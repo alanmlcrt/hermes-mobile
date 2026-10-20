@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Hermes Mobile — Une conversation, simplement.</title>
+<style>
+/* DISCOVERY PROPOSAL. Sample sage system palette only: no confirmed brand tokens.
+   Colors below illustrate Android dynamic roles; actual wallpaper values are unknown.
+   Layout, corners, icons and spacing are proposals for feedback, not spine decisions. */
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#262c29;background:#f1f3f0;font-synthesis:none;line-height:1.5}
+*{box-sizing:border-box}body{margin:0}button,textarea{font:inherit}button{color:inherit}button:disabled{cursor:default;opacity:1}svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}.presentation{max-width:1032px;margin:auto;padding:44px 40px 38px}.masthead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;font-weight:650;letter-spacing:.015em}.brand-mark{width:30px;height:30px;background:#283b33;color:#f0f7f2;display:grid;place-items:center;border-radius:10px;font-size:16px}.badge{font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border:1px solid #ccd3cd;border-radius:30px;padding:4px 9px;color:#59645c;margin-left:auto}h1{font-size:clamp(28px,4vw,43px);font-weight:560;line-height:1.18;letter-spacing:-.045em;margin:28px 0 12px}.intro{font-size:16px;color:#5c665e;max-width:650px;margin:0}.sample-note{font-size:14px;color:#5c665e;margin:22px 0 0}.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,390px));gap:48px;justify-content:center;margin:28px 0 0}.variant{min-width:0;margin:0}.variant-label{display:flex;align-items:center;gap:9px;margin:0 0 14px;font-size:14px;font-weight:600}.theme-dot{width:12px;height:12px;border-radius:50%;background:#f9fbf7;border:1px solid #b5bfb7}.dark-dot{background:#1a211d;border-color:#44534a}.phone{--surface:#f9fbf7;--on-surface:#202b24;--muted:#5f6c63;--container:#edf2ec;--user:#e2ece3;--primary:#35644c;--on-primary:#fff;--outline:#d6dfd5;--line:#e5ebe2;--detail:#f0f5ee;--stop:#344d3d;background:var(--surface);color:var(--on-surface);border:1px solid #bdc8be;border-radius:34px;min-height:780px;display:flex;flex-direction:column;box-shadow:0 8px 28px #344b3c08;padding:0 0 9px;position:relative;isolation:isolate}
+.phone.dark{--surface:#141b17;--on-surface:#e1e9e1;--muted:#adbbae;--container:#202b23;--user:#2b3d30;--primary:#b1d3ba;--on-primary:#173b28;--outline:#39483c;--line:#28342b;--detail:#1b261f;--stop:#c1d9c7;border-color:#3b4940;box-shadow:0 8px 28px #17251a0c;color-scheme:dark}
+.status-bar{display:flex;justify-content:space-between;align-items:center;min-height:45px;padding:11px 25px 5px;font-size:14px;font-weight:650}.system-indicators{display:flex;align-items:center;gap:7px}.system-indicators svg{width:16px;height:16px;stroke-width:1.8}.app-header{display:flex;align-items:center;gap:2px;min-height:72px;padding:6px 8px 11px;border-bottom:1px solid var(--line)}.icon-button{display:inline-grid;place-items:center;width:48px;height:48px;min-width:48px;border:0;background:transparent;border-radius:50%;padding:0}.profile{flex:1;min-width:0;position:relative;text-align:center}.profile summary{cursor:pointer;list-style:none;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;padding:4px;font-weight:600;font-size:15px;line-height:1.3}.profile summary::-webkit-details-marker{display:none}.profile summary svg{width:15px;height:15px}.profile[open] summary svg{transform:rotate(180deg)}.profile-menu{position:absolute;top:calc(100% + 6px);inset-inline:0;min-width:0;padding:12px;text-align:left;background:var(--container);border:1px solid var(--outline);border-radius:16px;box-shadow:0 8px 24px #00000014;z-index:2}.selected-profile{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}.selected-profile svg{width:18px;height:18px}.profile-menu p{font-size:14px;color:var(--muted);margin:10px 0 0;line-height:1.45;overflow-wrap:anywhere}.conversation{display:flex;flex-direction:column;align-items:stretch;gap:27px;padding:23px 22px 30px;flex:1}.date{font-size:12px;color:var(--muted);align-self:center;border-radius:20px;background:var(--container);padding:4px 10px;letter-spacing:.01em}.user-message{align-self:flex-end;background:var(--user);max-width:92%;padding:13px 16px;border-radius:20px 20px 5px 20px;margin:4px 0 0;font-size:16px;line-height:1.55;overflow-wrap:anywhere}.assistant{padding:1px 0 0}.assistant-label{font-size:14px;font-weight:650;margin:0 0 7px;display:flex;align-items:center;gap:8px}.assistant-symbol{font-size:13px;width:21px;height:21px;display:grid;place-items:center;border:1px solid var(--outline);border-radius:7px;color:var(--primary);line-height:1}.assistant-response{font-size:16px;margin:0;line-height:1.55}.activity{border:1px solid var(--outline);border-radius:17px;padding:15px 16px;margin-top:20px;background:var(--detail)}.activity-heading{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;margin:0 0 2px}.activity-heading svg{width:17px;height:17px;color:var(--primary)}.activity details{margin-top:5px}.activity summary{cursor:pointer;list-style:none;min-height:48px;display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--muted);gap:8px}.activity summary::-webkit-details-marker{display:none}.activity summary svg{width:16px;height:16px}.activity details[open] summary svg{transform:rotate(180deg)}.progress-note{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 12px;padding:0 0 12px;border-bottom:1px solid var(--outline)}.stop{display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;color:var(--stop);background:transparent;border:1px solid var(--outline);border-radius:24px;min-height:48px;padding:8px 17px;margin-top:4px}.stop svg{width:14px;height:14px;stroke-width:1.8}.composer-area{padding:15px 14px 0}.composer{border:1px solid var(--outline);border-radius:25px;background:var(--container);padding:12px 9px 8px}.composer label{display:block;padding:0 11px 11px;font-size:16px;color:var(--muted);line-height:1.5}.composer-tools{display:flex;align-items:center;justify-content:space-between;gap:8px}.send-button{background:var(--primary);color:var(--on-primary);width:44px;height:44px;min-width:48px;min-height:48px;border-radius:50%;border:0;display:grid;place-items:center}.composer .icon-button{color:var(--muted)}.gesture{height:4px;width:106px;border-radius:4px;background:var(--on-surface);opacity:.8;margin:20px auto 1px}.footer{border-top:1px solid #d2d9d0;margin-top:36px;padding-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:25px;color:#5c665e;font-size:14px}.footer p{margin:0;max-width:420px}.footer strong{font-weight:600;color:#38483c}summary:focus-visible{outline:3px solid var(--primary);outline-offset:3px;border-radius:7px}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.badge,.date{font-size:14px}.composer .placeholder{display:block;margin:0;padding:0 11px 11px;font-size:16px;color:var(--muted);line-height:1.5}
+@media(max-width:760px){.presentation{padding:28px 16px}.gallery{grid-template-columns:minmax(0,390px);gap:30px}.footer{grid-template-columns:1fr;gap:12px}.badge{margin-left:0}h1{margin-top:25px}.phone{border-radius:30px}.conversation{padding-inline:19px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="history" viewBox="0 0 24 24"><path d="M4 8a8 8 0 1 1-1 6M3 4v5h5M12 7v5l3 2"/></symbol>
+<symbol id="new" viewBox="0 0 24 24"><path d="M13 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-7M16 4l4 4M10 14l1-4 7-7a1.4 1.4 0 0 1 2 0l1 1a1.4 1.4 0 0 1 0 2l-7 7-4 1Z"/></symbol>
+<symbol id="chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="send" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+<symbol id="stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+<symbol id="progress" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-dasharray="35 15"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="signal" viewBox="0 0 20 20"><path d="M3 15v1m4-5v5m4-9v9m4-13v13"/></symbol>
+<symbol id="wifi" viewBox="0 0 20 20"><path d="M2 7a13 13 0 0 1 16 0M5 10a8 8 0 0 1 10 0M8 13a3 3 0 0 1 4 0M10 16h.01"/></symbol>
+<symbol id="battery" viewBox="0 0 20 20"><rect x="2" y="6" width="14" height="8" rx="2"/><path d="M18 9v2M5 9h8v2H5z"/></symbol>
+</defs></svg>
+<main class="presentation">
+<header>
+<div class="masthead"><span class="brand-mark" aria-hidden="true">h</span><span>Hermes Mobile</span><span class="badge">Exploration visuelle · 01</span></div>
+<h1>Une conversation, simplement.</h1>
+<p class="intro">Un profil, une demande, un suivi discret. Les détails restent à portée de main.</p>
+<p class="sample-note">Exemple de conversation — contenu illustratif</p>
+</header>
+<div class="gallery">
+<figure class="variant">
+<figcaption class="variant-label"><span class="theme-dot" aria-hidden="true"></span>Mode clair</figcaption>
+<section class="phone light" aria-label="Proposition de conversation en mode clair">
+<div class="status-bar" aria-hidden="true"><span>09:41</span><div class="system-indicators"><svg><use href="#signal"/></svg><svg><use href="#wifi"/></svg><svg><use href="#battery"/></svg></div></div>
+<header class="app-header">
+<button class="icon-button" type="button" disabled aria-label="Historique des conversations — maquette non connectée"><svg aria-hidden="true"><use href="#history"/></svg></button>
+<details class="profile"><summary aria-label="Voir le profil — exemple illustratif">Profil par défaut<svg aria-hidden="true"><use href="#chevron"/></svg></summary><div class="profile-menu"><div class="selected-profile"><svg aria-hidden="true"><use href="#check"/></svg>Profil par défaut</div><p>Les autres profils seront ceux de votre Hermes.</p></div></details>
+<button class="icon-button" type="button" disabled aria-label="Nouvelle conversation — maquette non connectée"><svg aria-hidden="true"><use href="#new"/></svg></button>
+</header>
+<div class="conversation">
+<span class="date">Aujourd’hui</span>
+<p class="user-message">Utilise le MCP de mon Hermes pour cette demande.</p>
+<div class="assistant"><p class="assistant-label"><span class="assistant-symbol" aria-hidden="true">h</span>Hermes</p><p class="assistant-response">Je m’en occupe.</p>
+<div class="activity"><p class="activity-heading"><svg aria-hidden="true"><use href="#progress"/></svg>Travail en cours</p><details><summary>Voir les détails<svg aria-hidden="true"><use href="#chevron"/></svg></summary><p class="progress-note">La demande est en cours de traitement.<br>Exemple de suivi, sans activité réelle.</p></details><button class="stop" type="button" disabled aria-label="Arrêter le travail — maquette non connectée"><svg aria-hidden="true"><use href="#stop"/></svg>Arrêter</button></div>
+</div>
+</div>
+<div class="composer-area"><div class="composer"><p class="placeholder">Écrire à Hermes…</p><div class="composer-tools"><button class="icon-button" type="button" disabled aria-label="Joindre un fichier — maquette non connectée"><svg aria-hidden="true"><use href="#plus"/></svg></button><button class="send-button" type="button" disabled aria-label="Envoyer le message — maquette non connectée"><svg aria-hidden="true"><use href="#send"/></svg></button></div></div><div class="gesture" aria-hidden="true"></div></div>
+</section>
+</figure>
+<figure class="variant">
+<figcaption class="variant-label"><span class="theme-dot dark-dot" aria-hidden="true"></span>Mode sombre</figcaption>
+<section class="phone dark" aria-label="Proposition de conversation en mode sombre">
+<div class="status-bar" aria-hidden="true"><span>09:41</span><div class="system-indicators"><svg><use href="#signal"/></svg><svg><use href="#wifi"/></svg><svg><use href="#battery"/></svg></div></div>
+<header class="app-header">
+<button class="icon-button" type="button" disabled aria-label="Historique des conversations — maquette non connectée"><svg aria-hidden="true"><use href="#history"/></svg></button>
+<details class="profile"><summary aria-label="Voir le profil — exemple illustratif">Profil par défaut<svg aria-hidden="true"><use href="#chevron"/></svg></summary><div class="profile-menu"><div class="selected-profile"><svg aria-hidden="true"><use href="#check"/></svg>Profil par défaut</div><p>Les autres profils seront ceux de votre Hermes.</p></div></details>
+<button class="icon-button" type="button" disabled aria-label="Nouvelle conversation — maquette non connectée"><svg aria-hidden="true"><use href="#new"/></svg></button>
+</header>
+<div class="conversation">
+<span class="date">Aujourd’hui</span>
+<p class="user-message">Utilise le MCP de mon Hermes pour cette demande.</p>
+<div class="assistant"><p class="assistant-label"><span class="assistant-symbol" aria-hidden="true">h</span>Hermes</p><p class="assistant-response">Je m’en occupe.</p>
+<div class="activity"><p class="activity-heading"><svg aria-hidden="true"><use href="#progress"/></svg>Travail en cours</p><details><summary>Voir les détails<svg aria-hidden="true"><use href="#chevron"/></svg></summary><p class="progress-note">La demande est en cours de traitement.<br>Exemple de suivi, sans activité réelle.</p></details><button class="stop" type="button" disabled aria-label="Arrêter le travail — maquette non connectée"><svg aria-hidden="true"><use href="#stop"/></svg>Arrêter</button></div>
+</div>
+</div>
+<div class="composer-area"><div class="composer"><p class="placeholder">Écrire à Hermes…</p><div class="composer-tools"><button class="icon-button" type="button" disabled aria-label="Joindre un fichier — maquette non connectée"><svg aria-hidden="true"><use href="#plus"/></svg></button><button class="send-button" type="button" disabled aria-label="Envoyer le message — maquette non connectée"><svg aria-hidden="true"><use href="#send"/></svg></button></div></div><div class="gesture" aria-hidden="true"></div></div>
+</section>
+</figure>
+</div>
+<footer class="footer"><p><strong>Les couleurs suivent votre téléphone.</strong><br>La palette sauge présentée ici est un exemple provisoire de couleurs dynamiques, à valider visuellement.</p><p><strong>Maquette visuelle · actions non connectées.</strong><br>Le profil et les détails peuvent se déplier. Cette exploration propose une composition ; elle ne modifie pas les décisions déjà capturées.</p></footer>
+</main>
+</body>
+</html>

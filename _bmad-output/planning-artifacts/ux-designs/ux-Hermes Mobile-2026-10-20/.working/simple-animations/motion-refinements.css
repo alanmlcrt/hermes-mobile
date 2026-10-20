@@ -1,0 +1,23 @@
+/* Shared writing timeline: empty, four lines, readable hold, soft reset. */
+.art{--write-cycle:4.6s;--call-cycle:3.2s}
+.writing-line{animation:write-a var(--write-cycle) cubic-bezier(.25,.1,.25,1) infinite;animation-delay:0s}
+.writing-line[data-step="1"]{animation-name:write-b}.writing-line[data-step="2"]{animation-name:write-c}.writing-line[data-step="3"]{animation-name:write-d}
+.cursor{animation:typing-cursor var(--write-cycle) linear infinite}.code-content{animation:code-scroll var(--write-cycle) cubic-bezier(.22,1,.36,1) infinite}.document-arrival{animation:page-arrival var(--write-cycle) cubic-bezier(.22,1,.36,1) infinite}
+.search-lens{animation:search-v2 3.4s cubic-bezier(.45,0,.25,1) infinite}.reading-bar{animation:read-v2 3.8s cubic-bezier(.65,0,.25,1) infinite}
+.signal-dot{animation:call-v2 var(--call-cycle) cubic-bezier(.4,0,.2,1) infinite}.signal-trail{opacity:.45}.return-dot{animation:return-v2 var(--call-cycle) cubic-bezier(.4,0,.2,1) infinite}.tool{animation:tool-v2 var(--call-cycle) cubic-bezier(.22,1,.36,1) infinite;transform-box:fill-box;transform-origin:center}
+.tool-halo{animation:response var(--call-cycle) ease-out infinite;transform-box:fill-box;transform-origin:center;opacity:0}.machine-led{animation:receive var(--call-cycle) ease-in-out infinite;opacity:.3}
+@keyframes write-a{0%,10%{stroke-dashoffset:1;opacity:0}11%{opacity:1}24%,84%{stroke-dashoffset:0;opacity:1}96%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes write-b{0%,25%{stroke-dashoffset:1;opacity:0}26%{opacity:1}40%,84%{stroke-dashoffset:0;opacity:1}96%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes write-c{0%,41%{stroke-dashoffset:1;opacity:0}42%{opacity:1}56%,84%{stroke-dashoffset:0;opacity:1}96%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes write-d{0%,57%{stroke-dashoffset:1;opacity:0}58%{opacity:1}70%,84%{stroke-dashoffset:0;opacity:1}96%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes typing-cursor{0%,9%{opacity:0;transform:translate(-44px,0)}10%{opacity:1;transform:translate(-44px,0)}24%{transform:translate(0,0)}25%{transform:translate(-41px,15px)}40%{transform:translate(42px,15px)}41%{transform:translate(-41px,30px)}56%{transform:translate(32px,30px)}57%{transform:translate(-44px,46px)}70%,79%{opacity:1;transform:translate(-14px,46px)}84%,100%{opacity:0;transform:translate(-14px,46px)}}
+@keyframes code-scroll{0%,78%{transform:translateY(0)}89%,100%{transform:translateY(-4px)}}
+@keyframes page-arrival{0%{transform:translateY(7px);opacity:.3}7%{transform:translateY(-2px);opacity:1}12%,100%{transform:translateY(0);opacity:1}}
+@keyframes search-v2{0%,10%,100%{transform:translate(-15px,-12px)}34%,42%{transform:translate(9px,-10px)}63%,71%{transform:translate(10px,12px)}86%{transform:translate(-12px,10px)}}
+@keyframes read-v2{0%,12%{transform:translateY(0);opacity:1}28%,36%{transform:translateY(16px);opacity:1}52%,60%{transform:translateY(32px);opacity:1}76%,85%{transform:translateY(48px);opacity:1}92%{transform:translateY(48px);opacity:0}94%{transform:translateY(0);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes call-v2{0%,10%{transform:translateX(0);opacity:0}16%{opacity:1}41%{transform:translateX(40px);opacity:1}47%,100%{transform:translateX(40px);opacity:0}}
+@keyframes return-v2{0%,58%{transform:translateX(0);opacity:0}64%{opacity:1}87%{transform:translateX(-40px);opacity:1}94%,100%{transform:translateX(-40px);opacity:0}}
+@keyframes tool-v2{0%,39%,76%,100%{transform:rotate(0) scale(1)}47%{transform:rotate(-12deg) scale(1.06)}58%{transform:rotate(8deg) scale(1.03)}68%{transform:rotate(-3deg) scale(1)}}
+@keyframes response{0%,39%{transform:scale(1);opacity:0}45%{transform:scale(1.02);opacity:.5}65%,100%{transform:scale(1.2);opacity:0}}
+@keyframes receive{0%,12%,42%,75%,100%{opacity:.3}22%,34%,88%,94%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.art *{animation:none!important;transform:none!important}.writing-line{stroke-dashoffset:0;opacity:1}.signal-dot,.return-dot,.cursor,.tool-halo{opacity:0}.reading-bar{transform:translateY(25px)!important}.machine-led{opacity:.6}}

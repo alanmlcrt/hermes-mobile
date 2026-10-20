@@ -1,0 +1,140 @@
+[
+  {
+    "path": "hermes_cli/web_routers/files.py",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/hermes_cli/web_routers/files.py",
+    "hits": [
+      "1: \"\"\"Managed-files, chat image upload, /api/media and /api/fs dashboard routes.",
+      "25: from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile",
+      "36: ChatImageUpload, FsWriteText, ManagedDirectoryCreate, ManagedFileDelete, ManagedFileUpload,",
+      "103: (upload/mkdir/delete) are a separate threat class handled by the write-path checks; extending this guard",
+      "336: @router.get(\"/api/media\")",
+      "380: @router.get(\"/api/media/proxy\")",
+      "426: raise HTTPException(status_code=400, detail=\"Upload payload must be a data URL\")",
+      "430: raise HTTPException(status_code=400, detail=\"Upload payload must be base64 encoded\")",
+      "434: raise HTTPException(status_code=400, detail=\"Upload payload is not valid base64\")",
+      "440: _CHAT_IMAGE_UPLOAD_MAX_BYTES = 25 * 1024 * 1024",
+      "464: def _decode_chat_image_upload(payload: ChatImageUpload) -> tuple[bytes, str, str]:",
+      "467: raise HTTPException(status_code=400, detail=\"Upload payload must be an image\")",
+      "468: if len(data) > _CHAT_IMAGE_UPLOAD_MAX_BYTES:",
+      "469: mb = _CHAT_IMAGE_UPLOAD_MAX_BYTES // (1024 * 1024)",
+      "477: @router.post(\"/api/chat/image-upload\")",
+      "478: async def upload_chat_image(payload: ChatImageUpload, profile: Optional[str] = None):",
+      "482: /chat page uploads them here and drives the TUI's ``/image <path>`` with",
+      "487: data, mime_type, ext = _decode_chat_image_upload(payload)",
+      "515: @router.get(\"/api/files\")",
+      "568: @router.get(\"/api/files/read\")",
+      "606: @router.get(\"/api/files/download\")",
+      "608: \"\"\"Stream a managed file as an attachment download.",
+      "614: use this route as their player source, attachment semantics otherwise.",
+      "621: content_disposition_type=\"inline\" if is_media_subresource else \"attachment\",",
+      "626: @router.get(\"/api/files/stream\")",
+      "630: media pipeline may reject an attachment response as an ``<audio>``/",
+      "654: @router.post(\"/api/files/upload\")",
+      "655: async def upload_managed_file(payload: ManagedFileUpload, request: Request):",
+      "664: async def stream_upload_to_path(",
+      "665: file: UploadFile,",
+      "672: \"\"\"Stream a multipart upload to ``target`` in chunks; returns bytes written.",
+      "674: Writes a sibling temp file first so a partial/aborted upload never clobbers",
+      "678: browser aborts a large upload mid-stream.",
+      "680: from hermes_cli.web_server import _MANAGED_FILE_MAX_BYTES, _UPLOAD_CHUNK_BYTES",
+      "681: tmp_fd, tmp_name = tempfile.mkstemp(prefix=f\".{target.name}.\", suffix=\".upload\", dir=str(target.parent))"
+    ]
+  },
+  {
+    "path": "hermes_cli/web_routers/profiles.py",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/hermes_cli/web_routers/profiles.py",
+    "hits": [
+      "453: @sessions_router.get(\"/api/profiles/sessions\")",
+      "521: @sessions_router.get(\"/api/profiles/sessions/sidebar\")",
+      "716: @sessions_router.get(\"/api/profiles/projects/tree\")",
+      "769: @sessions_router.post(\"/api/profiles/sessions/pull-requests\")",
+      "807: @router.get(\"/api/profiles\")",
+      "812: @router.post(\"/api/profiles\")",
+      "885: @router.get(\"/api/profiles/active\")",
+      "906: @router.post(\"/api/profiles/active\")",
+      "917: @router.get(\"/api/profiles/{name}/setup-command\")",
+      "938: @router.post(\"/api/profiles/{name}/open-terminal\")",
+      "1000: @router.get(\"/api/profiles/{name}/soul\")",
+      "1066: @router.post(\"/api/profiles/{name}/describe-auto\")",
+      "1097: @router.post(\"/api/profiles/{name}/export\")",
+      "1115: @router.post(\"/api/profiles/import\")",
+      "1144: @router.get(\"/api/profiles/{name}/desktop-overlay\")"
+    ]
+  },
+  {
+    "path": "hermes_cli/web_routers/chat_ws.py",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/hermes_cli/web_routers/chat_ws.py",
+    "hits": [
+      "299: @router.websocket(\"/api/console\")",
+      "538: @router.websocket(\"/api/pty\")",
+      "702: @router.websocket(\"/api/ws\")",
+      "713: # The authenticated identity (ticket / internal credential) stamped by",
+      "755: @router.websocket(\"/api/pub\")",
+      "767: @router.websocket(\"/api/events\")"
+    ]
+  },
+  {
+    "path": "hermes_cli/web_server_files.py",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/hermes_cli/web_server_files.py",
+    "hits": [
+      "94: native profile ticket's override) gets its own terminal policy when no scope is bound, so"
+    ]
+  },
+  {
+    "path": "hermes_cli/web_server_chat.py",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/hermes_cli/web_server_chat.py",
+    "hits": [
+      "170: _GATEWAY_WS_TICKET_PROTOCOL_PREFIX,",
+      "171: _gateway_ws_ticket_from_subprotocol,",
+      "204: ``token_mismatch``, ``ticket_invalid``, ``internal_invalid``);",
+      "208: Gated: ``?ticket=`` (browser-minted, single-use, 30s TTL) or ``?internal=``",
+      "218: ``X-Hermes-Gateway-Ticket`` grant its REST calls use (``authenticate_native_ws``).",
+      "237: from hermes_cli.dashboard_auth.ws_tickets import (",
+      "238: TicketInvalid, consume_internal_credential, consume_ticket)",
+      "242: AuditEvent.WS_TICKET_REJECTED, reason=reason,",
+      "261: except TicketInvalid as exc:",
+      "265: protocol_ticket, protocol_reason = _gateway_ws_ticket_from_subprotocol(ws)",
+      "267: return \"ticket_invalid\", \"ticket-subprotocol\"",
+      "268: ticket = protocol_ticket or ws.query_params.get(\"ticket\", \"\")",
+      "269: if ticket:",
+      "271: info = consume_ticket(ticket)",
+      "273: # A display ticket admits one RFB bridge on /api/display/ws (a watch-only",
+      "275: raise TicketInvalid(\"display ticket presented as a gateway login\")",
+      "277: if protocol_ticket:",
+      "279: # ticket-bearing protocol is a credential and must never be",
+      "282: return None, \"ticket-subprotocol\"",
+      "283: return None, \"ticket\"",
+      "284: except TicketInvalid as exc:",
+      "286: return \"ticket_invalid\", \"ticket\"",
+      "293: # only credentials gated mode accepted were browser-minted tickets and",
+      "463: browser ticket: the child reads the URL once and reuses it on every",
+      "464: reconnect, and a 30s-TTL ticket can expire before a slow cold boot dials.",
+      "473: from hermes_cli.dashboard_auth.ws_tickets import internal_ws_credential"
+    ]
+  },
+  {
+    "path": "apps/desktop/src/lib/gateway-rpc.ts",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/apps/desktop/src/lib/gateway-rpc.ts",
+    "hits": []
+  },
+  {
+    "path": "gateway/platforms/api_server_runs.py",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/gateway/platforms/api_server_runs.py",
+    "hits": []
+  },
+  {
+    "path": "pyproject.toml",
+    "url": "https://raw.githubusercontent.com/NousResearch/hermes-agent/5eee5d02e85eaad32dfade3030d27fcfad204e72/pyproject.toml",
+    "hits": [
+      "7: version = \"0.0.0\"",
+      "15: requires-python = \">=3.11,<3.15\"",
+      "153: # Streaming multipart uploads for the dashboard file manager (NS-501).",
+      "154: # FastAPI's UploadFile/Form depend on python-multipart; it is NOT pulled in",
+      "155: # by fastapi itself, so the dashboard's multipart upload endpoint would 500",
+      "182: # are HEIC (frequently mislabeled .jpg by upload pipelines); Pillow has no",
+      "373: trace-upload = [\"huggingface-hub==1.24.0\"]",
+      "637: # package mirrors publish no upload times and uv rejects a file it cannot date",
+      "715: python-version = \"3.13\""
+    ]
+  }
+]
