@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"event","params":{"type":"message.start","session_id":"a1b2c3d4","payload":{},"seq":1}}

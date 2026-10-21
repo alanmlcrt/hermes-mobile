@@ -342,3 +342,57 @@ class HermesAdapter {
     }
   }
 }
+
+/// Dialecte legacy du contrat 9e01b44 : seul endroit qui connaît ces formats.
+abstract final class HermesRpc {
+  static const runtimeLost = 4001;
+  static const turnStart = 'message.start';
+  static const turnEnd = 'message.complete';
+  static const sessionError = 'error';
+  static const _accepted = {'streaming', 'queued', 'steered', 'redirected'};
+
+  /// Le dialecte canonique (`session_authority`) n'est pas pris en charge.
+  static bool conversationSupported(Map payload) =>
+      payload['session_authority'] != true;
+
+  static Map<String, dynamic> createParams(ProfileKey profile, String key) => {
+    'profile': profile.value,
+    'close_on_disconnect': false,
+    'idempotency_key': key,
+  };
+
+  static ({String runtime, String stored}) created(Map<String, dynamic> r) {
+    final runtime = r['session_id'];
+    final stored = r['stored_session_id'];
+    if (runtime is! String ||
+        runtime.isEmpty ||
+        stored is! String ||
+        stored.isEmpty) {
+      throw const AppError('contract.invalid_response');
+    }
+    return (runtime: runtime, stored: stored);
+  }
+
+  static Map<String, dynamic> resumeParams(String stored, ProfileKey profile) =>
+      {'session_id': stored, 'profile': profile.value};
+
+  static ({String runtime, bool running}) resumed(Map<String, dynamic> r) {
+    final runtime = r['session_id'];
+    if (runtime is! String || runtime.isEmpty) {
+      throw const AppError('contract.invalid_response');
+    }
+    return (runtime: runtime, running: r['running'] == true);
+  }
+
+  static Map<String, dynamic> submitParams(String runtime, String text) => {
+    'session_id': runtime,
+    'text': text,
+  };
+
+  /// `null` si la réponse n'est pas une acceptation connue.
+  static ({int? userRowId})? submitted(Map<String, dynamic> r) {
+    if (!_accepted.contains(r['status'])) return null;
+    final row = r['user_row_id'];
+    return (userRowId: row is int ? row : null);
+  }
+}

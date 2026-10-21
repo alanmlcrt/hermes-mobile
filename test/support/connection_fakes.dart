@@ -55,6 +55,17 @@ class MemorySecrets implements SecretStore {
   }
 }
 
+/// Réponse RPC scriptée : erreur JSON-RPC reçue.
+class RpcFail {
+  const RpcFail(this.code);
+  final int code;
+}
+
+/// Réponse RPC scriptée : la socket tombe après réception de la trame.
+class RpcDrop {
+  const RpcDrop();
+}
+
 class FakeSocket implements GatewaySocket {
   FakeSocket(this.owner) {
     owner.active++;
@@ -74,6 +85,33 @@ class FakeSocket implements GatewaySocket {
   Stream<Object?> get messages => controller.stream;
   @override
   void send(Map<String, dynamic> message) {
+    owner.frames.add(message);
+    if (message['method'] == owner.throwOnMethod) {
+      throw StateError('synthetic write failure');
+    }
+    final script = owner.rpc;
+    if (script != null && message['id'] != 'capabilities') {
+      final outcome = script(
+        message['method'] as String,
+        Map<String, dynamic>.from(message['params'] as Map),
+      );
+      if (outcome is RpcDrop) {
+        unawaited(close());
+      } else if (outcome is RpcFail) {
+        controller.add({
+          'jsonrpc': '2.0',
+          'id': message['id'],
+          'error': {'code': outcome.code, 'message': 'SYNTHETIC'},
+        });
+      } else if (outcome is Map) {
+        controller.add({
+          'jsonrpc': '2.0',
+          'id': message['id'],
+          'result': outcome,
+        });
+      }
+      return;
+    }
     if (owner.silentRpc) return;
     controller.add({
       'jsonrpc': '2.0',
@@ -102,7 +140,17 @@ class FakeTransport implements HermesTransport {
         ({Uri uri, String method, Map<String, dynamic>? body, String? bearer})
       >[];
   Map<String, dynamic> profiles = fixture('profiles');
-  Map<String, dynamic> ready = fixture('gateway-ready');
+  Map<String, dynamic> ready = fixture('gateway-ready-legacy');
+
+  /// Trames écrites par l'app, dans l'ordre.
+  final frames = <Map<String, dynamic>>[];
+
+  /// Méthode dont l'écriture lève une erreur (trame peut-être partie).
+  String? throwOnMethod;
+
+  /// Script des appels hors `gateway.capabilities` : Map = résultat,
+  /// [RpcFail] = erreur, [RpcDrop] = socket coupée, autre = silence.
+  Object? Function(String method, Map<String, dynamic> params)? rpc;
   int loginStatus = 200;
   List<String>? loginCookies;
   int refreshStatus = 200;
@@ -196,6 +244,20 @@ class Harness {
 
 class MemoryOutbox implements OutboxGateway {
   final drafts = <DraftKey, Draft>{};
+  final statuses = <DraftKey, SendStatus>{};
+  final sent = <DraftKey>[];
+  final _changes = StreamController<DraftKey>.broadcast(sync: true);
+  void setStatus(DraftKey key, SendStatus status) {
+    statuses[key] = status;
+    _changes.add(key);
+  }
+
+  @override
+  Stream<DraftKey> get changes => _changes.stream;
+  @override
+  SendStatus status(DraftKey key) => statuses[key] ?? const SendStatus();
+  @override
+  Future<void> send(DraftKey key) async => sent.add(key);
   bool failSave = false;
   bool failOpen = false;
   bool failRead = false;
@@ -232,6 +294,7 @@ class MemoryOutbox implements OutboxGateway {
       connection: d.connection,
       profile: d.profile,
       body: body,
+      revision: d.revision + 1,
     );
   }
 

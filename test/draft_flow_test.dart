@@ -193,6 +193,144 @@ void main() {
     });
   }
 
+  Future<(Harness, MemoryOutbox, DraftKey)> openDraft(
+    WidgetTester tester, {
+    Map<String, dynamic>? ready,
+  }) async {
+    final h = await _launched();
+    if (ready != null) h.transport.ready = ready;
+    final outbox = MemoryOutbox();
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+    await tester.pumpAndSettle();
+    return (h, outbox, outbox.drafts.keys.single);
+  }
+
+  Finder sendButton() => find.widgetWithText(FilledButton, Content.send);
+  bool sendEnabled(WidgetTester tester) =>
+      tester.widget<FilledButton>(sendButton()).onPressed != null;
+
+  testWidgets('envoi actif : texte saisi, connecté, tour terminé', (
+    tester,
+  ) async {
+    final (_, outbox, key) = await openDraft(tester);
+    expect(sendEnabled(tester), isFalse);
+    expect(find.text(Content.sendEmpty), findsOne);
+    await tester.enterText(find.byType(TextField), 'ma demande');
+    await tester.pumpAndSettle();
+    expect(sendEnabled(tester), isTrue);
+    await tester.tap(sendButton());
+    await tester.pumpAndSettle();
+    expect(outbox.sent, [key]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tour en cours : saisie enregistrée, bouton désactivé et raison', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final (_, outbox, key) = await openDraft(tester);
+    await tester.enterText(find.byType(TextField), 'première');
+    outbox.setStatus(key, const SendStatus(turnActive: true));
+    await tester.pumpAndSettle();
+    expect(sendEnabled(tester), isFalse);
+    expect(find.text(Content.turnActive), findsOne);
+    await tester.enterText(find.byType(TextField), 'seconde en cours');
+    await tester.pumpAndSettle();
+    expect(outbox.drafts[key]!.body, 'seconde en cours');
+    expect(sendEnabled(tester), isFalse);
+    expect(
+      tester.getSemantics(find.text(Content.turnActive)),
+      matchesSemantics(label: Content.turnActive, isLiveRegion: true),
+    );
+    outbox.setStatus(key, const SendStatus());
+    await tester.pumpAndSettle();
+    expect(sendEnabled(tester), isTrue);
+    semantics.dispose();
+  });
+
+  testWidgets('envoi en cours puis résultat incertain : annoncé, explicite', (
+    tester,
+  ) async {
+    final (_, outbox, key) = await openDraft(tester);
+    await tester.enterText(find.byType(TextField), 'texte');
+    outbox.setStatus(key, const SendStatus(state: OperationState.sending));
+    await tester.pumpAndSettle();
+    expect(find.text(Content.sending), findsOne);
+    expect(sendEnabled(tester), isFalse);
+    outbox.setStatus(
+      key,
+      const SendStatus(state: OperationState.unknown, errorCode: 'send.unknown'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(Content.error('send.unknown')), findsOne);
+    expect(find.text('texte'), findsOne);
+    // Un nouvel envoi n'est possible que par action explicite.
+    expect(sendEnabled(tester), isTrue);
+    expect(outbox.sent, isEmpty);
+  });
+
+  for (final typedMore in [false, true]) {
+    testWidgets(
+      typedMore
+          ? 'acceptée avec saisie plus récente : texte conservé'
+          : 'acceptée : saisie envoyée retirée de l’écran',
+      (tester) async {
+        final (_, outbox, key) = await openDraft(tester);
+        await tester.enterText(find.byType(TextField), 'abc');
+        await tester.pumpAndSettle();
+        await tester.tap(sendButton());
+        await tester.pumpAndSettle();
+        if (typedMore) {
+          await tester.enterText(find.byType(TextField), 'abc suite');
+          await tester.pumpAndSettle();
+        } else {
+          // Le stockage a vidé la version envoyée (révision identique).
+          await outbox.saveText(key, '');
+        }
+        outbox.setStatus(key, const SendStatus(state: OperationState.accepted));
+        await tester.pumpAndSettle();
+        expect(find.text(Content.sendAccepted), findsOne);
+        expect(
+          tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          typedMore ? 'abc suite' : '',
+        );
+      },
+    );
+  }
+
+  testWidgets('dialecte canonique : envoi désactivé, capacité absente dite', (
+    tester,
+  ) async {
+    final (h, outbox, _) = await openDraft(
+      tester,
+      ready: fixture('gateway-ready'),
+    );
+    await tester.enterText(find.byType(TextField), 'texte');
+    await tester.pumpAndSettle();
+    expect(find.text(Content.sendCapabilityMissing), findsOne);
+    expect(sendEnabled(tester), isFalse);
+    expect(outbox.sent, isEmpty);
+    expect(h.transport.frames.where((f) => f['id'] != 'capabilities'), isEmpty);
+  });
+
+  testWidgets('texte 200 % : état d’envoi lisible sans débordement', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 700);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final (_, outbox, key) = await openDraft(tester);
+    outbox.setStatus(
+      key,
+      const SendStatus(state: OperationState.unknown, errorCode: 'send.unknown'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(Content.error('send.unknown')), findsOne);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in [const Size(375, 700), const Size(700, 375)]) {
     testWidgets('200 %, lecteur d\'écran, clavier, échec d\'écriture ($size)', (
       tester,
@@ -229,7 +367,7 @@ void main() {
         tester.getSemantics(send.first),
         isSemantics(
           label: Content.send,
-          hint: Content.sendUnavailable,
+          hint: Content.sendEmpty,
           isButton: true,
           hasEnabledState: true,
           isEnabled: false,

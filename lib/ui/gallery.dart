@@ -85,7 +85,7 @@ class ComponentGallery extends StatelessWidget {
       (GalleryContent.sectionCardSection, _sectionCard),
       (
         GalleryContent.composerSection,
-        () => const Composer(disabledReason: Content.sendUnavailable),
+        () => const Composer(disabledReason: Content.sendEmpty),
       ),
       (
         Content.profilesTitle,

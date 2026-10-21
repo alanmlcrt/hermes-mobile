@@ -31,6 +31,10 @@ class ConnectionRepository implements ConnectionGateway {
   Future<void> _closingSocket = Future.value();
   final Future<void> Function()? closeStorage;
   final _changes = StreamController<ConnectionSnapshot>.broadcast(sync: true);
+  final _events = StreamController<GatewayEvent>.broadcast(sync: true);
+  final _calls = <String, Completer<Map<String, dynamic>>>{};
+  int _rpcSeq = 0;
+  int _generation = 0;
   ConnectionSnapshot _snapshot = ConnectionSnapshot(
     capabilities: _documentaryCapabilities,
   );
@@ -47,6 +51,7 @@ class ConnectionRepository implements ConnectionGateway {
     Capability('profiles', CapabilityState.unverified, required: true),
     Capability('websocket', CapabilityState.unverified, required: true),
     Capability('replay_epoch', CapabilityState.unverified, required: true),
+    Capability('conversation', CapabilityState.unverified, required: true),
     Capability('change_events', CapabilityState.unverified),
     Capability('heartbeat', CapabilityState.unverified),
     Capability('per_session_exclusive_submit', CapabilityState.unverified),
@@ -58,6 +63,44 @@ class ConnectionRepository implements ConnectionGateway {
   ConnectionSnapshot get snapshot => _snapshot;
   @override
   Stream<ConnectionSnapshot> get snapshots => _changes.stream;
+  @override
+  Stream<GatewayEvent> get events => _events.stream;
+  @override
+  int get socketGeneration => _generation;
+
+  @override
+  Future<Map<String, dynamic>> call(
+    String method,
+    Map<String, dynamic> params, {
+    Duration timeout = rpcTimeout,
+  }) async {
+    final socket = _socket;
+    if (socket == null || _snapshot.link != LinkState.connected) {
+      throw const AppError('transport.offline', retryable: true);
+    }
+    final id = 'r${++_rpcSeq}';
+    final done = Completer<Map<String, dynamic>>();
+    _calls[id] = done;
+    try {
+      socket.send({
+        'jsonrpc': '2.0',
+        'id': id,
+        'method': method,
+        'params': params,
+      });
+    } catch (_) {
+      // Écriture peut-être partielle : on ne sait pas si Hermes a reçu la trame.
+      _calls.remove(id);
+      throw const AppError('rpc.uncertain');
+    }
+    try {
+      return await done.future.timeout(timeout);
+    } on TimeoutException {
+      throw const AppError('rpc.uncertain');
+    } finally {
+      _calls.remove(id);
+    }
+  }
   void _emit(ConnectionSnapshot value) {
     if (_disposed) return;
     _snapshot = value;
@@ -265,6 +308,7 @@ class ConnectionRepository implements ConnectionGateway {
       socket = await adapter.socket(origin, await _renew());
     }
     _socket = socket;
+    final generation = ++_generation;
     final epoch = _epoch;
     final ready = Completer<void>();
     _subscription = socket.messages.listen(
@@ -280,6 +324,12 @@ class ConnectionRepository implements ConnectionGateway {
             final payload = params['payload'];
             if (payload is! Map) throw const FormatException();
             _capability('websocket', CapabilityState.present);
+            _capability(
+              'conversation',
+              HermesRpc.conversationSupported(payload)
+                  ? CapabilityState.present
+                  : CapabilityState.absent,
+            );
             for (final name in ['change_events', 'heartbeat', 'replay_epoch']) {
               final value = payload[name];
               _capability(
@@ -313,6 +363,36 @@ class ConnectionRepository implements ConnectionGateway {
               'params': <String, dynamic>{},
             });
             if (!ready.isCompleted) ready.complete();
+          } else if (message['method'] == 'event' &&
+              params is Map &&
+              params['session_id'] is String &&
+              params['type'] is String) {
+            final payload = params['payload'];
+            final seq = params['seq'];
+            _events.add(
+              GatewayEvent(
+                sessionId: params['session_id'] as String,
+                type: params['type'] as String,
+                payload: payload is Map
+                    ? Map<String, dynamic>.from(payload)
+                    : const {},
+                seq: seq is int ? seq : null,
+                generation: generation,
+              ),
+            );
+          } else if (message['id'] is String &&
+              _calls.containsKey(message['id'])) {
+            final done = _calls.remove(message['id'])!;
+            final result = message['result'];
+            final error = message['error'];
+            if (error is Map) {
+              final code = error['code'];
+              done.completeError(RpcError(code is int ? code : -1));
+            } else if (result is Map) {
+              done.complete(Map<String, dynamic>.from(result));
+            } else {
+              done.completeError(const AppError('rpc.uncertain'));
+            }
           } else if (message['id'] == 'capabilities') {
             _capabilitiesDeadline?.cancel();
             _capabilitiesDeadline = null;
@@ -433,6 +513,12 @@ class ConnectionRepository implements ConnectionGateway {
   }
 
   Future<void> _closeSocket() {
+    // Trames déjà écrites : sans la socket, plus aucune réponse n'arrivera.
+    final lost = _calls.values.toList();
+    _calls.clear();
+    for (final call in lost) {
+      call.completeError(const AppError('rpc.uncertain'));
+    }
     _capabilitiesDeadline?.cancel();
     _capabilitiesDeadline = null;
     final socket = _socket;
@@ -537,5 +623,6 @@ class ConnectionRepository implements ConnectionGateway {
     adapter.transport.close();
     await closeStorage?.call();
     await _changes.close();
+    await _events.close();
   }
 }

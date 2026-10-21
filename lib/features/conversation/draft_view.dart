@@ -23,6 +23,7 @@ class _DraftViewState extends State<DraftView> {
   final _controller = TextEditingController();
   late final _viewModel = widget.create();
   bool _filled = false;
+  int _clearTick = 0;
 
   @override
   void dispose() {
@@ -41,7 +42,12 @@ class _DraftViewState extends State<DraftView> {
         _filled = true;
         _controller.text = draft.body;
       }
+      if (_clearTick != vm.clearTick) {
+        _clearTick = vm.clearTick;
+        _controller.clear();
+      }
       final profile = vm.profile;
+      final blocked = vm.blockedReason;
       return Scaffold(
         appBar: AppBar(
           title: const Text(Content.newConversation),
@@ -79,7 +85,9 @@ class _DraftViewState extends State<DraftView> {
                 Composer(
                   controller: _controller,
                   onChanged: vm.update,
-                  disabledReason: Content.sendUnavailable,
+                  onSend: blocked == null ? vm.send : null,
+                  disabledReason: blocked,
+                  status: vm.statusText,
                 ),
             ],
           ),

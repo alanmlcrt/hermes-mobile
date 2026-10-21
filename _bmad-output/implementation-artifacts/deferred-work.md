@@ -8,3 +8,10 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-1-nouvelle-conversation-brouillon.md`
   summary: Tester que `MainApp.dispose` vide l'outbox avant de fermer la base via le gateway.
   evidence: `MemoryOutbox.dispose` est vide ; l'ordre `outbox.dispose().whenComplete(gateway.dispose)` de `lib/main.dart` n'est observé par aucun test.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-envoi-sans-double-execution.md`
+  summary: Rapprocher une opération `unknown` quand une réponse tardive ou l'historique prouve son acceptation.
+  evidence: `call()` retire l'id au timeout, une réponse tardive est ignorée ; relève de la story 2.4.
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-envoi-sans-double-execution.md`
+  summary: L'accueil rouvre un brouillon de conversation existante quand il contient du texte, au lieu d'une nouvelle conversation.
+  evidence: `openNewDraft` préfère `body <> ''` ; à remplacer par la restauration de 2.4/2.6 une fois l'historique disponible.

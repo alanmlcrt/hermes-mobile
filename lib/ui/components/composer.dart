@@ -13,11 +13,15 @@ class Composer extends StatelessWidget {
     this.onChanged,
     this.onSend,
     this.disabledReason,
+    this.status,
   });
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onSend;
   final String? disabledReason;
+
+  /// État d'envoi annoncé (région live) ; remplace l'affichage de la raison.
+  final String? status;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -50,7 +54,13 @@ class Composer extends StatelessWidget {
           ),
         ),
       ),
-      if (onSend == null && disabledReason != null) ...[
+      if (status != null) ...[
+        const SizedBox(height: Spacing.xs),
+        Semantics(container: true, liveRegion: true, child: Text(status!)),
+      ],
+      if (onSend == null &&
+          disabledReason != null &&
+          disabledReason != status) ...[
         const SizedBox(height: Spacing.xs),
         ExcludeSemantics(child: Text(disabledReason!)),
       ],

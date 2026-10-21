@@ -18,5 +18,8 @@ Future<({ConnectionGateway gateway, OutboxGateway outbox})> bootstrap() async {
     closeStorage: database.close,
   );
   // La restauration réseau ne bloque pas le premier écran.
-  return (gateway: repository, outbox: OutboxRepository(database));
+  return (
+    gateway: repository,
+    outbox: OutboxRepository(database, gateway: repository),
+  );
 }

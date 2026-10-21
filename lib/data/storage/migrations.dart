@@ -25,4 +25,30 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'ON outbox_drafts (connection_key, profile_key)',
     );
   },
+  (db) async {
+    await db.execute(
+      'ALTER TABLE outbox_drafts ADD COLUMN revision INTEGER NOT NULL DEFAULT 0',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_drafts ADD COLUMN stored_session_id TEXT',
+    );
+    await db.execute('ALTER TABLE outbox_drafts ADD COLUMN idempotency_key TEXT');
+    // Une fois la session créée, le brouillon quitte l'unicité « nouveau ».
+    await db.execute('DROP INDEX outbox_drafts_target');
+    await db.execute(
+      'CREATE UNIQUE INDEX outbox_drafts_new ON outbox_drafts '
+      '(connection_key, profile_key) WHERE stored_session_id IS NULL',
+    );
+    await db.execute(
+      'CREATE TABLE outbox_operations ('
+      'operation_key TEXT PRIMARY KEY, draft_key TEXT NOT NULL, '
+      'connection_key TEXT NOT NULL, profile_key TEXT NOT NULL, '
+      'body TEXT NOT NULL, revision INTEGER NOT NULL, state TEXT NOT NULL, '
+      'user_row_id INTEGER, error_code TEXT, '
+      'created_at TEXT NOT NULL, updated_at TEXT NOT NULL)',
+    );
+    await db.execute(
+      'CREATE INDEX outbox_operations_draft ON outbox_operations (draft_key)',
+    );
+  },
 ];

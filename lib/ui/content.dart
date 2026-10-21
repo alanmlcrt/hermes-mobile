@@ -37,8 +37,15 @@ abstract final class Content {
   static const newConversation = 'Nouvelle conversation';
   static const composerLabel = 'Votre demande';
   static const send = 'Envoyer';
-  static const sendUnavailable =
-      'L’envoi sera disponible après la validation du serveur.';
+  static const sendEmpty = 'Saisissez votre demande pour pouvoir l’envoyer.';
+  static const sendCapabilityMissing =
+      'Envoi indisponible : ce serveur ne prend pas en charge cette conversation.';
+  static const sendCapabilityPending =
+      'Envoi indisponible : vérification du serveur en cours.';
+  static const sending = 'Envoi en cours…';
+  static const sendAccepted = 'Demande acceptée par Hermes.';
+  static const turnActive = 'Hermes traite encore la demande précédente.';
+  static String sendLink(String label) => 'Envoi indisponible : $label.';
   static const draftKept = 'Votre texte reste affiché sur cet écran.';
   static String draftProfile(String name) => 'Profil : $name';
   static const profileFixture = 'Principal';
@@ -54,6 +61,7 @@ abstract final class Content {
     'session.events.since' => 'Reprise des événements',
     'session.create.idempotency_key' => 'Création sans doublon',
     'file.attach' => 'Pièces jointes',
+    'conversation' => 'Conversations',
     _ => name,
   };
   static String error(String code) => switch (code) {
@@ -71,6 +79,23 @@ abstract final class Content {
       'Le serveur redirige la connexion. Vérifiez son adresse.',
     'storage.unavailable' => startupError,
     'draft.not_found' => 'Ce brouillon est introuvable.',
+    'send.unknown' =>
+      'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',
+    'send.turn_active' => turnActive,
+    'send.unavailable' =>
+      'Hermes n’est pas joignable pour le moment. Votre texte est conservé.',
+    'transport.offline' =>
+      'Hermes n’est pas joignable pour le moment. Votre texte est conservé.',
+    'transport.unreachable' =>
+      'La conversation n’a pas pu être préparée. Votre texte est conservé.',
+    'rpc.4009' => 'La conversation est occupée. Votre texte est conservé.',
+    'rpc.4090' =>
+      'Trop de conversations sont actives sur Hermes. Votre texte est conservé.',
+    'rpc.5035' =>
+      'Hermes s’arrête ou redémarre. Votre texte est conservé.',
+    'rpc.4064' => 'Ce profil n’existe plus sur le serveur. Votre texte est conservé.',
+    final code when code.startsWith('rpc.') =>
+      'Hermes a refusé la demande. Votre texte est conservé.',
     _ => 'Serveur inaccessible. Vérifiez votre connexion et réessayez.',
   };
 }

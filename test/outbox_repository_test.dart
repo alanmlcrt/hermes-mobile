@@ -10,6 +10,8 @@ import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
 
+import 'support/connection_fakes.dart';
+
 void main() {
   sqfliteFfiInit();
   late Directory directory;
@@ -27,7 +29,7 @@ void main() {
 
   test('relance : même DraftKey et texte relu après réouverture', () async {
     var database = await open();
-    var outbox = OutboxRepository(database);
+    var outbox = OutboxRepository(database, gateway: Harness().repository);
     final draft = await outbox.openNewDraft(
       connection,
       const ProfileKey('Travail'),
@@ -37,7 +39,7 @@ void main() {
     await outbox.dispose();
     await database.close();
     database = await open();
-    outbox = OutboxRepository(database);
+    outbox = OutboxRepository(database, gateway: Harness().repository);
     final again = await outbox.openNewDraft(
       connection,
       const ProfileKey('Travail'),
@@ -55,19 +57,25 @@ void main() {
 
   test("dispose attend l'écriture en cours avant fermeture", () async {
     var database = await open();
-    final outbox = OutboxRepository(database);
+    final outbox = OutboxRepository(database, gateway: Harness().repository);
     final draft = await outbox.openNewDraft(connection, const ProfileKey('p'));
     unawaited(outbox.saveText(draft.key, 'en vol'));
     await outbox.dispose();
     await database.close();
     database = await open();
-    expect((await OutboxRepository(database).draft(draft.key))!.body, 'en vol');
+    expect(
+      (await OutboxRepository(
+        database,
+        gateway: Harness().repository,
+      ).draft(draft.key))!.body,
+      'en vol',
+    );
     await database.close();
   });
 
   test('long collage : 200 000 caractères, emojis et /cmd intacts', () async {
     final database = await open();
-    final outbox = OutboxRepository(database);
+    final outbox = OutboxRepository(database, gateway: Harness().repository);
     final draft = await outbox.openNewDraft(connection, const ProfileKey('p'));
     final text = '/cmd 👩‍💻 é\n\t${'🚀a/' * 50000}';
     expect(text.length, greaterThan(200000));
@@ -78,7 +86,7 @@ void main() {
 
   test('saisies rapides : la dernière écriture gagne', () async {
     final database = await open();
-    final outbox = OutboxRepository(database);
+    final outbox = OutboxRepository(database, gateway: Harness().repository);
     final draft = await outbox.openNewDraft(connection, const ProfileKey('p'));
     final opens = await Future.wait([
       for (var i = 0; i < 5; i++)
@@ -94,7 +102,7 @@ void main() {
 
   test('écriture échouée : storage.unavailable, la suivante passe', () async {
     final database = await open();
-    final outbox = OutboxRepository(database);
+    final outbox = OutboxRepository(database, gateway: Harness().repository);
     await expectLater(
       outbox.saveText(const DraftKey('inconnu'), 'x'),
       throwsA(
@@ -116,7 +124,7 @@ void main() {
     await database.close();
   });
 
-  test('migration réelle v2 vers v3 conserve la connexion', () async {
+  test('migration réelle v2 vers v4 conserve la connexion', () async {
     final old = await databaseFactoryFfi.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -137,7 +145,7 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 3);
+    expect(await database.getVersion(), 4);
     expect(
       (await database.query('connection_entries')).single['connection_key'],
       'stable-v2',
@@ -149,9 +157,13 @@ void main() {
       'profile_key',
       'body',
       'updated_at',
+      'revision',
+      'stored_session_id',
+      'idempotency_key',
     ]);
     final outbox = OutboxRepository(
       database,
+      gateway: Harness().repository,
       now: () => DateTime.utc(2026, 10, 21, 8),
     );
     final draft = await outbox.openNewDraft(
