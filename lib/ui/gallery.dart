@@ -2,6 +2,7 @@
 // lancée par lib/main_gallery.dart, jamais importée par lib/main.dart.
 import 'package:flutter/material.dart';
 
+import 'components/composer.dart';
 import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
@@ -82,6 +83,10 @@ class ComponentGallery extends StatelessWidget {
     final sections = <(String, Widget Function())>[
       (GalleryContent.statusLabelSection, _statusLabels),
       (GalleryContent.sectionCardSection, _sectionCard),
+      (
+        GalleryContent.composerSection,
+        () => const Composer(disabledReason: Content.sendUnavailable),
+      ),
       (
         Content.profilesTitle,
         () => const ProfileChoice(

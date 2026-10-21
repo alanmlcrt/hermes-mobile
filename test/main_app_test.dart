@@ -13,7 +13,9 @@ void main() {
       tester.platformDispatcher.platformBrightnessTestValue = brightness;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-      await tester.pumpWidget(MainApp(gateway: Harness().repository));
+      await tester.pumpWidget(
+        MainApp(gateway: Harness().repository, outbox: MemoryOutbox()),
+      );
       await tester.pumpAndSettle();
 
       final label = find.text(Content.connectTitle);

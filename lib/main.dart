@@ -6,6 +6,7 @@ import 'dart:async';
 import 'app/bootstrap.dart';
 import 'app/routes.dart';
 import 'models/connection_gateway.dart';
+import 'models/draft.dart';
 
 import 'ui/content.dart';
 import 'ui/dynamic_color_bridge.dart';
@@ -14,8 +15,8 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    final gateway = await bootstrap();
-    runApp(MainApp(gateway: gateway));
+    final (:gateway, :outbox) = await bootstrap();
+    runApp(MainApp(gateway: gateway, outbox: outbox));
   } catch (_) {
     runApp(
       MaterialApp(
@@ -30,8 +31,9 @@ Future<void> main() async {
 }
 
 class MainApp extends StatefulWidget {
-  const MainApp({super.key, required this.gateway});
+  const MainApp({super.key, required this.gateway, required this.outbox});
   final ConnectionGateway gateway;
+  final OutboxGateway outbox;
   @override
   State<MainApp> createState() => _MainAppState();
 }
@@ -41,14 +43,15 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    _routes = AppRoutes(widget.gateway);
+    _routes = AppRoutes(widget.gateway, widget.outbox);
     unawaited(widget.gateway.restore());
   }
 
   @override
   void dispose() {
     _routes.dispose();
-    unawaited(widget.gateway.dispose());
+    // L'outbox termine ses écritures avant que le gateway ferme la base.
+    unawaited(widget.outbox.dispose().whenComplete(widget.gateway.dispose));
     super.dispose();
   }
 

@@ -7,6 +7,8 @@ import 'package:hermes_mobile/data/hermes_adapter.dart';
 import 'package:hermes_mobile/data/storage/connection_store.dart';
 import 'package:hermes_mobile/data/storage/secret_store.dart';
 import 'package:hermes_mobile/models/connection.dart';
+import 'package:hermes_mobile/models/draft.dart';
+import 'package:hermes_mobile/models/profile.dart';
 
 Map<String, dynamic> fixture(String name) =>
     jsonDecode(File('contracts/fixtures/$name.json').readAsStringSync())
@@ -190,4 +192,49 @@ class Harness {
     );
     await repository.authenticate('<SYNTHETIC_PASSWORD>');
   }
+}
+
+class MemoryOutbox implements OutboxGateway {
+  final drafts = <DraftKey, Draft>{};
+  bool failSave = false;
+  bool failOpen = false;
+  bool failRead = false;
+  @override
+  Future<Draft> openNewDraft(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    if (failOpen) throw StateError('synthetic storage failure');
+    for (final d in drafts.values) {
+      if (d.connection == connection && d.profile == profile) return d;
+    }
+    final draft = Draft(
+      key: DraftKey.create(),
+      connection: connection,
+      profile: profile,
+      body: '',
+    );
+    return drafts[draft.key] = draft;
+  }
+
+  @override
+  Future<Draft?> draft(DraftKey key) async {
+    if (failRead) throw StateError('synthetic storage failure');
+    return drafts[key];
+  }
+
+  @override
+  Future<void> saveText(DraftKey key, String body) async {
+    if (failSave) throw StateError('synthetic storage failure');
+    final d = drafts[key]!;
+    drafts[key] = Draft(
+      key: key,
+      connection: d.connection,
+      profile: d.profile,
+      body: body,
+    );
+  }
+
+  @override
+  Future<void> dispose() async {}
 }

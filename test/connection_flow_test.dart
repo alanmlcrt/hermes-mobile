@@ -14,7 +14,9 @@ void main() {
     'lien Android reçu par le routeur exige confirmation du nouveau serveur',
     (tester) async {
       final h = Harness();
-      await tester.pumpWidget(MainApp(gateway: h.repository));
+      await tester.pumpWidget(
+        MainApp(gateway: h.repository, outbox: MemoryOutbox()),
+      );
       await tester.pumpAndSettle();
       await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
         'flutter/navigation',
@@ -39,7 +41,9 @@ void main() {
     'confirmation avant réseau et persistance puis connexion et profils',
     (tester) async {
       final h = Harness();
-      await tester.pumpWidget(MainApp(gateway: h.repository));
+      await tester.pumpWidget(
+        MainApp(gateway: h.repository, outbox: MemoryOutbox()),
+      );
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextField).first,
@@ -68,6 +72,13 @@ void main() {
             'auth=${h.repository.snapshot.authenticated}, busy=${h.repository.snapshot.busy}, '
             'error=${h.repository.snapshot.error}, requests=${h.transport.requests.map((r) => r.uri.path).toList()}',
       );
+      // Accueil : nouvelle conversation sur le profil par défaut.
+      expect(
+        find.text(Content.draftProfile('Principal (default)')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(Content.profilesTitle));
+      await tester.pumpAndSettle();
       expect(find.text('Principal (default)'), findsOneWidget);
       expect(find.text(ConnectionLabels.connected), findsOneWidget);
       expect(tester.takeException(), isNull);

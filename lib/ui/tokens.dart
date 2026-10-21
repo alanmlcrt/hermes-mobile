@@ -39,6 +39,12 @@ abstract final class Motion {
   static const Duration medium = Duration(milliseconds: 300);
 }
 
+/// Hauteur visible du champ de saisie, en lignes ; au-delà il défile.
+abstract final class ComposerLines {
+  static const int min = 3;
+  static const int max = 8;
+}
+
 /// Échelles de texte de référence (galerie : texte agrandi 200 %).
 abstract final class TextScales {
   static const double large = 2.0;

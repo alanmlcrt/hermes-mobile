@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hermes_mobile/ui/components/composer.dart';
 import 'package:hermes_mobile/ui/components/section_card.dart';
 import 'package:hermes_mobile/ui/components/status_label.dart';
 import 'package:hermes_mobile/ui/content.dart';
@@ -33,8 +34,8 @@ void main() {
       GalleryContent.variantLargeText,
       GalleryContent.variantReducedMotion,
     ]) {
-      // Une fois par composant (3 composants).
-      expect(find.text(variant), findsNWidgets(3), reason: variant);
+      // Une fois par composant (4 composants).
+      expect(find.text(variant), findsNWidgets(4), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -73,6 +74,7 @@ void main() {
     );
 
     expect(find.byType(SectionCard), findsNWidgets(4));
+    expect(find.byType(Composer), findsNWidgets(4));
     // Trois états par variante.
     expect(find.byType(StatusLabel), findsNWidgets(4 * 3));
     for (final label in [

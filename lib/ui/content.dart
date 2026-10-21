@@ -34,6 +34,13 @@ abstract final class Content {
       'La validation des fonctions requises reste ouverte.';
   static const startupError =
       'Impossible d’ouvrir le stockage sécurisé de l’application.';
+  static const newConversation = 'Nouvelle conversation';
+  static const composerLabel = 'Votre demande';
+  static const send = 'Envoyer';
+  static const sendUnavailable =
+      'L’envoi sera disponible après la validation du serveur.';
+  static const draftKept = 'Votre texte reste affiché sur cet écran.';
+  static String draftProfile(String name) => 'Profil : $name';
   static const profileFixture = 'Principal';
   static const profileFixtureKey = 'default';
   static String profileName(String label, String key) => '$label ($key)';
@@ -63,6 +70,7 @@ abstract final class Content {
     'transport.redirect' =>
       'Le serveur redirige la connexion. Vérifiez son adresse.',
     'storage.unavailable' => startupError,
+    'draft.not_found' => 'Ce brouillon est introuvable.',
     _ => 'Serveur inaccessible. Vérifiez votre connexion et réessayez.',
   };
 }
@@ -85,6 +93,7 @@ abstract final class GalleryContent {
 
   static const statusLabelSection = 'Indicateur d\'état';
   static const sectionCardSection = 'Carte de section';
+  static const composerSection = 'Zone de saisie';
 
   static const sampleCardTitle = 'Mes profils';
   static const sampleProfiles = ['Profil principal', 'Profil travail'];

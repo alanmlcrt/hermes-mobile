@@ -5,23 +5,24 @@ import 'profile.dart';
 
 class ConnectionKey {
   const ConnectionKey(this.value);
-  factory ConnectionKey.create() {
-    final random = Random.secure();
-    final bytes = List.generate(16, (_) => random.nextInt(256));
-    bytes[6] = (bytes[6] & 15) | 64;
-    bytes[8] = (bytes[8] & 63) | 128;
-    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-    return ConnectionKey(
-      '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
-      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}',
-    );
-  }
+  factory ConnectionKey.create() => ConnectionKey(randomUuid());
   final String value;
   @override
   bool operator ==(Object other) =>
       other is ConnectionKey && value == other.value;
   @override
   int get hashCode => value.hashCode;
+}
+
+/// UUID v4 local (clés de connexion et de brouillon).
+String randomUuid() {
+  final random = Random.secure();
+  final bytes = List.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
 }
 
 /// Validation commune au clavier, deep link et générateur QR.
