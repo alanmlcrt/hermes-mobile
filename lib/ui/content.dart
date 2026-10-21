@@ -4,6 +4,67 @@
 abstract final class Content {
   static const appTitle = 'Hermes Mobile';
   static const homePlaceholder = 'Bienvenue dans Hermes Mobile';
+  static const connectTitle = 'Connecter Hermes';
+  static const originLabel = 'Adresse du serveur';
+  static const originHint = 'http://mon-serveur.ts.net:9119';
+  static const originHelp =
+      'Scannez le QR avec la caméra Android ou saisissez l’adresse.';
+  static const reviewOrigin = 'Vérifier l’adresse';
+  static const confirmOrigin = 'Confirmer ce serveur';
+  static const confirmationHelp =
+      'Vérifiez cette adresse avant de saisir votre mot de passe.';
+  static const passwordLabel = 'Mot de passe Hermes';
+  static const signIn = 'Se connecter';
+  static const working = 'Connexion en cours…';
+  static const changeServer = 'Changer de serveur';
+  static const profilesTitle = 'Mes profils';
+  static const refresh = 'Actualiser les profils';
+  static const retry = 'Réessayer la connexion';
+  static const loadingProfiles = 'Chargement des profils…';
+  static const refreshingProfiles = 'Actualisation des profils…';
+  static const emptyProfiles = 'Aucun profil disponible sur ce serveur.';
+  static const profilesError = 'Impossible de charger les profils.';
+  static const selected = 'Profil sélectionné';
+  static const localSelection =
+      'Ce choix est mémorisé uniquement sur ce téléphone.';
+  static const capabilitiesTitle = 'Fonctions disponibles';
+  static const unverified = 'Non vérifiée';
+  static const missing = 'Indisponible';
+  static const acceptanceOpen =
+      'La validation des fonctions requises reste ouverte.';
+  static const startupError =
+      'Impossible d’ouvrir le stockage sécurisé de l’application.';
+  static const profileFixture = 'Principal';
+  static const profileFixtureKey = 'default';
+  static String profileName(String label, String key) => '$label ($key)';
+  static String capability(String name) => switch (name) {
+    'profiles' => 'Liste des profils',
+    'websocket' => 'Connexion en direct',
+    'replay_epoch' => 'Reprise après redémarrage',
+    'change_events' => 'Signalement des changements',
+    'heartbeat' => 'Vérification de présence',
+    'per_session_exclusive_submit' => 'Envoi exclusif par conversation',
+    'session.events.since' => 'Reprise des événements',
+    'session.create.idempotency_key' => 'Création sans doublon',
+    'file.attach' => 'Pièces jointes',
+    _ => name,
+  };
+  static String error(String code) => switch (code) {
+    'connection.invalid_origin' => 'Adresse invalide. Utilisez HTTPS ou HTTP sur un sous-domaine ts.net, sans chemin ni identifiants.',
+    'auth.refused' => 'Authentification refusée. Vérifiez votre mot de passe.',
+    'auth.password_required' => 'Saisissez votre mot de passe Hermes.',
+    'auth.invalid_session' =>
+      'La réponse de connexion ne contient pas de session utilisable.',
+    'contract.method_missing' => 'Cette fonction est absente du serveur.',
+    'contract.capabilities_timeout' => 'La vérification des fonctions du serveur a expiré. Réessayez la connexion.',
+    'contract.rpc_failed' => 'Le serveur ne peut pas vérifier cette fonction.',
+    'contract.invalid_response' =>
+      'La réponse du serveur n’est pas compatible.',
+    'transport.redirect' =>
+      'Le serveur redirige la connexion. Vérifiez son adresse.',
+    'storage.unavailable' => startupError,
+    _ => 'Serveur inaccessible. Vérifiez votre connexion et réessayez.',
+  };
 }
 
 /// Libellés de l'indicateur de connexion (utilisés à partir de la story 1.6).

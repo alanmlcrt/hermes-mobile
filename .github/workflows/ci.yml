@@ -37,6 +37,15 @@ jobs:
       - name: Tests (dont contrôle des imports)
         run: flutter test
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Tests du lien et du QR
+        run: |
+          python -m pip install -r tool/requirements.txt
+          python -m unittest discover -s tool -p 'test_*.py'
+
       # Pas de clé de signature en CI : build debug uniquement.
       - name: Build Android
         run: flutter build apk --debug

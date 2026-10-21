@@ -41,9 +41,9 @@ bool _isNonZero(String n) => double.parse(n) != 0;
 /// Remplace les commentaires `//` par des espaces (longueurs conservées pour
 /// garder les numéros de ligne et les positions).
 String _stripLineComments(String source) => source.replaceAllMapped(
-      RegExp(r'//[^\n]*'),
-      (m) => ' ' * m.group(0)!.length,
-    );
+  RegExp(r'//[^\n]*'),
+  (m) => ' ' * m.group(0)!.length,
+);
 
 /// Retourne les violations de [source] (fichier [path], relatif à la racine
 /// du package, séparateurs `/`), sous la forme `path:ligne : motif`.
@@ -58,6 +58,11 @@ List<String> literalViolations(String path, String source) {
     }
   }
   for (final e in _argPatterns.entries) {
+    // Les délais réseau ne sont pas des valeurs de mouvement visuel.
+    if (e.key == 'Duration' &&
+        (path.startsWith('lib/data/') || path.startsWith('lib/models/'))) {
+      continue;
+    }
     for (final m in e.value.allMatches(code)) {
       if (_number.allMatches(m.group(1)!).any((n) => _isNonZero(n.group(1)!))) {
         hits.add((m.start, e.key));
@@ -83,13 +88,19 @@ void main() {
     const path = 'lib/features/x.dart';
 
     test('couleur littérale : fichier et ligne cités', () {
-      final v = literalViolations(path, "import 'a';\nconst c = Color(0xFF112233);\n");
+      final v = literalViolations(
+        path,
+        "import 'a';\nconst c = Color(0xFF112233);\n",
+      );
       expect(v, hasLength(1));
       expect(v.single, startsWith('lib/features/x.dart:2'));
     });
 
     test('EdgeInsets.all(8) refusé', () {
-      expect(literalViolations(path, 'const p = EdgeInsets.all(8);'), hasLength(1));
+      expect(
+        literalViolations(path, 'const p = EdgeInsets.all(8);'),
+        hasLength(1),
+      );
     });
 
     test('Duration(milliseconds: 200) refusé', () {
@@ -136,7 +147,8 @@ void main() {
     });
 
     test('littéral autorisé dans lib/ui/tokens.dart et lib/ui/theme.dart', () {
-      const src = 'Color(0xFF112233); EdgeInsets.all(8); '
+      const src =
+          'Color(0xFF112233); EdgeInsets.all(8); '
           'Duration(milliseconds: 200);';
       expect(literalViolations('lib/ui/tokens.dart', src), isEmpty);
       expect(literalViolations('lib/ui/theme.dart', src), isEmpty);

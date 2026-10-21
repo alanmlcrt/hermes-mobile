@@ -1,0 +1,14 @@
+{
+  "evidence":"documentary",
+  "capabilities":[
+    {"name":"profiles","required":true,"documented":"present","actual":"unverified","surface":"GET /api/profiles"},
+    {"name":"websocket","required":true,"documented":"present","actual":"unverified","surface":"gateway.ready"},
+    {"name":"replay_epoch","required":true,"documented":"present","actual":"unverified","surface":"gateway.ready.payload.replay_epoch"},
+    {"name":"change_events","required":false,"documented":"present","actual":"unverified","surface":"gateway.ready.payload.change_events"},
+    {"name":"heartbeat","required":false,"documented":"present","actual":"unverified","surface":"gateway.ready.payload.heartbeat"},
+    {"name":"per_session_exclusive_submit","required":false,"documented":"present","actual":"unverified","surface":"gateway.capabilities"},
+    {"name":"session.events.since","required":false,"documented":"present","actual":"unverified","surface":"openrpc"},
+    {"name":"session.create.idempotency_key","required":false,"documented":"present","actual":"unverified","surface":"openrpc"},
+    {"name":"file.attach","required":false,"documented":"present","actual":"unverified","surface":"openrpc"}
+  ]
+}

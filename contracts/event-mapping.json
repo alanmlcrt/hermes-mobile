@@ -1,0 +1,1 @@
+{"source":"https://github.com/NousResearch/hermes-agent/blob/d923a5eb487a17c0a68801bba9ef0f56c81040a8/tui_gateway/ws.py#L353-L376","events":{"gateway.ready":{"connectionState":"connected","workState":null,"terminal":false,"activityKind":null},"unknown":{"connectionState":null,"workState":null,"terminal":false,"activityKind":"unknown"}},"fallback":"unknown"}

@@ -8,8 +8,9 @@ import 'package:hermes_mobile/ui/theme.dart';
 import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
-  testWidgets('chaque composant rendu dans les quatre variantes',
-      (tester) async {
+  testWidgets('chaque composant rendu dans les quatre variantes', (
+    tester,
+  ) async {
     // Écran de téléphone étroit pour éprouver le texte à 200 %.
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3;
@@ -32,8 +33,8 @@ void main() {
       GalleryContent.variantLargeText,
       GalleryContent.variantReducedMotion,
     ]) {
-      // Une fois par composant (2 composants).
-      expect(find.text(variant), findsNWidgets(2), reason: variant);
+      // Une fois par composant (3 composants).
+      expect(find.text(variant), findsNWidgets(3), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -45,10 +46,16 @@ void main() {
     }) {
       for (final element in find.text(variant).evaluate()) {
         expect(Theme.of(element).brightness, brightness, reason: variant);
-        expect(MediaQuery.textScalerOf(element).scale(1), textScale,
-            reason: variant);
-        expect(MediaQuery.disableAnimationsOf(element), disableAnimations,
-            reason: variant);
+        expect(
+          MediaQuery.textScalerOf(element).scale(1),
+          textScale,
+          reason: variant,
+        );
+        expect(
+          MediaQuery.disableAnimationsOf(element),
+          disableAnimations,
+          reason: variant,
+        );
       }
     }
 

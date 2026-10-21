@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'components/section_card.dart';
 import 'components/status_label.dart';
+import 'components/profile_choice.dart';
+import '../models/profile.dart';
 import 'content.dart';
 import 'theme.dart';
 import 'tokens.dart';
@@ -46,40 +48,50 @@ class ComponentGallery extends StatelessWidget {
   final ColorScheme? darkScheme;
 
   static Widget _statusLabels() => const Wrap(
-        spacing: Spacing.md,
-        runSpacing: Spacing.sm,
-        children: [
-          StatusLabel(
-            icon: Icons.cloud_done_outlined,
-            label: ConnectionLabels.connected,
-          ),
-          StatusLabel(icon: Icons.sync, label: ConnectionLabels.resyncing),
-          StatusLabel(
-            icon: Icons.cloud_off_outlined,
-            label: ConnectionLabels.offline,
-          ),
-        ],
-      );
+    spacing: Spacing.md,
+    runSpacing: Spacing.sm,
+    children: [
+      StatusLabel(
+        icon: Icons.cloud_done_outlined,
+        label: ConnectionLabels.connected,
+      ),
+      StatusLabel(icon: Icons.sync, label: ConnectionLabels.resyncing),
+      StatusLabel(
+        icon: Icons.cloud_off_outlined,
+        label: ConnectionLabels.offline,
+      ),
+    ],
+  );
 
   static Widget _sectionCard() => SectionCard(
-        title: GalleryContent.sampleCardTitle,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final name in GalleryContent.sampleProfiles)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-                child: Text(name),
-              ),
-          ],
-        ),
-      );
+    title: GalleryContent.sampleCardTitle,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final name in GalleryContent.sampleProfiles)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+            child: Text(name),
+          ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     final sections = <(String, Widget Function())>[
       (GalleryContent.statusLabelSection, _statusLabels),
       (GalleryContent.sectionCardSection, _sectionCard),
+      (
+        Content.profilesTitle,
+        () => const ProfileChoice(
+          profile: Profile(
+            key: ProfileKey(Content.profileFixtureKey),
+            label: Content.profileFixture,
+          ),
+          selected: true,
+        ),
+      ),
     ];
     return Scaffold(
       appBar: AppBar(title: const Text(GalleryContent.title)),
@@ -136,8 +148,9 @@ class _VariantFrame extends StatelessWidget {
       data: theme,
       child: MediaQuery(
         data: mq.copyWith(
-          textScaler:
-              textScale == null ? mq.textScaler : TextScaler.linear(textScale),
+          textScaler: textScale == null
+              ? mq.textScaler
+              : TextScaler.linear(textScale),
           disableAnimations: variant.disableAnimations || mq.disableAnimations,
         ),
         child: Material(
@@ -150,8 +163,9 @@ class _VariantFrame extends StatelessWidget {
               children: [
                 Text(
                   variant.label,
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: theme.colorScheme.content),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.content,
+                  ),
                 ),
                 const SizedBox(height: Spacing.sm),
                 child,
