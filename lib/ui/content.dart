@@ -63,6 +63,29 @@ abstract final class Content {
   static String draftProfile(String name) => 'Profil : $name';
   static const chooseProfileHint = 'Ouvre la liste des profils';
   static const chooseProfile = 'Choisir le profil';
+  static const conversations = 'Conversations';
+  static const historyLoading = 'Chargement des conversations…';
+  static const historyEmpty = 'Aucune conversation pour ce profil';
+  static const historyError =
+      'Impossible de charger les conversations de ce profil.';
+  static const refreshHistory = 'Actualiser la liste';
+  static const historyLimitNote =
+      'Seules les conversations les plus récentes sont affichées.';
+  static const retryList = 'Réessayer';
+  static const untitledConversation = 'Conversation sans titre';
+  static const openingConversation = 'Ouverture de la conversation…';
+  static const resumeFailed =
+      'Impossible de retrouver la suite de cette conversation. Votre texte est conservé.';
+  static String messageCount(int count) =>
+      count == 1 ? '1 message' : '$count messages';
+
+  /// Date locale lisible : jour/mois/année à heure:minute.
+  static String historyDate(DateTime date) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final d = date.toLocal();
+    return '${two(d.day)}/${two(d.month)}/${d.year} à ${two(d.hour)}:${two(d.minute)}';
+  }
+
   static const profileFixture = 'Principal';
   static const profileFixtureKey = 'default';
   static String profileName(String label, String key) => '$label ($key)';
@@ -147,6 +170,10 @@ abstract final class GalleryContent {
   static const sampleReply =
       '# Résumé\n\n- Premier point 🚀\n- Deuxième point en **gras**\n\n'
       '```dart\nfinal resume = fichier.lignes.where((l) => l.isNotEmpty).map((l) => l.trim()).join("-");\n```';
+
+  static const historySection = 'Historique';
+  static const sampleSessionTitle = 'Résumé du contrat';
+  static const sampleSessionPreview = 'Peux-tu résumer ce fichier ?';
 
   static const sampleCardTitle = 'Mes profils';
   static const sampleProfiles = ['Profil principal', 'Profil travail'];

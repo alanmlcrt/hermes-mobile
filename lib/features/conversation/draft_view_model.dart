@@ -164,6 +164,12 @@ class DraftViewModel extends ChangeNotifier {
     return k != null && conversation.resyncing(k);
   }
 
+  /// La reprise a échoué : le fil affiché peut être ancien, le brouillon reste.
+  bool get resumeFailed {
+    final k = _timelineKey;
+    return k != null && !conversation.resyncing(k) && conversation.resumeFailed(k);
+  }
+
   Future<void> _loadTimeline() async {
     final k = _timelineKey;
     if (k == null) return;

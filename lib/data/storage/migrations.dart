@@ -67,4 +67,37 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'ALTER TABLE outbox_operations ADD COLUMN row_watermark INTEGER',
     );
   },
+  (db) async {
+    // Doublons éventuels : on garde un brouillon par conversation (texte non
+    // vide, puis le plus récent) et on lui rattache les opérations des autres.
+    final rows = await db.rawQuery(
+      'SELECT draft_key, connection_key, profile_key, stored_session_id '
+      'FROM outbox_drafts WHERE stored_session_id IS NOT NULL '
+      "ORDER BY (body <> '') DESC, updated_at DESC, rowid",
+    );
+    final kept = <(String, String, String), String>{};
+    for (final r in rows) {
+      final triple = (
+        r['connection_key'] as String,
+        r['profile_key'] as String,
+        r['stored_session_id'] as String,
+      );
+      final draft = r['draft_key'] as String;
+      final keeper = kept.putIfAbsent(triple, () => draft);
+      if (keeper == draft) continue;
+      await db.update(
+        'outbox_operations',
+        {'draft_key': keeper},
+        where: 'draft_key = ?',
+        whereArgs: [draft],
+      );
+      await db.delete('outbox_drafts', where: 'draft_key = ?', whereArgs: [draft]);
+    }
+    // Un seul brouillon de suite par conversation (casse respectée : collation BINARY).
+    await db.execute(
+      'CREATE UNIQUE INDEX outbox_drafts_session ON outbox_drafts '
+      '(connection_key, profile_key, stored_session_id) '
+      'WHERE stored_session_id IS NOT NULL',
+    );
+  },
 ];

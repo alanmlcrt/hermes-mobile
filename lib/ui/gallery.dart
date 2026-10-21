@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 
 import 'components/activity_line.dart';
 import 'components/composer.dart';
+import 'components/history_row.dart';
 import 'components/message_bubble.dart';
 import 'components/work_state_label.dart';
 import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
+import '../models/history.dart';
 import '../models/profile.dart';
 import '../models/timeline.dart';
 import 'content.dart';
@@ -92,6 +94,42 @@ class ComponentGallery extends StatelessWidget {
     children: [for (final s in WorkState.values) WorkStateLabel(state: s)],
   );
 
+  static Widget _history() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const HistoryNotice(
+        icon: Icons.hourglass_empty,
+        message: Content.historyLoading,
+      ),
+      const HistoryNotice(
+        icon: Icons.inbox_outlined,
+        message: Content.historyEmpty,
+      ),
+      HistoryNotice(
+        icon: Icons.error_outline,
+        message: Content.historyError,
+        actionLabel: Content.retryList,
+        onAction: () {},
+      ),
+      HistoryRow(
+        session: SessionSummary(
+          id: 'a',
+          title: GalleryContent.sampleSessionTitle,
+          startedAt: DateTime.utc(2026, 10, 21, 9, 30),
+          messageCount: 4,
+        ),
+        onTap: () {},
+      ),
+      const HistoryRow(
+        session: SessionSummary(
+          id: 'b',
+          preview: GalleryContent.sampleSessionPreview,
+          messageCount: 1,
+        ),
+      ),
+    ],
+  );
+
   static Widget _sectionCard() => SectionCard(
     title: GalleryContent.sampleCardTitle,
     child: Column(
@@ -118,6 +156,7 @@ class ComponentGallery extends StatelessWidget {
       (GalleryContent.messageSection, _messages),
       (GalleryContent.activitySection, _activityLines),
       (GalleryContent.workStateSection, _workStates),
+      (GalleryContent.historySection, _history),
       (
         Content.profilesTitle,
         () => const ProfileChoice(

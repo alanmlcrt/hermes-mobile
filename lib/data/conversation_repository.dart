@@ -9,6 +9,8 @@ import '../models/app_error.dart';
 import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
+import '../models/history.dart';
+import '../models/profile.dart';
 import '../models/timeline.dart';
 import 'event_mapping.dart';
 import 'hermes_adapter.dart';
@@ -42,6 +44,7 @@ class ConversationRepository implements ConversationGateway {
   final _resyncs = <TimelineKey, ({int generation, Future<void> future})>{};
   final _loaded = <TimelineKey>{};
   final _resyncing = <TimelineKey>{};
+  final _failed = <TimelineKey>{};
   final _synced = <TimelineKey, int>{};
   int _seenGeneration = 0;
   StreamSubscription<GatewayEvent>? _events;
@@ -201,6 +204,33 @@ class ConversationRepository implements ConversationGateway {
   @override
   bool resyncing(TimelineKey key) => _resyncs.containsKey(key);
 
+  @override
+  bool resumeFailed(TimelineKey key) => _failed.contains(key);
+
+  void _setFailed(TimelineKey key, bool failed) {
+    if (failed ? !_failed.add(key) : !_failed.remove(key)) return;
+    if (!_changes.isClosed) _changes.add(key);
+  }
+
+  /// Lecture seule du serveur : une liste par (connexion, profil), jamais
+  /// conservée. Autre connexion que la courante : refus, rien n'est demandé.
+  @override
+  Future<List<SessionSummary>> sessions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    if (gateway.snapshot.connection?.key != connection) {
+      throw const AppError('connection.mismatch');
+    }
+    return HermesRpc.sessions(
+      await gateway.call(
+        'session.list',
+        HermesRpc.listParams(profile),
+        timeout: timeout,
+      ),
+    );
+  }
+
   /// Fil affiché ou dont le travail est en cours/incertain ; les autres se
   /// resynchronisent à l'ouverture ([load]).
   Future<void> _resyncIfActive(TimelineKey key) async {
@@ -308,9 +338,11 @@ class ConversationRepository implements ConversationGateway {
       _cache[key] = next;
       if (!_changes.isClosed) _changes.add(key);
       _synced[key] = generation;
+      _setFailed(key, false);
       if (userRows != null) await resumer.reconcile(key, info, userRows);
     } catch (_) {
       // Rien n'est renvoyé : la projection précédente et les opérations restent.
+      _setFailed(key, true);
       _log('conversation.resync_failed');
     } finally {
       _resyncing.remove(key);
@@ -643,6 +675,7 @@ class ConversationRepository implements ConversationGateway {
       }
     }
     _dirty.clear();
+    _failed.clear();
     await _changes.close();
   }
 }

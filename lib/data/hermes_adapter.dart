@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 
 import '../models/app_error.dart';
 import '../models/connection_gateway.dart';
+import '../models/history.dart';
 import '../models/profile.dart';
 import '../models/timeline.dart';
 
@@ -402,6 +403,44 @@ abstract final class HermesRpc {
     null => false,
     _ => true,
   };
+
+  /// Limite par défaut du serveur : pas de pagination au-delà.
+  static const listLimit = sessionListLimit;
+
+  static Map<String, dynamic> listParams(ProfileKey profile) => {
+    'profile': profile.value,
+    'limit': listLimit,
+  };
+
+  /// Lignes de `session.list` dans l'ordre du serveur ; une ligne sans `id` est écartée.
+  static List<SessionSummary> sessions(Map<String, dynamic> r) {
+    final raw = r['sessions'];
+    if (raw is! List) throw const AppError('contract.invalid_response');
+    String? text(Object? v) => v is String && v.trim().isNotEmpty ? v : null;
+    return [
+      for (final s in raw)
+        if (s is Map && s['id'] is String && (s['id'] as String).isNotEmpty)
+          SessionSummary(
+            id: s['id'] as String,
+            title: text(s['title']),
+            preview: text(s['preview']),
+            startedAt: _date(s['started_at']),
+            messageCount: _count(s['message_count']),
+          ),
+    ];
+  }
+
+  /// Secondes epoch ; hors plage ou non finies : pas de date.
+  static DateTime? _date(Object? seconds) {
+    if (seconds is! num || !seconds.isFinite || seconds <= 0) return null;
+    final ms = seconds * 1000;
+    return ms > 8.64e15
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(ms.round(), isUtc: true);
+  }
+
+  static int _count(Object? n) =>
+      n is num && n.isFinite ? n.toInt().clamp(0, 1 << 31) : 0;
 
   static Map<String, dynamic> historyParams(String runtime) => {
     'session_id': runtime,

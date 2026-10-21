@@ -60,7 +60,7 @@ void main() {
         'origin',
         'selected_profile',
       ]);
-      expect(await database.getVersion(), 6);
+      expect(await database.getVersion(), 7);
       await database.close();
     },
   );

@@ -1,5 +1,6 @@
 import 'connection.dart';
 import 'draft.dart';
+import 'history.dart';
 import 'profile.dart';
 
 /// État du travail distant ; distinct de l'état de la connexion.
@@ -217,6 +218,17 @@ abstract interface class ConversationGateway {
 
   /// Ce fil est en cours de resynchronisation (distinct de l'état du travail).
   bool resyncing(TimelineKey key);
+
+  /// La dernière reprise de ce fil a échoué (la projection affichée peut être
+  /// ancienne) ; revient à faux dès qu'une reprise aboutit.
+  bool resumeFailed(TimelineKey key);
+
+  /// Conversations du [profile] dans l'ordre du serveur ; jamais mises en
+  /// cache : une erreur lève, aucune liste périmée n'est rendue.
+  Future<List<SessionSummary>> sessions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  );
 
   /// Clé dont la projection a changé.
   Stream<TimelineKey> get changes;

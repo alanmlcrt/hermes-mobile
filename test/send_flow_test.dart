@@ -450,7 +450,7 @@ void main() {
     expect(again.status(draft.key).retryable, isTrue);
   });
 
-  test('migration réelle v3 vers v6 : données et index « nouveau »', () async {
+  test('migration réelle v3 vers v7 : données et index « nouveau »', () async {
     directory = await Directory.systemTemp.createTemp('hermes-v3-');
     final path = '${directory.path}/hermes.sqlite';
     final old = await databaseFactoryFfi.openDatabase(
@@ -488,7 +488,7 @@ void main() {
     );
     h = Harness();
     outbox = OutboxRepository(database, gateway: h.repository);
-    expect(await database.getVersion(), 6);
+    expect(await database.getVersion(), 7);
     final row = (await database.query('outbox_drafts')).single;
     expect(row['body'], 'gardé');
     expect(row['revision'], 0);
@@ -512,11 +512,14 @@ void main() {
       whereArgs: ['d-1'],
     );
     await database.insert('outbox_drafts', {...extra, 'draft_key': 'd-2'});
-    // Brouillon non vide avec session réutilisé : son texte n'est pas masqué.
+    // L'accueil ne rend que des brouillons sans session, même si l'un d'eux
+    // porte un texte : celui-ci se retrouve par l'historique.
+    await outbox.saveText(const DraftKey('d-1'), 'suite');
     final reopened = await outbox.openNewDraft(
       const ConnectionKey('c-1'),
       const ProfileKey('p'),
     );
-    expect(reopened.key, const DraftKey('d-1'));
+    expect(reopened.key, const DraftKey('d-2'));
+    expect(reopened.storedSessionId, isNull);
   });
 }

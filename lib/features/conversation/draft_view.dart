@@ -18,12 +18,22 @@ class DraftView extends StatefulWidget {
     super.key,
     required this.create,
     required this.onOpenProfiles,
+    this.continuation = false,
+    this.onOpenHistory,
+    this.onNewConversation,
   });
 
   /// Le ViewModel vit aussi longtemps que la page, pas que le rendu.
   final DraftViewModel Function() create;
   /// [pick] : l'écran renvoie le profil choisi (brouillon neuf seulement).
   final Future<ProfileKey?> Function(bool pick) onOpenProfiles;
+
+  /// Suite d'une conversation existante (route `/c/...`), pas un brouillon neuf.
+  final bool continuation;
+
+  /// Historique du profil de cette conversation (ou du brouillon neuf).
+  final void Function(ProfileKey profile)? onOpenHistory;
+  final void Function(ProfileKey profile)? onNewConversation;
   @override
   State<DraftView> createState() => _DraftViewState();
 }
@@ -61,7 +71,11 @@ class _DraftViewState extends State<DraftView> {
       final blocked = vm.blockedReason;
       return Scaffold(
         appBar: AppBar(
-          title: const Text(Content.newConversation),
+          title: Text(
+            widget.continuation
+                ? Content.timelineTitle
+                : Content.newConversation,
+          ),
           actions: [
             TextButton(
               onPressed: () => _openProfiles(vm),
@@ -112,6 +126,26 @@ class _DraftViewState extends State<DraftView> {
         !c.hasClients || c.position.maxScrollExtent - c.position.pixels < Spacing.md;
     final children = <Widget>[
       if (draft != null) _profileRow(context, vm, draft, profile),
+      if (draft != null &&
+          (widget.onOpenHistory != null ||
+              (widget.continuation && widget.onNewConversation != null)))
+        Wrap(
+          spacing: Spacing.sm,
+          children: [
+            if (widget.onOpenHistory != null)
+              TextButton(
+                onPressed: () => widget.onOpenHistory!(draft.profile),
+                child: const Text(Content.conversations),
+              ),
+            if (widget.continuation && widget.onNewConversation != null)
+              TextButton(
+                onPressed: () => widget.onNewConversation!(draft.profile),
+                child: const Text(Content.newConversation),
+              ),
+          ],
+        ),
+      if (vm.resumeFailed)
+        Semantics(liveRegion: true, child: const Text(Content.resumeFailed)),
       if (vm.error != null)
         Semantics(
           liveRegion: true,

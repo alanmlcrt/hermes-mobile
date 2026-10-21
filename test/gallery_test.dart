@@ -38,8 +38,8 @@ void main() {
       GalleryContent.variantLargeText,
       GalleryContent.variantReducedMotion,
     ]) {
-      // Une fois par composant (7 sections).
-      expect(find.text(variant), findsNWidgets(7), reason: variant);
+      // Une fois par composant (8 sections).
+      expect(find.text(variant), findsNWidgets(8), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.

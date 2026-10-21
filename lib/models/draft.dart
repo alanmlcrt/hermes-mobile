@@ -68,7 +68,16 @@ class SendStatus {
 /// Brouillons locaux ; aucun appel Hermes.
 abstract interface class OutboxGateway {
   /// Brouillon « nouvelle conversation » du couple, créé s'il n'existe pas.
+  /// Ne rend jamais un brouillon qui a déjà une session.
   Future<Draft> openNewDraft(ConnectionKey connection, ProfileKey profile);
+
+  /// Brouillon de suite de la conversation (connexion, profil, session
+  /// durable), créé vide s'il n'existe pas ; aucune création de session.
+  Future<Draft> openContinuation(
+    ConnectionKey connection,
+    ProfileKey profile,
+    String storedSessionId,
+  );
   Future<Draft?> draft(DraftKey key);
 
   /// Rattache le brouillon neuf [key] à [profile] (une transaction) : un

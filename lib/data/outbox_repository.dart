@@ -53,14 +53,13 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
     ConnectionKey connection,
     ProfileKey profile,
   ) async {
-    // Un brouillon non vide garde son texte même s'il a déjà une session.
+    // Un brouillon qui a une session reste sur sa conversation (liste d'historique).
     Future<List<Map<String, Object?>>> reusable() => database.query(
       'outbox_drafts',
       where:
           'connection_key = ? AND profile_key = ? '
-          "AND (stored_session_id IS NULL OR body <> '')",
+          'AND stored_session_id IS NULL',
       whereArgs: [connection.value, profile.value],
-      orderBy: "(body <> '') DESC, updated_at DESC",
       limit: 1,
     );
     var rows = await reusable();
@@ -74,6 +73,34 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
         'updated_at': _now().toIso8601String(),
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
       rows = await reusable();
+    }
+    return _draft(rows.single);
+  }
+
+  @override
+  Future<Draft> openContinuation(
+    ConnectionKey connection,
+    ProfileKey profile,
+    String storedSessionId,
+  ) async {
+    Future<List<Map<String, Object?>>> existing() => database.query(
+      'outbox_drafts',
+      where:
+          'connection_key = ? AND profile_key = ? AND stored_session_id = ?',
+      whereArgs: [connection.value, profile.value, storedSessionId],
+    );
+    var rows = await existing();
+    if (rows.isEmpty) {
+      // L'index unique départage deux ouvertures concurrentes.
+      await database.insert('outbox_drafts', {
+        'draft_key': DraftKey.create().value,
+        'connection_key': connection.value,
+        'profile_key': profile.value,
+        'stored_session_id': storedSessionId,
+        'body': '',
+        'updated_at': _now().toIso8601String(),
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      rows = await existing();
     }
     return _draft(rows.single);
   }

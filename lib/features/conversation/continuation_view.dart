@@ -1,0 +1,94 @@
+import 'package:flutter/material.dart';
+
+import '../../models/connection.dart';
+import '../../models/draft.dart';
+import '../../models/profile.dart';
+import '../../ui/content.dart';
+import '../../ui/tokens.dart';
+import 'draft_view.dart';
+import 'draft_view_model.dart';
+
+/// `/c/<connexion>/<profil>/<session>` : retrouve (ou crée vide) le brouillon de
+/// suite de la conversation, puis réutilise la vue de conversation.
+class ContinuationView extends StatefulWidget {
+  const ContinuationView({
+    super.key,
+    required this.outbox,
+    required this.connection,
+    required this.profile,
+    required this.session,
+    required this.createViewModel,
+    required this.onOpenProfiles,
+    required this.onOpenHistory,
+    required this.onNewConversation,
+  });
+  final OutboxGateway outbox;
+  final ConnectionKey connection;
+  final ProfileKey profile;
+  final String session;
+  final DraftViewModel Function(DraftKey key) createViewModel;
+  final Future<ProfileKey?> Function(bool pick) onOpenProfiles;
+  final void Function(ProfileKey profile) onOpenHistory;
+  final void Function(ProfileKey profile) onNewConversation;
+  @override
+  State<ContinuationView> createState() => _ContinuationViewState();
+}
+
+class _ContinuationViewState extends State<ContinuationView> {
+  late Future<Draft> _draft = _open();
+
+  Future<Draft> _open() => widget.outbox.openContinuation(
+    widget.connection,
+    widget.profile,
+    widget.session,
+  );
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Draft>(
+    future: _draft,
+    builder: (context, snapshot) {
+      final draft = snapshot.data;
+      if (draft != null) {
+        return DraftView(
+          continuation: true,
+          create: () => widget.createViewModel(draft.key),
+          onOpenProfiles: widget.onOpenProfiles,
+          onOpenHistory: widget.onOpenHistory,
+          onNewConversation: widget.onNewConversation,
+        );
+      }
+      final failed = snapshot.hasError;
+      return Scaffold(
+        appBar: AppBar(title: const Text(Content.timelineTitle)),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Semantics(
+              liveRegion: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    failed
+                        ? Content.error('storage.unavailable')
+                        : Content.openingConversation,
+                  ),
+                  if (failed)
+                    TextButton(
+                      onPressed: () {
+                        final next = _open();
+                        setState(() {
+                          _draft = next;
+                        });
+                      },
+                      child: const Text(Content.retryList),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}

@@ -9,6 +9,7 @@ import 'package:hermes_mobile/data/storage/secret_store.dart';
 import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
+import 'package:hermes_mobile/models/history.dart';
 import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 
@@ -270,13 +271,41 @@ class MemoryOutbox implements OutboxGateway {
   ) async {
     if (failOpen) throw StateError('synthetic storage failure');
     for (final d in drafts.values) {
-      if (d.connection == connection && d.profile == profile) return d;
+      if (d.connection == connection &&
+          d.profile == profile &&
+          d.storedSessionId == null) {
+        return d;
+      }
     }
     final draft = Draft(
       key: DraftKey.create(),
       connection: connection,
       profile: profile,
       body: '',
+    );
+    return drafts[draft.key] = draft;
+  }
+
+  @override
+  Future<Draft> openContinuation(
+    ConnectionKey connection,
+    ProfileKey profile,
+    String storedSessionId,
+  ) async {
+    if (failOpen) throw StateError('synthetic storage failure');
+    for (final d in drafts.values) {
+      if (d.connection == connection &&
+          d.profile == profile &&
+          d.storedSessionId == storedSessionId) {
+        return d;
+      }
+    }
+    final draft = Draft(
+      key: DraftKey.create(),
+      connection: connection,
+      profile: profile,
+      body: '',
+      storedSessionId: storedSessionId,
     );
     return drafts[draft.key] = draft;
   }
@@ -332,6 +361,7 @@ class MemoryOutbox implements OutboxGateway {
       profile: d.profile,
       body: body,
       revision: d.revision + 1,
+      storedSessionId: d.storedSessionId,
     );
   }
 
@@ -362,6 +392,25 @@ class MemoryConversation implements ConversationGateway {
   final resyncingKeys = <TimelineKey>{};
   @override
   bool resyncing(TimelineKey key) => resyncingKeys.contains(key);
+  final failedKeys = <TimelineKey>{};
+  @override
+  bool resumeFailed(TimelineKey key) => failedKeys.contains(key);
+
+  /// Listes par (connexion, profil) ; [listError] ou [listGate] pour les cas limites.
+  final lists = <(ConnectionKey, ProfileKey), List<SessionSummary>>{};
+  final listCalls = <(ConnectionKey, ProfileKey)>[];
+  Object? listError;
+  Completer<void>? listGate;
+  @override
+  Future<List<SessionSummary>> sessions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    listCalls.add((connection, profile));
+    await listGate?.future;
+    if (listError != null) throw listError!;
+    return lists[(connection, profile)] ?? const [];
+  }
   @override
   Future<void> dispose() async {}
 }

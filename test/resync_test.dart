@@ -75,12 +75,12 @@ void main() {
       database,
       gateway: h.repository,
       mapping: mapping,
-      timeout: const Duration(milliseconds: 100),
+      timeout: const Duration(seconds: 1),
     );
     outbox = OutboxRepository(
       database,
       gateway: h.repository,
-      timeout: const Duration(milliseconds: 100),
+      timeout: const Duration(seconds: 1),
       conversation: conversation,
     );
     draft = await outbox.openNewDraft(connection, profile);
@@ -187,8 +187,11 @@ void main() {
       'open_requests': [],
     };
     await reconnect();
-    await until(() => outbox.status(draft.key).turnActive);
-    await settle();
+    await until(
+      () =>
+          outbox.status(draft.key).turnActive &&
+          timeline().workState == WorkState.running,
+    );
     expect(timeline().workState, WorkState.running);
     expect((timeline().items.last as ResponseItem).text, 'Voici ');
     expect(timeline().turns, 1);
@@ -265,12 +268,12 @@ void main() {
       database,
       gateway: h.repository,
       mapping: mapping,
-      timeout: const Duration(milliseconds: 100),
+      timeout: const Duration(seconds: 1),
     );
     outbox = OutboxRepository(
       database,
       gateway: h.repository,
-      timeout: const Duration(milliseconds: 100),
+      timeout: const Duration(seconds: 1),
       conversation: conversation,
     );
     overrides['session.resume'] = _result('session-resume-running');
@@ -380,6 +383,25 @@ void main() {
     expect((items[2] as UserItem).text, 'seconde');
     expect((items[2] as UserItem).userRowId, 52);
     expect(timeline().workState, WorkState.unknown);
+  });
+
+  test('reprise en échec : resumeFailed signalé par un changement, effacé au succès',
+      () async {
+    await start();
+    await outbox.send(draft.key);
+    final changes = <TimelineKey>[];
+    final sub = conversation.changes.listen(changes.add);
+    addTearDown(sub.cancel);
+    overrides['session.resume'] = const RpcFail(5000);
+    await conversation.resync(key);
+    expect(conversation.resumeFailed(key), isTrue);
+    expect(changes, contains(key));
+    overrides.remove('session.resume');
+    overrides['session.history'] = _result('session-history');
+    changes.clear();
+    await conversation.resync(key);
+    expect(conversation.resumeFailed(key), isFalse);
+    expect(changes, contains(key));
   });
 
   test('migration v6 : colonne row_watermark ajoutée', () async {

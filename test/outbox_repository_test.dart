@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:hermes_mobile/data/outbox_repository.dart';
 import 'package:hermes_mobile/data/storage/database.dart';
+import 'package:hermes_mobile/data/storage/migrations.dart';
 import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
@@ -262,7 +263,60 @@ void main() {
     await database.close();
   });
 
-  test('migration réelle v2 vers v6 conserve la connexion', () async {
+  test('migration v6 vers v7 : doublons de conversation dédupliqués, opérations rattachées',
+      () async {
+    final old = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 6,
+        onCreate: (db, _) async {
+          for (var i = 0; i < 6; i++) {
+            await connectionMigrations[i](db);
+          }
+          Future<void> draft(String key, String session, String body, String at) =>
+              db.insert('outbox_drafts', {
+                'draft_key': key,
+                'connection_key': 'c-1',
+                'profile_key': 'p',
+                'stored_session_id': session,
+                'body': body,
+                'updated_at': at,
+              });
+          await draft('d1', 's', '', '3');
+          await draft('d2', 's', 'texte', '1');
+          await draft('d3', 's', '', '2');
+          await draft('d4', 'S', '', '1');
+          for (final d in ['d1', 'd3']) {
+            await db.insert('outbox_operations', {
+              'operation_key': 'o-$d',
+              'draft_key': d,
+              'connection_key': 'c-1',
+              'profile_key': 'p',
+              'body': 'b',
+              'revision': 0,
+              'state': 'accepted',
+              'created_at': 'x',
+              'updated_at': 'x',
+            });
+          }
+        },
+      ),
+    );
+    await old.close();
+    final database = await open();
+    expect(await database.getVersion(), 7);
+    expect(
+      (await database.query('outbox_drafts', orderBy: 'draft_key')).map((r) => r['draft_key']),
+      ['d2', 'd4'],
+    );
+    expect(
+      (await database.query('outbox_operations')).map((r) => r['draft_key']),
+      ['d2', 'd2'],
+    );
+    await database.close();
+  });
+
+  test('migration réelle v2 vers v7 conserve la connexion', () async {
     final old = await databaseFactoryFfi.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -283,7 +337,7 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 6);
+    expect(await database.getVersion(), 7);
     expect(
       (await database.query('connection_entries')).single['connection_key'],
       'stable-v2',

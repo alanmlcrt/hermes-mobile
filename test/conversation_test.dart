@@ -288,7 +288,7 @@ void main() {
     expect(loaded.workState, WorkState.unknown);
   });
 
-  test('migration réelle v4 vers v6 : ajout seul, données conservées',
+  test('migration réelle v4 vers v7 : ajout seul, données conservées',
       () async {
     started = true;
     directory = await Directory.systemTemp.createTemp('hermes-v4-');
@@ -319,7 +319,7 @@ void main() {
     h = Harness();
     outbox = OutboxRepository(database, gateway: h.repository);
     conversation = newConversation();
-    expect(await database.getVersion(), 6);
+    expect(await database.getVersion(), 7);
     expect((await database.query('outbox_drafts')).single['body'], 'gardé');
     expect(await database.query('conversation_timelines'), isEmpty);
   });
