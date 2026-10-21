@@ -2,11 +2,15 @@
 // lancée par lib/main_gallery.dart, jamais importée par lib/main.dart.
 import 'package:flutter/material.dart';
 
+import 'components/activity_line.dart';
 import 'components/composer.dart';
+import 'components/message_bubble.dart';
+import 'components/work_state_label.dart';
 import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
 import '../models/profile.dart';
+import '../models/timeline.dart';
 import 'content.dart';
 import 'theme.dart';
 import 'tokens.dart';
@@ -64,6 +68,30 @@ class ComponentGallery extends StatelessWidget {
     ],
   );
 
+  static Widget _messages() => const Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      MessageBubble(text: GalleryContent.sampleRequest, fromUser: true),
+      SizedBox(height: Spacing.sm),
+      MessageBubble(text: GalleryContent.sampleReply),
+    ],
+  );
+
+  static Widget _activityLines() => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      ActivityLine(kind: 'tool'),
+      SizedBox(height: Spacing.sm),
+      ActivityLine(kind: 'unknown'),
+    ],
+  );
+
+  static Widget _workStates() => Wrap(
+    spacing: Spacing.md,
+    runSpacing: Spacing.sm,
+    children: [for (final s in WorkState.values) WorkStateLabel(state: s)],
+  );
+
   static Widget _sectionCard() => SectionCard(
     title: GalleryContent.sampleCardTitle,
     child: Column(
@@ -87,6 +115,9 @@ class ComponentGallery extends StatelessWidget {
         GalleryContent.composerSection,
         () => const Composer(disabledReason: Content.sendEmpty),
       ),
+      (GalleryContent.messageSection, _messages),
+      (GalleryContent.activitySection, _activityLines),
+      (GalleryContent.workStateSection, _workStates),
       (
         Content.profilesTitle,
         () => const ProfileChoice(

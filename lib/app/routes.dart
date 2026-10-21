@@ -9,6 +9,7 @@ import '../features/profiles/profiles_view.dart';
 import '../features/profiles/profiles_view_model.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
+import '../models/timeline.dart';
 
 /// Seul décideur de l'écran d'ouverture : notification (Epic 5), puis
 /// restauration (story 2.4), puis accueil. Seul l'accueil existe : nouvelle
@@ -32,7 +33,11 @@ Future<String?> resolveLaunchTarget(
 }
 
 class AppRoutes {
-  AppRoutes(ConnectionGateway gateway, OutboxGateway outbox) {
+  AppRoutes(
+    ConnectionGateway gateway,
+    OutboxGateway outbox,
+    ConversationGateway conversation,
+  ) {
     connection = ConnectionViewModel(gateway);
     profiles = ProfilesViewModel(gateway);
     router = GoRouter(
@@ -73,6 +78,7 @@ class AppRoutes {
             create: () => DraftViewModel(
               outbox: outbox,
               gateway: gateway,
+              conversation: conversation,
               key: DraftKey(state.pathParameters['draftKey']!),
             ),
             onOpenProfiles: () => context.push('/profiles'),

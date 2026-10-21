@@ -1,6 +1,8 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../data/connection_repository.dart';
+import '../data/conversation_repository.dart';
+import '../data/event_mapping.dart';
 import '../data/hermes_adapter.dart';
 import '../data/outbox_repository.dart';
 import '../data/storage/connection_store.dart';
@@ -8,8 +10,16 @@ import '../data/storage/database.dart';
 import '../data/storage/secret_store.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
+import '../models/timeline.dart';
 
-Future<({ConnectionGateway gateway, OutboxGateway outbox})> bootstrap() async {
+Future<
+  ({
+    ConnectionGateway gateway,
+    OutboxGateway outbox,
+    ConversationGateway conversation,
+  })
+>
+bootstrap() async {
   final database = await openConnectionDatabase();
   final repository = ConnectionRepository(
     adapter: HermesAdapter(IoHermesTransport()),
@@ -18,8 +28,18 @@ Future<({ConnectionGateway gateway, OutboxGateway outbox})> bootstrap() async {
     closeStorage: database.close,
   );
   // La restauration réseau ne bloque pas le premier écran.
+  final conversation = ConversationRepository(
+    database,
+    gateway: repository,
+    mapping: await EventMapping.load(),
+  );
   return (
     gateway: repository,
-    outbox: OutboxRepository(database, gateway: repository),
+    outbox: OutboxRepository(
+      database,
+      gateway: repository,
+      conversation: conversation,
+    ),
+    conversation: conversation,
   );
 }

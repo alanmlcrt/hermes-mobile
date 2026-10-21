@@ -50,7 +50,7 @@ void main() {
     (tester) async {
       final h = await _launched();
       final outbox = MemoryOutbox();
-      await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+      await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
       await tester.pumpAndSettle();
       final draft = outbox.drafts.values.single;
       expect(draft.profile.value, 'default');
@@ -80,7 +80,7 @@ void main() {
       relaunched.store.value = h.store.value;
       relaunched.secrets.values.addAll(h.secrets.values);
       await tester.pumpWidget(
-        MainApp(gateway: relaunched.repository, outbox: outbox),
+        MainApp(gateway: relaunched.repository, outbox: outbox, conversation: MemoryConversation()),
       );
       await tester.pumpAndSettle();
       expect(outbox.drafts, hasLength(1));
@@ -104,7 +104,7 @@ void main() {
   ) async {
     final h = await _launched(profilesStatus: 500);
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
     await tester.pumpAndSettle();
     expect(find.text(Content.profilesError), findsOne);
     expect(outbox.drafts, isEmpty);
@@ -116,7 +116,7 @@ void main() {
   ) async {
     final h = await _launched();
     final outbox = MemoryOutbox()..failOpen = true;
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
     await tester.pumpAndSettle();
     expect(_location(tester), '/');
     expect(find.text('Principal (default)'), findsOne);
@@ -132,7 +132,7 @@ void main() {
       choice: const ProfileKey('travail'),
     );
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
     await tester.pumpAndSettle();
     final draft = outbox.drafts.values.single;
     expect(draft.profile, const ProfileKey('travail'));
@@ -148,7 +148,7 @@ void main() {
     // de test simulée.
     h.transport.ticketStatus = 500;
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'gardé');
     await tester.pumpAndSettle();
@@ -180,6 +180,7 @@ void main() {
             create: () => DraftViewModel(
               outbox: outbox,
               gateway: h.repository,
+              conversation: MemoryConversation(),
               key: failRead ? draft.key : const DraftKey('inconnu'),
             ),
             onOpenProfiles: () {},
@@ -200,7 +201,7 @@ void main() {
     final h = await _launched();
     if (ready != null) h.transport.ready = ready;
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
     await tester.pumpAndSettle();
     return (h, outbox, outbox.drafts.keys.single);
   }
@@ -343,11 +344,11 @@ void main() {
       final semantics = tester.ensureSemantics();
       final h = await _launched();
       final outbox = MemoryOutbox();
-      await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox));
+      await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
       await tester.pumpAndSettle();
       final field = find.byType(TextField);
       expect(
-        tester.getSemantics(field),
+        tester.getSemantics(find.bySemanticsLabel(Content.composerLabel)),
         matchesSemantics(
           label: Content.composerLabel,
           isTextField: true,

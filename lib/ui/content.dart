@@ -46,6 +46,19 @@ abstract final class Content {
   static const sendAccepted = 'Demande acceptée par Hermes.';
   static const turnActive = 'Hermes traite encore la demande précédente.';
   static String sendLink(String label) => 'Envoi indisponible : $label.';
+  static const timelineTitle = 'Conversation';
+  static const yourRequest = 'Votre demande';
+  static const hermesReply = 'Réponse de Hermes';
+  static const activityTool = 'Hermes utilise un outil…';
+  static const activityUnknown = 'Hermes est en activité…';
+  static String activity(String kind) =>
+      kind == 'tool' ? activityTool : activityUnknown;
+  static const workSending = 'Envoi…';
+  static const workRunning = 'Hermes travaille…';
+  static const workSucceeded = 'Terminé';
+  static const workFailed = 'Erreur';
+  static const workStopped = 'Arrêté';
+  static const workUnknown = 'Non synchronisé';
   static const draftKept = 'Votre texte reste affiché sur cet écran.';
   static String draftProfile(String name) => 'Profil : $name';
   static const profileFixture = 'Principal';
@@ -82,6 +95,8 @@ abstract final class Content {
     'send.unknown' =>
       'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',
     'send.turn_active' => turnActive,
+    'turn.error' =>
+      'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',
     'send.unavailable' =>
       'Hermes n’est pas joignable pour le moment. Votre texte est conservé.',
     'transport.offline' =>
@@ -119,6 +134,13 @@ abstract final class GalleryContent {
   static const statusLabelSection = 'Indicateur d\'état';
   static const sectionCardSection = 'Carte de section';
   static const composerSection = 'Zone de saisie';
+  static const messageSection = 'Message';
+  static const activitySection = 'Ligne d’activité';
+  static const workStateSection = 'États du travail';
+  static const sampleRequest = 'Peux-tu résumer ce fichier ? 🙂';
+  static const sampleReply =
+      '# Résumé\n\n- Premier point 🚀\n- Deuxième point en **gras**\n\n'
+      '```dart\nfinal resume = fichier.lignes.where((l) => l.isNotEmpty).map((l) => l.trim()).join("-");\n```';
 
   static const sampleCardTitle = 'Mes profils';
   static const sampleProfiles = ['Profil principal', 'Profil travail'];

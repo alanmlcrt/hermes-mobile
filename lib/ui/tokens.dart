@@ -45,6 +45,11 @@ abstract final class ComposerLines {
   static const int max = 8;
 }
 
+/// Police à chasse fixe des blocs de code.
+abstract final class CodeStyle {
+  static const String family = 'monospace';
+}
+
 /// Échelles de texte de référence (galerie : texte agrandi 200 %).
 abstract final class TextScales {
   static const double large = 2.0;
@@ -57,4 +62,7 @@ extension ColorRoles on ColorScheme {
   Color get content => onSurface;
   Color get emphasis => primary;
   Color get emphasisContent => onPrimary;
+  Color get codeSurface => surfaceContainerHighest;
+  Color get bubbleSurface => secondaryContainer;
+  Color get bubbleContent => onSecondaryContainer;
 }

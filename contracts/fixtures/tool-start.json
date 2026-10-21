@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"event","params":{"type":"tool.start","session_id":"a1b2c3d4","payload":{"name":"SYNTHETIC"},"seq":5}}

@@ -7,23 +7,30 @@ import '../../models/connection.dart';
 import '../../models/connection_gateway.dart';
 import '../../models/draft.dart';
 import '../../models/profile.dart';
+import '../../models/timeline.dart';
 import '../../ui/content.dart';
 
 class DraftViewModel extends ChangeNotifier {
   DraftViewModel({
     required this.outbox,
     required this.gateway,
+    required this.conversation,
     required this.key,
   }) {
     _subscription = gateway.snapshots.listen((_) => _notify());
     _outboxChanges = outbox.changes.listen(_onOutbox);
+    _timelineChanges = conversation.changes.listen((changed) {
+      if (changed == _timelineKey) _notify();
+    });
     unawaited(_load());
   }
   final OutboxGateway outbox;
   final ConnectionGateway gateway;
+  final ConversationGateway conversation;
   final DraftKey key;
   late final StreamSubscription<ConnectionSnapshot> _subscription;
   late final StreamSubscription<DraftKey> _outboxChanges;
+  late final StreamSubscription<TimelineKey> _timelineChanges;
   String _text = '';
   String? _sentText;
 
@@ -42,6 +49,7 @@ class DraftViewModel extends ChangeNotifier {
       draft = await outbox.draft(key);
       _text = draft?.body ?? '';
       if (draft == null) error = const AppError('draft.not_found');
+      await _loadTimeline();
     } catch (_) {
       error = const AppError('storage.unavailable');
     }
@@ -109,8 +117,42 @@ class DraftViewModel extends ChangeNotifier {
     return outbox.send(key);
   }
 
+  /// Fil de la session du brouillon, une fois la session créée.
+  TimelineKey? get _timelineKey {
+    final d = draft;
+    final session = d?.storedSessionId;
+    return d == null || session == null
+        ? null
+        : TimelineKey(d.connection, d.profile, session);
+  }
+
+  TimelineProjection get timeline {
+    final k = _timelineKey;
+    return k == null ? const TimelineProjection() : conversation.projection(k);
+  }
+
+  Future<void> _loadTimeline() async {
+    final k = _timelineKey;
+    if (k == null) return;
+    try {
+      await conversation.load(k);
+    } catch (_) {
+      error = const AppError('storage.unavailable');
+    }
+  }
+
   Future<void> _onOutbox(DraftKey changed) async {
     if (changed != key) return;
+    if (draft != null && draft!.storedSessionId == null) {
+      try {
+        final fresh = await outbox.draft(key);
+        final created = fresh?.storedSessionId != null;
+        draft = fresh ?? draft;
+        if (created) await _loadTimeline();
+      } catch (_) {
+        error = const AppError('storage.unavailable');
+      }
+    }
     if (sendStatus.state == OperationState.accepted && _sentText != null) {
       final sent = _sentText;
       _sentText = null;
@@ -138,6 +180,7 @@ class DraftViewModel extends ChangeNotifier {
     _disposed = true;
     unawaited(_subscription.cancel());
     unawaited(_outboxChanges.cancel());
+    unawaited(_timelineChanges.cancel());
     super.dispose();
   }
 }

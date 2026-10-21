@@ -19,6 +19,7 @@ class GatewayEvent {
     required this.payload,
     required this.generation,
     this.seq,
+    this.replayEpoch,
   });
   final String sessionId;
   final String type;
@@ -27,6 +28,9 @@ class GatewayEvent {
 
   /// Génération de socket qui a porté l'événement.
   final int generation;
+
+  /// `replay_epoch` annoncé par `gateway.ready` sur cette socket, si présent.
+  final String? replayEpoch;
 }
 
 abstract interface class ConnectionGateway {

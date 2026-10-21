@@ -9,6 +9,7 @@ import 'package:hermes_mobile/data/storage/secret_store.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
+import 'package:hermes_mobile/models/timeline.dart';
 
 Map<String, dynamic> fixture(String name) =>
     jsonDecode(File('contracts/fixtures/$name.json').readAsStringSync())
@@ -298,6 +299,30 @@ class MemoryOutbox implements OutboxGateway {
     );
   }
 
+  @override
+  Future<void> dispose() async {}
+}
+
+class MemoryConversation implements ConversationGateway {
+  final projections = <TimelineKey, TimelineProjection>{};
+  final loaded = <TimelineKey>[];
+  final _changes = StreamController<TimelineKey>.broadcast(sync: true);
+  void set(TimelineKey key, TimelineProjection projection) {
+    projections[key] = projection;
+    _changes.add(key);
+  }
+
+  @override
+  Stream<TimelineKey> get changes => _changes.stream;
+  @override
+  Future<TimelineProjection> load(TimelineKey key) async {
+    loaded.add(key);
+    return projection(key);
+  }
+
+  @override
+  TimelineProjection projection(TimelineKey key) =>
+      projections[key] ?? const TimelineProjection();
   @override
   Future<void> dispose() async {}
 }

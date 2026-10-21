@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../models/draft.dart';
+import '../../models/profile.dart';
+import '../../models/timeline.dart';
+import '../../ui/components/activity_line.dart';
 import '../../ui/components/composer.dart';
+import '../../ui/components/message_bubble.dart';
+import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
 import 'draft_view_model.dart';
@@ -21,6 +27,7 @@ class DraftView extends StatefulWidget {
 
 class _DraftViewState extends State<DraftView> {
   final _controller = TextEditingController();
+  final _scroll = ScrollController();
   late final _viewModel = widget.create();
   bool _filled = false;
   int _clearTick = 0;
@@ -29,6 +36,7 @@ class _DraftViewState extends State<DraftView> {
   void dispose() {
     _viewModel.dispose();
     _controller.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -59,35 +67,27 @@ class _DraftViewState extends State<DraftView> {
           ],
         ),
         body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(Spacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (draft != null)
-                Text(
-                  Content.draftProfile(
-                    profile == null
-                        ? draft.profile.value
-                        : Content.profileName(profile.label, profile.key.value),
-                  ),
-                ),
-              if (vm.error != null)
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    draft == null
-                        ? Content.error(vm.error!.code)
-                        : '${Content.error(vm.error!.code)} ${Content.draftKept}',
-                  ),
-                ),
-              const SizedBox(height: Spacing.md),
+              Expanded(child: _thread(context, vm, draft, profile)),
               // Sans brouillon chargé, une saisie écraserait le texte stocké.
               if (draft != null)
-                Composer(
-                  controller: _controller,
-                  onChanged: vm.update,
-                  onSend: blocked == null ? vm.send : null,
-                  disabledReason: blocked,
-                  status: vm.statusText,
+                // Défile si la saisie dépasse l'écran (texte 200 %, paysage).
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * 0.5,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(Spacing.md),
+                    child: Composer(
+                      controller: _controller,
+                      onChanged: vm.update,
+                      onSend: blocked == null ? vm.send : null,
+                      disabledReason: blocked,
+                      status: vm.statusText,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -95,4 +95,80 @@ class _DraftViewState extends State<DraftView> {
       );
     },
   );
+
+  /// Fil paresseux au-dessus de la saisie ; suit le dernier élément quand
+  /// l'utilisateur est déjà en bas.
+  Widget _thread(
+    BuildContext context,
+    DraftViewModel vm,
+    Draft? draft,
+    Profile? profile,
+  ) {
+    final c = _scroll;
+    final atBottom =
+        !c.hasClients || c.position.maxScrollExtent - c.position.pixels < Spacing.md;
+    final children = <Widget>[
+      if (draft != null)
+        Text(
+          Content.draftProfile(
+            profile == null
+                ? draft.profile.value
+                : Content.profileName(profile.label, profile.key.value),
+          ),
+        ),
+      if (vm.error != null)
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            draft == null
+                ? Content.error(vm.error!.code)
+                : '${Content.error(vm.error!.code)} ${Content.draftKept}',
+          ),
+        ),
+      ..._timeline(context, vm.timeline),
+    ];
+    if (atBottom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (c.hasClients) c.jumpTo(c.position.maxScrollExtent);
+      });
+    }
+    return ListView.builder(
+      controller: c,
+      padding: const EdgeInsets.all(Spacing.md),
+      itemCount: children.length,
+      itemBuilder: (context, i) => children[i],
+    );
+  }
+
+  /// Éléments du fil ; rebâti sans aucun appel (état dans la projection).
+  List<Widget> _timeline(BuildContext context, TimelineProjection timeline) {
+    if (timeline.items.isEmpty && timeline.workState == null) return const [];
+    final work = timeline.workState;
+    return [
+      Semantics(
+        header: true,
+        child: Text(
+          Content.timelineTitle,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ),
+      for (final item in timeline.items) ...[
+        const SizedBox(height: Spacing.sm),
+        switch (item) {
+          UserItem() => MessageBubble(text: item.text, fromUser: true),
+          ResponseItem() => MessageBubble(text: item.text),
+          ActivityItem() => ActivityLine(kind: item.kind),
+        },
+      ],
+      if (work != null) ...[
+        const SizedBox(height: Spacing.sm),
+        // Région live : chaque changement d'état est annoncé.
+        Semantics(liveRegion: true, child: WorkStateLabel(state: work)),
+      ],
+      if (work == WorkState.failed && timeline.errorCode != null) ...[
+        const SizedBox(height: Spacing.xs),
+        Text(Content.error(timeline.errorCode!)),
+      ],
+    ];
+  }
 }

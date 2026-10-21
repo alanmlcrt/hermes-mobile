@@ -7,6 +7,8 @@ import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
 import '../models/profile.dart';
+import '../models/timeline.dart';
+import 'conversation_repository.dart';
 import 'hermes_adapter.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
@@ -18,6 +20,7 @@ class OutboxRepository implements OutboxGateway {
     DateTime Function()? now,
     this.timeout = rpcTimeout,
     this.onStep,
+    this.conversation,
   }) : _now = now ?? (() => DateTime.now().toUtc()) {
     _events = gateway.events.listen(_onEvent);
   }
@@ -28,11 +31,15 @@ class OutboxRepository implements OutboxGateway {
 
   /// Observateur du pipeline nommé (tests, diagnostic) ; jamais de contenu.
   final void Function(String step)? onStep;
+
+  /// Reçoit la liaison runtime et les demandes acceptées ; jamais d'ordre inverse.
+  final ConversationRepository? conversation;
   final _writes = <DraftKey, Future<void>>{};
   final _recovered = <DraftKey>{};
   final _status = <DraftKey, SendStatus>{};
   final _runtime = <DraftKey, ({String id, int generation})>{};
   final _turns = <DraftKey, int>{};
+  final _storedIds = <DraftKey, String>{};
   final _ensuring = <DraftKey, Future<String>>{};
   final _changes = StreamController<DraftKey>.broadcast(sync: true);
   StreamSubscription<GatewayEvent>? _events;
@@ -200,6 +207,7 @@ class OutboxRepository implements OutboxGateway {
     // Lue avant l'appel : une reconnexion pendant l'attente rend l'id périmé.
     final generation = g.socketGeneration;
     final String runtime;
+    final String stored;
     var running = false;
     if (draft.storedSessionId == null) {
       final result = await g.call(
@@ -216,6 +224,7 @@ class OutboxRepository implements OutboxGateway {
         whereArgs: [key.value],
       );
       runtime = created.runtime;
+      stored = created.stored;
     } else {
       final result = await g.call(
         'session.resume',
@@ -224,9 +233,16 @@ class OutboxRepository implements OutboxGateway {
       );
       final resumed = HermesRpc.resumed(result);
       runtime = resumed.runtime;
+      stored = draft.storedSessionId!;
       running = resumed.running;
     }
     _runtime[key] = (id: runtime, generation: generation);
+    _storedIds[key] = stored;
+    conversation?.bind(
+      TimelineKey(draft.connection, draft.profile, stored),
+      runtime,
+      generation,
+    );
     if (running) {
       _turns[key] = generation;
       if (!_changes.isClosed) _changes.add(key);
@@ -463,6 +479,13 @@ class OutboxRepository implements OutboxGateway {
     } catch (_) {
       /* acceptée côté serveur : l'écran l'indique même si la base échoue */
     }
+    // Après la base : la bulle n'apparaît que pour une demande réellement acceptée.
+    await conversation?.accepted(
+      TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
+      operation,
+      draft.body,
+      userRowId: userRowId,
+    );
     _set(key, const SendStatus(state: OperationState.accepted));
   }
 

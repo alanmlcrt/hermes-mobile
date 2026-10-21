@@ -51,4 +51,14 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'CREATE INDEX outbox_operations_draft ON outbox_operations (draft_key)',
     );
   },
+  (db) async {
+    // Projection et curseur dans la même ligne : une seule écriture atomique.
+    await db.execute(
+      'CREATE TABLE conversation_timelines ('
+      'connection_key TEXT NOT NULL, profile_key TEXT NOT NULL, '
+      'stored_session_id TEXT NOT NULL, projection TEXT NOT NULL, '
+      'replay_epoch TEXT, seq INTEGER, updated_at TEXT NOT NULL, '
+      'PRIMARY KEY (connection_key, profile_key, stored_session_id))',
+    );
+  },
 ];

@@ -15,3 +15,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-envoi-sans-double-execution.md`
   summary: L'accueil rouvre un brouillon de conversation existante quand il contient du texte, au lieu d'une nouvelle conversation.
   evidence: `openNewDraft` préfère `body <> ''` ; à remplacer par la restauration de 2.4/2.6 une fois l'historique disponible.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-3-reponse-en-direct.md`
+  summary: Appariement des bulles utilisateur aux tours robuste aux tours lancés par un autre client sur la même session.
+  evidence: `accepted()` apparie par position (`userTurns + 1`) ; un tour démarré ailleurs décale les liaisons.

@@ -395,4 +395,28 @@ abstract final class HermesRpc {
     final row = r['user_row_id'];
     return (userRowId: row is int ? row : null);
   }
+
+  /// Texte non vide d'un `message.delta` / `message.complete` ; `null` sinon.
+  static String? eventText(Map<String, dynamic> payload) {
+    final text = payload['text'];
+    return text is String && text.isNotEmpty ? text : null;
+  }
+
+  /// Commentaire `message.interim` à ajouter (rien s'il a déjà été diffusé).
+  static String? interimText(Map<String, dynamic> payload) =>
+      payload['already_streamed'] == true ? null : eventText(payload);
+
+  /// Lignes utilisateur validées d'un tour (`persisted_turn`), dans l'ordre.
+  static List<int> persistedUserRows(Map<String, dynamic> payload) {
+    final turn = payload['persisted_turn'];
+    if (turn is! Map) return const [];
+    final many = turn['user_row_ids'];
+    if (many is List) return [for (final r in many) if (r is int) r];
+    final one = turn['user_row_id'];
+    return one is int ? [one] : const [];
+  }
+
+  /// Le serveur signale une erreur de tour dans la charge utile.
+  static bool hasTurnError(Map<String, dynamic> payload) =>
+      payload['error'] != null || payload['error_surface'] != null;
 }

@@ -124,7 +124,7 @@ void main() {
     await database.close();
   });
 
-  test('migration réelle v2 vers v4 conserve la connexion', () async {
+  test('migration réelle v2 vers v5 conserve la connexion', () async {
     final old = await databaseFactoryFfi.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -145,7 +145,7 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 4);
+    expect(await database.getVersion(), 5);
     expect(
       (await database.query('connection_entries')).single['connection_key'],
       'stable-v2',

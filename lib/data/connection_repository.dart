@@ -311,6 +311,8 @@ class ConnectionRepository implements ConnectionGateway {
     final generation = ++_generation;
     final epoch = _epoch;
     final ready = Completer<void>();
+    // Propre à cette socket : change à chaque redémarrage du processus Hermes.
+    String? replayEpoch;
     _subscription = socket.messages.listen(
       (raw) {
         if (_disposed || _epoch != epoch || !identical(_socket, socket)) return;
@@ -323,6 +325,8 @@ class ConnectionRepository implements ConnectionGateway {
               params['type'] == 'gateway.ready') {
             final payload = params['payload'];
             if (payload is! Map) throw const FormatException();
+            final epochValue = payload['replay_epoch'];
+            replayEpoch = epochValue is String ? epochValue : null;
             _capability('websocket', CapabilityState.present);
             _capability(
               'conversation',
@@ -378,6 +382,7 @@ class ConnectionRepository implements ConnectionGateway {
                     : const {},
                 seq: seq is int ? seq : null,
                 generation: generation,
+                replayEpoch: replayEpoch,
               ),
             );
           } else if (message['id'] is String &&

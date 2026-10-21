@@ -14,7 +14,7 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
       await tester.pumpWidget(
-        MainApp(gateway: Harness().repository, outbox: MemoryOutbox()),
+        MainApp(gateway: Harness().repository, outbox: MemoryOutbox(), conversation: MemoryConversation()),
       );
       await tester.pumpAndSettle();
 

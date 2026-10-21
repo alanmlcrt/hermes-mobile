@@ -15,7 +15,7 @@ void main() {
     (tester) async {
       final h = Harness();
       await tester.pumpWidget(
-        MainApp(gateway: h.repository, outbox: MemoryOutbox()),
+        MainApp(gateway: h.repository, outbox: MemoryOutbox(), conversation: MemoryConversation()),
       );
       await tester.pumpAndSettle();
       await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
@@ -42,7 +42,7 @@ void main() {
     (tester) async {
       final h = Harness();
       await tester.pumpWidget(
-        MainApp(gateway: h.repository, outbox: MemoryOutbox()),
+        MainApp(gateway: h.repository, outbox: MemoryOutbox(), conversation: MemoryConversation()),
       );
       await tester.pumpAndSettle();
       await tester.enterText(
