@@ -159,6 +159,54 @@ class TimelineProjection {
   );
 }
 
+/// Ce que `session.resume` apprend sur une session : liaison runtime et travail.
+class Resumed {
+  const Resumed({
+    required this.runtime,
+    this.running = false,
+    this.inflight = false,
+    this.partial,
+    this.queued = false,
+    this.generation = 0,
+  });
+  final String runtime;
+  final bool running;
+
+  /// Un tour en cours existe côté serveur (`inflight` non vide).
+  final bool inflight;
+
+  /// Texte assistant partiel du tour en cours.
+  final String? partial;
+
+  /// Des demandes attendent dans la file de la session.
+  final bool queued;
+
+  /// Génération de socket qui a porté la reprise.
+  final int generation;
+
+  Resumed at(int generation) => Resumed(
+    runtime: runtime,
+    running: running,
+    inflight: inflight,
+    partial: partial,
+    queued: queued,
+    generation: generation,
+  );
+}
+
+/// Reprise de session fournie par l'outbox (seul appelant de `session.resume`)
+/// à `ConversationRepository` ; jamais de création ni de renvoi.
+abstract interface class SessionResumer {
+  Future<Resumed> resume(TimelineKey key);
+
+  /// Une opération `unknown` attend d'être tranchée : snapshot obligatoire.
+  Future<bool> hasUnknown(TimelineKey key);
+
+  /// Tranche les opérations `unknown` d'après les lignes utilisateur du
+  /// snapshot (`row_id` croissants), par position, jamais par le texte.
+  Future<void> reconcile(TimelineKey key, Resumed state, List<int> userRows);
+}
+
 /// Lecture de la projection par les ViewModels ; aucun appel Hermes.
 abstract interface class ConversationGateway {
   /// Relit la projection enregistrée (ouverture de l'écran, relance).
@@ -166,6 +214,9 @@ abstract interface class ConversationGateway {
 
   /// Dernière projection connue en mémoire ([load] d'abord).
   TimelineProjection projection(TimelineKey key);
+
+  /// Ce fil est en cours de resynchronisation (distinct de l'état du travail).
+  bool resyncing(TimelineKey key);
 
   /// Clé dont la projection a changé.
   Stream<TimelineKey> get changes;

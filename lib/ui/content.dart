@@ -95,6 +95,8 @@ abstract final class Content {
     'send.unknown' =>
       'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',
     'send.turn_active' => turnActive,
+    'send.not_received' =>
+      'Hermes n’affiche pas cette demande. Vérifiez la conversation, puis renvoyez-la si besoin. Votre texte est conservé.',
     'turn.error' =>
       'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',
     'send.unavailable' =>

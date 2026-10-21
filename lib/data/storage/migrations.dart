@@ -61,4 +61,10 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'PRIMARY KEY (connection_key, profile_key, stored_session_id))',
     );
   },
+  (db) async {
+    // Plus grand row_id utilisateur connu avant la soumission (rapprochement).
+    await db.execute(
+      'ALTER TABLE outbox_operations ADD COLUMN row_watermark INTEGER',
+    );
+  },
 ];

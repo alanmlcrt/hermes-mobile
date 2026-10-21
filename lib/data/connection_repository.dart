@@ -35,6 +35,7 @@ class ConnectionRepository implements ConnectionGateway {
   final _calls = <String, Completer<Map<String, dynamic>>>{};
   int _rpcSeq = 0;
   int _generation = 0;
+  String? _replayEpoch;
   ConnectionSnapshot _snapshot = ConnectionSnapshot(
     capabilities: _documentaryCapabilities,
   );
@@ -67,6 +68,8 @@ class ConnectionRepository implements ConnectionGateway {
   Stream<GatewayEvent> get events => _events.stream;
   @override
   int get socketGeneration => _generation;
+  @override
+  String? get replayEpoch => _replayEpoch;
 
   @override
   Future<Map<String, dynamic>> call(
@@ -327,6 +330,7 @@ class ConnectionRepository implements ConnectionGateway {
             if (payload is! Map) throw const FormatException();
             final epochValue = payload['replay_epoch'];
             replayEpoch = epochValue is String ? epochValue : null;
+            _replayEpoch = replayEpoch;
             _capability('websocket', CapabilityState.present);
             _capability(
               'conversation',
@@ -528,6 +532,7 @@ class ConnectionRepository implements ConnectionGateway {
     _capabilitiesDeadline = null;
     final socket = _socket;
     _socket = null;
+    _replayEpoch = null;
     final subscription = _subscription;
     _subscription = null;
     final previousClosing = _closingSocket;

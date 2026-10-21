@@ -6,7 +6,9 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 
 import '../models/app_error.dart';
+import '../models/connection_gateway.dart';
 import '../models/profile.dart';
+import '../models/timeline.dart';
 
 const networkTimeout = Duration(seconds: 15);
 
@@ -376,12 +378,97 @@ abstract final class HermesRpc {
   static Map<String, dynamic> resumeParams(String stored, ProfileKey profile) =>
       {'session_id': stored, 'profile': profile.value};
 
-  static ({String runtime, bool running}) resumed(Map<String, dynamic> r) {
+  static Resumed resumed(Map<String, dynamic> r) {
     final runtime = r['session_id'];
     if (runtime is! String || runtime.isEmpty) {
       throw const AppError('contract.invalid_response');
     }
-    return (runtime: runtime, running: r['running'] == true);
+    final inflight = r['inflight'];
+    final partial = inflight is Map ? inflight['assistant'] : null;
+    return Resumed(
+      runtime: runtime,
+      running: r['running'] == true,
+      inflight: _filled(inflight),
+      partial: partial is String && partial.isNotEmpty ? partial : null,
+      queued: _filled(r['queued']),
+    );
+  }
+
+  static bool _filled(Object? value) => switch (value) {
+    Map() => value.isNotEmpty,
+    List() => value.isNotEmpty,
+    String() => value.isNotEmpty,
+    bool() => value,
+    null => false,
+    _ => true,
+  };
+
+  static Map<String, dynamic> historyParams(String runtime) => {
+    'session_id': runtime,
+  };
+
+  /// Lignes utilisateur/assistant affichables de `session.history`, dans l'ordre.
+  static List<({int row, bool user, String text})> history(
+    Map<String, dynamic> r,
+  ) {
+    final messages = r['messages'];
+    if (messages is! List) throw const AppError('contract.invalid_response');
+    final rows = <({int row, bool user, String text})>[];
+    for (final m in messages) {
+      final kind = m is Map ? m['display_kind'] : null;
+      if (m is! Map || (kind != null && kind != 'text')) continue;
+      final role = m['role'];
+      final text = m['text'] ?? m['content'];
+      final row = m['row_id'];
+      if ((role != 'user' && role != 'assistant') ||
+          row is! int ||
+          text is! String ||
+          text.isEmpty) {
+        continue;
+      }
+      rows.add((row: row, user: role == 'user', text: text));
+    }
+    return rows;
+  }
+
+  static Map<String, dynamic> sinceParams(String runtime, int lastSeen) => {
+    'session_id': runtime,
+    'last_seen': lastSeen,
+  };
+
+  /// Événements rejoués (`seq` inclus) rendus comme s'ils étaient arrivés en direct.
+  static ({List<GatewayEvent> events, int? latest, bool truncated, String? epoch})
+  since(
+    Map<String, dynamic> r, {
+    required String runtime,
+    required int generation,
+    required String? replayEpoch,
+  }) {
+    final raw = r['events'];
+    if (raw is! List) throw const AppError('contract.invalid_response');
+    final events = <GatewayEvent>[];
+    for (final e in raw) {
+      if (e is! Map || e['type'] is! String || e['seq'] is! int) continue;
+      final payload = e['payload'];
+      events.add(
+        GatewayEvent(
+          sessionId: runtime,
+          type: e['type'] as String,
+          payload: payload is Map ? Map<String, dynamic>.from(payload) : const {},
+          seq: e['seq'] as int,
+          generation: generation,
+          replayEpoch: replayEpoch,
+        ),
+      );
+    }
+    final latest = r['latest_seq'];
+    final epoch = r['epoch'];
+    return (
+      events: events,
+      latest: latest is int ? latest : null,
+      truncated: r['truncated'] != false,
+      epoch: epoch is String ? epoch : null,
+    );
   }
 
   static Map<String, dynamic> submitParams(String runtime, String text) => {

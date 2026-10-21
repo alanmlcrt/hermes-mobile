@@ -323,6 +323,9 @@ class MemoryConversation implements ConversationGateway {
   @override
   TimelineProjection projection(TimelineKey key) =>
       projections[key] ?? const TimelineProjection();
+  final resyncingKeys = <TimelineKey>{};
+  @override
+  bool resyncing(TimelineKey key) => resyncingKeys.contains(key);
   @override
   Future<void> dispose() async {}
 }

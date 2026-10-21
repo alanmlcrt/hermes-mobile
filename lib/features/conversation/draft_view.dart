@@ -6,6 +6,7 @@ import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/composer.dart';
 import '../../ui/components/message_bubble.dart';
+import '../../ui/components/status_label.dart';
 import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
@@ -123,6 +124,14 @@ class _DraftViewState extends State<DraftView> {
             draft == null
                 ? Content.error(vm.error!.code)
                 : '${Content.error(vm.error!.code)} ${Content.draftKept}',
+          ),
+        ),
+      if (vm.resyncing)
+        Semantics(
+          liveRegion: true,
+          child: const StatusLabel(
+            icon: Icons.sync,
+            label: ConnectionLabels.resyncing,
           ),
         ),
       ..._timeline(context, vm.timeline),

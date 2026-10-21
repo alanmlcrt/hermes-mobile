@@ -13,7 +13,7 @@ import 'hermes_adapter.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
 /// base partagée.
-class OutboxRepository implements OutboxGateway {
+class OutboxRepository implements OutboxGateway, SessionResumer {
   OutboxRepository(
     this.database, {
     required this.gateway,
@@ -23,6 +23,7 @@ class OutboxRepository implements OutboxGateway {
     this.conversation,
   }) : _now = now ?? (() => DateTime.now().toUtc()) {
     _events = gateway.events.listen(_onEvent);
+    conversation?.resumer = this;
   }
   final Database database;
   final ConnectionGateway gateway;
@@ -331,7 +332,15 @@ class OutboxRepository implements OutboxGateway {
         );
         return;
       }
-      await _persist(operation, OperationState.sending);
+      // Repère du rapprochement si la réponse se perd : lignes déjà connues.
+      final watermark = await conversation?.maxUserRow(
+        TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
+      );
+      await _persist(
+        operation,
+        OperationState.sending,
+        rowWatermark: watermark,
+      );
     } catch (error) {
       // Rien n'a été soumis : l'échec est certain, un renvoi manuel est permis.
       await _finish(key, operation, OperationState.failed, _code(error), true);
@@ -423,12 +432,14 @@ class OutboxRepository implements OutboxGateway {
     OperationState state, {
     String? errorCode,
     int? userRowId,
+    int? rowWatermark,
   }) => database.update(
     'outbox_operations',
     {
       'state': state.name,
       'error_code': errorCode,
-      'user_row_id': userRowId,
+      'user_row_id': ?userRowId,
+      'row_watermark': ?rowWatermark,
       'updated_at': _now().toIso8601String(),
     },
     where: 'operation_key = ?',
@@ -457,25 +468,12 @@ class OutboxRepository implements OutboxGateway {
     int? userRowId,
   ) async {
     try {
-      await database.transaction((t) async {
-        await t.update(
-          'outbox_operations',
-          {
-            'state': OperationState.accepted.name,
-            'user_row_id': userRowId,
-            'updated_at': _now().toIso8601String(),
-          },
-          where: 'operation_key = ?',
-          whereArgs: [operation.value],
-        );
-        // Seule la version envoyée est retirée ; une saisie plus récente reste.
-        await t.update(
-          'outbox_drafts',
-          {'body': ''},
-          where: 'draft_key = ? AND revision = ?',
-          whereArgs: [key.value, draft.revision],
-        );
-      });
+      await _commitAccepted(
+        key,
+        operation,
+        userRowId,
+        clearRevision: draft.revision,
+      );
     } catch (_) {
       /* acceptée côté serveur : l'écran l'indique même si la base échoue */
     }
@@ -487,6 +485,152 @@ class OutboxRepository implements OutboxGateway {
       userRowId: userRowId,
     );
     _set(key, const SendStatus(state: OperationState.accepted));
+  }
+
+  Future<void> _commitAccepted(
+    DraftKey key,
+    OperationKey operation,
+    int? userRowId, {
+    int? clearRevision,
+  }) => database.transaction((t) async {
+    await t.update(
+      'outbox_operations',
+      {
+        'state': OperationState.accepted.name,
+        'user_row_id': userRowId,
+        'updated_at': _now().toIso8601String(),
+      },
+      where: 'operation_key = ?',
+      whereArgs: [operation.value],
+    );
+    // Seule la version envoyée est retirée ; une saisie plus récente reste.
+    // Un rapprochement ne prouve pas l'envoi : le texte reste alors en place.
+    if (clearRevision == null) return;
+    await t.update(
+      'outbox_drafts',
+      {'body': ''},
+      where: 'draft_key = ? AND revision = ?',
+      whereArgs: [key.value, clearRevision],
+    );
+  });
+
+  /// Reprise d'une session déjà connue (jamais de création) : lie le runtime à
+  /// la projection et rend le travail en cours.
+  @override
+  Future<Resumed> resume(TimelineKey key) async {
+    // Lue avant l'appel : une reconnexion pendant l'attente rend l'id périmé.
+    final generation = gateway.socketGeneration;
+    final resumed = HermesRpc.resumed(
+      await gateway.call(
+        'session.resume',
+        HermesRpc.resumeParams(key.session, key.profile),
+        timeout: timeout,
+      ),
+    ).at(generation);
+    for (final draft in await _draftsOf(key)) {
+      _runtime[draft] = (id: resumed.runtime, generation: generation);
+      _storedIds[draft] = key.session;
+      if (resumed.running) {
+        _turns[draft] = generation;
+      } else {
+        _turns.remove(draft);
+      }
+      if (!_changes.isClosed) _changes.add(draft);
+    }
+    conversation?.bind(key, resumed.runtime, generation);
+    return resumed;
+  }
+
+  Future<List<DraftKey>> _draftsOf(TimelineKey key) async => [
+    for (final row in await database.query(
+      'outbox_drafts',
+      columns: ['draft_key'],
+      where: 'connection_key = ? AND profile_key = ? AND stored_session_id = ?',
+      whereArgs: [key.connection.value, key.profile.value, key.session],
+    ))
+      DraftKey(row['draft_key'] as String),
+  ];
+
+  Future<List<Map<String, Object?>>> _unknownOperations(
+    TimelineKey key, {
+    bool marked = false,
+  }) => database.rawQuery(
+        'SELECT o.operation_key, o.draft_key, o.revision, o.row_watermark '
+        'FROM outbox_operations o JOIN outbox_drafts d '
+        'ON d.draft_key = o.draft_key '
+        'WHERE o.state = ? AND d.connection_key = ? AND d.profile_key = ? '
+        'AND d.stored_session_id = ? '
+        '${marked ? 'AND o.row_watermark IS NOT NULL ' : ''}'
+        'ORDER BY o.created_at, o.rowid',
+        [
+          OperationState.unknown.name,
+          key.connection.value,
+          key.profile.value,
+          key.session,
+        ],
+      );
+
+  /// Sans repère, une opération reste affichée « incertaine » sans forcer de snapshot.
+  @override
+  Future<bool> hasUnknown(TimelineKey key) async =>
+      (await _unknownOperations(key, marked: true)).isNotEmpty;
+
+  /// Une opération `unknown` devient `accepted` seulement si le rapprochement
+  /// est sans ambiguïté : elle est la seule incertaine de la session et une
+  /// seule ligne utilisateur libre dépasse son repère. `failed` (renvoi
+  /// manuel possible) si rien n'est arrivé ni en cours. Sinon elle reste
+  /// `unknown`. Jamais de renvoi, de comparaison de texte, ni d'effacement du
+  /// brouillon (seule une acceptation directe le retire).
+  @override
+  Future<void> reconcile(
+    TimelineKey key,
+    Resumed state,
+    List<int> userRows,
+  ) async {
+    final ops = await _unknownOperations(key);
+    if (ops.length != 1) return;
+    final op = ops.single;
+    try {
+      final watermark = op['row_watermark'] as int?;
+      if (watermark == null) return;
+      final operation = OperationKey(op['operation_key'] as String);
+      final draft = DraftKey(op['draft_key'] as String);
+      final taken = {
+        for (final row in await database.rawQuery(
+          'SELECT o.user_row_id FROM outbox_operations o JOIN outbox_drafts d '
+          'ON d.draft_key = o.draft_key WHERE o.operation_key <> ? '
+          'AND o.user_row_id IS NOT NULL AND d.connection_key = ? '
+          'AND d.profile_key = ? AND d.stored_session_id = ?',
+          [
+            operation.value,
+            key.connection.value,
+            key.profile.value,
+            key.session,
+          ],
+        ))
+          row['user_row_id'] as int,
+      };
+      final fresh = userRows
+          .where((r) => r > watermark && !taken.contains(r))
+          .toList();
+      if (fresh.length == 1) {
+        await _commitAccepted(draft, operation, fresh.single);
+        _set(draft, const SendStatus(state: OperationState.accepted));
+      } else if (fresh.isEmpty &&
+          !state.running &&
+          !state.inflight &&
+          !state.queued) {
+        await _finish(
+          draft,
+          operation,
+          OperationState.failed,
+          'send.not_received',
+          true,
+        );
+      }
+    } catch (_) {
+      /* l'opération reste incertaine */
+    }
   }
 
   @override

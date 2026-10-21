@@ -131,6 +131,12 @@ class DraftViewModel extends ChangeNotifier {
     return k == null ? const TimelineProjection() : conversation.projection(k);
   }
 
+  /// Le fil est en cours de resynchronisation (distinct de l'état du travail).
+  bool get resyncing {
+    final k = _timelineKey;
+    return k != null && conversation.resyncing(k);
+  }
+
   Future<void> _loadTimeline() async {
     final k = _timelineKey;
     if (k == null) return;

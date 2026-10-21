@@ -450,7 +450,7 @@ void main() {
     expect(again.status(draft.key).retryable, isTrue);
   });
 
-  test('migration réelle v3 vers v5 : données et index « nouveau »', () async {
+  test('migration réelle v3 vers v6 : données et index « nouveau »', () async {
     directory = await Directory.systemTemp.createTemp('hermes-v3-');
     final path = '${directory.path}/hermes.sqlite';
     final old = await databaseFactoryFfi.openDatabase(
@@ -488,7 +488,7 @@ void main() {
     );
     h = Harness();
     outbox = OutboxRepository(database, gateway: h.repository);
-    expect(await database.getVersion(), 5);
+    expect(await database.getVersion(), 6);
     final row = (await database.query('outbox_drafts')).single;
     expect(row['body'], 'gardé');
     expect(row['revision'], 0);

@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'app/bootstrap.dart';
 import 'app/routes.dart';
+import 'models/connection.dart';
 import 'models/connection_gateway.dart';
 import 'models/draft.dart';
 import 'models/timeline.dart';
@@ -47,17 +48,19 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-class _MainAppState extends State<MainApp> {
+class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   late final AppRoutes _routes;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _routes = AppRoutes(widget.gateway, widget.outbox, widget.conversation);
     unawaited(widget.gateway.restore());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _routes.dispose();
     // L'outbox termine ses écritures avant que le gateway ferme la base.
     unawaited(
@@ -66,6 +69,36 @@ class _MainAppState extends State<MainApp> {
       ),
     );
     super.dispose();
+  }
+
+  /// Retour au premier plan : la socket a pu tomber en arrière-plan, ou rester
+  /// à moitié ouverte (elle se dit alors connectée) : un `gateway.ping` court
+  /// tranche. La resynchronisation suit la nouvelle socket ; le travail
+  /// serveur n'est jamais annulé par l'app.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final gateway = widget.gateway;
+    final snapshot = gateway.snapshot;
+    if (state != AppLifecycleState.resumed ||
+        snapshot.connection == null ||
+        !snapshot.authenticated ||
+        snapshot.busy) {
+      return;
+    }
+    if (snapshot.link != LinkState.connected) {
+      unawaited(gateway.reconnect());
+      return;
+    }
+    unawaited(
+      gateway
+          .call('gateway.ping', const {}, timeout: pingTimeout)
+          .then<void>(
+            (_) {},
+            onError: (Object _) {
+              if (mounted) unawaited(gateway.reconnect());
+            },
+          ),
+    );
   }
 
   @override

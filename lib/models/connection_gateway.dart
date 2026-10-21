@@ -3,6 +3,9 @@ import 'profile.dart';
 
 const rpcTimeout = Duration(seconds: 15);
 
+/// Sonde de la socket au retour au premier plan.
+const pingTimeout = Duration(seconds: 3);
+
 /// Erreur JSON-RPC reçue : refus certain du serveur.
 class RpcError implements Exception {
   const RpcError(this.code);
@@ -40,6 +43,9 @@ abstract interface class ConnectionGateway {
 
   /// Change à chaque nouvelle socket : les identifiants runtime n'y survivent pas.
   int get socketGeneration;
+
+  /// `replay_epoch` du dernier `gateway.ready` de la socket ouverte.
+  String? get replayEpoch;
 
   /// Appel JSON-RPC sur l'unique socket. Lève [RpcError] (refus reçu),
   /// `transport.offline` (rien écrit) ou `rpc.uncertain` (trame écrite, sans
