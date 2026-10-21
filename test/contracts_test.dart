@@ -65,14 +65,21 @@ void main() {
     () {
       final release = contract('release');
       expect(release['tag'], 'v0.22.2');
-      expect(release['commit'], 'd923a5eb487a17c0a68801bba9ef0f56c81040a8');
+      expect(release['commit'], '9e01b44dd23978f9ff40b7837467f3a9f1582130');
+      expect(release['baseTagCommit'], 'd923a5eb487a17c0a68801bba9ef0f56c81040a8');
+      expect(release['evidence'], 'documentary');
+      expect(release['realAcceptance'], 'open');
       expect(release['fixtures'], 'synthetic');
-      expect(release['installedBuild'], 'unverified');
+      expect(release['installedBuild'], 'observed-health');
       final openrpc = contract('openrpc');
       expect(openrpc['openrpc'], '1.3.2');
       expect(openrpc['x-provenance']['kind'], 'excerpt');
       expect(openrpc['x-provenance']['commit'], release['commit']);
-      expect(openrpc['methods'], hasLength(6));
+      expect(openrpc['methods'], hasLength(13));
+      expect(
+        (openrpc['x-notifications'] as List).map((n) => n['name']),
+        containsAll(['gateway.ready', 'message.start', 'message.delta', 'message.complete', 'message.interim', 'error', 'session.info', 'status.update', 'sessions.changed', 'session.title']),
+      );
       void checkRefs(Object? value) {
         if (value is List) {
           for (final item in value) {

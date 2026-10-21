@@ -1,12 +1,12 @@
 {
-  "sourceRoot":"https://github.com/NousResearch/hermes-agent/blob/d923a5eb487a17c0a68801bba9ef0f56c81040a8/",
+  "sourceRoot":"https://github.com/NousResearch/hermes-agent/blob/9e01b44dd23978f9ff40b7837467f3a9f1582130/",
   "rest":[
     {"method":"POST","path":"/auth/password-login","source":"hermes_cli/dashboard_auth/routes.py#L439-L493","fields":["provider","username","password","next"],"response":"cookies"},
     {"method":"POST","path":"/auth/native/refresh","source":"hermes_cli/dashboard_auth/routes.py#L589-L617","fields":["refresh_token","provider"],"response":"bearer"},
-    {"method":"GET","path":"/api/profiles","source":"hermes_cli/web_routers/profiles.py#L84-L100","fields":[],"response":"profiles"},
-    {"method":"POST","path":"/api/auth/ws-ticket","source":"hermes_cli/dashboard_auth/routes.py#L517-L564","fields":[],"response":"ticket"}
+    {"method":"GET","path":"/api/profiles","source":"hermes_cli/web_routers/profiles.py#L800-L803","fields":[],"response":"profiles"},
+    {"method":"POST","path":"/api/auth/ws-ticket","source":"hermes_cli/dashboard_auth/routes.py#L556-L571","fields":[],"response":"ticket"}
   ],
-  "rpc":[{"name":"gateway.capabilities","source":"tui_gateway/methods_voice.py#L434-L457","mutating":false}],
-  "socket":{"path":"/api/ws","protocols":["hermes-gateway-v1","hermes-gateway-ticket.<SYNTHETIC_TICKET>"],"source":"hermes_cli/web_server_chat.py#L207-L222"},
+  "rpc":[{"name":"gateway.capabilities","source":"tui_gateway/methods_voice.py#L442-L447","mutating":false}],
+  "socket":{"path":"/api/ws","protocols":["hermes-gateway-v1","hermes-gateway-ticket.<SYNTHETIC_TICKET>"],"source":"hermes_cli/web_server_chat.py#L265-L283"},
   "forbidden":["POST /api/profiles/active"]
 }

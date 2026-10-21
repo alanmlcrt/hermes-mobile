@@ -5,16 +5,21 @@ import json
 from pathlib import Path
 
 METHODS = {"gateway.capabilities", "ping", "client.capabilities",
-           "session.events.since", "session.create", "file.attach"}
-COMMIT = "d923a5eb487a17c0a68801bba9ef0f56c81040a8"
+           "session.events.since", "session.create", "file.attach",
+           "session.list", "session.history", "session.resume", "session.status",
+           "prompt.submit", "session.interrupt", "session.title"}
+NOTIFICATIONS = {"gateway.ready", "message.start", "message.delta", "message.complete",
+                 "message.interim", "error", "session.info", "status.update",
+                 "sessions.changed", "session.title"}
+COMMIT = "9e01b44dd23978f9ff40b7837467f3a9f1582130"
 
 
 def extract(source: dict) -> dict:
     output = {"openrpc": source["openrpc"], "info": copy.deepcopy(source["info"]),
               "methods": [m for m in source["methods"] if m["name"] in METHODS],
               "components": {"schemas": {}},
-              "x-notifications": [m for m in source["x-notifications"] if m["name"] == "gateway.ready"],
-              "x-provenance": {"release": "v0.22.2", "commit": COMMIT,
+              "x-notifications": [m for m in source["x-notifications"] if m["name"] in NOTIFICATIONS],
+              "x-provenance": {"release": "v0.22.2+1690 (main 9e01b44)", "commit": COMMIT,
                   "kind": "excerpt", "evidence": "documentary",
                   "source": f"https://github.com/NousResearch/hermes-agent/blob/{COMMIT}/apps/shared/src/gateway-contract.openrpc.json"}}
     seen = set()
