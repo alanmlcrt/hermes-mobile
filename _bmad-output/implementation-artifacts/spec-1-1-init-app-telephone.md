@@ -89,6 +89,9 @@ context:
 - Clé : `%USERPROFILE%\.hermes-mobile\upload-keystore.jks` (PKCS12, RSA 4096, alias `upload`) ; mots de passe aléatoires dans `%USERPROFILE%\.hermes-mobile\key.properties`, copié dans `android/key.properties` (ignoré).
 - Tâche GitHub (dépôt, remote, push) laissée non cochée : opérations distantes exclues de cette étape. Installation téléphone à faire par Alanc.
 
+- 2026-10-21 : APK release installé par adb sur le Pixel 8 Pro d'Alanc ; `Displayed fr.hermes_mobile/.MainActivity +554ms`, aucun plantage ; Alanc confirme l'affichage « Hello World! ». Stack validée sur téléphone réel.
+- Dépôt GitHub privé `alanmlcrt/hermes-mobile` créé, `master` et `story/1-1-init-app` poussés.
+
 ## Spec Change Log
 
 ## Review Triage Log
