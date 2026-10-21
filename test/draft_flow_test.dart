@@ -183,7 +183,7 @@ void main() {
               conversation: MemoryConversation(),
               key: failRead ? draft.key : const DraftKey('inconnu'),
             ),
-            onOpenProfiles: () {},
+            onOpenProfiles: (_) async => null,
           ),
         ),
       );
@@ -330,6 +330,207 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(Content.error('send.unknown')), findsOne);
     expect(tester.takeException(), isNull);
+  });
+
+  final toTravail = Content.draftProfile('Travail (travail)');
+  final fromDefault = Content.draftProfile('Principal (default)');
+
+  for (final scaled in [false, true]) {
+    testWidgets(
+      'sélecteur : profil rattaché, annoncé, texte intact, choix enregistré'
+      '${scaled ? ' (200 %)' : ''}',
+      (tester) async {
+        if (scaled) {
+          tester.view.physicalSize = const Size(375, 700);
+          tester.view.devicePixelRatio = 1;
+          tester.platformDispatcher.textScaleFactorTestValue = 2;
+          addTearDown(tester.view.reset);
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        }
+        final semantics = tester.ensureSemantics();
+        final (h, outbox, key) = await openDraft(tester);
+        await tester.enterText(find.byType(TextField), 'abc');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(fromDefault));
+        await tester.pumpAndSettle();
+        // Le profil actif est identifiable sans couleur seule.
+        expect(find.text(Content.selected), findsOne);
+        await tester.tap(find.text('Travail (travail)'));
+        await tester.pumpAndSettle();
+        expect(outbox.drafts.keys.single, key);
+        expect(outbox.drafts[key]!.profile, const ProfileKey('travail'));
+        expect(outbox.drafts[key]!.body, 'abc');
+        expect(_location(tester), '/draft/${key.value}');
+        expect(find.text('abc'), findsOne);
+        expect(
+          tester.getSemantics(find.text(toTravail)),
+          matchesSemantics(
+            label: toTravail,
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true,
+            hasFocusAction: true,
+            isFocusable: true,
+            isLiveRegion: true,
+          ),
+        );
+        expect(h.repository.snapshot.selectedProfile, const ProfileKey('travail'));
+        for (final request in h.transport.requests) {
+          expect(_epic1Paths, contains(request.uri.path));
+        }
+        expect(tester.takeException(), isNull);
+        semantics.dispose();
+      },
+    );
+  }
+
+  testWidgets('sélecteur désactivé pendant un envoi', (tester) async {
+    final (_, outbox, key) = await openDraft(tester);
+    outbox.setStatus(key, const SendStatus(state: OperationState.sending));
+    await tester.pumpAndSettle();
+    final button = find.ancestor(
+      of: find.text(fromDefault),
+      matching: find.byType(TextButton),
+    );
+    expect(tester.widget<TextButton>(button).onPressed, isNull);
+  });
+
+  testWidgets('« Mes profils » depuis un brouillon neuf rattache le choix', (
+    tester,
+  ) async {
+    final (_, outbox, key) = await openDraft(tester);
+    await tester.enterText(find.byType(TextField), 'abc');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Content.profilesTitle));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Travail (travail)'));
+    // Le retour part après l'écriture du choix, hors de toute image.
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    expect(_location(tester), '/draft/${key.value}');
+    expect(outbox.drafts[key]!.profile, const ProfileKey('travail'));
+    expect(find.text(toTravail), findsOne);
+    expect(find.text('abc'), findsOne);
+  });
+
+  testWidgets('perte d’authentification sur « Mes profils » : connexion', (
+    tester,
+  ) async {
+    final h = await _launched();
+    h.transport.ticketStatus = 500;
+    final outbox = MemoryOutbox();
+    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Content.profilesTitle));
+    await tester.pumpAndSettle();
+    h.transport.profilesStatus = 401;
+    h.transport.refreshStatus = 401;
+    h.transport.loginStatus = 401;
+    unawaited(h.repository.refreshProfiles());
+    await tester.pumpAndSettle();
+    expect(find.text(Content.connectTitle), findsOne);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('notification de profils sur le brouillon : « Mes profils » '
+      'ne se rouvre pas', (tester) async {
+    final (h, outbox, key) = await openDraft(tester);
+    await tester.tap(find.text(Content.profilesTitle));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Travail (travail)'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    expect(find.text(toTravail), findsOne);
+    await h.repository.refreshProfiles();
+    await tester.pumpAndSettle();
+    expect(find.text(toTravail), findsOne);
+    expect(find.text(Content.profilesTitle), findsOne);
+    expect(find.text(Content.localSelection), findsNothing);
+    expect(outbox.drafts[key]!.profile, const ProfileKey('travail'));
+  });
+
+  testWidgets('« Mes profils » : sélection en échec, brouillon inchangé', (
+    tester,
+  ) async {
+    final (h, outbox, key) = await openDraft(tester);
+    await tester.tap(find.text(Content.profilesTitle));
+    await tester.pumpAndSettle();
+    h.store.failSave = true;
+    await tester.tap(find.text('Travail (travail)'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    // Reste sur « Mes profils » avec l'erreur ; le brouillon ne bouge pas.
+    expect(find.text(Content.localSelection), findsOne);
+    expect(
+      find.text(Content.error('storage.unavailable')),
+      findsOne,
+    );
+    expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
+  });
+
+  testWidgets('écriture échouée : brouillon et profil inchangés, erreur dite', (
+    tester,
+  ) async {
+    final (_, outbox, key) = await openDraft(tester);
+    await tester.tap(find.text(fromDefault));
+    await tester.pumpAndSettle();
+    outbox.failSave = true;
+    await tester.tap(find.text('Travail (travail)'));
+    await tester.pumpAndSettle();
+    expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
+    expect(find.text(fromDefault), findsOne);
+    expect(
+      find.text('${Content.error('storage.unavailable')} ${Content.draftKept}'),
+      findsOne,
+    );
+  });
+
+  testWidgets('conversation commencée : profil en lecture seule, inchangé', (
+    tester,
+  ) async {
+    final h = await _launched();
+    await h.connect();
+    final outbox = MemoryOutbox();
+    const key = DraftKey('d-1');
+    outbox.drafts[key] = Draft(
+      key: key,
+      connection: ConnectionKey.create(),
+      profile: const ProfileKey('default'),
+      body: 'suite',
+      storedSessionId: 's-1',
+    );
+    bool? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DraftView(
+          create: () => DraftViewModel(
+            outbox: outbox,
+            gateway: h.repository,
+            conversation: MemoryConversation(),
+            key: key,
+          ),
+          onOpenProfiles: (pick) async {
+            picked = pick;
+            return const ProfileKey('travail');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(fromDefault), findsOne);
+    expect(
+      find.ancestor(
+        of: find.textContaining(Content.draftProfile('')),
+        matching: find.byType(TextButton),
+      ),
+      findsNothing,
+    );
+    await tester.tap(find.text(Content.profilesTitle));
+    await tester.pumpAndSettle();
+    expect(picked, isFalse);
+    expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
+    expect(find.text(fromDefault), findsOne);
   });
 
   for (final size in [const Size(375, 700), const Size(700, 375)]) {

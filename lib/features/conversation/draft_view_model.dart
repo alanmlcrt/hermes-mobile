@@ -44,6 +44,33 @@ class DraftViewModel extends ChangeNotifier {
       .where((p) => p.key == draft?.profile)
       .firstOrNull;
 
+  /// Brouillon neuf : le profil peut encore changer ; sinon lecture seule.
+  bool get canChooseProfile => draft != null && draft!.storedSessionId == null;
+
+  bool _selecting = false;
+
+  /// Rattache le brouillon au profil choisi, puis seulement l'enregistre
+  /// comme choix local ; sans déplacement effectif, l'erreur est affichée.
+  Future<void> selectProfile(ProfileKey profile) async {
+    if (!canChooseProfile || sendStatus.busy || _selecting) return;
+    _selecting = true;
+    try {
+      await outbox.reassignNewDraft(key, profile);
+      draft = await outbox.draft(key) ?? draft;
+      if (draft?.profile != profile) throw const AppError('storage.unavailable');
+      error = null;
+      _notify();
+      await gateway.selectProfile(profile);
+    } on AppError catch (e) {
+      error = e;
+    } catch (_) {
+      error = const AppError('storage.unavailable');
+    } finally {
+      _selecting = false;
+    }
+    _notify();
+  }
+
   Future<void> _load() async {
     try {
       draft = await outbox.draft(key);

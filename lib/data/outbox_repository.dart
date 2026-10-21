@@ -79,6 +79,72 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
   }
 
   @override
+  Future<void> reassignNewDraft(DraftKey key, ProfileKey profile) async {
+    try {
+      // Les saisies en vol (source et cible) sont écrites avant de déplacer
+      // les textes.
+      await Future.wait(_writes.values.map((w) => w.catchError((_) {})));
+      await database.transaction((t) async {
+        final rows = await t.query(
+          'outbox_drafts',
+          where: 'draft_key = ?',
+          whereArgs: [key.value],
+        );
+        if (rows.isEmpty) throw const AppError('draft.not_found');
+        final source = _draft(rows.single);
+        if (source.storedSessionId != null || source.profile == profile) return;
+        final targets = await t.query(
+          'outbox_drafts',
+          where:
+              'connection_key = ? AND profile_key = ? '
+              'AND stored_session_id IS NULL',
+          whereArgs: [source.connection.value, profile.value],
+        );
+        if (targets.isNotEmpty) {
+          final target = _draft(targets.single);
+          // Un envoi en cours garde son profil : rien ne bouge.
+          if (status(target.key).busy || status(key).busy) {
+            throw const AppError('draft.profile_busy');
+          }
+          if (target.body.isEmpty) {
+            await t.delete(
+              'outbox_operations',
+              where: 'draft_key = ?',
+              whereArgs: [target.key.value],
+            );
+            await t.delete(
+              'outbox_drafts',
+              where: 'draft_key = ?',
+              whereArgs: [target.key.value],
+            );
+          } else {
+            // L'index unique interdit deux brouillons neufs sur un profil :
+            // l'échange passe par une valeur provisoire.
+            Future<void> move(DraftKey draft, String to) => t.update(
+              'outbox_drafts',
+              {'profile_key': to},
+              where: 'draft_key = ?',
+              whereArgs: [draft.value],
+            );
+            await move(key, '');
+            await move(target.key, source.profile.value);
+          }
+        }
+        await t.update(
+          'outbox_drafts',
+          {'profile_key': profile.value},
+          where: 'draft_key = ?',
+          whereArgs: [key.value],
+        );
+      });
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      throw const AppError('storage.unavailable');
+    }
+  }
+
+  @override
   Future<Draft?> draft(DraftKey key) async {
     await _recover(key);
     final rows = await database.query(

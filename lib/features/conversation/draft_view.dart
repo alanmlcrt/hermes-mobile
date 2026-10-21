@@ -6,6 +6,7 @@ import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/composer.dart';
 import '../../ui/components/message_bubble.dart';
+import '../../ui/components/profile_choice.dart';
 import '../../ui/components/status_label.dart';
 import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
@@ -21,7 +22,8 @@ class DraftView extends StatefulWidget {
 
   /// Le ViewModel vit aussi longtemps que la page, pas que le rendu.
   final DraftViewModel Function() create;
-  final VoidCallback onOpenProfiles;
+  /// [pick] : l'écran renvoie le profil choisi (brouillon neuf seulement).
+  final Future<ProfileKey?> Function(bool pick) onOpenProfiles;
   @override
   State<DraftView> createState() => _DraftViewState();
 }
@@ -62,7 +64,7 @@ class _DraftViewState extends State<DraftView> {
           title: const Text(Content.newConversation),
           actions: [
             TextButton(
-              onPressed: widget.onOpenProfiles,
+              onPressed: () => _openProfiles(vm),
               child: const Text(Content.profilesTitle),
             ),
           ],
@@ -109,14 +111,7 @@ class _DraftViewState extends State<DraftView> {
     final atBottom =
         !c.hasClients || c.position.maxScrollExtent - c.position.pixels < Spacing.md;
     final children = <Widget>[
-      if (draft != null)
-        Text(
-          Content.draftProfile(
-            profile == null
-                ? draft.profile.value
-                : Content.profileName(profile.label, profile.key.value),
-          ),
-        ),
+      if (draft != null) _profileRow(context, vm, draft, profile),
       if (vm.error != null)
         Semantics(
           liveRegion: true,
@@ -147,6 +142,73 @@ class _DraftViewState extends State<DraftView> {
       itemCount: children.length,
       itemBuilder: (context, i) => children[i],
     );
+  }
+
+  /// Profil du brouillon : bouton de choix tant que la conversation est neuve,
+  /// texte seul ensuite. Région live : le profil choisi est annoncé.
+  Widget _profileRow(
+    BuildContext context,
+    DraftViewModel vm,
+    Draft draft,
+    Profile? profile,
+  ) {
+    final name = profile == null
+        ? draft.profile.value
+        : Content.profileName(profile.label, profile.key.value);
+    final label = Content.draftProfile(name);
+    if (!vm.canChooseProfile) return Text(label);
+    return Align(
+      alignment: Alignment.centerLeft,
+      // Fusionné : le bouton lui-même est la région live annonçant le profil.
+      child: MergeSemantics(
+        child: Semantics(
+          liveRegion: true,
+          hint: Content.chooseProfileHint,
+          child: TextButton.icon(
+            onPressed: vm.sendStatus.busy ? null : () => _pick(context, vm),
+            icon: const Icon(Icons.expand_more),
+            label: Text(label),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pick(BuildContext context, DraftViewModel vm) async {
+    final chosen = await showModalBottomSheet<ProfileKey>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Semantics(
+                header: true,
+                child: Text(
+                  Content.chooseProfile,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ),
+            for (final p in vm.gateway.snapshot.profiles)
+              ProfileChoice(
+                profile: p,
+                selected: p.key == vm.draft?.profile,
+                onTap: () => Navigator.of(context).pop(p.key),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (chosen != null && mounted) await vm.selectProfile(chosen);
+  }
+
+  /// « Mes profils » depuis un brouillon neuf renvoie le profil choisi.
+  Future<void> _openProfiles(DraftViewModel vm) async {
+    final chosen = await widget.onOpenProfiles(vm.canChooseProfile);
+    if (chosen != null && mounted) await vm.selectProfile(chosen);
   }
 
   /// Éléments du fil ; rebâti sans aucun appel (état dans la projection).

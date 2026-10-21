@@ -71,6 +71,12 @@ abstract interface class OutboxGateway {
   Future<Draft> openNewDraft(ConnectionKey connection, ProfileKey profile);
   Future<Draft?> draft(DraftKey key);
 
+  /// Rattache le brouillon neuf [key] à [profile] (une transaction) : un
+  /// brouillon neuf vide du profil est supprimé, un non vide échange son
+  /// profil avec [key] ; aucun texte n'est perdu. Sans effet sur un brouillon
+  /// qui a déjà une session.
+  Future<void> reassignNewDraft(DraftKey key, ProfileKey profile);
+
   /// Écritures sérialisées par brouillon : la dernière saisie gagne.
   Future<void> saveText(DraftKey key, String body);
 

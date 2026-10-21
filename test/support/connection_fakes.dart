@@ -6,6 +6,7 @@ import 'package:hermes_mobile/data/connection_repository.dart';
 import 'package:hermes_mobile/data/hermes_adapter.dart';
 import 'package:hermes_mobile/data/storage/connection_store.dart';
 import 'package:hermes_mobile/data/storage/secret_store.dart';
+import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
@@ -284,6 +285,41 @@ class MemoryOutbox implements OutboxGateway {
   Future<Draft?> draft(DraftKey key) async {
     if (failRead) throw StateError('synthetic storage failure');
     return drafts[key];
+  }
+
+  @override
+  Future<void> reassignNewDraft(DraftKey key, ProfileKey profile) async {
+    if (failSave) throw const AppError('storage.unavailable');
+    final d = drafts[key];
+    if (d == null) throw const AppError('draft.not_found');
+    if (d.storedSessionId != null || d.profile == profile) return;
+    Draft on(Draft x, ProfileKey p) => Draft(
+      key: x.key,
+      connection: x.connection,
+      profile: p,
+      body: x.body,
+      revision: x.revision,
+      storedSessionId: x.storedSessionId,
+    );
+    final target = drafts.values
+        .where(
+          (x) =>
+              x.connection == d.connection &&
+              x.profile == profile &&
+              x.storedSessionId == null,
+        )
+        .firstOrNull;
+    if (target != null) {
+      if (status(target.key).busy || status(key).busy) {
+        throw const AppError('draft.profile_busy');
+      }
+      if (target.body.isEmpty) {
+        drafts.remove(target.key);
+      } else {
+        drafts[target.key] = on(target, d.profile);
+      }
+    }
+    drafts[key] = on(d, profile);
   }
 
   @override

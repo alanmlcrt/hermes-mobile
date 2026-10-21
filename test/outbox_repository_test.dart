@@ -55,6 +55,144 @@ void main() {
     await database.close();
   });
 
+  group('reassignNewDraft', () {
+    const a = ProfileKey('a');
+    const b = ProfileKey('b');
+    late Database database;
+    late OutboxRepository outbox;
+    setUp(() async {
+      database = await open();
+      outbox = OutboxRepository(database, gateway: Harness().repository);
+    });
+    tearDown(() async {
+      await outbox.dispose();
+      await database.close();
+    });
+
+    test('cible sans brouillon : le texte passe sur B', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      await outbox.saveText(abc.key, 'abc');
+      await outbox.reassignNewDraft(abc.key, b);
+      final moved = (await outbox.draft(abc.key))!;
+      expect((moved.profile, moved.body), (b, 'abc'));
+      expect((await outbox.openNewDraft(connection, b)).key, abc.key);
+      expect((await outbox.openNewDraft(connection, a)).key, isNot(abc.key));
+    });
+
+    test('cible vide : supprimée, le texte passe sur B', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      await outbox.saveText(abc.key, 'abc');
+      final empty = await outbox.openNewDraft(connection, b);
+      await outbox.reassignNewDraft(abc.key, b);
+      expect(await outbox.draft(empty.key), isNull);
+      expect((await outbox.draft(abc.key))!.profile, b);
+    });
+
+    test('cible non vide : les deux textes échangent leur profil', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      await outbox.saveText(abc.key, 'abc');
+      final xyz = await outbox.openNewDraft(connection, b);
+      await outbox.saveText(xyz.key, 'xyz');
+      await outbox.reassignNewDraft(abc.key, b);
+      final first = (await outbox.draft(abc.key))!;
+      final second = (await outbox.draft(xyz.key))!;
+      expect((first.profile, first.body), (b, 'abc'));
+      expect((second.profile, second.body), (a, 'xyz'));
+    });
+
+    test('session déjà créée : profil inchangé', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      await database.update('outbox_drafts', {'stored_session_id': 's-1'});
+      await outbox.reassignNewDraft(abc.key, b);
+      expect((await outbox.draft(abc.key))!.profile, a);
+    });
+
+    test('brouillon inconnu : draft.not_found', () async {
+      await expectLater(
+        outbox.reassignNewDraft(const DraftKey('inconnu'), b),
+        throwsA(isA<AppError>().having((e) => e.code, 'code', 'draft.not_found')),
+      );
+    });
+
+    test('saisie non attendue puis rattachement : texte conservé', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      final xyz = await outbox.openNewDraft(connection, b);
+      unawaited(outbox.saveText(abc.key, 'abc'));
+      unawaited(outbox.saveText(xyz.key, 'xyz'));
+      await outbox.reassignNewDraft(abc.key, b);
+      final first = (await outbox.draft(abc.key))!;
+      final second = (await outbox.draft(xyz.key))!;
+      expect((first.profile, first.body), (b, 'abc'));
+      expect((second.profile, second.body), (a, 'xyz'));
+    });
+
+    test('échec au milieu de l’échange : retour arrière complet', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      await outbox.saveText(abc.key, 'abc');
+      final xyz = await outbox.openNewDraft(connection, b);
+      await outbox.saveText(xyz.key, 'xyz');
+      // Le deuxième déplacement (cible vers A) échoue.
+      await database.execute(
+        'CREATE TRIGGER boom BEFORE UPDATE OF profile_key ON outbox_drafts '
+        "WHEN NEW.profile_key = 'a' "
+        "BEGIN SELECT RAISE(ABORT, 'boom'); END",
+      );
+      await expectLater(
+        outbox.reassignNewDraft(abc.key, b),
+        throwsA(isA<AppError>()),
+      );
+      expect((await outbox.draft(abc.key))!.profile, a);
+      expect((await outbox.draft(xyz.key))!.profile, b);
+      expect((await outbox.draft(xyz.key))!.body, 'xyz');
+    });
+
+    test('cible en envoi : draft.profile_busy, rien ne change', () async {
+      final h = Harness();
+      await h.connect();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      // Sans réponse à session.create : l'envoi reste « preparing ».
+      h.transport.rpc = (method, params) => null;
+      final busy = OutboxRepository(
+        database,
+        gateway: h.repository,
+        timeout: const Duration(milliseconds: 100),
+      );
+      final abc = await busy.openNewDraft(connection, a);
+      await busy.saveText(abc.key, 'abc');
+      final xyz = await busy.openNewDraft(connection, b);
+      await busy.saveText(xyz.key, 'xyz');
+      final sending = busy.send(xyz.key);
+      expect(busy.status(xyz.key).busy, isTrue);
+      await expectLater(
+        busy.reassignNewDraft(abc.key, b),
+        throwsA(
+          isA<AppError>().having((e) => e.code, 'code', 'draft.profile_busy'),
+        ),
+      );
+      expect((await busy.draft(abc.key))!.profile, a);
+      expect((await busy.draft(xyz.key))!.profile, b);
+      await sending;
+      await busy.dispose();
+      await h.repository.dispose();
+    });
+
+    test('transaction en erreur : rien ne change', () async {
+      final abc = await outbox.openNewDraft(connection, a);
+      await outbox.saveText(abc.key, 'abc');
+      final xyz = await outbox.openNewDraft(connection, b);
+      await outbox.saveText(xyz.key, 'xyz');
+      await database.close();
+      await expectLater(
+        outbox.reassignNewDraft(abc.key, b),
+        throwsA(isA<AppError>()),
+      );
+      database = await open();
+      outbox = OutboxRepository(database, gateway: Harness().repository);
+      expect((await outbox.draft(abc.key))!.profile, a);
+      expect((await outbox.draft(xyz.key))!.profile, b);
+    });
+  });
+
   test("dispose attend l'écriture en cours avant fermeture", () async {
     var database = await open();
     final outbox = OutboxRepository(database, gateway: Harness().repository);

@@ -9,6 +9,7 @@ import '../features/profiles/profiles_view.dart';
 import '../features/profiles/profiles_view_model.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
+import '../models/profile.dart';
 import '../models/timeline.dart';
 
 /// Seul décideur de l'écran d'ouverture : notification (Epic 5), puis
@@ -32,6 +33,10 @@ Future<String?> resolveLaunchTarget(
   }
 }
 
+class _Refresh extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
 class AppRoutes {
   AppRoutes(
     ConnectionGateway gateway,
@@ -41,7 +46,7 @@ class AppRoutes {
     connection = ConnectionViewModel(gateway);
     profiles = ProfilesViewModel(gateway);
     router = GoRouter(
-      refreshListenable: profiles,
+      refreshListenable: _refresh,
       redirect: (context, state) {
         if (state.uri.scheme == 'hermes-mobile') {
           return Uri(
@@ -70,7 +75,8 @@ class AppRoutes {
         ),
         GoRoute(
           path: '/profiles',
-          builder: (context, state) => _profiles(context),
+          builder: (context, state) =>
+              _profiles(context, pick: state.extra == true),
         ),
         GoRoute(
           path: '/draft/:draftKey',
@@ -81,7 +87,8 @@ class AppRoutes {
               conversation: conversation,
               key: DraftKey(state.pathParameters['draftKey']!),
             ),
-            onOpenProfiles: () => context.push('/profiles'),
+            onOpenProfiles: (pick) =>
+                context.push<ProfileKey>('/profiles', extra: pick),
           ),
         ),
         GoRoute(
@@ -93,12 +100,27 @@ class AppRoutes {
       errorBuilder: (context, state) =>
           _connection(context, link: state.uri.toString()),
     );
+    // Hors accueil, seule une perte d'authentification relance les
+    // redirections : une notification de profils rejouerait l'écran « Mes
+    // profils » après son retour au brouillon.
+    var authenticated = gateway.snapshot.authenticated;
+    _onProfiles = () {
+      final now = gateway.snapshot.authenticated;
+      final home = router.routeInformationProvider.value.uri.path == '/';
+      if (now == authenticated && !home) return;
+      authenticated = now;
+      _refresh.ping();
+    };
+    profiles.addListener(_onProfiles);
   }
   late final ConnectionViewModel connection;
   late final ProfilesViewModel profiles;
+  final _refresh = _Refresh();
+  late final VoidCallback _onProfiles;
   late final GoRouter router;
-  Widget _profiles(BuildContext context) => ProfilesView(
+  Widget _profiles(BuildContext context, {bool pick = false}) => ProfilesView(
     viewModel: profiles,
+    onPicked: pick ? (key) => context.pop(key) : null,
     onChangeServer: () {
       connection.edit();
       context.go('/pair');
@@ -112,6 +134,8 @@ class AppRoutes {
   void dispose() {
     router.dispose();
     connection.dispose();
+    profiles.removeListener(_onProfiles);
     profiles.dispose();
+    _refresh.dispose();
   }
 }

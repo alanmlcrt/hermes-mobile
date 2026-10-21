@@ -357,7 +357,7 @@ void main() {
               conversation: memory,
               key: d.key,
             ),
-            onOpenProfiles: () {},
+            onOpenProfiles: (_) async => null,
           ),
         ),
       ),

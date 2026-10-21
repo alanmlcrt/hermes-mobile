@@ -61,6 +61,8 @@ abstract final class Content {
   static const workUnknown = 'Non synchronisé';
   static const draftKept = 'Votre texte reste affiché sur cet écran.';
   static String draftProfile(String name) => 'Profil : $name';
+  static const chooseProfileHint = 'Ouvre la liste des profils';
+  static const chooseProfile = 'Choisir le profil';
   static const profileFixture = 'Principal';
   static const profileFixtureKey = 'default';
   static String profileName(String label, String key) => '$label ($key)';
@@ -91,6 +93,8 @@ abstract final class Content {
     'transport.redirect' =>
       'Le serveur redirige la connexion. Vérifiez son adresse.',
     'storage.unavailable' => startupError,
+    'draft.profile_busy' =>
+      'Un envoi est en cours sur l’autre brouillon de ce profil. Réessayez après son envoi.',
     'draft.not_found' => 'Ce brouillon est introuvable.',
     'send.unknown' =>
       'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',

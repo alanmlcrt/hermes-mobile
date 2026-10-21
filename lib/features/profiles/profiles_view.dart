@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/connection.dart';
+import '../../models/profile.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
 import '../../ui/components/status_label.dart';
@@ -13,7 +14,11 @@ class ProfilesView extends StatelessWidget {
     super.key,
     required this.viewModel,
     required this.onChangeServer,
+    this.onPicked,
   });
+
+  /// Ouvert depuis un brouillon neuf : renvoie le profil choisi.
+  final ValueChanged<ProfileKey>? onPicked;
   final ProfilesViewModel viewModel;
   final VoidCallback onChangeServer;
   @override
@@ -95,7 +100,18 @@ class ProfilesView extends StatelessWidget {
                     selected: state.selectedProfile == profile.key,
                     onTap: state.busy
                         ? null
-                        : () => viewModel.select(profile.key),
+                        : () async {
+                            await viewModel.select(profile.key);
+                            // Un seul retour, et seulement si le choix est
+                            // enregistré.
+                            if (!context.mounted ||
+                                ModalRoute.of(context)?.isCurrent != true ||
+                                viewModel.snapshot.selectedProfile !=
+                                    profile.key) {
+                              return;
+                            }
+                            onPicked?.call(profile.key);
+                          },
                   ),
                 const Text(Content.localSelection),
                 const SizedBox(height: Spacing.lg),
