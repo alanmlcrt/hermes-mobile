@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lire la version Flutter épinglée (.fvmrc)
+        id: fvm
+        run: echo "flutter=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ steps.fvm.outputs.flutter }}
+          cache: true
+
+      - name: Dépendances (lockfile commité)
+        run: flutter pub get --enforce-lockfile
+
+      - name: Analyse
+        run: flutter analyze
+
+      - name: Tests (dont contrôle des imports)
+        run: flutter test
+
+      # Pas de clé de signature en CI : build debug uniquement.
+      - name: Build Android
+        run: flutter build apk --debug
+
+      # Sans android/key.properties, le build release doit être refusé.
+      - name: Refus du release non signé
+        run: |
+          if flutter build apk --release > release.log 2>&1; then
+            echo "Le build release non signé aurait dû échouer."; cat release.log; exit 1
+          fi
+          grep -q "key.properties introuvable" release.log || { cat release.log; exit 1; }

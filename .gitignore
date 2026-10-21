@@ -1,2 +1,33 @@
 _bmad/render/
 _bmad/config.user.toml
+
+# Signature release (hors dépôt)
+android/key.properties
+*.jks
+*.keystore
+
+# FVM
+.fvm/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Android
+android/.gradle/
+android/local.properties
+android/captures/
+android/app/debug/
+android/app/profile/
+android/app/release/
