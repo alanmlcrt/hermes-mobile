@@ -6,6 +6,7 @@ import 'dart:async';
 import 'app/bootstrap.dart';
 import 'app/routes.dart';
 import 'models/connection.dart';
+import 'models/companion_background.dart';
 import 'models/connection_gateway.dart';
 import 'models/draft.dart';
 import 'models/timeline.dart';
@@ -17,9 +18,14 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    final (:gateway, :outbox, :conversation) = await bootstrap();
+    final (:gateway, :outbox, :conversation, :backgrounds) = await bootstrap();
     runApp(
-      MainApp(gateway: gateway, outbox: outbox, conversation: conversation),
+      MainApp(
+        gateway: gateway,
+        outbox: outbox,
+        conversation: conversation,
+        backgrounds: backgrounds,
+      ),
     );
   } catch (_) {
     runApp(
@@ -40,8 +46,10 @@ class MainApp extends StatefulWidget {
     required this.gateway,
     required this.outbox,
     required this.conversation,
+    this.backgrounds,
   });
   final ConnectionGateway gateway;
+  final CompanionBackgroundStore? backgrounds;
   final OutboxGateway outbox;
   final ConversationGateway conversation;
   @override
@@ -54,18 +62,28 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _routes = AppRoutes(widget.gateway, widget.outbox, widget.conversation);
+    _routes = AppRoutes(
+      widget.gateway,
+      widget.outbox,
+      widget.conversation,
+      backgrounds: widget.backgrounds,
+    );
     unawaited(widget.gateway.restore());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    final backgroundWrites = _routes.profiles.backgroundWritesDone;
     _routes.dispose();
     // L'outbox termine ses écritures avant que le gateway ferme la base.
     unawaited(
       widget.outbox.dispose().whenComplete(
-        () => widget.conversation.dispose().whenComplete(widget.gateway.dispose),
+        () => backgroundWrites.whenComplete(
+          () => widget.conversation.dispose().whenComplete(
+            widget.gateway.dispose,
+          ),
+        ),
       ),
     );
     super.dispose();

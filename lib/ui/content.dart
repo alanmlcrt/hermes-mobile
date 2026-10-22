@@ -2,6 +2,21 @@
 // Vocabulaire du quotidien : pas de jargon technique en avant.
 
 abstract final class Content {
+  static const backgroundTitle = 'Arrière-plan';
+  static const backgroundPreview = 'Aperçu';
+  static const backgroundApply = 'Appliquer';
+  static const backgroundCancel = 'Annuler';
+  static const backgroundSaving = 'Enregistrement…';
+  static const backgroundLoading = 'Chargement de l’arrière-plan…';
+  static const backgroundReadError =
+      'Impossible de lire l’arrière-plan enregistré.';
+  static const backgroundSaveError =
+      'Impossible d’enregistrer l’arrière-plan. Réessayez ou annulez.';
+  static const backgroundRetry = 'Réessayer';
+  static const lavenderPeach = 'Lavande et pêche';
+  static const mintSky = 'Menthe et ciel';
+  static const roseLilac = 'Rose et lilas';
+  static const backgroundSelected = 'Sélectionnée';
   static const companionName = 'Otc';
   static const companionFallback = 'Compagnon';
   static const pauseCompanion = 'Mettre les animations en pause';
@@ -121,14 +136,11 @@ abstract final class Content {
     'transport.redirect' =>
       'Le serveur redirige la connexion. Vérifiez son adresse.',
     'storage.unavailable' => startupError,
-    'draft.profile_busy' =>
-      'Un envoi est en cours sur l’autre brouillon de ce profil. Réessayez après son envoi.',
+    'draft.profile_busy' => 'Un envoi est en cours sur l’autre brouillon de ce profil. Réessayez après son envoi.',
     'draft.not_found' => 'Ce brouillon est introuvable.',
-    'send.unknown' =>
-      'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',
+    'send.unknown' => 'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',
     'send.turn_active' => turnActive,
-    'send.not_received' =>
-      'Hermes n’affiche pas cette demande. Vérifiez la conversation, puis renvoyez-la si besoin. Votre texte est conservé.',
+    'send.not_received' => 'Hermes n’affiche pas cette demande. Vérifiez la conversation, puis renvoyez-la si besoin. Votre texte est conservé.',
     'turn.error' =>
       'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',
     'send.unavailable' =>
@@ -138,11 +150,10 @@ abstract final class Content {
     'transport.unreachable' =>
       'La conversation n’a pas pu être préparée. Votre texte est conservé.',
     'rpc.4009' => 'La conversation est occupée. Votre texte est conservé.',
-    'rpc.4090' =>
-      'Trop de conversations sont actives sur Hermes. Votre texte est conservé.',
-    'rpc.5035' =>
-      'Hermes s’arrête ou redémarre. Votre texte est conservé.',
-    'rpc.4064' => 'Ce profil n’existe plus sur le serveur. Votre texte est conservé.',
+    'rpc.4090' => 'Trop de conversations sont actives sur Hermes. Votre texte est conservé.',
+    'rpc.5035' => 'Hermes s’arrête ou redémarre. Votre texte est conservé.',
+    'rpc.4064' =>
+      'Ce profil n’existe plus sur le serveur. Votre texte est conservé.',
     final code when code.startsWith('rpc.') =>
       'Hermes a refusé la demande. Votre texte est conservé.',
     _ => 'Serveur inaccessible. Vérifiez votre connexion et réessayez.',
@@ -158,6 +169,7 @@ abstract final class ConnectionLabels {
 
 /// Libellés et données fictives de la galerie de composants.
 abstract final class GalleryContent {
+  static const backgroundFailure = 'Simuler un échec puis réessayer';
   static const rabbitSection = 'Compagnon lapin';
   static const rabbitName = 'Otc';
   static const rabbitLarge = '180 px';

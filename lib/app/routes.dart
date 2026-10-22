@@ -11,6 +11,7 @@ import '../features/history/history_view_model.dart';
 import '../features/profiles/profiles_view.dart';
 import '../features/profiles/profiles_view_model.dart';
 import '../models/connection.dart';
+import '../models/companion_background.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
 import '../models/profile.dart';
@@ -66,10 +67,11 @@ class AppRoutes {
   AppRoutes(
     ConnectionGateway gateway,
     OutboxGateway outbox,
-    ConversationGateway conversation,
-  ) {
+    ConversationGateway conversation, {
+    CompanionBackgroundStore? backgrounds,
+  }) {
     connection = ConnectionViewModel(gateway);
-    profiles = ProfilesViewModel(gateway);
+    profiles = ProfilesViewModel(gateway, backgrounds: backgrounds);
     router = GoRouter(
       refreshListenable: _refresh,
       redirect: (context, state) {
@@ -186,7 +188,10 @@ class AppRoutes {
                   context.push<ProfileKey>('/profiles', extra: pick),
               onOpenHistory: (p) => context.push(historyPath(p)),
               onNewConversation: (p) => context.go(
-                Uri(path: '/', queryParameters: {'profile': p.value}).toString(),
+                Uri(
+                  path: '/',
+                  queryParameters: {'profile': p.value},
+                ).toString(),
               ),
             );
           },

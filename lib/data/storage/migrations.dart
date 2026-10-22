@@ -32,7 +32,9 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
     await db.execute(
       'ALTER TABLE outbox_drafts ADD COLUMN stored_session_id TEXT',
     );
-    await db.execute('ALTER TABLE outbox_drafts ADD COLUMN idempotency_key TEXT');
+    await db.execute(
+      'ALTER TABLE outbox_drafts ADD COLUMN idempotency_key TEXT',
+    );
     // Une fois la session créée, le brouillon quitte l'unicité « nouveau ».
     await db.execute('DROP INDEX outbox_drafts_target');
     await db.execute(
@@ -91,13 +93,26 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
         where: 'draft_key = ?',
         whereArgs: [draft],
       );
-      await db.delete('outbox_drafts', where: 'draft_key = ?', whereArgs: [draft]);
+      await db.delete(
+        'outbox_drafts',
+        where: 'draft_key = ?',
+        whereArgs: [draft],
+      );
     }
     // Un seul brouillon de suite par conversation (casse respectée : collation BINARY).
     await db.execute(
       'CREATE UNIQUE INDEX outbox_drafts_session ON outbox_drafts '
       '(connection_key, profile_key, stored_session_id) '
       'WHERE stored_session_id IS NOT NULL',
+    );
+  },
+  (db) async {
+    await db.execute(
+      'CREATE TABLE companion_backgrounds ('
+      'origin TEXT NOT NULL COLLATE BINARY, '
+      'connection_key TEXT NOT NULL COLLATE BINARY, '
+      'profile_key TEXT NOT NULL COLLATE BINARY, palette_id TEXT NOT NULL, '
+      'PRIMARY KEY (origin, connection_key, profile_key))',
     );
   },
 ];

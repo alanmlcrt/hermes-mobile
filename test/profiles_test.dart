@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'dart:async';
+
 import 'dart:ui' show Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +9,9 @@ import 'package:hermes_mobile/features/profiles/profiles_view.dart';
 import 'package:hermes_mobile/features/profiles/profiles_view_model.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/profile.dart';
+import 'package:hermes_mobile/models/connection_gateway.dart';
+import 'package:hermes_mobile/models/companion_background.dart';
+import 'package:hermes_mobile/ui/components/companion_background_editor.dart';
 import 'package:hermes_mobile/ui/components/profile_companion_panel.dart';
 import 'package:hermes_mobile/ui/components/rabbit_companion.dart';
 import 'package:hermes_mobile/ui/content.dart';
@@ -50,7 +55,192 @@ RabbitPainter rabbitPose(WidgetTester tester) => tester
     .whereType<RabbitPainter>()
     .single;
 
+class BackgroundGateway implements ConnectionGateway {
+  @override
+  ConnectionSnapshot snapshot = profileState();
+  final updates = StreamController<ConnectionSnapshot>.broadcast(sync: true);
+  @override
+  Stream<ConnectionSnapshot> get snapshots => updates.stream;
+  void show(ConnectionSnapshot value) {
+    snapshot = value;
+    updates.add(value);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class DelayedBackgrounds implements CompanionBackgroundStore {
+  final reads = <(CompanionBackgroundIdentity, Completer<CompanionPalette>)>[];
+  final writes =
+      <(CompanionBackgroundIdentity, CompanionPalette, Completer<void>)>[];
+  @override
+  Future<CompanionPalette> read(CompanionBackgroundIdentity id) {
+    final c = Completer<CompanionPalette>();
+    reads.add((id, c));
+    return c.future;
+  }
+
+  @override
+  Future<void> save(CompanionBackgroundIdentity id, CompanionPalette palette) {
+    final c = Completer<void>();
+    writes.add((id, palette, c));
+    return c.future;
+  }
+}
+
 void main() {
+  test(
+    'background : A vers B vers A ignore la fin de l’ancienne édition',
+    () async {
+      final gateway = BackgroundGateway();
+      final store = DelayedBackgrounds();
+      final vm = ProfilesViewModel(gateway, backgrounds: store);
+      store.reads.last.$2.complete(CompanionPalette.lavenderPeach);
+      await Future<void>.delayed(Duration.zero);
+      final write = vm.saveBackground(
+        vm.backgroundIdentity!,
+        CompanionPalette.roseLilac,
+      );
+      gateway.show(profileState(selected: secondProfile.key));
+      gateway.show(profileState());
+      store.reads.last.$2.complete(CompanionPalette.mintSky);
+      await Future<void>.delayed(Duration.zero);
+      var notifications = 0;
+      vm.addListener(() => notifications++);
+      store.writes.single.$3.complete();
+      await write;
+      expect(vm.palette, CompanionPalette.mintSky);
+      expect(notifications, 0);
+      store.reads[1].$2.complete(CompanionPalette.lavenderPeach);
+      await Future<void>.delayed(Duration.zero);
+      vm.dispose();
+      await gateway.updates.close();
+    },
+  );
+  test('background : lectures obsolètes, retry, identité origine et écriture attachée à sa cible', () async {
+    final gateway = BackgroundGateway();
+    final store = DelayedBackgrounds();
+    final vm = ProfilesViewModel(gateway, backgrounds: store);
+    expect(vm.backgroundLoading, isTrue);
+    final first = vm.backgroundIdentity!;
+    gateway.show(profileState(selected: secondProfile.key));
+    store.reads[0].$2.complete(CompanionPalette.roseLilac);
+    await Future<void>.delayed(Duration.zero);
+    expect(vm.palette, CompanionPalette.lavenderPeach);
+    expect(vm.backgroundLoading, isTrue);
+    store.reads[1].$2.completeError(StateError('read failed'));
+    await Future<void>.delayed(Duration.zero);
+    expect(vm.backgroundError, isTrue);
+    final retry = vm.loadBackground();
+    store.reads.last.$2.complete(CompanionPalette.mintSky);
+    await retry;
+    expect(vm.backgroundError, isFalse);
+    expect(vm.palette, CompanionPalette.mintSky);
+    final target = vm.backgroundIdentity!;
+    final write = vm.saveBackground(target, CompanionPalette.roseLilac);
+    gateway.show(
+      ConnectionSnapshot(
+        connection: Connection(
+          key: target.connection,
+          origin: parseOrigin('https://other.example'),
+        ),
+        selectedProfile: target.profile,
+        profiles: const [firstProfile, secondProfile],
+        profilesState: ProfilesState.ready,
+      ),
+    );
+    expect(vm.backgroundIdentity, isNot(target));
+    expect(vm.backgroundIdentity!.connection, target.connection);
+    store.reads.last.$2.complete(CompanionPalette.lavenderPeach);
+    store.writes.single.$3.complete();
+    await write;
+    expect(store.writes.single.$1, target);
+    expect(vm.palette, CompanionPalette.lavenderPeach);
+    expect(first.profile, firstProfile.key);
+    gateway.show(profileState(selected: null));
+    expect(vm.backgroundIdentity, isNull);
+    vm.dispose();
+    await gateway.updates.close();
+  });
+
+  testWidgets(
+    'background : lecture bloquante et édition abandonnée au changement de serveur',
+    (tester) async {
+      final gateway = BackgroundGateway();
+      final store = DelayedBackgrounds();
+      final vm = ProfilesViewModel(gateway, backgrounds: store);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ProfilesView(viewModel: vm, onChangeServer: () {}),
+        ),
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.widgetWithText(OutlinedButton, Content.backgroundTitle),
+            )
+            .onPressed,
+        isNull,
+      );
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
+      expect(find.bySemanticsLabel(Content.backgroundLoading), findsOneWidget);
+      semantics.dispose();
+      store.reads.single.$2.completeError(StateError('failed'));
+      await tester.pumpAndSettle();
+      expect(find.text(Content.backgroundReadError), findsOneWidget);
+      await tester.tap(find.text(Content.backgroundRetry));
+      await tester.pump();
+      store.reads.last.$2.complete(CompanionPalette.mintSky);
+      await tester.pumpAndSettle();
+      final activate = tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, Content.backgroundTitle),
+          )
+          .onPressed!;
+      activate();
+      activate();
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(CompanionBackgroundEditor, skipOffstage: false),
+        findsOneWidget,
+      );
+      gateway.show(
+        ConnectionSnapshot(
+          connection: Connection(
+            key: const ConnectionKey('one'),
+            origin: parseOrigin('https://different.example'),
+          ),
+          selectedProfile: firstProfile.key,
+          profiles: const [firstProfile],
+          profilesState: ProfilesState.ready,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(CompanionBackgroundEditor), findsNothing);
+      expect(store.writes, isEmpty);
+      store.reads.last.$2.complete(CompanionPalette.roseLilac);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(Content.backgroundTitle));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(Content.mintSky));
+      await tester.tap(find.text(Content.backgroundApply));
+      await tester.pump();
+      expect(store.writes, hasLength(1));
+      expect(store.writes.single.$1.origin, 'https://different.example');
+      gateway.show(profileState(selected: null));
+      await tester.pumpAndSettle();
+      expect(find.byType(CompanionBackgroundEditor), findsNothing);
+      store.writes.single.$3.complete();
+      await tester.pump();
+      expect(vm.backgroundIdentity, isNull);
+      expect(vm.palette, CompanionPalette.lavenderPeach);
+      await tester.pumpWidget(const SizedBox());
+      vm.dispose();
+      await gateway.updates.close();
+    },
+  );
   testWidgets(
     'profils : suspension hors viewport, route et arrière-plan, libellé long accessible',
     (tester) async {
@@ -170,6 +360,10 @@ void main() {
       await tester.pump();
       expect(tester.getRect(find.byType(ProfileCompanionPanel)), rect);
       expect(find.text('Principal (first)'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text(Content.refreshingProfiles),
+        100,
+      );
       expect(find.text(Content.refreshingProfiles), findsOneWidget);
       vm.show(profileState(profiles: [], state: ProfilesState.empty));
       await tester.pump();
@@ -362,6 +556,8 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(find.text('Travail (travail)'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Travail (travail)'));
       await tester.pumpAndSettle();
       final selected = tester.getSemantics(find.text('Travail (travail)'));

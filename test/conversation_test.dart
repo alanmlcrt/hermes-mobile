@@ -319,7 +319,7 @@ void main() {
     h = Harness();
     outbox = OutboxRepository(database, gateway: h.repository);
     conversation = newConversation();
-    expect(await database.getVersion(), 7);
+    expect(await database.getVersion(), 8);
     expect((await database.query('outbox_drafts')).single['body'], 'gardé');
     expect(await database.query('conversation_timelines'), isEmpty);
   });

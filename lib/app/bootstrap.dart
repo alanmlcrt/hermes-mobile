@@ -7,6 +7,8 @@ import '../data/hermes_adapter.dart';
 import '../data/outbox_repository.dart';
 import '../data/storage/connection_store.dart';
 import '../data/storage/database.dart';
+import '../data/storage/companion_background_store.dart';
+import '../models/companion_background.dart';
 import '../data/storage/secret_store.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
@@ -15,6 +17,7 @@ import '../models/timeline.dart';
 Future<
   ({
     ConnectionGateway gateway,
+    CompanionBackgroundStore backgrounds,
     OutboxGateway outbox,
     ConversationGateway conversation,
   })
@@ -35,6 +38,7 @@ bootstrap() async {
   );
   return (
     gateway: repository,
+    backgrounds: SqliteCompanionBackgroundStore(database),
     outbox: OutboxRepository(
       database,
       gateway: repository,

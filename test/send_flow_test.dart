@@ -488,7 +488,7 @@ void main() {
     );
     h = Harness();
     outbox = OutboxRepository(database, gateway: h.repository);
-    expect(await database.getVersion(), 7);
+    expect(await database.getVersion(), 8);
     final row = (await database.query('outbox_drafts')).single;
     expect(row['body'], 'gardé');
     expect(row['revision'], 0);

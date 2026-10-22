@@ -304,7 +304,7 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 7);
+    expect(await database.getVersion(), 8);
     expect(
       (await database.query('outbox_drafts', orderBy: 'draft_key')).map((r) => r['draft_key']),
       ['d2', 'd4'],
@@ -337,7 +337,7 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 7);
+    expect(await database.getVersion(), 8);
     expect(
       (await database.query('connection_entries')).single['connection_key'],
       'stable-v2',

@@ -11,6 +11,9 @@ import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
 import 'components/rabbit_companion.dart';
+import 'components/companion_background_editor.dart';
+import 'components/companion_backdrop.dart';
+import '../models/companion_background.dart';
 import '../models/history.dart';
 import '../models/profile.dart';
 import '../models/timeline.dart';
@@ -149,6 +152,7 @@ class ComponentGallery extends StatelessWidget {
   Widget build(BuildContext context) {
     final sections = <(String, Widget Function())>[
       (GalleryContent.rabbitSection, () => const _RabbitPreview()),
+      (Content.backgroundTitle, () => const _BackgroundPreview()),
       (GalleryContent.statusLabelSection, _statusLabels),
       (GalleryContent.sectionCardSection, _sectionCard),
       (
@@ -203,6 +207,70 @@ class ComponentGallery extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BackgroundPreview extends StatefulWidget {
+  const _BackgroundPreview();
+  @override
+  State<_BackgroundPreview> createState() => _BackgroundPreviewState();
+}
+
+class _BackgroundPreviewState extends State<_BackgroundPreview> {
+  CompanionPalette _palette = CompanionPalette.lavenderPeach;
+  Future<void> _open(bool fail) async {
+    final theme = Theme.of(context);
+    final media = MediaQuery.of(context);
+    final forcedMotion = context
+        .getInheritedWidgetOfExactType<_GalleryMotion>()!
+        .disabled;
+    var failed = false;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => Theme(
+          data: theme,
+          child: MediaQuery(
+            data: media.copyWith(
+              disableAnimations:
+                  forcedMotion || MediaQuery.disableAnimationsOf(routeContext),
+            ),
+            child: CompanionBackgroundEditor(
+              initialPalette: _palette,
+              onApply: (palette) async {
+                await Future<void>.delayed(Motion.medium);
+                if (fail && !failed) {
+                  failed = true;
+                  throw StateError('Gallery simulation');
+                }
+                if (mounted) setState(() => _palette = palette);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Center(
+        child: CompanionBackdrop(
+          palette: _palette,
+          child: const RabbitCompanion(name: Content.companionName),
+        ),
+      ),
+      Text(companionPaletteLabel(_palette)),
+      OutlinedButton(
+        onPressed: () => _open(false),
+        child: const Text(Content.backgroundTitle),
+      ),
+      OutlinedButton(
+        onPressed: () => _open(true),
+        child: const Text(GalleryContent.backgroundFailure),
+      ),
+    ],
+  );
 }
 
 class _RabbitPreview extends StatefulWidget {
@@ -265,6 +333,14 @@ class _RabbitPreviewState extends State<_RabbitPreview> {
   );
 }
 
+class _GalleryMotion extends InheritedWidget {
+  const _GalleryMotion({required this.disabled, required super.child});
+  final bool disabled;
+  @override
+  bool updateShouldNotify(_GalleryMotion oldWidget) =>
+      disabled != oldWidget.disabled;
+}
+
 class _VariantFrame extends StatelessWidget {
   const _VariantFrame({
     required this.variant,
@@ -305,7 +381,10 @@ class _VariantFrame extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Spacing.sm),
-                child,
+                _GalleryMotion(
+                  disabled: variant.disableAnimations,
+                  child: child,
+                ),
               ],
             ),
           ),

@@ -57,6 +57,18 @@ abstract final class TextScales {
 
 /// Réglages locaux du compagnon, sans modifier la palette de l'application.
 abstract final class RabbitTokens {
+  static const double frostSigma = 12;
+  static const Color frost = Color(0x33FFFFFF);
+  static const LinearGradient mintSky = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFD9F0E6), Color(0xFFDCEAF8)],
+  );
+  static const LinearGradient roseLilac = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF5DDE8), Color(0xFFE7DFF5)],
+  );
   static const double large = 180;
   static const double compact = 64;
   static const double minimum = 48;

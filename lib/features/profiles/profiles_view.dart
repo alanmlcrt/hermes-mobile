@@ -8,6 +8,7 @@ import '../../ui/components/status_label.dart';
 import '../../ui/components/section_card.dart';
 import '../../ui/components/profile_choice.dart';
 import '../../ui/components/profile_companion_panel.dart';
+import '../../ui/components/companion_background_editor.dart';
 import 'profiles_view_model.dart';
 
 class ProfilesView extends StatefulWidget {
@@ -31,7 +32,36 @@ class ProfilesView extends StatefulWidget {
 }
 
 class _ProfilesViewState extends State<ProfilesView> {
-  (ConnectionKey, ProfileKey)? _verifiedSelection;
+  (String, ConnectionKey, ProfileKey)? _verifiedSelection;
+  bool _editingBackground = false;
+
+  Future<void> _editBackground() async {
+    if (_editingBackground) return;
+    final vm = widget.viewModel;
+    final identity = vm.backgroundIdentity;
+    if (identity == null || vm.backgroundLoading || vm.backgroundError) return;
+    _editingBackground = true;
+    final navigator = Navigator.of(context);
+    final route = MaterialPageRoute<void>(
+      builder: (_) => CompanionBackgroundEditor(
+        initialPalette: vm.palette,
+        onApply: (palette) => vm.saveBackground(identity, palette),
+      ),
+    );
+    void identityChanged() {
+      if (vm.backgroundIdentity != identity && route.isActive) {
+        navigator.removeRoute(route);
+      }
+    }
+
+    vm.addListener(identityChanged);
+    try {
+      await navigator.push(route);
+    } finally {
+      _editingBackground = false;
+      vm.removeListener(identityChanged);
+    }
+  }
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -44,7 +74,11 @@ class _ProfilesViewState extends State<ProfilesView> {
           state.profilesState == ProfilesState.refreshing;
       final selected = state.selectedProfile;
       final identity = state.connection != null && selected != null
-          ? (state.connection!.key, selected)
+          ? (
+              parseOrigin(state.connection!.origin.toString()).toString(),
+              state.connection!.key,
+              selected,
+            )
           : null;
       final present = state.profiles.any((profile) => profile.key == selected);
       final knownSelection =
@@ -74,8 +108,13 @@ class _ProfilesViewState extends State<ProfilesView> {
               children: [
                 if (knownSelection) ...[
                   ProfileCompanionPanel(
-                    key: ValueKey((state.connection!.key, selected)),
+                    key: ValueKey(identity),
                     active: widget.active,
+                    palette: viewModel.palette,
+                    backgroundLoading: viewModel.backgroundLoading,
+                    backgroundError: viewModel.backgroundError,
+                    onRetryBackground: viewModel.loadBackground,
+                    onBackground: _editBackground,
                   ),
                   const SizedBox(height: Spacing.md),
                 ],

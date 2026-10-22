@@ -1,0 +1,246 @@
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) modèle propre : aucune violation
+00:00 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) modèle impur : fichier et import cités
+00:00 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue fautive : import relatif vers data/
+00:00 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue fautive : import package:hermes_mobile/data/
+00:00 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) modèle impur : dart:ui compte comme import Flutter
+00:00 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue fautive : export vers data/
+00:00 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue propre : models et ui autorisés
+00:00 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: lib/ respecte les frontières d'imports
+00:00 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: preview, annuler et retour ne sauvegardent rien
+00:00 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: preview, annuler et retour ne sauvegardent rien
+00:01 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: échec garde sélection, retry unique et retour bloqué pendant écriture
+00:01 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: clair sombre, portrait paysage, 200 %, clavier et sémantique
+00:09 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +28: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +29: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +30: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +31: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +32: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +33: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:10 +34: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +35: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +36: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +37: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +38: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +39: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +40: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +41: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +42: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +43: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:11 +44: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: restauration tardive préserve saisie et lien : null
+00:11 +45: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: restauration tardive préserve saisie et lien : null
+00:11 +46: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: restauration tardive préserve saisie et lien : null
+00:12 +47: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +48: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +49: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +50: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +51: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +52: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +53: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +54: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:12 +55: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +56: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +57: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +58: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +59: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +60: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +61: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +62: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +63: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +64: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:13 +65: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:13 +66: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +67: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +68: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +69: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +70: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +71: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +72: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +73: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +74: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +75: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +76: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +77: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +78: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +79: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:14 +80: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:15 +81: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:15 +82: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:15 +83: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:15 +84: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:15 +85: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:15 +86: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:15 +87: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:15 +88: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:15 +89: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:15 +90: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:15 +91: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +92: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +93: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +94: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +95: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +96: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +97: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +98: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +99: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +100: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +101: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +102: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +103: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +104: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +105: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +106: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +107: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:16 +108: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +109: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +110: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +111: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +112: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +113: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +114: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +115: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +116: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +117: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:17 +118: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +119: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +120: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +121: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +122: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +123: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +124: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +125: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +126: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +127: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +128: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +129: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +130: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +131: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +132: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +133: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +134: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +135: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +136: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:18 +137: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:18 +138: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +139: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +140: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +141: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +142: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +143: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +144: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +145: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +146: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +147: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +148: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +149: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +150: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +151: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +152: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +153: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +154: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +155: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +156: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +157: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +158: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +159: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +160: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +161: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +162: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +163: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +164: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +165: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +166: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +167: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:19 +168: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+00:19 +169: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+00:19 +170: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+00:19 +171: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+00:19 +172: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+00:19 +173: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+00:19 +174: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:19 +175: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:19 +176: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +177: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +178: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +179: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +180: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +181: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +182: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +183: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +184: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +185: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +186: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +187: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +188: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +189: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:20 +190: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +191: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +192: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +193: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +194: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +195: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +196: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +197: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +198: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +199: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +200: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +201: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +202: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:21 +203: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +204: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +205: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +206: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +207: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +208: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +209: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:22 +210: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +211: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +212: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +213: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +214: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +215: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +216: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:23 +217: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: reprise en échec : resumeFailed signalé par un changement, effacé au succès
+00:24 +218: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: perte d’authentification sur « Mes profils » : connexion
+00:24 +219: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: perte d’authentification sur « Mes profils » : connexion
+00:24 +220: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: perte d’authentification sur « Mes profils » : connexion
+00:24 +221: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:24 +222: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:24 +223: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:25 +224: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:25 +225: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:25 +226: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:26 +227: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:26 +228: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:26 +229: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:26 +230: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:26 +231: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:27 +232: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+00:27 +233: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+00:27 +234: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+00:27 +235: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+00:27 +236: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+00:28 +237: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+00:28 +238: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+00:29 +239: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+00:29 +240: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans 200 % : historique et conversation sans débordement (Size(700.0, 375.0))
+00:29 +241: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:35 +242: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine file d'attente non vide sans ligne : reste unknown
+00:36 +243: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine ligne étrangère en plus : deux candidates → reste unknown, texte conservé
+00:37 +244: All tests passed!

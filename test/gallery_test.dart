@@ -14,6 +14,72 @@ import 'package:hermes_mobile/ui/theme.dart';
 import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
+  testWidgets(
+    'éditeur galerie suit le mouvement réduit système pendant son ouverture',
+    (tester) async {
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      for (final variant in [0, 3]) {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: false);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildTheme(null, Brightness.light),
+            home: const ComponentGallery(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final action = find
+            .widgetWithText(OutlinedButton, Content.backgroundTitle)
+            .at(variant);
+        await tester.ensureVisible(action);
+        await tester.pumpAndSettle();
+        await tester.tap(action);
+        await tester.pumpAndSettle();
+        bool reduced() => MediaQuery.disableAnimationsOf(
+          tester.element(find.byType(RabbitCompanion).last),
+        );
+        expect(reduced(), variant == 3);
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        await tester.pump();
+        expect(reduced(), isTrue);
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: false);
+        await tester.pump();
+        expect(reduced(), variant == 3);
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
+  testWidgets('éditeur galerie : erreur simulée, retry puis succès local', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(null, Brightness.light),
+        home: const ComponentGallery(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final action = find.text(GalleryContent.backgroundFailure).first;
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Content.mintSky));
+    await tester.tap(find.text(Content.backgroundApply));
+    await tester.pumpAndSettle();
+    expect(find.text(Content.backgroundSaveError), findsOneWidget);
+    await tester.tap(find.text(Content.backgroundRetry));
+    await tester.pumpAndSettle();
+    expect(find.text(Content.backgroundSaveError), findsNothing);
+    expect(find.text(Content.mintSky), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets('chaque aperçu visible applique Pause et Reprendre au lapin', (
     tester,
   ) async {
@@ -89,7 +155,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(GalleryContent.resumeRabbit), findsOneWidget);
         // Toutes les variantes existent, dont sombre avec texte système à 200 %.
-        expect(find.byType(RabbitCompanion), findsNWidgets(12));
+        expect(find.byType(RabbitCompanion), findsNWidgets(16));
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       }
@@ -122,7 +188,7 @@ void main() {
       GalleryContent.variantReducedMotion,
     ]) {
       // Une fois par composant (9 sections).
-      expect(find.text(variant), findsNWidgets(9), reason: variant);
+      expect(find.text(variant), findsNWidgets(10), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -161,7 +227,7 @@ void main() {
     );
 
     expect(find.byType(SectionCard), findsNWidgets(4));
-    expect(find.byType(RabbitCompanion), findsNWidgets(4 * 3));
+    expect(find.byType(RabbitCompanion), findsNWidgets(4 * 4));
     expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(4));
     expect(find.byType(Composer), findsNWidgets(4));
     // Trois états de connexion, deux lignes d'activité, six états du travail.
