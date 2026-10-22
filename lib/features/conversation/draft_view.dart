@@ -329,6 +329,7 @@ class _DraftViewState extends State<DraftView> {
               ), GlobalKey.new),
         kind: item.kind,
         completed: item.completed,
+        paused: _companionPaused || vm.resyncing,
         details: item.details,
         expanded:
             _detailExpansion[(vm.draft?.key, item.eventKey ?? item)] ?? false,

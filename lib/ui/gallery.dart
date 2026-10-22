@@ -2,6 +2,7 @@
 // lancée par lib/main_gallery.dart, jamais importée par lib/main.dart.
 import 'package:flutter/material.dart';
 
+import 'components/activity_catalog.dart';
 import 'components/activity_line.dart';
 import 'components/activity_group.dart';
 import 'components/composer.dart';
@@ -230,6 +231,7 @@ class _ActivityPreviewState extends State<ActivityPreview> {
   ];
   final _detailsExpanded = <String?, bool>{};
   bool _reply = false;
+  bool _paused = false;
   bool? _manual;
   @override
   Widget build(BuildContext context) {
@@ -238,6 +240,31 @@ class _ActivityPreviewState extends State<ActivityPreview> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(GalleryContent.activitySynthetic),
+        const SizedBox(height: Spacing.xs),
+        const Text(GalleryContent.activityCatalog),
+        const SizedBox(height: Spacing.xs),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final kind in ActivityKind.values)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+                child: Row(
+                  children: [
+                    ActivityIllustration(kind: kind, paused: _paused),
+                    const SizedBox(width: Spacing.xs),
+                    Expanded(
+                      child: Text(
+                        GalleryContent.activityCatalogItem(kind),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: Spacing.xs),
         if (_items.length >= 2)
           ActivityGroup(
             count: _items.length,
@@ -252,6 +279,7 @@ class _ActivityPreviewState extends State<ActivityPreview> {
               child: ActivityLine(
                 kind: item.kind,
                 completed: item.completed,
+                paused: _paused,
                 details: item.details,
                 expanded: _detailsExpanded[item.toolId] ?? false,
                 onChanged: (value) =>
@@ -305,10 +333,34 @@ class _ActivityPreviewState extends State<ActivityPreview> {
                   : () => setState(
                       () => _items = [
                         ..._items,
+                        ActivityItem(
+                          1,
+                          ActivityKind.code,
+                          toolId: 'SYNTHETIC_CODE_${_items.length}',
+                          started: true,
+                        ),
+                      ],
+                    ),
+              child: const Text(GalleryContent.activityCode),
+            ),
+            TextButton(
+              onPressed: _reply
+                  ? null
+                  : () => setState(
+                      () => _items = [
+                        ..._items,
                         const ActivityItem(1, ActivityKind.unknown),
                       ],
                     ),
               child: const Text(GalleryContent.activityUnknown),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _paused = !_paused),
+              child: Text(
+                _paused
+                    ? GalleryContent.resumeActivities
+                    : GalleryContent.pauseActivities,
+              ),
             ),
             TextButton(
               onPressed: () => setState(() => _reply = true),
@@ -317,6 +369,7 @@ class _ActivityPreviewState extends State<ActivityPreview> {
             TextButton(
               onPressed: () => setState(() {
                 _reply = false;
+                _paused = false;
                 _manual = null;
                 _detailsExpanded.clear();
                 _items = const [
@@ -397,7 +450,10 @@ class _ConversationPreviewState extends State<ConversationCompanionPreview> {
               MessageBubble(
                 text: GalleryContent.sampleReply.substring(0, _textLength),
               ),
-            const ActivityLine(kind: ActivityKind.tool),
+            ActivityLine(
+              kind: ActivityKind.tool,
+              paused: _paused || !_active,
+            ),
             Semantics(liveRegion: true, child: WorkStateLabel(state: _work)),
           ],
         ),

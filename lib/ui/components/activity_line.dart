@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/timeline.dart';
 import '../content.dart';
 import '../tokens.dart';
+import 'activity_catalog.dart';
 import 'activity_details.dart';
 
 /// Ligne d'activité générique : jamais de détail inventé sur ce que fait Hermes.
@@ -11,21 +12,25 @@ class ActivityLine extends StatelessWidget {
     super.key,
     required this.kind,
     this.completed = false,
+    this.paused = false,
+    this.catalog = ActivityCatalog.standard,
     this.details = const {},
     this.expanded = false,
     this.onChanged,
   });
 
-  /// Famille issue du mapping (`tool`, `unknown`).
+  /// Famille issue du mapping (`tool`, `code`, `unknown`).
   final ActivityKind kind;
   final bool completed;
+  final bool paused;
+  final ActivityCatalog catalog;
   final Map<String, Object?> details;
   final bool expanded;
   final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final label = Content.activity(kind == ActivityKind.tool);
+    final label = Content.activityLabel(kind);
     final scheme = Theme.of(context).colorScheme;
     final heading = Semantics(
       container: true,
@@ -34,16 +39,11 @@ class ActivityLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: ActivityTokens.illustration,
-            height: ActivityTokens.illustration,
-            child: Icon(
-              kind == ActivityKind.tool
-                  ? Icons.build_outlined
-                  : Icons.circle_outlined,
-              size: IconSizes.sm,
-              color: scheme.content,
-            ),
+          ActivityIllustration(
+            kind: kind,
+            completed: completed,
+            paused: paused,
+            catalog: catalog,
           ),
           const SizedBox(width: Spacing.sm),
           Expanded(

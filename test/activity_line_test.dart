@@ -6,12 +6,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hermes_mobile/models/timeline.dart';
+import 'package:hermes_mobile/ui/components/activity_catalog.dart';
 import 'package:hermes_mobile/ui/components/activity_group.dart';
 import 'package:hermes_mobile/ui/components/activity_line.dart';
 import 'package:hermes_mobile/ui/components/activity_details.dart';
 import 'package:hermes_mobile/ui/content.dart';
 import 'package:hermes_mobile/ui/gallery.dart';
 import 'package:hermes_mobile/ui/theme.dart';
+import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
   testWidgets('sortie longue : deux axes, texte intégral et corps sans repli', (
@@ -320,7 +322,7 @@ void main() {
                 );
                 image.dispose();
                 final dir = Directory(
-                  '_bmad-output/implementation-artifacts/story-3-1-verification/captures',
+                  '_bmad-output/implementation-artifacts/story-3-3-verification/captures',
                 );
                 await dir.create(recursive: true);
                 await File(
@@ -337,6 +339,7 @@ void main() {
             expect(find.text(Content.activitySummary(3, 2)), findsOneWidget);
             for (final label in [
               GalleryContent.activitySecond,
+              GalleryContent.activityCode,
               GalleryContent.activityUnknown,
             ]) {
               expect(
@@ -353,4 +356,336 @@ void main() {
       }
     }
   }
+
+  testWidgets(
+    'catalogue par ActivityKind : repli générique et isolation de details[name] / emoji',
+    (tester) async {
+      final fallbackOnly = ActivityCatalog(entries: const {});
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                const ActivityLine(
+                  kind: ActivityKind.tool,
+                  details: {'name': 'write_file 💻', 'context': 'code'},
+                ),
+                const ActivityLine(kind: ActivityKind.code),
+                const ActivityLine(kind: ActivityKind.unknown),
+                ActivityLine(kind: ActivityKind.code, catalog: fallbackOnly),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      final paints = tester
+          .widgetList<CustomPaint>(
+            find.descendant(
+              of: find.byType(ActivityIllustration),
+              matching: find.byType(CustomPaint),
+            ),
+          )
+          .map((p) => p.painter)
+          .toList();
+      expect(paints[0], isA<ToolActivityPainter>());
+      expect(paints[1], isA<CodeActivityPainter>());
+      expect(paints[2], isA<UnknownActivityPainter>());
+      expect(paints[3], isA<UnknownActivityPainter>());
+      expect(ActivityKind.decode('tool'), ActivityKind.tool);
+      expect(ActivityKind.decode('code'), ActivityKind.code);
+      expect(ActivityKind.decode('unexpected_family'), ActivityKind.unknown);
+      expect(ActivityKind.decode(null), ActivityKind.unknown);
+    },
+  );
+
+  testWidgets(
+    'illustration code (UX-DR14), tool et unknown : châssis fixe aux traits épais, lignes/curseur mobiles, clé/signal mobiles et 3 points en rotation',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                ActivityLine(kind: ActivityKind.code),
+                ActivityLine(kind: ActivityKind.tool),
+                ActivityLine(kind: ActivityKind.unknown),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      CodeActivityPainter codePainter() => tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((p) => p.painter)
+          .whereType<CodeActivityPainter>()
+          .single;
+      ToolActivityPainter toolPainter() => tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((p) => p.painter)
+          .whereType<ToolActivityPainter>()
+          .single;
+      UnknownActivityPainter unknownPainter() => tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((p) => p.painter)
+          .whereType<UnknownActivityPainter>()
+          .single;
+
+      final initialChassis = codePainter().chassisBounds;
+      final initialLines = codePainter().lineLengths;
+      final initialCursor = codePainter().cursorOffset;
+      final initialDots = unknownPainter().dotCenters;
+      expect(codePainter().stationary, isTrue);
+      expect(toolPainter().stationary, isTrue);
+      expect(toolPainter().wrenchAngle, 0);
+      expect(toolPainter().signalX, ActivityTokens.toolSignalStartX);
+      expect(unknownPainter().stationary, isTrue);
+      expect(initialDots, hasLength(3));
+
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(codePainter().stationary, isFalse);
+      expect(codePainter().chassisBounds, initialChassis);
+      expect(codePainter().lineLengths, isNot(equals(initialLines)));
+      expect(codePainter().cursorOffset, isNot(equals(initialCursor)));
+
+      expect(toolPainter().stationary, isFalse);
+      expect(toolPainter().wrenchAngle, isNot(0));
+      expect(
+        toolPainter().signalX,
+        greaterThan(ActivityTokens.toolSignalStartX),
+      );
+
+      expect(unknownPainter().stationary, isFalse);
+      expect(unknownPainter().rotationAngle, greaterThan(0));
+      expect(unknownPainter().dotCenters, isNot(equals(initialDots)));
+
+      await tester.pump(ActivityTokens.cycle);
+      expect(codePainter().stationary, isTrue);
+      expect(codePainter().chassisBounds, initialChassis);
+      expect(codePainter().lineLengths, initialLines);
+      expect(codePainter().cursorOffset, initialCursor);
+      expect(toolPainter().stationary, isTrue);
+      expect(toolPainter().wrenchAngle, 0);
+      expect(toolPainter().signalX, ActivityTokens.toolSignalStartX);
+      expect(unknownPainter().stationary, isTrue);
+    },
+  );
+
+  testWidgets(
+    'suspension immédiate : mouvement réduit, pause, completed, Offstage, hors viewport et arrière-plan',
+    (tester) async {
+      var paused = false;
+      var completed = false;
+      var offstage = false;
+      var disableAnimations = false;
+      final scroll = ScrollController();
+      addTearDown(scroll.dispose);
+
+      Widget buildHarness() => MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(
+            size: const Size(375, 400),
+            disableAnimations: disableAnimations,
+          ),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, _) => SingleChildScrollView(
+                controller: scroll,
+                child: Column(
+                  children: [
+                    Offstage(
+                      offstage: offstage,
+                      child: ActivityLine(
+                        kind: ActivityKind.code,
+                        paused: paused,
+                        completed: completed,
+                      ),
+                    ),
+                    const SizedBox(height: 1200),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      CodeActivityPainter current() => tester
+          .widgetList<CustomPaint>(
+            find.byType(CustomPaint, skipOffstage: false),
+          )
+          .map((p) => p.painter)
+          .whereType<CodeActivityPainter>()
+          .single;
+
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 1. Mouvement réduit en cours de cycle -> arrêt immédiat.
+      disableAnimations = true;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      expect(current().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      // Reprise normale.
+      disableAnimations = false;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 2. Pause de la page -> variante immobile immédiate, zéro callback.
+      paused = true;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      expect(current().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      paused = false;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 3. Fin d'action (completed: true) -> variante immobile immédiate.
+      completed = true;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      expect(current().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      completed = false;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 4. Offstage -> suspension immédiate.
+      offstage = true;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      expect(current().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      offstage = false;
+      await tester.pumpWidget(buildHarness());
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 5. Défilement hors du viewport -> suspension immédiate.
+      scroll.jumpTo(800);
+      await tester.pump();
+      await tester.pump();
+      expect(current().stationary, isTrue);
+      await tester.pump(ActivityTokens.rest + ActivityTokens.cycle);
+      expect(current().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      scroll.jumpTo(0);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 6. Passage en arrière-plan -> suspension immédiate, reprise au retour.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      expect(current().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      // 7. Route couverte -> suspension immédiate, reprise au retour.
+      final navigator = Navigator.of(
+        tester.element(find.byType(ActivityIllustration)),
+      );
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('Route couverte')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.pump(ActivityTokens.rest + ActivityTokens.cycle);
+      expect(tester.binding.transientCallbackCount, 0);
+      navigator.pop();
+      await tester.pumpAndSettle();
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(current().stationary, isFalse);
+
+      await tester.pumpWidget(const SizedBox());
+      expect(tester.binding.transientCallbackCount, 0);
+    },
+  );
+
+  testWidgets(
+    'remplacement d’une entrée dans ActivityCatalog sans toucher au décodage ni au transport',
+    (tester) async {
+      final replaced = ActivityCatalog.standard.copyWithEntry(
+        ActivityKind.tool,
+        const ActivityCatalogEntry(painter: _ReplacementPainter.build),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ActivityLine(kind: ActivityKind.tool, catalog: replaced),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is CustomPaint && w.painter is _ReplacementPainter,
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+}
+
+class _ReplacementPainter extends CustomPainter {
+  const _ReplacementPainter({
+    required this.color,
+    required this.progress,
+    required this.stationary,
+  });
+
+  static CustomPainter build({
+    required Color color,
+    required double progress,
+    required bool stationary,
+  }) => _ReplacementPainter(
+    color: color,
+    progress: progress,
+    stationary: stationary,
+  );
+
+  final Color color;
+  final double progress;
+  final bool stationary;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_ReplacementPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.stationary != stationary;
 }

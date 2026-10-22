@@ -62,6 +62,10 @@ components:
 
 # Hermes Mobile — Design du compagnon
 
+## Complément approuvé — illustrations d’activité 3.3
+
+Les activités remplacent l’icône statique de 3.1 par `ActivityIllustration` (24 × 24 px) pilotée par `ActivityCatalog` (indexé par `ActivityKind` : `code` à châssis fixe aux traits épais + lignes/curseur mobiles, `tool` à clé oscillante + impulsion, `unknown` / repli à trois petits points en rotation sans bulle). Otc reste seul porteur de la préparation de réponse au niveau du tour (lot 4 inchangé). Toute ligne terminée (`completed: true`), en pause (`_companionPaused`), sous mouvement réduit, hors écran ou en arrière-plan affiche sa variante immobile sans timer actif.
+
 ## Complément approuvé — activités 3.1
 
 Les activités utilisent `ActivityLine`, le thème et les tokens existants : illustration statique réservée de 24 px, texte multiligne, repère neutre « Fin reçue » uniquement sur événement de fin et commandes de groupe de 48 px. Les familles restent `tool`/`unknown` ; aucune animation ni détail d’action nouveau. Ce complément conserve intégralement les contrats Otc ci-dessous et leur construction paresseuse par blocs.

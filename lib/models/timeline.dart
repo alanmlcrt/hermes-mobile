@@ -8,10 +8,14 @@ enum WorkState { sending, running, succeeded, failed, stopped, unknown }
 
 enum ActivityKind {
   tool,
+  code,
   unknown;
 
-  static ActivityKind decode(Object? value) =>
-      value == 'tool' ? ActivityKind.tool : ActivityKind.unknown;
+  static ActivityKind decode(Object? value) => switch (value) {
+    'tool' => ActivityKind.tool,
+    'code' => ActivityKind.code,
+    _ => ActivityKind.unknown,
+  };
 }
 
 /// Pose courante de présentation, sans mesure de progression ni succès.

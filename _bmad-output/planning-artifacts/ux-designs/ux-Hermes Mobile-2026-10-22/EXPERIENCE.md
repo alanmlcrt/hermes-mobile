@@ -17,6 +17,10 @@ sources:
 
 # Hermes Mobile — Expérience du compagnon
 
+## Complément approuvé — illustrations d’activité 3.3
+
+Le bouton « Mettre les animations en pause » de la conversation immobilise simultanément Otc et les illustrations d’activité (`ActivityIllustration`), tout comme le mouvement réduit système, la fin reçue (`completed: true`), le défilement hors du viewport, `Offstage` et le passage en arrière-plan. Remplacer une entrée dans `ActivityCatalog` ne modifie ni le décodage serveur (`EventMapping`), ni `ConversationRepository`, ni les contrats Otc.
+
 ## Complément approuvé — activités 3.1
 
 Au premier delta/interim non vide après une série d’au moins deux activités, la série se replie en « N activités » et indique combien n’ont pas de fin confirmée. Le choix manuel reste local et stable lors des mises à jour ; aucune reconstruction ou commande de repli ne lance d’appel Hermes ni ne déplace le focus. La fin reçue d’une action ne vaut ni réussite ni fin du travail ; seul `WorkStateLabel` porte le statut du travail. Lignes et commande native restent lisibles à 200 %, avec cible de commande de 48 px, état accessible replié/déplié et sans mouvement nouveau. Les contrats de présence, pause, chatouilles, fonds, suspension et placement Otc demeurent ceux approuvés ci-dessous.

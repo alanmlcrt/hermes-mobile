@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hermes_mobile/models/timeline.dart';
+import 'package:hermes_mobile/ui/components/activity_catalog.dart';
 import 'package:hermes_mobile/ui/components/activity_line.dart';
 import 'package:hermes_mobile/ui/components/composer.dart';
 import 'package:hermes_mobile/ui/components/message_bubble.dart';
@@ -44,6 +45,62 @@ void main() {
     await tester.pump();
     expect(find.text(Content.detailArguments), findsOneWidget);
   });
+
+  testWidgets(
+    'activité : ajout code, pause/reprise des illustrations et réinitialisation',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: SingleChildScrollView(child: ActivityPreview())),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text(GalleryContent.activityCode));
+      await tester.pump();
+      expect(find.byType(ActivityLine), findsNWidgets(2));
+      expect(find.text(Content.activityCode), findsOneWidget);
+
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      CodeActivityPainter codeLinePainter() => tester
+          .widgetList<CustomPaint>(
+            find.descendant(
+              of: find.byType(ActivityLine),
+              matching: find.byType(CustomPaint),
+            ),
+          )
+          .map((p) => p.painter)
+          .whereType<CodeActivityPainter>()
+          .single;
+      expect(codeLinePainter().stationary, isFalse);
+
+      await tester.tap(find.text(GalleryContent.pauseActivities));
+      await tester.pumpAndSettle();
+      expect(find.text(GalleryContent.resumeActivities), findsOneWidget);
+      for (final illustration in tester.widgetList<ActivityIllustration>(
+        find.byType(ActivityIllustration),
+      )) {
+        expect(illustration.paused, isTrue);
+      }
+      expect(codeLinePainter().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      await tester.tap(find.text(GalleryContent.resumeActivities));
+      await tester.pumpAndSettle();
+      expect(find.text(GalleryContent.pauseActivities), findsOneWidget);
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(codeLinePainter().stationary, isFalse);
+
+      await tester.tap(find.text(GalleryContent.pauseActivities));
+      await tester.pump();
+      await tester.tap(find.text(GalleryContent.activityReset));
+      await tester.pump();
+      expect(find.byType(ActivityLine), findsOneWidget);
+      expect(find.text(GalleryContent.pauseActivities), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets(
     'scénario conversation piloté : texte, terminal pendant chatouille, reprise',
     (tester) async {
@@ -345,6 +402,25 @@ void main() {
     expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 7)));
     expect(find.byType(MessageBubble), findsNWidgets(4 * 2));
     expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
+    expect(find.byType(ActivityIllustration), findsNWidgets(4 * 5));
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is CodeActivityPainter,
+      ),
+      findsNWidgets(4),
+    );
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is ToolActivityPainter,
+      ),
+      findsNWidgets(4 * 3),
+    );
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is UnknownActivityPainter,
+      ),
+      findsNWidgets(4),
+    );
     for (final state in WorkState.values) {
       expect(
         find.descendant(

@@ -1,5 +1,6 @@
 // Libellés d'interface (UX-DR22), séparés des styles.
 // Vocabulaire du quotidien : pas de jargon technique en avant.
+import '../models/timeline.dart';
 
 abstract final class Content {
   static const detailName = 'Nom';
@@ -78,8 +79,13 @@ abstract final class Content {
   static const yourRequest = 'Votre demande';
   static const hermesReply = 'Réponse de Hermes';
   static const activityTool = 'Appel d’outil';
+  static const activityCode = 'Écriture du code';
   static const activityUnknown = 'Événement non reconnu';
-  static String activity(bool tool) => tool ? activityTool : activityUnknown;
+  static String activityLabel(ActivityKind kind) => switch (kind) {
+    ActivityKind.tool => activityTool,
+    ActivityKind.code => activityCode,
+    ActivityKind.unknown => activityUnknown,
+  };
   static const activityEnd = 'Fin reçue';
   static const activityEndAccessible = 'Fin d’action reçue';
   static String activitySummary(int count, int pending) =>
@@ -209,8 +215,14 @@ abstract final class GalleryContent {
   static const messageSection = 'Message';
   static const activitySection = 'Ligne d’activité';
   static const activitySynthetic = 'Activités fictives · aucun appel Hermes';
+  static const activityCatalog = 'Catalogue d’illustrations';
+  static String activityCatalogItem(ActivityKind kind) =>
+      '${Content.activityLabel(kind)} (${kind.name})';
+  static const pauseActivities = 'Mettre les illustrations en pause';
+  static const resumeActivities = 'Reprendre les illustrations';
   static const activitySecond = 'Deuxième ID';
   static const activityComplete = 'Recevoir la fin';
+  static const activityCode = 'Ajouter code';
   static const activityUnknown = 'Événement inconnu';
   static const activityReply = 'Recevoir une réponse';
   static const activityReplyText =

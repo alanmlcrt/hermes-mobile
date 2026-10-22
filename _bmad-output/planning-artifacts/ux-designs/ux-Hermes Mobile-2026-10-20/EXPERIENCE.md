@@ -11,6 +11,10 @@ sources:
 
 # Hermes Mobile — Expérience
 
+## Décisions approuvées — illustrations d’activité 3.3 (22 octobre)
+
+Le catalogue d’illustrations (`ActivityCatalog`) associe chaque `ActivityKind` (`tool`, `code`, `unknown`) à son rendu vectoriel 24 × 24 px, ses tokens de mouvement (`ActivityTokens`) et sa variante immobile, avec repli générique sur `unknown` (trois petits points en rotation sans bulle, Otc restant seul porteur de la préparation de réponse du tour). Aucune inférence par nom d’outil MCP, sous-chaîne de `details['name']`, emoji ou minuterie n’est autorisée. Les animations s’immobilisent immédiatement sous mouvement réduit, pause de la page, action terminée (`completed: true`), hors viewport, `Offstage`, route couverte ou passage en arrière-plan, et ne modifient jamais `WorkState`.
+
 ## Décisions approuvées — activités compactes 3.1 (22 octobre)
 
 Chaque action conserve son identité opaque par connexion, profil, session et tour ; début et fin du même `tool_id` mettent à jour la même ligne sans supposer de réussite. Une fin isolée ne crée pas de début. Sans ID ou pour un événement inconnu, conserver une entrée générique distincte, sans rapprochement par nom ou proximité. Une réponse et un terminal de tour ne terminent pas les actions.

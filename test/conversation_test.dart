@@ -14,6 +14,7 @@ import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/components/message_bubble.dart';
+import 'package:hermes_mobile/ui/components/activity_catalog.dart';
 import 'package:hermes_mobile/ui/components/activity_group.dart';
 import 'package:hermes_mobile/ui/components/activity_line.dart';
 import 'package:hermes_mobile/ui/components/work_state_label.dart';
@@ -21,6 +22,7 @@ import 'package:hermes_mobile/ui/components/conversation_companion.dart';
 import 'package:hermes_mobile/ui/components/rabbit_companion.dart';
 import 'package:hermes_mobile/ui/content.dart';
 import 'package:hermes_mobile/ui/theme.dart';
+import 'package:hermes_mobile/ui/tokens.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'contracts_test.dart' show contract;
@@ -1583,4 +1585,90 @@ void main() {
     expect(find.text('texte alt'), findsOne);
     expect(find.byType(Image), findsNothing);
   });
+
+  testWidgets(
+    'DraftView : pause de la page immobilise les illustrations d’activité sans toucher WorkState ni Otc',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final memory = MemoryConversation();
+      const k = TimelineKey(
+        ConnectionKey('c-1'),
+        ProfileKey('default'),
+        _stored,
+      );
+      memory.projections[k] = TimelineProjection(
+        items: [
+          UserItem(1, 'Demande', operation: const OperationKey('o-1')),
+          const ActivityItem(
+            1,
+            ActivityKind.tool,
+            toolId: 'T-1',
+            started: true,
+            details: {'name': 'write_file 💻'},
+          ),
+        ],
+        turns: 1,
+        userTurns: 1,
+        workState: WorkState.running,
+        companionPhase: CompanionPhase.concentrating,
+      );
+      await pumpView(tester, memory, size: const Size(800, 1200), scale: 1);
+      ToolActivityPainter currentPainter() => tester
+          .widgetList<CustomPaint>(
+            find.descendant(
+              of: find.byType(ActivityIllustration),
+              matching: find.byType(CustomPaint),
+            ),
+          )
+          .map((p) => p.painter)
+          .whereType<ToolActivityPainter>()
+          .single;
+      expect(find.byType(ActivityLine), findsOneWidget);
+      expect(
+        tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
+        isFalse,
+      );
+      expect(
+        tester.widget<ActivityLine>(find.byType(ActivityLine)).kind,
+        ActivityKind.tool,
+      );
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(currentPainter().stationary, isFalse);
+
+      await tester.tap(find.text(Content.pauseCompanion));
+      await tester.pump();
+      expect(
+        tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
+        isTrue,
+      );
+      expect(currentPainter().stationary, isTrue);
+      expect(find.text(Content.workRunning), findsOneWidget);
+
+      await tester.tap(find.text(Content.resumeCompanion));
+      await tester.pump();
+      expect(
+        tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
+        isFalse,
+      );
+      await tester.pump(ActivityTokens.rest);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(currentPainter().stationary, isFalse);
+
+      memory.resyncingKeys.add(k);
+      memory.set(k, memory.projections[k]!);
+      await tester.pump();
+      expect(
+        tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
+        isTrue,
+      );
+      expect(currentPainter().stationary, isTrue);
+      await tester.pump(ActivityTokens.rest + ActivityTokens.cycle);
+      expect(currentPainter().stationary, isTrue);
+      expect(tester.binding.transientCallbackCount, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

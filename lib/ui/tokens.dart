@@ -37,6 +37,57 @@ abstract final class ActivityTokens {
   static const String detailFont = 'monospace';
   static const double illustration = 24;
   static const double command = 48;
+  static const double viewSize = 32;
+  static const double strokeWidth = 3.2;
+  static const double lineStrokeWidth = 2.6;
+  static const Duration cycle = Duration(milliseconds: 800);
+  static const Duration rest = Duration(milliseconds: 600);
+
+  // Géométrie de l'illustration « code » (châssis d'ordinateur fixe, UX-DR14).
+  static final RRect codeMonitor = RRect.fromRectAndRadius(
+    const Rect.fromLTWH(3, 4, 26, 18),
+    const Radius.circular(3.5),
+  );
+  static const Offset codeNeckTop = Offset(16, 22);
+  static const Offset codeNeckBottom = Offset(16, 27);
+  static const Offset codeBaseStart = Offset(9.5, 27);
+  static const Offset codeBaseEnd = Offset(22.5, 27);
+  static const double codeLineStartX = 7.5;
+  static const double codeLine1Y = 9.5;
+  static const double codeLine1MaxWidth = 11.0;
+  static const double codeLine1End = 0.3;
+  static const double codeLine2Y = 14.0;
+  static const double codeLine2MaxWidth = 14.0;
+  static const double codeLine2End = 0.65;
+  static const double codeLine3Y = 18.0;
+  static const double codeLine3MaxWidth = 8.0;
+  static const double codeLine3End = 0.95;
+  static const double codeCursorGap = 2.2;
+  static const double codeCursorHalfHeight = 1.6;
+
+  // Géométrie de l'illustration « tool » (boîtier d'outil + clé + impulsion).
+  static final RRect toolChassis = RRect.fromRectAndRadius(
+    const Rect.fromLTWH(3.5, 9, 13, 14),
+    const Radius.circular(3),
+  );
+  static const Offset toolPortCenter = Offset(10, 16);
+  static const double toolPortRadius = 2.2;
+  static const Offset toolPivot = Offset(22, 16);
+  static const double toolWrenchAngle = 0.28;
+  static const Offset toolShaftStart = Offset(16.5, 16);
+  static const Offset toolShaftEnd = Offset(22.5, 16);
+  static const Rect toolJawArc = Rect.fromLTWH(22.5, 12, 6, 8);
+  static const double toolJawStartFactor = 0.35;
+  static const double toolJawSweepFactor = 1.3;
+  static const double toolSignalStartX = 15.0;
+  static const double toolSignalTravel = 5.5;
+  static const double toolSignalY = 8.0;
+  static const double toolSignalRadius = 1.8;
+
+  // Géométrie de l'illustration « unknown » (trois petits points en rotation, UX-DR13).
+  static const Offset unknownCenter = Offset(16, 16);
+  static const double unknownOrbitRadius = 7.2;
+  static const double unknownDotRadius = 2.7;
 }
 
 /// Durées de mouvement. À lire via `motionDuration` (theme.dart), qui

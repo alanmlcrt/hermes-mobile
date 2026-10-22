@@ -29,6 +29,13 @@ theme:
 
 # Hermes Mobile — Design
 
+## Décisions approuvées — illustrations d’activité 3.3 (22 octobre)
+
+Les trois arbitrages UX de la Story 3.3 sont approuvés par Alanc (« Fait tout ce que tu recommandes », Options A retenues) :
+1. **Conciliation `UX-DR13` / lot 4 Otc :** aucune ligne « Préparation de réponse » n’est réintroduite dans le fil de conversation — Otc seul porte la préparation de réponse au niveau du tour conformément au lot 4. Le motif des trois petits points en rotation (dans le slot 24 × 24 px, sans bulle ni grand dessin, immobile en variante fixe) sert d’illustration pour une ligne d’activité `ActivityKind.unknown` et de repli générique du catalogue.
+2. **Catalogue dès 3.3 (`code`, `tool`, `unknown`) :** `ActivityCatalog` est indexé exclusivement par `ActivityKind` avec repli générique, sans lire un emoji, un nom d’outil MCP ou une minuterie. Il fournit 3 illustrations : `code` (ordinateur au châssis fixe aux traits épais, lignes de code et curseur mobiles, `UX-DR14`), `tool` (appel d’outil : boîtier, clé oscillante et impulsion) et `unknown` (trois petits points en rotation 24 × 24 px), toutes présentées dans la galerie en clair, sombre, texte 200 % et mouvement réduit.
+3. **Fin d’action et pause de la page :** toute ligne avec `completed: true` (« Fin reçue ») ou lorsque la pause de la page est active affiche immédiatement sa variante immobile sans timer ni cycle actif.
+
 ## Décisions approuvées — activités compactes 3.1 (22 octobre)
 
 Une ligne par action attestée, avec emplacement d’illustration statique de 24 px, texte multiligne et thème existant. La fin reçue porte un repère neutre et le texte « Fin reçue », accessible comme « Fin d’action reçue » ; aucune couleur de réussite ni second « Terminé ». Les commandes de groupe ont une cible minimale de 48 px. Seules les familles `tool` et `unknown` sont justifiées ; les événements sans ID et les anciennes projections restent génériques.
