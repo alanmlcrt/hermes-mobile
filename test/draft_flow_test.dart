@@ -94,6 +94,7 @@ void main() {
       // Lien vers « Mes profils ».
       await tester.tap(find.text(Content.profilesTitle));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
       expect(find.text('Travail (travail)'), findsOne);
       expect(tester.takeException(), isNull);
     },
@@ -404,6 +405,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(Content.profilesTitle));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
     await tester.tap(find.text('Travail (travail)'));
     // Le retour part après l'écriture du choix, hors de toute image.
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
@@ -438,6 +440,7 @@ void main() {
     final (h, outbox, key) = await openDraft(tester);
     await tester.tap(find.text(Content.profilesTitle));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
     await tester.tap(find.text('Travail (travail)'));
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
@@ -457,6 +460,7 @@ void main() {
     await tester.tap(find.text(Content.profilesTitle));
     await tester.pumpAndSettle();
     h.store.failSave = true;
+    await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
     await tester.tap(find.text('Travail (travail)'));
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();

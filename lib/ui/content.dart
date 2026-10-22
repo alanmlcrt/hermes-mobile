@@ -2,7 +2,10 @@
 // Vocabulaire du quotidien : pas de jargon technique en avant.
 
 abstract final class Content {
+  static const companionName = 'Otc';
   static const companionFallback = 'Compagnon';
+  static const pauseCompanion = 'Mettre les animations en pause';
+  static const resumeCompanion = 'Reprendre les animations';
   static String tickleCompanion(String name) => 'Chatouiller $name';
   static const appTitle = 'Hermes Mobile';
   static const homePlaceholder = 'Bienvenue dans Hermes Mobile';

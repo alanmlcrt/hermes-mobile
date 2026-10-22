@@ -7,28 +7,51 @@ import '../../ui/tokens.dart';
 import '../../ui/components/status_label.dart';
 import '../../ui/components/section_card.dart';
 import '../../ui/components/profile_choice.dart';
+import '../../ui/components/profile_companion_panel.dart';
 import 'profiles_view_model.dart';
 
-class ProfilesView extends StatelessWidget {
+class ProfilesView extends StatefulWidget {
   const ProfilesView({
     super.key,
     required this.viewModel,
     required this.onChangeServer,
     this.onPicked,
+    this.active = true,
   });
 
   /// Ouvert depuis un brouillon neuf : renvoie le profil choisi.
   final ValueChanged<ProfileKey>? onPicked;
   final ProfilesViewModel viewModel;
   final VoidCallback onChangeServer;
+
+  /// À désactiver si la surface est conservée dans une sous-vue masquée.
+  final bool active;
+  @override
+  State<ProfilesView> createState() => _ProfilesViewState();
+}
+
+class _ProfilesViewState extends State<ProfilesView> {
+  (ConnectionKey, ProfileKey)? _verifiedSelection;
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: viewModel,
+    listenable: widget.viewModel,
     builder: (context, _) {
+      final viewModel = widget.viewModel;
       final state = viewModel.snapshot;
       final loading =
           state.profilesState == ProfilesState.loading ||
           state.profilesState == ProfilesState.refreshing;
+      final selected = state.selectedProfile;
+      final identity = state.connection != null && selected != null
+          ? (state.connection!.key, selected)
+          : null;
+      final present = state.profiles.any((profile) => profile.key == selected);
+      final knownSelection =
+          selected != null &&
+          state.connection != null &&
+          (present || (loading && _verifiedSelection == identity));
+      _verifiedSelection = knownSelection ? identity : null;
       final (icon, label) = switch (state.link) {
         LinkState.connected => (
           Icons.cloud_done_outlined,
@@ -49,6 +72,13 @@ class ProfilesView extends StatelessWidget {
               padding: const EdgeInsets.all(Spacing.md),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
+                if (knownSelection) ...[
+                  ProfileCompanionPanel(
+                    key: ValueKey((state.connection!.key, selected)),
+                    active: widget.active,
+                  ),
+                  const SizedBox(height: Spacing.md),
+                ],
                 StatusLabel(icon: icon, label: label),
                 const SizedBox(height: Spacing.md),
                 Text(state.connection?.origin.toString() ?? ''),
@@ -70,7 +100,7 @@ class ProfilesView extends StatelessWidget {
                         child: const Text(Content.retry),
                       ),
                     TextButton(
-                      onPressed: state.busy ? null : onChangeServer,
+                      onPressed: state.busy ? null : widget.onChangeServer,
                       child: const Text(Content.changeServer),
                     ),
                   ],
@@ -110,7 +140,7 @@ class ProfilesView extends StatelessWidget {
                                     profile.key) {
                               return;
                             }
-                            onPicked?.call(profile.key);
+                            widget.onPicked?.call(profile.key);
                           },
                   ),
                 const Text(Content.localSelection),

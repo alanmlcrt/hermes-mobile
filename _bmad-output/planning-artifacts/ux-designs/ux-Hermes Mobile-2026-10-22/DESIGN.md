@@ -24,7 +24,7 @@ colors:
   glass-veil: '#FFFFFF'
 typography:
   companion-name:
-    note: Hériter de ThemeData.textTheme.titleMedium ; aucun changement de police.
+    note: Hériter de ThemeData.textTheme.titleLarge ; aucun changement de police.
   companion-status:
     note: Hériter du rôle de texte de WorkStateLabel ; texte agrandi système conservé.
 rounded:
@@ -62,15 +62,26 @@ components:
 
 # Hermes Mobile — Design du compagnon
 
+## Contrat courant — lots 1 et 2
+
+La v5 approuvée est prioritaire sur toutes les études historiques ci-dessous. `RabbitCompanion` reprend ce dessin, ses réactions et sa suspension ; la galerie conserve son aperçu. Le lot 2 place le compagnon avant les contenus existants de « Mes profils », à 180 pixels logiques, sur le dégradé fixe `RabbitTokens.backdrop`. Le nom apparaît en vrai texte sur une surface sémantique du thème, hors du pastel, avec retour à la ligne à 200 %, et une commande de pause accessible.
+
+**Clarification utilisateur : Otc est le nom constant du compagnon pour chaque profil sélectionné.** Les profils Hermes gardent leurs propres libellés ; aucun profil n'est renommé ni identifié comme Alanc. Aucun champ serveur, correspondance de noms ou usage de `isDefault` n'est requis. Un nom de présentation absent ou blanc donne « Compagnon », visuellement et dans l'action accessible.
+
+La sélection doit être présente dans le snapshot courant. Pendant un chargement, une sélection précédemment vérifiée sur la même connexion garde une enveloppe stable, sans ancien libellé de profil. Sans sélection vérifiable ou avec une liste vide, les états métier restent seuls. Changer de profil ou de serveur réinitialise la pose au repos. Hors viewport, route masquée, arrière-plan ou surface conservée avec `active: false`, les cycles sont suspendus ; le mouvement réduit est immédiat.
+
+La personnalisation du fond, la génération et les trois points sont hors du lot 2. Les propositions historiques les concernant ne constituent pas le contrat de cette intégration. `contextes.html` est une étude ancienne archivée ; ses couleurs, son dessin et sa personnalisation ne priment pas sur v5 ni sur le présent contrat.
+
+
 ## Brand & Style
 
 **Validation Alanc : planche v5 approuvée comme première référence visuelle.** Le [dessin validé](mockups/planche-lapin-v5-proportions.png) fixe le compagnon blanc aux traits noirs, les yeux discrets proportionnés, la bouche graphique lisse et les oreilles légèrement raccourcies, sans pli, asymétriques par leur inclinaison. Cette validation remplace les mentions historiques « à valider » du dessin v5 et les directions taupe ou à oreilles pliées. Les itérations ci-dessous sont conservées comme historique. Elle ne valide pas de nouveaux timings, ni la chorégraphie proposée pendant la génération, ni une implémentation Flutter.
 
-**Correction la plus récente :** Alanc juge les yeux de v4 trop gros et demande de respecter les proportions. La [planche v5](mockups/planche-lapin-v5-proportions.png) réduit les yeux en conservant leur espacement, la bouche de v4 et les oreilles raccourcies sans pli. Elle remplace v4 comme support courant de discussion ; l'agrandissement des yeux de v4 n'est pas retenu. Le réglage précis de v5 reste à valider visuellement.
+**Dessin approuvé :** Alanc juge les yeux de v4 trop gros et demande de respecter les proportions. La [planche v5](mockups/planche-lapin-v5-proportions.png) réduit les yeux en conservant leur espacement, la bouche de v4 et les oreilles raccourcies sans pli. Elle remplace v4 ; l'agrandissement des yeux de v4 n'est pas retenu. Le dessin v5 est approuvé ; ce choix est clos.
 
-**Direction courante après itérations :** Alanc préfère la variante blanc/noir aux oreilles raccourcies (« c'est déjà mieux »), puis demande un essai plus mignon avec yeux et bouche un peu agrandis, et explicitement aucune oreille pliée. La [planche v4](mockups/planche-lapin-v4-yeux-oreilles.png) illustre cet essai : pointes arrondies dépliées, asymétrie conservée par l'inclinaison. Cette demande corrige les descriptions historiques de pointe pliée ; les dimensions exactes des yeux et de la bouche restent à apprécier sur l'image. Les tokens taupe et premières planches ci-dessous documentent les études antérieures, sans décrire les couleurs de la direction courante.
+**Historique — essai v4, remplacé par v5 :** Alanc préfère la variante blanc/noir aux oreilles raccourcies (« c'est déjà mieux »), puis demande un essai plus mignon avec yeux et bouche un peu agrandis, et explicitement aucune oreille pliée. La [planche v4](mockups/planche-lapin-v4-yeux-oreilles.png) illustre cet essai : pointes arrondies dépliées, asymétrie conservée par l'inclinaison. Cette demande corrige les descriptions historiques de pointe pliée ; les dimensions exactes des yeux et de la bouche restent à apprécier sur l'image. Les tokens taupe et premières planches ci-dessous documentent les études antérieures, sans décrire les couleurs de la direction courante.
 
-**Validé par Alanc.** Un dessin simplifié dans l'esprit de Grok Bot, reconnaissable comme le lapin fourni. La tête, les petits yeux sombres, la bouche et les longues oreilles asymétriques portent son identité. Le même lapin et les mêmes animations servent tous les profils ; le nom varie, **Otc** pour celui d'Alanc. Le fond est personnalisable par profil, avec verre dépoli/flou, pastels et dégradé fixe.
+**Validé par Alanc.** Un dessin simplifié dans l'esprit de Grok Bot, reconnaissable comme le lapin fourni. La tête, les petits yeux sombres, la bouche et les longues oreilles asymétriques portent son identité. Le même lapin et les mêmes animations servent tous les profils ; le compagnon se nomme **Otc**, indépendamment du libellé du profil Hermes. Le fond du lot 2 est pastel et fixe ; la personnalisation envisagée dans l’étude est hors périmètre.
 
 **Correction validée : aucun brodage dans le compagnon.** Ni fil, ni points de couture, ni texture brodée. La bouche conserve une forme reconnaissable avec un tracé graphique lisse et continu ; la matière de la peluche ne doit pas être reproduite.
 
@@ -78,7 +89,7 @@ components:
 
 Ce dossier complète les [contrats généraux du 20 octobre](../ux-Hermes%20Mobile-2026-10-20/DESIGN.md). Le code actuel utilise Flutter, ThemeData et les rôles de ColorScheme ; le thème clair/sombre et Dynamic Color de l'interface sont hérités. La palette du lapin constitue une proposition d'illustration, pas une nouvelle palette globale.
 
-Les deux contrats de ce dossier prévalent sur ses maquettes et imports en cas de conflit ; une proposition reste une proposition dans chaque support. Aucun développement Flutter n'est autorisé à cette étape.
+Les deux contrats de ce dossier prévalent sur ses maquettes et imports en cas de conflit ; une proposition reste une proposition dans chaque support. Le contrat courant ci-dessus et la spec du lot 2 encadrent désormais l’intégration Flutter.
 
 ## Colors
 
@@ -86,7 +97,7 @@ Les deux contrats de ce dossier prévalent sur ses maquettes et imports en cas d
 
 | Token | Usage proposé |
 | --- | --- |
-| `{colors.rabbit-coat}` | Aplat principal beige-taupe, interprétation du doudou. |
+| `{colors.rabbit-coat}` | Aplat blanc v5 ; la direction beige-taupe appartient aux études archivées. |
 | `{colors.rabbit-ear-inner}` | Intérieur des deux oreilles, plus clair sans texture satinée détaillée. |
 | `{colors.rabbit-face}` | Petits yeux, nez triangulaire et bouche ; conserver cette même encre aux différentes poses. |
 | `{colors.pastel-lavender}` / `{colors.pastel-peach}` | Exemple unique de dégradé pastel fixe ; aucune palette par défaut approuvée. |
@@ -111,7 +122,7 @@ Les tokens `{spacing.xs}` à `{spacing.xl}` reprennent `Spacing` dans `lib/ui/to
 
 Conserver une enveloppe extérieure stable dans toutes les poses : les oreilles ne poussent pas le texte. Prévoir un écart de `{spacing.sm}` entre slot et réponse. Le compagnon n'est pas une icône de 24 px ; ne pas écraser le visage pour gagner une colonne. Si l'espace manque, proposer le slot au-dessus du premier bloc de réponse, décision responsive encore à valider.
 
-La [maquette des deux contextes](mockups/contextes.html) cadre placement et échelle ; ce n'est ni un nouvel écran global approuvé ni une interface connectée.
+L’[étude ancienne des deux contextes](mockups/contextes.html), archivée et supplantée par v5, explorait placement et échelle ; ce n'est ni un nouvel écran global approuvé ni une interface connectée.
 
 ## Elevation & Depth
 
@@ -133,7 +144,7 @@ En compact, simplifier l'intérieur des oreilles et épaissir optiquement les tr
 | --- | --- |
 | `companion` | Même dessin aux deux échelles ; cinq poses ci-dessous ; fond et enveloppe stables. La zone tactile peut excéder le dessin sans le grossir. |
 | `companion-backdrop` | Dégradé pastel fixe et voile dépoli ; personnalisation du fond seulement, aucune variante d'anatomie ou de personnalité. Son application au slot conversation reste à arbitrer. |
-| `companion-name` | Vrai texte via `{typography.companion-name.note}` ; Otc pour Alanc, valeur du profil actif ailleurs ; identité distincte du nom du profil. |
+| `companion-name` | Vrai texte via `{typography.companion-name.note}` ; Otc pour chaque profil sélectionné ; constante de présentation distincte de `Profile.label`. |
 | `work-status` | Libellé et icône existants conservés comme autorité d'état ; rôle `{typography.companion-status.note}`. Une expression du lapin ne code pas une réussite ou une erreur. |
 | `backdrop-editor` | Sous-vue proposée : aperçu net, choix pastel identifiables par texte, sélection visible autrement que par couleur ; commandes héritées de l'interface. |
 
@@ -153,11 +164,11 @@ La [planche lapin](mockups/planche-lapin.png) sert à juger ressemblance et pose
 
 ### Points ouverts avant contrat de production
 
-**Variante demandée ensuite par Alanc :** [planche v3 noir et blanc](mockups/planche-lapin-v3-noir-blanc.png), compagnon blanc à traits noirs, intérieurs d'oreilles gris clair et oreilles légèrement raccourcies, toujours asymétriques. Cette exploration conserve la bouche lisse sans brodage et le fond pastel personnalisable. Le raccourcissement demandé au générateur était d'environ 15–20 %, sans constituer une mesure du résultat. La palette taupe reste une étude antérieure ; le choix final entre variantes n'est pas encore confirmé. Les tokens taupe ci-dessus ne décrivent pas la variante v3.
+**Variante demandée ensuite par Alanc :** [planche v3 noir et blanc](mockups/planche-lapin-v3-noir-blanc.png), compagnon blanc à traits noirs, intérieurs d'oreilles gris clair et oreilles légèrement raccourcies, toujours asymétriques. Cette exploration conserve la bouche lisse sans brodage et le fond pastel personnalisable. Le raccourcissement demandé au générateur était d'environ 15–20 %, sans constituer une mesure du résultat. La palette taupe reste une étude antérieure ; le choix final est désormais la v5 approuvée. Les tokens taupe ci-dessus ne décrivent pas la variante v3.
 
-**Affinage visuel du 22 octobre :** la [planche v2](mockups/planche-lapin-v2.png) accentue le regard latéral par un léger trois-quarts et distingue mieux le panneau dépoli du fond pastel, en gardant le visage net et la bouche lisse sans brodage. Elle devient le support courant de discussion ; la première planche reste conservée comme historique. Les mentions « Compact » et « Très petit » sont indicatives, pas des mesures. Un léger modelé demeure dans le bitmap ; l'aplat strict et la lecture sur appareil restent à vérifier. Cette révision ne constitue pas une validation utilisateur des propositions.
+**Affinage visuel du 22 octobre :** la [planche v2](mockups/planche-lapin-v2.png) accentue le regard latéral par un léger trois-quarts et distingue mieux le panneau dépoli du fond pastel, en gardant le visage net et la bouche lisse sans brodage. Elle était alors le support de discussion, désormais remplacé par v5 ; la première planche reste conservée comme historique. Les mentions « Compact » et « Très petit » sont indicatives, pas des mesures. Un léger modelé demeure dans le bitmap ; l'aplat strict et la lecture sur appareil restent à vérifier. Cette révision ne constitue pas une validation utilisateur des propositions.
 
-La planche doit encore faire valider la ressemblance, le cadrage sans corps, la palette et les deux échelles. La proposition de génération n'est pas approuvée. La coexistence ou le remplacement des trois points tournants déjà validés le 20 octobre reste à décider ; leur suppression n'est pas déduite de l'apparition du lapin.
+La v5 clôt le choix du dessin ; les études v1 à v4 ne rouvrent pas sa ressemblance ou son cadrage. La proposition de génération n'est pas approuvée. La coexistence ou le remplacement des trois points tournants déjà validés le 20 octobre reste à décider ; leur suppression n'est pas déduite de l'apparition du lapin.
 
 ## Do's and Don'ts
 

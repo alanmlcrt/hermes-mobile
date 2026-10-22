@@ -17,6 +17,17 @@ sources:
 
 # Hermes Mobile — Expérience du compagnon
 
+## Contrat courant — lots 1 et 2
+
+La v5 approuvée est prioritaire sur toutes les études historiques ci-dessous. `RabbitCompanion` reprend ce dessin, ses réactions et sa suspension ; la galerie conserve son aperçu. Le lot 2 place le compagnon avant les contenus existants de « Mes profils », à 180 pixels logiques, sur le dégradé fixe `RabbitTokens.backdrop`. Le nom apparaît en vrai texte sur une surface sémantique du thème, hors du pastel, avec retour à la ligne à 200 %, et une commande de pause accessible.
+
+**Clarification utilisateur : Otc est le nom constant du compagnon pour chaque profil sélectionné.** Les profils Hermes gardent leurs propres libellés ; aucun profil n'est renommé ni identifié comme Alanc. Aucun champ serveur, correspondance de noms ou usage de `isDefault` n'est requis. Un nom de présentation absent ou blanc donne « Compagnon », visuellement et dans l'action accessible.
+
+La sélection doit être présente dans le snapshot courant. Pendant un chargement, une sélection précédemment vérifiée sur la même connexion garde une enveloppe stable, sans ancien libellé de profil. Sans sélection vérifiable ou avec une liste vide, les états métier restent seuls. Changer de profil ou de serveur réinitialise la pose au repos. Hors viewport, route masquée, arrière-plan ou surface conservée avec `active: false`, les cycles sont suspendus ; le mouvement réduit est immédiat.
+
+La personnalisation du fond, la génération et les trois points sont hors du lot 2. Les propositions historiques les concernant ne constituent pas le contrat de cette intégration. `contextes.html` est une étude ancienne archivée ; ses couleurs, son dessin et sa personnalisation ne priment pas sur v5 ni sur le présent contrat.
+
+
 ## Foundation
 
 **Validation Alanc : la [planche v5](mockups/planche-lapin-v5-proportions.png) est la première référence visuelle approuvée.** Noir/blanc, proportions des yeux, bouche lisse, oreilles plus courtes sans pli et leur asymétrie sont retenus. Cette approbation clôt le choix du dessin présenté ; les mentions historiques d'essais précédents ne le rouvrent pas. Les animations détaillées, la piste de génération et son articulation avec les trois points restent à concevoir ou arbitrer. Aucune implémentation Flutter n'est réalisée par cette validation.
@@ -27,7 +38,7 @@ La [planche v5](mockups/planche-lapin-v5-proportions.png) corrige les yeux jugé
 
 Application Flutter, Android d'abord et iPhone anticipé. L'interface actuelle repose sur ThemeData/ColorScheme et des composants internes ; elle suit le thème système. Ce complément traite seulement du compagnon, en héritant des [parcours généraux](../ux-Hermes%20Mobile-2026-10-20/EXPERIENCE.md). [DESIGN.md](DESIGN.md) porte l'identité visuelle et les tokens ; aucun code Flutter n'est produit ici.
 
-**Validé par Alanc :** même compagnon et mêmes animations sur tous les profils, nom par profil (Otc pour Alanc), fond personnalisable pastel dépoli à dégradé fixe ; présence en haut du profil et à côté du texte en génération ; repos tranquille avec regards latéraux ; toucher provoquant oreilles remuantes et tentative de retournement.
+**Validé par Alanc :** même compagnon et mêmes animations sur tous les profils, nom constant Otc indépendant des profils, fond pastel fixe pour le lot 2 ; présence en haut du profil et à côté du texte en génération ; repos tranquille avec regards latéraux ; toucher provoquant oreilles remuantes et tentative de retournement.
 
 **Correction validée :** aucun brodage, fil, point de couture ou texture brodée ; la forme de bouche reconnaissable est rendue par un trait graphique lisse et continu, y compris dans les poses animées.
 
@@ -45,7 +56,7 @@ Le compagnon accompagne la lecture ; les statuts distants restent exprimés par 
 
 La [planche des poses](mockups/planche-lapin.png) illustre les états visuels ; la [photo](imports/lapin-reference.png) reste la référence de ressemblance. La présence du compagnon dans l'historique ou hors génération en conversation n'est pas décidée.
 
-Les trois surfaces ont une référence de composition ; les maquettes restent statiques et ne démontrent ni reconnaissance des gestes, ni mouvement réduit, ni conservation du fond. Le regard latéral et le verre de la planche doivent être améliorés avant validation visuelle ; les tailles CSS de la maquette ne remplacent pas un essai sur téléphone.
+Les trois surfaces ont une référence de composition ; les maquettes restent statiques et ne démontrent ni reconnaissance des gestes, ni mouvement réduit, ni conservation du fond. Les critiques de regard et de verre concernaient les premières études, désormais archivées ; les tailles CSS de la maquette ne remplacent pas un essai sur téléphone.
 
 ## Voice and Tone
 
@@ -56,7 +67,7 @@ Microcopies proposées, courtes et factuelles ; la voix visuelle est définie da
 | Action accessible | « Chatouiller Otc » ; substituer le nom réel du compagnon. |
 | Édition du fond | « Arrière-plan », « Appliquer », « Annuler ». |
 | Échec de conservation | « L'arrière-plan n'a pas été enregistré. Réessayer. » |
-| Nom indisponible | « Compagnon » provisoire ; ne pas attribuer Otc à tous les profils. |
+| Nom indisponible | « Compagnon » si nom injecté absent ou blanc ; en production Otc reste constant sur chaque profil sélectionné. |
 
 Les libellés d'envoi, travail, réussite, erreur, arrêt et état inconnu restent ceux de l'application. Ne pas remplacer « État inconnu » par une émotion ou « Terminé » par un sourire.
 
@@ -67,8 +78,8 @@ Les composants portent exactement les mêmes noms que dans DESIGN.md.Components.
 | Composant | Règles comportementales |
 | --- | --- |
 | `companion` | Repos autonome discret ; toucher volontaire → une réaction aux chatouilles ; aucune action réseau, aucun effet sur saisie, sélection du texte ou génération. Suspendre hors écran. |
-| `companion-backdrop` | Fixe pendant toutes les poses ; choix lié au profil actif. Valeur absente → fond de secours proposé, sans toucher à l'identité du lapin. |
-| `companion-name` | Résoudre le nom du bot du profil actif ; ne pas confondre avec `Profile.label`, seul champ de libellé actuellement observé. Édition du nom hors périmètre. |
+| `companion-backdrop` | Dégradé pastel fixe issu des tokens existants, indépendant du profil et du réseau. |
+| `companion-name` | Afficher la constante de présentation Otc ; ne pas confondre avec `Profile.label`, seul champ de libellé actuellement observé. Édition du nom hors périmètre. |
 | `work-status` | Afficher l'état réellement connu ; annonces accessibles et commandes de travail héritées. Indépendant du cycle d'animation. |
 | `backdrop-editor` | Proposition : prévisualisation locale, Appliquer conserve, Annuler restaure. Le stockage local/serveur et la synchronisation ne sont pas décidés. |
 
@@ -107,7 +118,7 @@ Si les événements nécessaires ne sont pas disponibles, conserver le repos ; n
 
 | Surface / cas | Traitement proposé |
 | --- | --- |
-| Profil chargé | Nom et fond du profil courant ; même anatomie. |
+| Profil chargé | Otc, distinct du libellé métier du profil courant ; fond fixe et anatomie v5. |
 | Profil en chargement ou nom absent | Slot stable, compagnon neutre ; pas de nom d'un précédent profil. |
 | Aucun profil accessible | Hériter de l'état vide du sélecteur ; ne pas créer de compagnon autonome. |
 | Fond absent ou invalide | Fond de secours fixe ; aucune disparition du nom ou du visage. |
@@ -142,9 +153,9 @@ Ces exigences de conception sont proposées comme minimum de production ; elles 
 
 ## Inspiration & Anti-patterns
 
-La [variante v3 noir et blanc](mockups/planche-lapin-v3-noir-blanc.png), demandée par Alanc avec des oreilles légèrement plus petites, explore un compagnon blanc à traits noirs. Cette variation d'apparence ne change ni les gestes ni les états ; le fond pastel fixe reste illustré. Le choix final du dessin reste ouvert.
+La [variante v3 noir et blanc](mockups/planche-lapin-v3-noir-blanc.png), demandée par Alanc avec des oreilles légèrement plus petites, explore un compagnon blanc à traits noirs. Cette variation d'apparence ne change ni les gestes ni les états ; le fond pastel fixe reste illustré. Cette étude est archivée ; la v5 approuvée clôt le dessin.
 
-La [planche affinée v2](mockups/planche-lapin-v2.png) est le support visuel courant : regard de côté mieux différencié, chatouilles et exemple de panneau dépoli fixe. Elle ne change aucun comportement validé et ne démontre pas les transitions animées.
+La [planche affinée v2](mockups/planche-lapin-v2.png) est une étude ancienne archivée, remplacée par v5 : regard de côté mieux différencié, chatouilles et exemple de panneau dépoli fixe. Elle ne change aucun comportement validé et ne démontre pas les transitions animées.
 
 La [référence Grok Bot au commit étudié](https://github.com/ngocdevv/grok-bot-emoji/tree/c4b9859d5fda157fce28ee729dbeaca1bce1668c) inspire le dessin simplifié, les poses et leurs transitions. C'est un démonstrateur d'expressions, pas une preuve de comportement pendant une réponse. Ni particules, ni traînées, ni morphing de grands yeux ne sont validés pour ce lapin.
 
@@ -174,7 +185,7 @@ Scénarios de vérification **inférés**, et non récits utilisateur validés.
 1. Alanc ouvre « Arrière-plan » depuis le haut du profil, accès proposé.
 2. Il compare une palette pastel fixe derrière le même lapin.
 3. **Climax proposé :** Appliquer conserve ce fond pour le profil courant ; le nom et l'anatomie restent identiques.
-4. Un autre profil présente son propre nom et son fond, avec le même compagnon.
+4. Cette proposition de fond est hors lot 2 ; un autre profil conserve le même compagnon nommé Otc, distinct de son libellé métier.
 
 Échec : si l'enregistrement échoue, conserver l'édition et proposer Réessayer ; Annuler restaure. L'endroit de stockage et la disponibilité après redémarrage restent à trancher avant de garantir l'étape 3.
 
@@ -189,4 +200,4 @@ Scénarios de vérification **inférés**, et non récits utilisateur validés.
 
 ## Arbitrages de conception restants
 
-Valider visuellement la tête sans corps, la ressemblance, les couleurs et les échelles ; confirmer ou modifier la piste de génération ; décider du lien avec les trois points existants, du fond dans la marge conversation et de la personnalisation détaillée. Nom par profil et fond par profil nécessiteront un contrat de données distinct du modèle `Profile` actuel. Ces ouverts n'empêchent pas de discuter la première planche, mais empêchent de qualifier ce dossier de contrat Flutter final.
+Le dessin v5 est approuvé et prioritaire. Restent hors lot 2 : confirmer ou modifier la piste de génération ; décider du lien avec les trois points existants, du fond dans la marge conversation et de la personnalisation détaillée. Otc est une constante de présentation et ne nécessite aucun contrat serveur. Une éventuelle personnalisation du fond demanderait une décision ultérieure distincte du modèle `Profile` actuel. Ces ouverts n'empêchent pas de discuter la première planche, mais empêchent de qualifier ce dossier de contrat Flutter final.
