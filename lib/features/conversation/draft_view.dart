@@ -5,6 +5,7 @@ import '../../models/profile.dart';
 import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/composer.dart';
+import '../../ui/components/conversation_companion.dart';
 import '../../ui/components/message_bubble.dart';
 import '../../ui/components/profile_choice.dart';
 import '../../ui/components/status_label.dart';
@@ -25,6 +26,7 @@ class DraftView extends StatefulWidget {
 
   /// Le ViewModel vit aussi longtemps que la page, pas que le rendu.
   final DraftViewModel Function() create;
+
   /// [pick] : l'écran renvoie le profil choisi (brouillon neuf seulement).
   final Future<ProfileKey?> Function(bool pick) onOpenProfiles;
 
@@ -44,6 +46,7 @@ class _DraftViewState extends State<DraftView> {
   late final _viewModel = widget.create();
   bool _filled = false;
   int _clearTick = 0;
+  bool _companionPaused = false;
 
   @override
   void dispose() {
@@ -77,36 +80,65 @@ class _DraftViewState extends State<DraftView> {
                 : Content.newConversation,
           ),
           actions: [
-            TextButton(
-              onPressed: () => _openProfiles(vm),
-              child: const Text(Content.profilesTitle),
-            ),
+            // Le libellé agrandi ne doit pas déborder de la barre étroite.
+            if (!ConversationCompanion.sideBySide(
+              context,
+              MediaQuery.sizeOf(context).width,
+            ))
+              IconButton(
+                tooltip: Content.profilesTitle,
+                onPressed: () => _openProfiles(vm),
+                icon: const Icon(Icons.people_outline),
+              )
+            else
+              TextButton(
+                onPressed: () => _openProfiles(vm),
+                child: const Text(Content.profilesTitle),
+              ),
           ],
         ),
         body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: _thread(context, vm, draft, profile)),
-              // Sans brouillon chargé, une saisie écraserait le texte stocké.
-              if (draft != null)
-                // Défile si la saisie dépasse l'écran (texte 200 %, paysage).
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.sizeOf(context).height * 0.5,
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(Spacing.md),
-                    child: Composer(
-                      controller: _controller,
-                      onChanged: vm.update,
-                      onSend: blocked == null ? vm.send : null,
-                      disabledReason: blocked,
-                      status: vm.statusText,
+          child: LayoutBuilder(
+            builder: (context, viewport) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _thread(context, vm, draft, profile)),
+                // Sans brouillon chargé, une saisie écraserait le texte stocké.
+                if (draft != null || vm.timeline.workState != null)
+                  // Défile si la saisie dépasse l'écran (texte 200 %, paysage).
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: viewport.maxHeight * 0.5,
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(Spacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (vm.timeline.workState case final work?) ...[
+                            // Toujours monté, même pendant la lecture d'un ancien
+                            // bloc très éloigné de la fin du fil paresseux.
+                            Semantics(
+                              liveRegion: true,
+                              child: WorkStateLabel(state: work),
+                            ),
+                            const SizedBox(height: Spacing.sm),
+                          ],
+                          if (draft != null)
+                            Composer(
+                              controller: _controller,
+                              onChanged: vm.update,
+                              onSend: blocked == null ? vm.send : null,
+                              disabledReason: blocked,
+                              status: vm.statusText,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -123,7 +155,8 @@ class _DraftViewState extends State<DraftView> {
   ) {
     final c = _scroll;
     final atBottom =
-        !c.hasClients || c.position.maxScrollExtent - c.position.pixels < Spacing.md;
+        !c.hasClients ||
+        c.position.maxScrollExtent - c.position.pixels < Spacing.md;
     final children = <Widget>[
       if (draft != null) _profileRow(context, vm, draft, profile),
       if (draft != null &&
@@ -163,7 +196,7 @@ class _DraftViewState extends State<DraftView> {
             label: ConnectionLabels.resyncing,
           ),
         ),
-      ..._timeline(context, vm.timeline),
+      ..._timeline(context, vm),
     ];
     if (atBottom) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -246,9 +279,86 @@ class _DraftViewState extends State<DraftView> {
   }
 
   /// Éléments du fil ; rebâti sans aucun appel (état dans la projection).
-  List<Widget> _timeline(BuildContext context, TimelineProjection timeline) {
+  List<Widget> _timeline(BuildContext context, DraftViewModel vm) {
+    final timeline = vm.timeline;
     if (timeline.items.isEmpty && timeline.workState == null) return const [];
     final work = timeline.workState;
+    final latestTurn = timeline.items.fold<int>(
+      timeline.turns > timeline.userTurns ? timeline.turns : timeline.userTurns,
+      (latest, item) => item.turn > latest ? item.turn : latest,
+    );
+    // Un seul passage de regroupement ; les blocs de chaque tour sont ensuite
+    // des entrées distinctes du ListView.builder (pas de Column de tout le tour).
+    final groups = <int, List<TimelineItem>>{};
+    for (final item in timeline.items) {
+      (groups[item.turn] ??= []).add(item);
+    }
+    if (work != null) groups.putIfAbsent(latestTurn, () => []);
+    Widget block(TimelineItem item) => switch (item) {
+      ResponseItem() => MessageBubble(text: item.text),
+      ActivityItem() => ActivityLine(kind: item.kind),
+      UserItem() => MessageBubble(text: item.text, fromUser: true),
+    };
+    final turns = groups.keys.toList()..sort();
+    final entries = <Widget>[];
+    for (final turn in turns) {
+      final items = groups[turn]!;
+      if (turn == 0) {
+        // Activités préalables à l'accusé : visibles mais pas encore un tour.
+        for (final item in items) {
+          entries.addAll([const SizedBox(height: Spacing.sm), block(item)]);
+        }
+        continue;
+      }
+      final responses = <TimelineItem>[];
+      for (final item in items) {
+        if (item is UserItem) {
+          entries.addAll([const SizedBox(height: Spacing.sm), block(item)]);
+        } else {
+          responses.add(item);
+        }
+      }
+      final current = turn == latestTurn;
+      if (current && work != null) {
+        entries.add(
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () =>
+                  setState(() => _companionPaused = !_companionPaused),
+              icon: Icon(_companionPaused ? Icons.play_arrow : Icons.pause),
+              label: Text(
+                _companionPaused
+                    ? Content.resumeCompanion
+                    : Content.pauseCompanion,
+              ),
+            ),
+          ),
+        );
+      }
+      entries.add(
+        ConversationCompanion(
+          key: ValueKey('companion-turn-$turn'),
+          current: current,
+          phase: vm.companionPhase,
+          resting:
+              work == WorkState.succeeded ||
+              work == WorkState.failed ||
+              work == WorkState.stopped,
+          active: !vm.resyncing,
+          paused: _companionPaused,
+          child: responses.isEmpty
+              ? const SizedBox.shrink()
+              : block(responses.first),
+        ),
+      );
+      for (final item in responses.skip(1)) {
+        entries.addAll([
+          const SizedBox(height: Spacing.sm),
+          ConversationCompanionContinuation(child: block(item)),
+        ]);
+      }
+    }
     return [
       Semantics(
         header: true,
@@ -257,19 +367,7 @@ class _DraftViewState extends State<DraftView> {
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
-      for (final item in timeline.items) ...[
-        const SizedBox(height: Spacing.sm),
-        switch (item) {
-          UserItem() => MessageBubble(text: item.text, fromUser: true),
-          ResponseItem() => MessageBubble(text: item.text),
-          ActivityItem() => ActivityLine(kind: item.kind),
-        },
-      ],
-      if (work != null) ...[
-        const SizedBox(height: Spacing.sm),
-        // Région live : chaque changement d'état est annoncé.
-        Semantics(liveRegion: true, child: WorkStateLabel(state: work)),
-      ],
+      ...entries,
       if (work == WorkState.failed && timeline.errorCode != null) ...[
         const SizedBox(height: Spacing.xs),
         Text(Content.error(timeline.errorCode!)),

@@ -62,6 +62,20 @@ components:
 
 # Hermes Mobile — Design du compagnon
 
+## Contrat courant — lot 4, présence pendant les réponses
+
+Les quatre options A sont approuvées par Alanc (« fait tout ce que tu recommandes »), dans la spec `spec-compagnon-lapin-lot-4.md`. Ce contrat remplace les propositions de génération et les arbitrages historiques ci-dessous.
+
+Otc occupe un carré stable de 64 px dès l'acceptation de la demande, conservé après toute fin. Une largeur utile d'au moins 360 px et un texte inférieur à 150 % permettent le placement latéral ; sinon le carré précède les blocs de réponse. Le clavier seul ne change pas ce placement. Tous les blocs et activités d'un même tour partagent la réservation ; les anciens tours gardent leur dessin neutre sans interaction dupliquée.
+
+Le fond de conversation est la surface neutre du thème, sans lecture de la préférence de fond du profil. Le dessin v5 et les oreilles asymétriques sont conservés. La concentration est une expression des yeux ; le regard vers le texte reste fixe, sans boucle pendant le travail. Aucun mouvement ne mesure l'avancement. Le lapin remplace l'intention des anciens trois points ; les activités et `WorkStateLabel` restent visibles.
+
+La commande « Mettre les animations en pause » est locale à la page. Le carré, les commandes et le texte conservent leurs limites pendant les poses et les chatouilles, en clair/sombre, en paysage et à 200 %.
+
+`WorkStateLabel` reste monté près de la saisie, hors de la liste paresseuse : sa région live unique demeure disponible pendant la lecture d'un long fil. La zone de saisie défile dans la moitié de la hauteur réellement disponible après clavier et zones sûres.
+
+Le seuil d'agrandissement utilise la taille réelle du corps de réponse, y compris pour un TextScaler non linéaire. Le regard est horizontal vers le texte en latéral et dirigé vers le bas en placement vertical ; l'anatomie et l'asymétrie des oreilles ne sont jamais inversées. La pause est défilable près de la réservation du dernier tour. Les blocs suivants conservent le retrait de la première réponse et leur rendu paresseux.
+
 ## Contrat courant — lots 1 et 2
 
 La v5 approuvée est prioritaire sur toutes les études historiques ci-dessous. `RabbitCompanion` reprend ce dessin, ses réactions et sa suspension ; la galerie conserve son aperçu. Le lot 2 place le compagnon avant les contenus existants de « Mes profils », à 180 pixels logiques, sur le dégradé fixe `RabbitTokens.backdrop`. Le nom apparaît en vrai texte sur une surface sémantique du thème, hors du pastel, avec retour à la ligne à 200 %, et une commande de pause accessible.

@@ -56,7 +56,8 @@ class ConversationRepository implements ConversationGateway {
   final _timers = <TimelineKey, Timer>{};
   bool _disposed = false;
 
-  static void _log(String code) => developer.log(code, name: 'hermes.conversation');
+  static void _log(String code) =>
+      developer.log(code, name: 'hermes.conversation');
 
   @override
   Stream<TimelineKey> get changes => _changes.stream;
@@ -122,12 +123,22 @@ class ConversationRepository implements ConversationGateway {
     );
     // Tour déjà démarré sans bulle (événement arrivé avant la réponse de
     // soumission) : la bulle passe devant ses éléments.
-    final at = p.items.indexWhere((i) => i.turn == turn);
-    final items = [...p.items]..insert(at < 0 ? p.items.length : at, item);
+    final items = [
+      for (final existing in p.items)
+        if (turn == 1 && existing is ActivityItem && existing.turn == 0)
+          ActivityItem(turn, existing.kind)
+        else
+          existing,
+    ];
+    final at = items.indexWhere((i) => i.turn == turn);
+    items.insert(at < 0 ? items.length : at, item);
     return p.copyWith(
       items: items,
       userTurns: turn,
       workState: p.turns >= turn ? p.workState : WorkState.sending,
+      companionPhase: p.turns >= turn
+          ? p.companionPhase
+          : CompanionPhase.neutral,
       clearError: true,
     );
   });
@@ -143,11 +154,7 @@ class ConversationRepository implements ConversationGateway {
             effect == EventEffect.interim ||
             effect == EventEffect.activity;
         unawaited(
-          _enqueue(
-            entry.key,
-            (p) => _apply(p, event),
-            immediate: !streaming,
-          ),
+          _enqueue(entry.key, (p) => _apply(p, event), immediate: !streaming),
         );
       }
     }
@@ -376,6 +383,20 @@ class ConversationRepository implements ConversationGateway {
     for (final e in fresh) {
       p = _apply(p, e) ?? p;
     }
+    // L'accusé local ne prouve aucun démarrage ; la reprise le confirme mais
+    // sans événement frais le snapshot fournit le contenu et le tour courants.
+    if (info.running && p.workState == WorkState.sending) return null;
+    if (info.running && p.workState == WorkState.running) {
+      p = p.copyWith(
+        companionPhase:
+            info.partial?.isNotEmpty == true ||
+                p.items.whereType<ResponseItem>().any(
+                  (item) => item.turn == p.turns && item.text.isNotEmpty,
+                )
+            ? CompanionPhase.reading
+            : CompanionPhase.concentrating,
+      );
+    }
     return !info.running && (p.inFlight || p.workState == WorkState.unknown)
         ? null
         : p;
@@ -458,14 +479,25 @@ class ConversationRepository implements ConversationGateway {
     return TimelineProjection(
       items: items,
       workState: work,
+      companionPhase: info.running
+          ? (items.whereType<ResponseItem>().any(
+                  (item) => item.turn == max(turn, 1) && item.text.isNotEmpty,
+                )
+                ? CompanionPhase.reading
+                : CompanionPhase.concentrating)
+          : CompanionPhase.neutral,
       errorCode: work == WorkState.failed ? p.errorCode : null,
       turns: max(turn, info.running ? 1 : 0),
       userTurns: turn,
     );
   }
 
-  static TimelineProjection? _unsynced(TimelineProjection p) =>
-      p.inFlight ? p.copyWith(workState: WorkState.unknown) : null;
+  static TimelineProjection? _unsynced(TimelineProjection p) => p.inFlight
+      ? p.copyWith(
+          workState: WorkState.unknown,
+          companionPhase: CompanionPhase.neutral,
+        )
+      : null;
 
   TimelineProjection? _apply(TimelineProjection p, GatewayEvent e) {
     final seq = e.seq;
@@ -499,10 +531,12 @@ class ConversationRepository implements ConversationGateway {
       case EventEffect.activity:
         final last = p.items.lastOrNull;
         final kind = m.activityKind ?? 'unknown';
-        if (last is ActivityItem && last.kind == kind && last.turn == p.turns) {
+        // Une demande acceptée attend parfois encore message.start.
+        final turn = max(p.turns, p.userTurns);
+        if (last is ActivityItem && last.kind == kind && last.turn == turn) {
           return p;
         }
-        return p.copyWith(items: [...p.items, ActivityItem(p.turns, kind)]);
+        return p.copyWith(items: [...p.items, ActivityItem(turn, kind)]);
       case EventEffect.terminal:
         return _finish(p, e, m);
       case EventEffect.ignore:
@@ -513,6 +547,7 @@ class ConversationRepository implements ConversationGateway {
   static TimelineProjection _startTurn(TimelineProjection p) => p.copyWith(
     turns: p.turns + 1,
     workState: WorkState.running,
+    companionPhase: CompanionPhase.concentrating,
     clearError: true,
   );
 
@@ -528,13 +563,17 @@ class ConversationRepository implements ConversationGateway {
     if (last is ResponseItem && last.turn == p.turns) {
       final joined = sealed ? '${last.text}\n\n$text' : '${last.text}$text';
       return p.copyWith(
+        companionPhase: CompanionPhase.reading,
         items: [
           ...p.items.take(p.items.length - 1),
           ResponseItem(p.turns, joined),
         ],
       );
     }
-    return p.copyWith(items: [...p.items, ResponseItem(p.turns, text)]);
+    return p.copyWith(
+      companionPhase: CompanionPhase.reading,
+      items: [...p.items, ResponseItem(p.turns, text)],
+    );
   }
 
   static TimelineProjection _finish(
@@ -577,6 +616,7 @@ class ConversationRepository implements ConversationGateway {
     return p.copyWith(
       items: items,
       workState: work,
+      companionPhase: CompanionPhase.neutral,
       errorCode: work == WorkState.failed ? 'turn.error' : null,
       clearError: work != WorkState.failed,
     );
@@ -620,7 +660,9 @@ class ConversationRepository implements ConversationGateway {
         _dirty.remove(key);
       } catch (_) {
         _log('conversation.write_failed');
-        if (!_disposed) _timers[key] ??= Timer(flushInterval, () => _flush(key));
+        if (!_disposed) {
+          _timers[key] ??= Timer(flushInterval, () => _flush(key));
+        }
       }
     });
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'components/activity_line.dart';
 import 'components/composer.dart';
+import 'components/conversation_companion.dart';
 import 'components/history_row.dart';
 import 'components/message_bubble.dart';
 import 'components/work_state_label.dart';
@@ -153,6 +154,10 @@ class ComponentGallery extends StatelessWidget {
     final sections = <(String, Widget Function())>[
       (GalleryContent.rabbitSection, () => const _RabbitPreview()),
       (Content.backgroundTitle, () => const _BackgroundPreview()),
+      (
+        GalleryContent.conversationCompanionSection,
+        () => const ConversationCompanionPreview(),
+      ),
       (GalleryContent.statusLabelSection, _statusLabels),
       (GalleryContent.sectionCardSection, _sectionCard),
       (
@@ -207,6 +212,120 @@ class ComponentGallery extends StatelessWidget {
       ),
     );
   }
+}
+
+class ConversationCompanionPreview extends StatefulWidget {
+  const ConversationCompanionPreview({super.key});
+  @override
+  State<ConversationCompanionPreview> createState() =>
+      _ConversationPreviewState();
+}
+
+class _ConversationPreviewState extends State<ConversationCompanionPreview> {
+  WorkState _work = WorkState.sending;
+  CompanionPhase _phase = CompanionPhase.neutral;
+  bool _paused = false;
+  bool _active = true;
+  int _textLength = 0;
+  int _restoration = 0;
+
+  void _change(
+    WorkState work,
+    CompanionPhase phase, {
+    bool text = false,
+    bool restore = false,
+  }) {
+    setState(() {
+      _work = work;
+      _phase = phase;
+      if (work == WorkState.sending) _textLength = 0;
+      if (text) {
+        _textLength = (_textLength + 18).clamp(
+          0,
+          GalleryContent.sampleReply.length,
+        );
+      }
+      // Une reprise reconstruit la pose courante et annule toute réaction locale.
+      if (restore) _restoration++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ConversationCompanion(
+        key: ValueKey(_restoration),
+        phase: _phase,
+        paused: _paused,
+        active: _active,
+        resting:
+            _work == WorkState.succeeded ||
+            _work == WorkState.failed ||
+            _work == WorkState.stopped,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_textLength > 0)
+              MessageBubble(
+                text: GalleryContent.sampleReply.substring(0, _textLength),
+              ),
+            const ActivityLine(kind: 'tool'),
+            Semantics(liveRegion: true, child: WorkStateLabel(state: _work)),
+          ],
+        ),
+      ),
+      Wrap(
+        spacing: Spacing.sm,
+        children: [
+          for (final state in WorkState.values)
+            TextButton(
+              onPressed: () => _change(
+                state,
+                state == WorkState.running
+                    ? CompanionPhase.concentrating
+                    : CompanionPhase.neutral,
+              ),
+              child: Text(WorkStateLabel.label(state)),
+            ),
+          TextButton(
+            onPressed: () =>
+                _change(WorkState.running, CompanionPhase.concentrating),
+            child: const Text(GalleryContent.companionStart),
+          ),
+          TextButton(
+            onPressed: () =>
+                _change(WorkState.running, CompanionPhase.reading, text: true),
+            child: const Text(GalleryContent.companionText),
+          ),
+          TextButton(
+            onPressed: () => _change(
+              WorkState.running,
+              _textLength > 0
+                  ? CompanionPhase.reading
+                  : CompanionPhase.concentrating,
+              restore: true,
+            ),
+            child: const Text(GalleryContent.companionRestore),
+          ),
+          TextButton(
+            onPressed: () => setState(() => _paused = !_paused),
+            child: Text(
+              _paused ? Content.resumeCompanion : Content.pauseCompanion,
+            ),
+          ),
+          TextButton(
+            onPressed: () => setState(() => _active = !_active),
+            child: Text(
+              _active
+                  ? GalleryContent.companionSuspend
+                  : GalleryContent.companionShow,
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 class _BackgroundPreview extends StatefulWidget {

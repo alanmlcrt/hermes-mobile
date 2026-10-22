@@ -169,6 +169,12 @@ abstract final class ConnectionLabels {
 
 /// Libellés et données fictives de la galerie de composants.
 abstract final class GalleryContent {
+  static const conversationCompanionSection = 'Otc pendant la réponse';
+  static const companionStart = 'Démarrage confirmé';
+  static const companionText = 'Réception de texte';
+  static const companionRestore = 'Reprendre avec texte courant';
+  static const companionSuspend = 'Masquer la surface';
+  static const companionShow = 'Afficher la surface';
   static const backgroundFailure = 'Simuler un échec puis réessayer';
   static const rabbitSection = 'Compagnon lapin';
   static const rabbitName = 'Otc';

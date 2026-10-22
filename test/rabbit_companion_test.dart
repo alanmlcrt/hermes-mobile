@@ -47,6 +47,66 @@ Future<void> settleMount(WidgetTester tester, Widget widget) async {
 }
 
 void main() {
+  testWidgets('pose de travail courante après suspension et chatouille fixe', (
+    tester,
+  ) async {
+    var current = RabbitPose.concentrating;
+    var active = true;
+    var reduced = false;
+    late StateSetter update;
+    await settleMount(
+      tester,
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            update = setState;
+            return MediaQuery(
+              data: MediaQueryData(
+                size: const Size(800, 600),
+                disableAnimations: reduced,
+              ),
+              child: Center(
+                child: RabbitCompanion(
+                  pose: current,
+                  autonomous: false,
+                  active: active,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    expect(pose(tester).concentrating, isTrue);
+    await tester.tap(find.byType(RabbitCompanion));
+    await tester.pump();
+    update(() {
+      active = false;
+      current = RabbitPose.reading;
+    });
+    await tester.pump();
+    expect(pose(tester).tickled, isFalse);
+    await tester.pump(const Duration(seconds: 20));
+    expect(tester.binding.transientCallbackCount, 0);
+    update(() {
+      active = true;
+      reduced = true;
+    });
+    await tester.pump();
+    await tester.pump();
+    expect(pose(tester).gaze, 1);
+    await tester.tap(find.byType(RabbitCompanion));
+    await tester.pump();
+    expect(pose(tester).tickled, isTrue);
+    expect(pose(tester).wiggle, 0);
+    update(() => current = RabbitPose.concentrating);
+    await tester.pump();
+    await tester.pump(RabbitTokens.tickle);
+    expect(pose(tester).concentrating, isTrue);
+    expect(pose(tester).tickled, isFalse);
+    expect(tester.binding.transientCallbackCount, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets('limites transformées du lapin et du viewport près du bord', (
     tester,
   ) async {
@@ -581,6 +641,52 @@ void main() {
       findsOneWidget,
     );
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('poses de travail à 48 et 64 px — référence raster', (
+    tester,
+  ) async {
+    const sheet = Key('rabbit-work-poses');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: RepaintBoundary(
+            key: sheet,
+            child: ColoredBox(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final size in [48.0, 64.0])
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final painter in const [
+                            RabbitPainter(),
+                            RabbitPainter(concentrating: true),
+                            RabbitPainter(gaze: 1),
+                            RabbitPainter(gazeDown: 1),
+                          ])
+                            CustomPaint(
+                              size: Size.square(size),
+                              painter: painter,
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await expectLater(
+      find.byKey(sheet),
+      matchesGoldenFile('goldens/rabbit_work_poses.png'),
+    );
   });
 
   testWidgets(

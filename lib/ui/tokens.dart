@@ -71,6 +71,9 @@ abstract final class RabbitTokens {
   );
   static const double large = 180;
   static const double compact = 64;
+  static const double conversationSideWidth = 360;
+  static const double conversationTextLimit = 1.5;
+  static const double concentrationEyeScale = .65;
   static const double minimum = 48;
   static const double stroke = 1.2;
   static const double faceStroke = 2.8;

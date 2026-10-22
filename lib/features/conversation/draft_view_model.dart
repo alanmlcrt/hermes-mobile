@@ -57,7 +57,9 @@ class DraftViewModel extends ChangeNotifier {
     try {
       await outbox.reassignNewDraft(key, profile);
       draft = await outbox.draft(key) ?? draft;
-      if (draft?.profile != profile) throw const AppError('storage.unavailable');
+      if (draft?.profile != profile) {
+        throw const AppError('storage.unavailable');
+      }
       error = null;
       _notify();
       await gateway.selectProfile(profile);
@@ -158,6 +160,10 @@ class DraftViewModel extends ChangeNotifier {
     return k == null ? const TimelineProjection() : conversation.projection(k);
   }
 
+  CompanionPhase get companionPhase => resyncing || resumeFailed
+      ? CompanionPhase.neutral
+      : timeline.companionPhase;
+
   /// Le fil est en cours de resynchronisation (distinct de l'état du travail).
   bool get resyncing {
     final k = _timelineKey;
@@ -167,7 +173,9 @@ class DraftViewModel extends ChangeNotifier {
   /// La reprise a échoué : le fil affiché peut être ancien, le brouillon reste.
   bool get resumeFailed {
     final k = _timelineKey;
-    return k != null && !conversation.resyncing(k) && conversation.resumeFailed(k);
+    return k != null &&
+        !conversation.resyncing(k) &&
+        conversation.resumeFailed(k);
   }
 
   Future<void> _loadTimeline() async {

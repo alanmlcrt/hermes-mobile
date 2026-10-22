@@ -158,6 +158,7 @@ void main() {
     expect([for (final i in p.items) i.runtimeType], [UserItem, ResponseItem]);
     expect((p.items.last as ResponseItem).text, 'SYNTHETIC');
     expect(p.turns, 1);
+    expect(p.companionPhase, CompanionPhase.neutral);
     expect(p.seq, 3);
     expect(lastParams('session.events.since'), {
       'session_id': 'a1b2c3d4',
@@ -170,43 +171,83 @@ void main() {
     expect(row['replay_epoch'], 'synthetic-epoch');
   });
 
-  test('tour toujours en cours : rejeu, fil « en cours », envoi bloqué',
-      () async {
-    await start();
-    await acceptedTurn();
-    overrides['session.resume'] = {
-      ..._result('session-resume-running'),
-      'session_id': 'a1b2c3d4',
-    };
-    overrides['session.events.since'] = {
-      'events': [],
-      'latest_seq': 2,
-      'truncated': false,
-      'count': 0,
-      'epoch': 'synthetic-epoch',
-      'open_requests': [],
-    };
-    await reconnect();
-    await until(
-      () =>
-          outbox.status(draft.key).turnActive &&
-          timeline().workState == WorkState.running,
-    );
-    expect(timeline().workState, WorkState.running);
-    expect((timeline().items.last as ResponseItem).text, 'Voici ');
-    expect(timeline().turns, 1);
-    expect(outbox.status(draft.key).turnActive, isTrue);
-    await outbox.saveText(draft.key, 'suite');
-    await outbox.send(draft.key); // bloqué : rien ne part
-    expect(count('prompt.submit'), 1);
-    expect((await outbox.draft(draft.key))!.body, 'suite');
-  });
+  test(
+    'rejeu sending sans start, reprise running : snapshot de la pose courante',
+    () async {
+      await start();
+      await outbox.send(draft.key);
+      emit('status.update', {}, 1);
+      await until(() => timeline().seq == 1);
+      expect(timeline().workState, WorkState.sending);
+      overrides['session.resume'] = {
+        ..._result('session-resume-running'),
+        'session_id': 'a1b2c3d4',
+      };
+      overrides['session.events.since'] = {
+        'events': [],
+        'latest_seq': 1,
+        'truncated': false,
+        'count': 0,
+        'epoch': 'synthetic-epoch',
+        'open_requests': [],
+      };
+      overrides['session.history'] = {
+        'count': 1,
+        'messages': [
+          {'role': 'user', 'text': _text, 'row_id': 42},
+        ],
+      };
+      await conversation.resync(key);
+      expect(count('session.history'), 1);
+      expect(timeline().workState, WorkState.running);
+      expect(timeline().companionPhase, CompanionPhase.reading);
+      expect((timeline().items.last as ResponseItem).text, 'SYNTHETIC_PARTIAL');
+      expect(count('prompt.submit'), 1);
+    },
+  );
+
+  test(
+    'tour toujours en cours : rejeu, fil « en cours », envoi bloqué',
+    () async {
+      await start();
+      await acceptedTurn();
+      overrides['session.resume'] = {
+        ..._result('session-resume-running'),
+        'session_id': 'a1b2c3d4',
+      };
+      overrides['session.events.since'] = {
+        'events': [],
+        'latest_seq': 2,
+        'truncated': false,
+        'count': 0,
+        'epoch': 'synthetic-epoch',
+        'open_requests': [],
+      };
+      await reconnect();
+      await until(
+        () =>
+            outbox.status(draft.key).turnActive &&
+            timeline().workState == WorkState.running,
+      );
+      expect(timeline().workState, WorkState.running);
+      expect(timeline().companionPhase, CompanionPhase.reading);
+      expect((timeline().items.last as ResponseItem).text, 'Voici ');
+      expect(timeline().turns, 1);
+      expect(outbox.status(draft.key).turnActive, isTrue);
+      await outbox.saveText(draft.key, 'suite');
+      await outbox.send(draft.key); // bloqué : rien ne part
+      expect(count('prompt.submit'), 1);
+      expect((await outbox.draft(draft.key))!.body, 'suite');
+    },
+  );
 
   test('tronqué : snapshot par l\'historique, bulle liée par row_id, curseur '
       'sur latest_seq, aucun renvoi', () async {
     await start();
     await acceptedTurn();
-    overrides['session.events.since'] = _result('session-events-since-truncated');
+    overrides['session.events.since'] = _result(
+      'session-events-since-truncated',
+    );
     overrides['session.history'] = _result('session-history');
     await reconnect();
     await until(() => timeline().workState == WorkState.succeeded);
@@ -216,6 +257,7 @@ void main() {
     expect(user.text, _text); // lien local par row_id 42, pas par le texte
     expect(user.userRowId, 42);
     expect((p.items.last as ResponseItem).text, 'SYNTHETIC_ANSWER');
+    expect(p.companionPhase, CompanionPhase.neutral);
     expect(p.seq, 9);
     expect(p.replayEpoch, 'synthetic-epoch');
     expect(count('prompt.submit'), 1);
@@ -226,7 +268,11 @@ void main() {
     await acceptedTurn();
     overrides['session.events.since'] = {
       'events': [
-        {'type': 'message.complete', 'payload': {'text': 'X'}, 'seq': 4},
+        {
+          'type': 'message.complete',
+          'payload': {'text': 'X'},
+          'seq': 4,
+        },
       ],
       'latest_seq': 4,
       'truncated': false,
@@ -257,54 +303,63 @@ void main() {
     expect(count('prompt.submit'), 1);
   });
 
-  test('relance : fil rouvert, snapshot avec le partiel assistant en cours',
-      () async {
-    await start();
-    await acceptedTurn();
-    // Nouvelle exécution de l'app : projections en mémoire perdues.
-    await outbox.dispose();
-    await conversation.dispose();
-    conversation = ConversationRepository(
-      database,
-      gateway: h.repository,
-      mapping: mapping,
-      timeout: const Duration(seconds: 1),
-    );
-    outbox = OutboxRepository(
-      database,
-      gateway: h.repository,
-      timeout: const Duration(seconds: 1),
-      conversation: conversation,
-    );
-    overrides['session.resume'] = _result('session-resume-running');
-    overrides['session.history'] = {
-      'count': 1,
-      'messages': [
-        {'role': 'user', 'text': _text, 'row_id': 42, 'display_kind': 'text'},
-      ],
-    };
-    await conversation.load(key);
-    await until(() => timeline().workState == WorkState.running);
-    await settle();
-    final p = timeline();
-    expect([for (final i in p.items) i.runtimeType], [UserItem, ResponseItem]);
-    expect((p.items.last as ResponseItem).text, 'SYNTHETIC_PARTIAL');
-    expect(count('prompt.submit'), 1);
-    // Les fragments suivants complètent le même tour.
-    h.transport.sockets.last.controller.add({
-      'jsonrpc': '2.0',
-      'method': 'event',
-      'params': {
-        'type': 'message.delta',
-        'session_id': 'e5f6a7b8',
-        'payload': {'text': ' suite'},
-        'seq': 5,
-      },
-    });
-    await until(() => timeline().seq == 5);
-    expect((timeline().items.last as ResponseItem).text, 'SYNTHETIC_PARTIAL suite');
-    expect(timeline().turns, 1);
-  });
+  test(
+    'relance : fil rouvert, snapshot avec le partiel assistant en cours',
+    () async {
+      await start();
+      await acceptedTurn();
+      // Nouvelle exécution de l'app : projections en mémoire perdues.
+      await outbox.dispose();
+      await conversation.dispose();
+      conversation = ConversationRepository(
+        database,
+        gateway: h.repository,
+        mapping: mapping,
+        timeout: const Duration(seconds: 1),
+      );
+      outbox = OutboxRepository(
+        database,
+        gateway: h.repository,
+        timeout: const Duration(seconds: 1),
+        conversation: conversation,
+      );
+      overrides['session.resume'] = _result('session-resume-running');
+      overrides['session.history'] = {
+        'count': 1,
+        'messages': [
+          {'role': 'user', 'text': _text, 'row_id': 42, 'display_kind': 'text'},
+        ],
+      };
+      await conversation.load(key);
+      await until(() => timeline().workState == WorkState.running);
+      await settle();
+      final p = timeline();
+      expect(
+        [for (final i in p.items) i.runtimeType],
+        [UserItem, ResponseItem],
+      );
+      expect((p.items.last as ResponseItem).text, 'SYNTHETIC_PARTIAL');
+      expect(p.companionPhase, CompanionPhase.reading);
+      expect(count('prompt.submit'), 1);
+      // Les fragments suivants complètent le même tour.
+      h.transport.sockets.last.controller.add({
+        'jsonrpc': '2.0',
+        'method': 'event',
+        'params': {
+          'type': 'message.delta',
+          'session_id': 'e5f6a7b8',
+          'payload': {'text': ' suite'},
+          'seq': 5,
+        },
+      });
+      await until(() => timeline().seq == 5);
+      expect(
+        (timeline().items.last as ResponseItem).text,
+        'SYNTHETIC_PARTIAL suite',
+      );
+      expect(timeline().turns, 1);
+    },
+  );
 
   Map<String, dynamic> sinceBody(
     List<Map<String, Object?>> events,
@@ -318,6 +373,41 @@ void main() {
     'epoch': epoch,
     'open_requests': [],
   };
+
+  test(
+    'snapshot courant sans partial : regard reconstruit depuis le dernier tour',
+    () async {
+      await start();
+      await acceptedTurn();
+      final running = _result('session-resume-running');
+      running['inflight'] = {'user': _text, 'streaming': true};
+      overrides['session.resume'] = running;
+      overrides['session.events.since'] = const RpcFail(5000);
+      overrides['session.history'] = {
+        'count': 4,
+        'messages': [
+          {'role': 'user', 'text': 'Avant', 'row_id': 40},
+          {'role': 'assistant', 'text': 'Ancienne réponse', 'row_id': 41},
+          {'role': 'user', 'text': _text, 'row_id': 42},
+          {'role': 'assistant', 'text': 'Texte courant', 'row_id': 43},
+        ],
+      };
+      await conversation.resync(key);
+      expect(timeline().workState, WorkState.running);
+      expect(timeline().companionPhase, CompanionPhase.reading);
+      expect((timeline().items.last as ResponseItem).text, 'Texte courant');
+      overrides['session.history'] = {
+        'count': 3,
+        'messages': [
+          {'role': 'user', 'text': 'Avant', 'row_id': 40},
+          {'role': 'assistant', 'text': 'Ancienne réponse', 'row_id': 41},
+          {'role': 'user', 'text': _text, 'row_id': 42},
+        ],
+      };
+      await conversation.resync(key);
+      expect(timeline().companionPhase, CompanionPhase.concentrating);
+    },
+  );
 
   Future<void> expectSnapshot(String why) async {
     await acceptedTurn();
@@ -385,8 +475,7 @@ void main() {
     expect(timeline().workState, WorkState.unknown);
   });
 
-  test('reprise en échec : resumeFailed signalé par un changement, effacé au succès',
-      () async {
+  test('reprise en échec : resumeFailed signalé par un changement, effacé au succès', () async {
     await start();
     await outbox.send(draft.key);
     final changes = <TimelineKey>[];
@@ -459,10 +548,16 @@ void main() {
       overrides['session.history'] = {
         'count': 1,
         'messages': [
-          {'role': 'user', 'text': 'seconde', 'row_id': 42}, // même texte, ligne ancienne
+          {
+            'role': 'user',
+            'text': 'seconde',
+            'row_id': 42,
+          }, // même texte, ligne ancienne
         ],
       };
-      await until(() => outbox.status(draft.key).state == OperationState.failed);
+      await until(
+        () => outbox.status(draft.key).state == OperationState.failed,
+      );
       final status = outbox.status(draft.key);
       expect(status.errorCode, 'send.not_received');
       expect(status.retryable, isTrue);
@@ -514,37 +609,40 @@ void main() {
       );
     }
 
-    test('deux opérations incertaines, une seule ligne neuve : les deux restent '
-        'unknown', () async {
-      await start();
-      await uncertainSend();
-      overrides.remove('prompt.submit');
-      overrides['session.history'] = const RpcFail(5070);
-      await reconnectAfterDrop();
-      await until(() => count('session.history') == 1);
-      await settle();
-      overrides['prompt.submit'] = const RpcDrop();
-      final delays = h.delays.length;
-      await outbox.send(draft.key);
-      expect(count('prompt.submit'), 2);
-      overrides.remove('prompt.submit');
-      overrides['session.history'] = {
-        'count': 1,
-        'messages': [
-          {'role': 'user', 'text': _text, 'row_id': 43},
-        ],
-      };
-      await until(() => h.delays.length > delays);
-      h.delays.last.complete();
-      await until(() => count('session.history') == 2);
-      await settle();
-      await settle();
-      final states = [
-        for (final o in await database.query('outbox_operations')) o['state'],
-      ];
-      expect(states, ['unknown', 'unknown']);
-      expect((await outbox.draft(draft.key))!.body, _text);
-    });
+    test(
+      'deux opérations incertaines, une seule ligne neuve : les deux restent '
+      'unknown',
+      () async {
+        await start();
+        await uncertainSend();
+        overrides.remove('prompt.submit');
+        overrides['session.history'] = const RpcFail(5070);
+        await reconnectAfterDrop();
+        await until(() => count('session.history') == 1);
+        await settle();
+        overrides['prompt.submit'] = const RpcDrop();
+        final delays = h.delays.length;
+        await outbox.send(draft.key);
+        expect(count('prompt.submit'), 2);
+        overrides.remove('prompt.submit');
+        overrides['session.history'] = {
+          'count': 1,
+          'messages': [
+            {'role': 'user', 'text': _text, 'row_id': 43},
+          ],
+        };
+        await until(() => h.delays.length > delays);
+        h.delays.last.complete();
+        await until(() => count('session.history') == 2);
+        await settle();
+        await settle();
+        final states = [
+          for (final o in await database.query('outbox_operations')) o['state'],
+        ];
+        expect(states, ['unknown', 'unknown']);
+        expect((await outbox.draft(draft.key))!.body, _text);
+      },
+    );
 
     test('repère absent : reste unknown, jamais échec', () async {
       await start();

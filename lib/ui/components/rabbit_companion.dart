@@ -7,6 +7,10 @@ import 'package:flutter/rendering.dart';
 import '../content.dart';
 import '../tokens.dart';
 
+enum RabbitPose { rest, concentrating, reading }
+
+enum RabbitLook { right, down }
+
 /// Compagnon vectoriel autonome. Le propriétaire passe [active] à false
 /// lorsqu'il masque sa surface (onglet, Offstage ou sous-vue conservée).
 /// TickerMode, route, viewport et cycle de vie sont également respectés.
@@ -17,12 +21,18 @@ class RabbitCompanion extends StatefulWidget {
     this.size = RabbitTokens.large,
     this.active = true,
     this.paused = false,
+    this.pose = RabbitPose.rest,
+    this.autonomous = true,
+    this.readingLook = RabbitLook.right,
   }) : assert(size >= RabbitTokens.minimum);
 
   final String name;
   final double size;
   final bool active;
   final bool paused;
+  final RabbitPose pose;
+  final bool autonomous;
+  final RabbitLook readingLook;
 
   @override
   State<RabbitCompanion> createState() => _RabbitCompanionState();
@@ -106,6 +116,12 @@ class _RabbitCompanionState extends State<RabbitCompanion>
       _cancel();
       _sync();
     }
+    if (oldWidget.pose != widget.pose ||
+        oldWidget.autonomous != widget.autonomous) {
+      // Une chatouille garde sa durée locale ; sa fin lira la pose courante.
+      if (!_reacting) _cancel();
+      _scheduleRest();
+    }
     _queueVisibility();
   }
 
@@ -180,7 +196,14 @@ class _RabbitCompanionState extends State<RabbitCompanion>
   }
 
   void _scheduleRest() {
-    if (!_animate || _reacting || _glancing || _timer != null) return;
+    if (!_animate ||
+        !widget.autonomous ||
+        widget.pose != RabbitPose.rest ||
+        _reacting ||
+        _glancing ||
+        _timer != null) {
+      return;
+    }
     _timer = Timer(RabbitTokens.rest, () {
       _timer = null;
       if (!_animate) return;
@@ -277,7 +300,21 @@ class _RabbitCompanionState extends State<RabbitCompanion>
                           : 0.0;
                       return CustomPaint(
                         painter: RabbitPainter(
-                          gaze: _direction * envelope + reaction,
+                          gaze: _reacting
+                              ? reaction
+                              : widget.pose == RabbitPose.reading &&
+                                    widget.readingLook == RabbitLook.right
+                              ? 1
+                              : _direction * envelope,
+                          gazeDown:
+                              !_reacting &&
+                                  widget.pose == RabbitPose.reading &&
+                                  widget.readingLook == RabbitLook.down
+                              ? 1
+                              : 0,
+                          concentrating:
+                              !_reacting &&
+                              widget.pose == RabbitPose.concentrating,
                           wiggle: _reacting && !_fixedReaction
                               ? math.sin(
                                       t *
@@ -378,10 +415,18 @@ class _FocusRingPainter extends CustomPainter {
 
 /// Dessin pur, également inspectable dans les tests de poses.
 class RabbitPainter extends CustomPainter {
-  const RabbitPainter({this.gaze = 0, this.wiggle = 0, this.tickled = false});
+  const RabbitPainter({
+    this.gaze = 0,
+    this.gazeDown = 0,
+    this.wiggle = 0,
+    this.tickled = false,
+    this.concentrating = false,
+  });
   final double gaze;
+  final double gazeDown;
   final double wiggle;
   final bool tickled;
+  final bool concentrating;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -446,15 +491,25 @@ class RabbitPainter extends CustomPainter {
     canvas.drawOval(RabbitTokens.head, outline);
     canvas.translate(
       RabbitTokens.headPivot.dx + gaze * RabbitTokens.gazeDistance,
-      0,
+      gazeDown * RabbitTokens.gazeDistance,
     );
     canvas.scale(1 - gaze.abs() * RabbitTokens.faceForeshortening, 1);
     canvas.translate(-RabbitTokens.headPivot.dx, 0);
     if (tickled) {
       canvas.drawPath(RabbitTokens.happyEyes, line);
     } else {
-      canvas.drawOval(RabbitTokens.leftEye, ink);
-      canvas.drawOval(RabbitTokens.rightEye, ink);
+      for (final eye in [RabbitTokens.leftEye, RabbitTokens.rightEye]) {
+        canvas.drawOval(
+          concentrating
+              ? Rect.fromCenter(
+                  center: eye.center,
+                  width: eye.width,
+                  height: eye.height * RabbitTokens.concentrationEyeScale,
+                )
+              : eye,
+          ink,
+        );
+      }
     }
     canvas.drawPath(RabbitTokens.nose, ink);
     canvas.drawPath(RabbitTokens.mouth, line);
@@ -464,6 +519,8 @@ class RabbitPainter extends CustomPainter {
   @override
   bool shouldRepaint(RabbitPainter oldDelegate) =>
       oldDelegate.gaze != gaze ||
+      oldDelegate.gazeDown != gazeDown ||
       oldDelegate.wiggle != wiggle ||
-      oldDelegate.tickled != tickled;
+      oldDelegate.tickled != tickled ||
+      oldDelegate.concentrating != concentrating;
 }

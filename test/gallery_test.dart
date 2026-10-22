@@ -15,6 +15,87 @@ import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
   testWidgets(
+    'scénario conversation piloté : texte, terminal pendant chatouille, reprise',
+    (tester) async {
+      tester.view.physicalSize = const Size(812, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildTheme(null, Brightness.light),
+          home: const Scaffold(body: ConversationCompanionPreview()),
+        ),
+      );
+      await tester.pump();
+      RabbitPainter current() => tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((paint) => paint.painter)
+          .whereType<RabbitPainter>()
+          .single;
+      await tester.tap(find.text(GalleryContent.companionStart));
+      await tester.pump();
+      expect(current().concentrating, isTrue);
+      await tester.tap(find.text(GalleryContent.companionText));
+      await tester.pump();
+      expect(current().gaze, 1);
+      final firstText = tester
+          .widget<MessageBubble>(find.byType(MessageBubble))
+          .text;
+      await tester.tap(find.text(GalleryContent.companionText));
+      await tester.pump();
+      final received = tester
+          .widget<MessageBubble>(find.byType(MessageBubble))
+          .text;
+      expect(received.length, greaterThan(firstText.length));
+      await tester.tap(find.byType(RabbitCompanion));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(TextButton, Content.workStopped));
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byType(WorkStateLabel),
+          matching: find.text(Content.workStopped),
+        ),
+        findsOneWidget,
+      );
+      expect(current().tickled, isTrue);
+      expect(
+        tester.widget<MessageBubble>(find.byType(MessageBubble)).text,
+        received,
+      );
+      await tester.pump(RabbitTokens.tickle);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(current().gaze, 0);
+      expect(current().tickled, isFalse);
+      await tester.tap(find.widgetWithText(TextButton, Content.workUnknown));
+      await tester.pump();
+      expect(
+        tester.widget<MessageBubble>(find.byType(MessageBubble)).text,
+        received,
+      );
+      await tester.tap(find.byType(RabbitCompanion));
+      await tester.pump();
+      expect(current().tickled, isTrue);
+      await tester.tap(find.text(GalleryContent.companionRestore));
+      await tester.pump();
+      await tester.pump();
+      expect(current().gaze, 1);
+      expect(current().tickled, isFalse);
+      expect(
+        tester.widget<MessageBubble>(find.byType(MessageBubble)).text,
+        received,
+      );
+      await tester.tap(find.text(GalleryContent.companionSuspend));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 20));
+      expect(tester.binding.transientCallbackCount, 0);
+      await tester.tap(find.text(GalleryContent.companionShow));
+      await tester.pump();
+      expect(current().gaze, 1);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
     'éditeur galerie suit le mouvement réduit système pendant son ouverture',
     (tester) async {
       addTearDown(
@@ -155,7 +236,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(GalleryContent.resumeRabbit), findsOneWidget);
         // Toutes les variantes existent, dont sombre avec texte système à 200 %.
-        expect(find.byType(RabbitCompanion), findsNWidgets(16));
+        expect(find.byType(RabbitCompanion), findsNWidgets(20));
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       }
@@ -187,8 +268,8 @@ void main() {
       GalleryContent.variantLargeText,
       GalleryContent.variantReducedMotion,
     ]) {
-      // Une fois par composant (9 sections).
-      expect(find.text(variant), findsNWidgets(10), reason: variant);
+      // Une fois par composant, dont le scénario conversation pilotable.
+      expect(find.text(variant), findsNWidgets(11), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -227,17 +308,20 @@ void main() {
     );
 
     expect(find.byType(SectionCard), findsNWidgets(4));
-    expect(find.byType(RabbitCompanion), findsNWidgets(4 * 4));
-    expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(4));
+    expect(find.byType(RabbitCompanion), findsNWidgets(4 * 5));
+    expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(8));
     expect(find.byType(Composer), findsNWidgets(4));
     // Trois états de connexion, deux lignes d'activité, six états du travail.
-    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 2 + 6)));
+    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 3 + 7)));
     expect(find.byType(MessageBubble), findsNWidgets(4 * 2));
-    expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
+    expect(find.byType(ActivityLine), findsNWidgets(4 * 3));
     for (final state in WorkState.values) {
       expect(
-        find.text(WorkStateLabel.label(state)),
-        findsNWidgets(4),
+        find.descendant(
+          of: find.byType(WorkStateLabel),
+          matching: find.text(WorkStateLabel.label(state)),
+        ),
+        findsNWidgets(state == WorkState.sending ? 8 : 4),
         reason: state.name,
       );
     }

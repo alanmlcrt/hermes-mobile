@@ -6,6 +6,10 @@ import 'profile.dart';
 /// État du travail distant ; distinct de l'état de la connexion.
 enum WorkState { sending, running, succeeded, failed, stopped, unknown }
 
+/// Pose courante de présentation, sans mesure de progression ni succès.
+/// Non persistée : la reprise reconstruit la pose depuis l'état courant.
+enum CompanionPhase { neutral, concentrating, reading }
+
 /// Clé de la projection : (connexion, profil, session durable), sensible à la casse.
 class TimelineKey {
   const TimelineKey(this.connection, this.profile, this.session);
@@ -91,8 +95,10 @@ class TimelineProjection {
     this.userTurns = 0,
     this.replayEpoch,
     this.seq,
+    this.companionPhase = CompanionPhase.neutral,
   });
   final List<TimelineItem> items;
+  final CompanionPhase companionPhase;
 
   /// Nul tant qu'aucune demande n'a été acceptée.
   final WorkState? workState;
@@ -118,6 +124,7 @@ class TimelineProjection {
     String? replayEpoch,
     int? seq,
     bool resetSeq = false,
+    CompanionPhase? companionPhase,
   }) => TimelineProjection(
     items: items ?? this.items,
     workState: workState ?? this.workState,
@@ -126,6 +133,7 @@ class TimelineProjection {
     userTurns: userTurns ?? this.userTurns,
     replayEpoch: replayEpoch ?? this.replayEpoch,
     seq: resetSeq ? null : seq ?? this.seq,
+    companionPhase: companionPhase ?? this.companionPhase,
   );
 
   bool get inFlight =>

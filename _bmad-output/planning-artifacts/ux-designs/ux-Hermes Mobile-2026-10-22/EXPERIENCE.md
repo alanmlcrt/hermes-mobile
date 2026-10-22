@@ -17,6 +17,20 @@ sources:
 
 # Hermes Mobile — Expérience du compagnon
 
+## Contrat courant — lot 4 approuvé
+
+Alanc a retenu les quatre recommandations A (« fait tout ce que tu recommandes »). Ce contrat prévaut sur les pistes et arbitrages historiques de génération ci-dessous.
+
+La soumission et l'acceptation gardent Otc neutre. Un démarrage confirmé lui donne une expression concentrée ; du texte réellement reçu attire son regard vers la réponse, maintenu sans battement par fragment. Toutes les fins ramènent le visage de face puis au repos ; aucune réaction ne distingue la réussite. `WorkStateLabel` annonce immédiatement le statut exact, même pendant une chatouille. Erreur, arrêt, perte de connexion et état inconnu ne produisent aucune réussite inventée.
+
+Les chatouilles sont une réaction locale sans commande de génération. Après la réaction, Otc reprend la pose courante ; une fin survenue pendant celle-ci n'est jamais rejouée plus tard. Les regards autonomes sont supprimés pendant le travail. La pause locale à la page et le mouvement réduit suppriment tout mouvement autonome ; le toucher donne alors une pose fixe temporaire.
+
+Hors écran, route masquée, surface inactive ou arrière-plan : annuler le cycle et la réaction en cours. Au retour, montrer seulement la pose de l'état courant, sans rattrapage. Le rejeu et le snapshot restaurent les données et la pose courante, sans animation des événements passés. Un historique terminé est neutre. Un nouveau tour garde les réservations des anciens tours sans dupliquer « Chatouiller Otc ».
+
+Le carré de 64 px est présent dès l'acceptation et reste après le terminal. Il est latéral si la largeur utile atteint 360 px avec texte inférieur à 150 %, sinon avant le texte. L'ouverture du clavier ne change pas ce choix. Le fond reste la surface neutre du thème. Le lapin remplace l'intention des trois points ; les activités et le statut restent présents.
+
+Le regard suit le contenu : vers la droite en placement latéral, vers le bas lorsque la réponse est dessous, sans miroir des oreilles. Le seuil de 150 % est évalué à la taille réelle du corps de réponse, même avec un agrandissement non linéaire. La pause reste dans le fil, près du dernier compagnon, accessible par défilement à 200 %. Les blocs longs d'un même tour gardent leur construction paresseuse et un retrait commun ; ils ne créent aucune interaction supplémentaire. Une activité reçue avant le démarrage appartient à la demande déjà acceptée. La reprise reconstruit le regard depuis le texte courant de l'historique, même sans partiel explicite.
+
 ## Contrat courant — lots 1 et 2
 
 La v5 approuvée est prioritaire sur toutes les études historiques ci-dessous. `RabbitCompanion` reprend ce dessin, ses réactions et sa suspension ; la galerie conserve son aperçu. Le lot 2 place le compagnon avant les contenus existants de « Mes profils », à 180 pixels logiques, sur le dégradé fixe `RabbitTokens.backdrop`. Le nom apparaît en vrai texte sur une surface sémantique du thème, hors du pastel, avec retour à la ligne à 200 %, et une commande de pause accessible.
