@@ -14,6 +14,36 @@ import 'package:hermes_mobile/ui/theme.dart';
 import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
+  testWidgets('activité : détails conservés après fin et repli du groupe', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: SingleChildScrollView(child: ActivityPreview())),
+      ),
+    );
+    await tester.tap(find.text(Content.activityTool));
+    await tester.pump();
+    expect(find.text(Content.detailArguments), findsOneWidget);
+    await tester.tap(find.text(GalleryContent.activityComplete));
+    await tester.pump();
+    expect(find.text(Content.detailError), findsOneWidget);
+    await tester.ensureVisible(find.text(GalleryContent.activitySecond));
+    await tester.tap(find.text(GalleryContent.activitySecond));
+    await tester.pump();
+    await tester.ensureVisible(find.text(GalleryContent.activityReply));
+    await tester.tap(find.text(GalleryContent.activityReply));
+    await tester.pump();
+    expect(find.text(Content.detailArguments), findsOneWidget);
+    await tester.ensureVisible(find.text(Content.activitySummary(2, 1)));
+    await tester.tap(find.text(Content.activitySummary(2, 1)));
+    await tester.pump();
+    expect(find.text(Content.detailArguments), findsNothing);
+    await tester.ensureVisible(find.text(Content.activitySummary(2, 1)));
+    await tester.tap(find.text(Content.activitySummary(2, 1)));
+    await tester.pump();
+    expect(find.text(Content.detailArguments), findsOneWidget);
+  });
   testWidgets(
     'scénario conversation piloté : texte, terminal pendant chatouille, reprise',
     (tester) async {

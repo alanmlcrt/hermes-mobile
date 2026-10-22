@@ -2,6 +2,14 @@
 // Vocabulaire du quotidien : pas de jargon technique en avant.
 
 abstract final class Content {
+  static const detailName = 'Nom';
+  static const detailContext = 'Contexte';
+  static const detailArguments = 'Arguments';
+  static const detailOutput = 'Sortie';
+  static const detailDiff = 'Différence';
+  static const detailError = 'Erreur';
+  static const expandDetails = 'Déplier les détails reçus';
+  static const collapseDetails = 'Replier les détails reçus';
   static const backgroundTitle = 'Arrière-plan';
   static const backgroundPreview = 'Aperçu';
   static const backgroundApply = 'Appliquer';

@@ -565,6 +565,7 @@ class ConversationRepository implements ConversationGateway {
             items[at] = old.copyWith(
               started: old.started || m.activityStarted,
               completed: old.completed || m.activityCompleted,
+              detailPatch: m.activityDetails,
             );
             return p.copyWith(items: items);
           }
@@ -576,6 +577,9 @@ class ConversationRepository implements ConversationGateway {
             toolId: id,
             started: m.activityStarted,
             completed: m.activityCompleted,
+            details: Map.unmodifiable(
+              {...m.activityDetails}..removeWhere((k, v) => v == null),
+            ),
             eventKey: jsonEncode([
               e.replayEpoch,
               e.seq,

@@ -3,20 +3,31 @@ import 'package:flutter/material.dart';
 import '../../models/timeline.dart';
 import '../content.dart';
 import '../tokens.dart';
+import 'activity_details.dart';
 
 /// Ligne d'activité générique : jamais de détail inventé sur ce que fait Hermes.
 class ActivityLine extends StatelessWidget {
-  const ActivityLine({super.key, required this.kind, this.completed = false});
+  const ActivityLine({
+    super.key,
+    required this.kind,
+    this.completed = false,
+    this.details = const {},
+    this.expanded = false,
+    this.onChanged,
+  });
 
   /// Famille issue du mapping (`tool`, `unknown`).
   final ActivityKind kind;
   final bool completed;
+  final Map<String, Object?> details;
+  final bool expanded;
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     final label = Content.activity(kind == ActivityKind.tool);
     final scheme = Theme.of(context).colorScheme;
-    return Semantics(
+    final heading = Semantics(
       container: true,
       label: completed ? '$label, ${Content.activityEndAccessible}' : label,
       excludeSemantics: true,
@@ -57,6 +68,42 @@ class ActivityLine extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (onChanged == null || ActivityDetails.sections(details).isEmpty) {
+      return heading;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          container: true,
+          label: completed ? '$label, ${Content.activityEndAccessible}' : label,
+          expanded: expanded,
+          hint: expanded ? Content.collapseDetails : Content.expandDetails,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(
+                ActivityTokens.command,
+                ActivityTokens.command,
+              ),
+              alignment: Alignment.centerLeft,
+            ),
+            onPressed: () => onChanged!(!expanded),
+            child: Row(
+              children: [
+                Expanded(child: ExcludeSemantics(child: heading)),
+                ExcludeSemantics(
+                  child: Icon(
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    size: IconSizes.md,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (expanded) ActivityDetails(details: details),
+      ],
     );
   }
 }

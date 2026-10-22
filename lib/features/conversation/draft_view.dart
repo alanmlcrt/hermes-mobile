@@ -49,6 +49,10 @@ class _DraftViewState extends State<DraftView> {
   int _clearTick = 0;
   bool _companionPaused = false;
   final _activityExpansion = <Object, bool>{};
+  final _detailExpansion = <Object, bool>{};
+  final _activityKeys = <Object, GlobalKey>{};
+  TimelineProjection? _renderedTimeline;
+  Size? _threadViewport;
 
   @override
   void dispose() {
@@ -104,7 +108,9 @@ class _DraftViewState extends State<DraftView> {
             builder: (context, viewport) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _thread(context, vm, draft, profile)),
+                Expanded(
+                  child: _thread(context, vm, draft, profile, viewport.biggest),
+                ),
                 // Sans brouillon chargé, une saisie écraserait le texte stocké.
                 if (draft != null || vm.timeline.workState != null)
                   // Défile si la saisie dépasse l'écran (texte 200 %, paysage).
@@ -154,8 +160,20 @@ class _DraftViewState extends State<DraftView> {
     DraftViewModel vm,
     Draft? draft,
     Profile? profile,
+    Size viewport,
   ) {
     final c = _scroll;
+    final timelineChanged = !identical(_renderedTimeline, vm.timeline);
+    _renderedTimeline = vm.timeline;
+    final viewportChanged = viewport != _threadViewport;
+    _threadViewport = viewport;
+    final focused = FocusManager.instance.primaryFocus?.context;
+    // Un changement de route peut laisser brièvement le focus sur un élément
+    // déjà détaché. Ne pas remonter ses ancêtres pendant cette transition.
+    final readingDetails =
+        focused is Element &&
+        focused.renderObject?.attached == true &&
+        focused.findAncestorWidgetOfExactType<ActivityLine>()?.expanded == true;
     final atBottom =
         !c.hasClients ||
         c.position.maxScrollExtent - c.position.pixels < Spacing.md;
@@ -200,7 +218,7 @@ class _DraftViewState extends State<DraftView> {
         ),
       ..._timeline(context, vm),
     ];
-    if (atBottom) {
+    if (atBottom && (timelineChanged || viewportChanged) && !readingDetails) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (c.hasClients) c.jumpTo(c.position.maxScrollExtent);
       });
@@ -303,8 +321,21 @@ class _DraftViewState extends State<DraftView> {
     Widget block(TimelineItem item) => switch (item) {
       ResponseItem() => MessageBubble(text: item.text),
       ActivityItem() => ActivityLine(
+        key: item.eventKey == null
+            ? null
+            : _activityKeys.putIfAbsent((
+                vm.draft?.key,
+                item.eventKey,
+              ), GlobalKey.new),
         kind: item.kind,
         completed: item.completed,
+        details: item.details,
+        expanded:
+            _detailExpansion[(vm.draft?.key, item.eventKey ?? item)] ?? false,
+        onChanged: (value) => setState(
+          () =>
+              _detailExpansion[(vm.draft?.key, item.eventKey ?? item)] = value,
+        ),
       ),
       UserItem() => MessageBubble(text: item.text, fromUser: true),
     };
@@ -350,9 +381,17 @@ class _DraftViewState extends State<DraftView> {
         }
         final activities = items.sublist(i, end).cast<ActivityItem>();
         final groupId = (vm.draft?.key, turn, item.eventKey ?? i);
+        // Consulter un détail maintient le groupe ouvert ; un repli manuel
+        // du groupe reste prioritaire, même si ce détail est encore ouvert.
         final expanded =
             _activityExpansion[groupId] ??
-            !activities.any((a) => a.responseReceived);
+            (!activities.any((a) => a.responseReceived) ||
+                activities.any(
+                  (a) => _detailExpansion.containsKey((
+                    vm.draft?.key,
+                    a.eventKey ?? a,
+                  )),
+                ));
         if (activities.length >= 2) {
           responses.add(
             ActivityGroup(

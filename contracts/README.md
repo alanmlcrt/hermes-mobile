@@ -17,3 +17,18 @@ La projection persistée conserve ces preuves sans migration destructive. Les an
 Login JSON, cookies de session explicitement extraits, REST bearer, refresh puis relogin via coffre. Le ticket WS est un sous-protocole, sans secret dans l’URL ; les redirections sont refusées. Aucun POST de sélection globale.
 
 Après activation autorisée : comparer build et contrat, capturer les réponses expurgées, vérifier auth, profils, ticket, reprise, deux profils, texte 200 % et TalkBack. La présence documentaire ne vaut jamais validation réelle.
+
+## Détails d’action (story 3.2)
+
+`tool.start` et `tool.complete` peuvent fournir `name`, `context`, `args`,
+`args_text`, `preview`, `result`, `result_text`, `inline_diff`. Seuls ces champs
+sont conservés ; les textes sont des chaînes et args/result sont des valeurs JSON.
+Une fin enrichit la même identité selon les règles 3.1 : omission conserve,
+null explicite supprime. Les données structurées priment sur les textes de secours.
+Seule une chaîne non vide dans `result.error` produit une section Erreur ; ni code
+de sortie, ni nom MCP, ni texte libre ne modifie le statut global.
+Les données restent du texte sélectionnable, jamais exécuté. Aucun RPC au dépliage.
+Les textes peuvent être expurgés ou tronqués par le serveur : leurs marqueurs sont
+conservés et l’interface ne promet pas une sortie complète. Un snapshot textuel ne
+reconstitue aucun détail. Toutes les fixtures outil sont synthétiques ; la
+disponibilité sur une installation réelle reste **unverified**.

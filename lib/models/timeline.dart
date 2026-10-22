@@ -95,6 +95,7 @@ class ActivityItem extends TimelineItem {
     this.completed = false,
     this.eventKey,
     this.responseReceived = false,
+    this.details = const {},
   });
   final ActivityKind kind;
   final String? toolId;
@@ -103,11 +104,16 @@ class ActivityItem extends TimelineItem {
   final String? eventKey;
   final bool responseReceived;
 
+  /// Champs autorisés reçus sur les événements d’outil connus. Les nulls
+  /// retirent un champ lors de la fusion, sans rester dans la projection.
+  final Map<String, Object?> details;
+
   ActivityItem copyWith({
     int? turn,
     bool? started,
     bool? completed,
     bool? responseReceived,
+    Map<String, Object?>? detailPatch,
   }) => ActivityItem(
     turn ?? this.turn,
     kind,
@@ -116,6 +122,10 @@ class ActivityItem extends TimelineItem {
     completed: completed ?? this.completed,
     eventKey: eventKey,
     responseReceived: responseReceived ?? this.responseReceived,
+    details: Map.unmodifiable(
+      ActivityDetailFields.decode({...details, ...?detailPatch})
+        ..removeWhere((k, v) => v == null),
+    ),
   );
 
   static ActivityItem fromJson(Map<String, Object?> json) {
@@ -129,6 +139,13 @@ class ActivityItem extends TimelineItem {
       completed: modern && json['completed'] == true,
       eventKey: modern ? json['eventKey'] as String? : null,
       responseReceived: modern && json['responseReceived'] == true,
+      details: modern && json['details'] is Map
+          ? Map.unmodifiable(
+              ActivityDetailFields.decode(
+                Map<String, Object?>.from(json['details'] as Map),
+              )..removeWhere((k, v) => v == null),
+            )
+          : const {},
     );
   }
 
@@ -143,6 +160,47 @@ class ActivityItem extends TimelineItem {
     'completed': completed,
     'eventKey': eventKey,
     'responseReceived': responseReceived,
+    if (details.isNotEmpty) 'details': details,
+  };
+}
+
+/// Frontière du contrat : aucune clé arbitraire ne devient un détail.
+abstract final class ActivityDetailFields {
+  static Map<String, Object?> decode(Map<String, Object?> payload) => {
+    for (final field in const [
+      'name',
+      'context',
+      'args',
+      'args_text',
+      'preview',
+      'result',
+      'result_text',
+      'inline_diff',
+    ])
+      if (payload.containsKey(field) &&
+          (payload[field] == null ||
+              (field == 'args' || field == 'result'
+                  ? _json(payload[field])
+                  : payload[field] is String)))
+        field: _freeze(payload[field]),
+  };
+
+  static bool _json(Object? value) =>
+      value == null ||
+      value is String ||
+      value is bool ||
+      value is num && value.isFinite ||
+      value is List && value.every(_json) ||
+      value is Map &&
+          value.entries.every((e) => e.key is String && _json(e.value));
+
+  static Object? _freeze(Object? value) => switch (value) {
+    Map() => Map<String, Object?>.unmodifiable({
+      for (final entry in value.entries)
+        entry.key as String: _freeze(entry.value),
+    }),
+    List() => List<Object?>.unmodifiable(value.map(_freeze)),
+    _ => value,
   };
 }
 

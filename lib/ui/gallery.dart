@@ -217,13 +217,23 @@ class ActivityPreview extends StatefulWidget {
 
 class _ActivityPreviewState extends State<ActivityPreview> {
   List<ActivityItem> _items = const [
-    ActivityItem(1, ActivityKind.tool, toolId: 'SYNTHETIC_A', started: true),
+    ActivityItem(
+      1,
+      ActivityKind.tool,
+      toolId: 'SYNTHETIC_A',
+      started: true,
+      details: {
+        'name': 'SYNTHETIC',
+        'args': {'path': 'example.dart', 'dry_run': false},
+      },
+    ),
   ];
+  final _detailsExpanded = <String?, bool>{};
   bool _reply = false;
   bool? _manual;
   @override
   Widget build(BuildContext context) {
-    final expanded = _manual ?? !_reply;
+    final expanded = _manual ?? (!_reply || _detailsExpanded.isNotEmpty);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -239,7 +249,14 @@ class _ActivityPreviewState extends State<ActivityPreview> {
           for (final item in _items)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-              child: ActivityLine(kind: item.kind, completed: item.completed),
+              child: ActivityLine(
+                kind: item.kind,
+                completed: item.completed,
+                details: item.details,
+                expanded: _detailsExpanded[item.toolId] ?? false,
+                onChanged: (value) =>
+                    setState(() => _detailsExpanded[item.toolId] = value),
+              ),
             ),
         if (_reply) const MessageBubble(text: GalleryContent.activityReplyText),
         Wrap(
@@ -264,7 +281,19 @@ class _ActivityPreviewState extends State<ActivityPreview> {
             TextButton(
               onPressed: () => setState(
                 () => _items = [
-                  _items.first.copyWith(completed: true),
+                  _items.first.copyWith(
+                    completed: true,
+                    detailPatch: {
+                      'result': {
+                        'error': 'Exemple synthétique reçu',
+                        'output': List.generate(
+                          40,
+                          (i) => 'Ligne $i : contenu reçu, sans coupe locale.',
+                        ).join('\n'),
+                      },
+                      'inline_diff': '- avant\n+ après',
+                    },
+                  ),
                   ..._items.skip(1),
                 ],
               ),
@@ -289,12 +318,17 @@ class _ActivityPreviewState extends State<ActivityPreview> {
               onPressed: () => setState(() {
                 _reply = false;
                 _manual = null;
+                _detailsExpanded.clear();
                 _items = const [
                   ActivityItem(
                     1,
                     ActivityKind.tool,
                     toolId: 'SYNTHETIC_A',
                     started: true,
+                    details: {
+                      'name': 'SYNTHETIC',
+                      'args': {'path': 'example.dart', 'dry_run': false},
+                    },
                   ),
                 ];
               }),

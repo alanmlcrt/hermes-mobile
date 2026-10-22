@@ -21,6 +21,13 @@ void main() {
         expect(payload['tool_id'], 'SYNTHETIC_TOOL_1');
         expect(payload['name'], 'SYNTHETIC');
       }
+      final start = fixture('tool-start')['params']['payload'];
+      final end = fixture('tool-complete')['params']['payload'];
+      expect(start['args']['dry_run'], false);
+      expect(start['args']['limit'], 0);
+      expect(end['result']['error'], isA<String>());
+      expect(end['result']['output'], contains('[truncated]'));
+      expect(end['inline_diff'], '- avant\n+ après');
     },
   );
   test('payload gateway.ready conforme aux champs requis et types du schéma embarqué', () {

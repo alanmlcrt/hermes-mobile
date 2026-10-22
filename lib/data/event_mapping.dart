@@ -14,12 +14,14 @@ class MappedEvent {
     this.activityKind,
     this.activityStarted = false,
     this.activityCompleted = false,
+    this.activityDetails = const {},
   });
   final EventEffect effect;
   final WorkState? workState;
   final ActivityKind? activityKind;
   final bool activityStarted;
   final bool activityCompleted;
+  final Map<String, Object?> activityDetails;
 }
 
 /// Table déclarative `contracts/event-mapping.json`, décodée sans Flutter.
@@ -59,6 +61,9 @@ class EventMapping {
           : ActivityKind.decode(entry['activityKind']),
       activityStarted: entry['activityPhase'] == 'start',
       activityCompleted: entry['activityPhase'] == 'complete',
+      activityDetails: type == 'tool.start' || type == 'tool.complete'
+          ? ActivityDetailFields.decode(payload)
+          : const {},
     );
   }
 

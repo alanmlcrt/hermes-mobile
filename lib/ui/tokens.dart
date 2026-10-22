@@ -33,6 +33,8 @@ abstract final class IconSizes {
 }
 
 abstract final class ActivityTokens {
+  static const double detailHeight = 240;
+  static const String detailFont = 'monospace';
   static const double illustration = 24;
   static const double command = 48;
 }

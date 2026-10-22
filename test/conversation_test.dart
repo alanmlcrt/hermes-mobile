@@ -117,6 +117,75 @@ void main() {
   TimelineProjection timeline() => conversation.projection(key);
   List<Type> kinds() => [for (final i in timeline().items) i.runtimeType];
 
+  test('détails reçus : fusion, null, rejeu et persistance', () async {
+    await start();
+    await outbox.send(draft.key);
+    emit('message.start', {}, seq: 1);
+    emit('tool.start', {
+      'tool_id': 'A',
+      'name': 'outil',
+      'args': {'flag': false, 'count': 0},
+      'context': 'avant',
+      'private': 'secret',
+    }, seq: 2);
+    emit('tool.complete', {
+      'tool_id': 'A',
+      'context': null,
+      'result': {'error': 'reçu', 'exit_code': 1},
+    }, seq: 3);
+    await until(() => timeline().seq == 3);
+    final action = timeline().items.whereType<ActivityItem>().single;
+    expect(action.details, {
+      'name': 'outil',
+      'args': {'flag': false, 'count': 0},
+      'result': {'error': 'reçu', 'exit_code': 1},
+    });
+    expect(action.completed, isTrue);
+    expect(timeline().workState, WorkState.running);
+    emit('tool.complete', {'tool_id': 'A', 'result': 'rejeu'}, seq: 3);
+    await settle();
+    expect(
+      timeline().items.whereType<ActivityItem>().single.details,
+      action.details,
+    );
+    await conversation.dispose();
+    conversation = newConversation();
+    final stored = await conversation.load(key);
+    expect(
+      stored.items.whereType<ActivityItem>().single.details,
+      action.details,
+    );
+  });
+
+  test(
+    'détails : inconnu ignoré, sans ID indépendant, types invalides omis',
+    () async {
+      await start();
+      await outbox.send(draft.key);
+      emit('message.start', {}, seq: 1);
+      emit('future.tool', {
+        'name': 'privé',
+        'args': {'secret': true},
+      }, seq: 2);
+      emit('tool.start', {
+        'name': 'isolé',
+        'args': false,
+        'context': [],
+      }, seq: 3);
+      emit('tool.complete', {
+        'name': 'isolé',
+        'result': 0,
+        'inline_diff': false,
+      }, seq: 4);
+      await until(() => timeline().seq == 4);
+      final actions = timeline().items.whereType<ActivityItem>().toList();
+      expect(actions, hasLength(3));
+      expect(actions[0].details, isEmpty);
+      expect(actions[1].details, {'name': 'isolé', 'args': false});
+      expect(actions[2].details, {'name': 'isolé', 'result': 0});
+    },
+  );
+
   test(
     'texte sans message.start : regard reçu, jamais concentration supposée',
     () async {
@@ -362,7 +431,11 @@ void main() {
       await start();
       await outbox.send(draft.key);
       emit('message.start', {}, seq: 1);
-      emit('tool.start', {'tool_id': 'opaque-A', 'name': 'same'}, seq: 2);
+      emit('tool.start', {
+        'tool_id': 'opaque-A',
+        'name': 'same',
+        'args': {'origin': 'first-turn'},
+      }, seq: 2);
       emit('tool.start', {'tool_id': 'opaque-B', 'name': 'same'}, seq: 3);
       emit('tool.complete', {'tool_id': 'opaque-A'}, seq: 4);
       emit('tool.complete', {'tool_id': 'opaque-C'}, seq: 5);
@@ -432,6 +505,8 @@ void main() {
       final next = timeline().items.whereType<ActivityItem>().last;
       expect(next.turn, 2);
       expect(next.completed, isFalse);
+      expect(next.details, isEmpty);
+      expect(actions.first.details['args'], {'origin': 'first-turn'});
     },
   );
 
@@ -445,16 +520,41 @@ void main() {
     ];
     for (var i = 0; i < others.length; i++) {
       conversation.bind(others[i], 'runtime-$i', h.repository.socketGeneration);
-      emit('tool.start', {'tool_id': 'same-id'}, session: 'runtime-$i', seq: 1);
+      emit(
+        'tool.start',
+        {
+          'tool_id': 'same-id',
+          'args': {'origin': i},
+        },
+        session: 'runtime-$i',
+        seq: 1,
+      );
     }
-    emit('tool.complete', {'tool_id': 'same-id'}, seq: 1);
+    emit('tool.complete', {
+      'tool_id': 'same-id',
+      'result': 'main-only',
+    }, seq: 1);
     await until(
       () =>
           others.every((k) => conversation.projection(k).seq == 1) &&
           timeline().seq == 1,
     );
     expect(timeline().items.whereType<ActivityItem>().single.completed, isTrue);
+    expect(timeline().items.whereType<ActivityItem>().single.details, {
+      'result': 'main-only',
+    });
     for (final other in others) {
+      expect(
+        conversation
+            .projection(other)
+            .items
+            .whereType<ActivityItem>()
+            .single
+            .details,
+        {
+          'args': {'origin': others.indexOf(other)},
+        },
+      );
       expect(
         conversation
             .projection(other)
@@ -466,6 +566,27 @@ void main() {
       );
     }
   });
+
+  test(
+    'fin seule avec erreur reçue : aucun début ni échec global supposé',
+    () async {
+      await start();
+      await outbox.send(draft.key);
+      emit('message.start', {}, seq: 1);
+      emit('tool.complete', {
+        'tool_id': 'end-only',
+        'result': {'error': 'Message reçu'},
+      }, seq: 2);
+      await until(() => timeline().seq == 2);
+      final action = timeline().items.whereType<ActivityItem>().single;
+      expect(action.started, isFalse);
+      expect(action.completed, isTrue);
+      expect(action.details, {
+        'result': {'error': 'Message reçu'},
+      });
+      expect(timeline().workState, WorkState.running);
+    },
+  );
 
   for (final type in ['message.delta', 'message.interim', 'message.complete']) {
     test('repli attesté uniquement au fragment non vide : $type', () async {

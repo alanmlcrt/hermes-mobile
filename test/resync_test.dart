@@ -22,6 +22,40 @@ const _text = 'Bonjour 🚀';
 const _stored = '<SYNTHETIC_STORED_SESSION>';
 
 void main() {
+  test(
+    'projection compatible : détails reçus seulement, copies correctives',
+    () {
+      const action = ActivityItem(
+        0,
+        ActivityKind.tool,
+        eventKey: 'stable',
+        details: {'args': [], 'result': false},
+      );
+      final restored = TimelineItem.fromJson(
+        jsonDecode(jsonEncode(action.toJson())) as Map<String, dynamic>,
+      ) as ActivityItem;
+      expect(
+        restored.copyWith(turn: 1, responseReceived: true).details,
+        action.details,
+      );
+      expect(restored.copyWith(detailPatch: {'args': null}).details, {
+        'result': false,
+      });
+      final legacy = ActivityItem.fromJson({
+        'k': 'act',
+        'turn': 1,
+        'details': {'name': 'inventé'},
+      });
+      expect(legacy.details, isEmpty);
+      final old = ActivityItem.fromJson({
+        'k': 'act',
+        'turn': 1,
+        'activityVersion': 1,
+        'kind': 'tool',
+      });
+      expect(old.details, isEmpty);
+    },
+  );
   sqfliteFfiInit();
   late Directory directory;
   late Database database;
@@ -175,7 +209,10 @@ void main() {
     await start();
     await outbox.send(draft.key);
     emit('message.start', {}, 1);
-    emit('tool.start', {'tool_id': 'A'}, 2);
+    emit('tool.start', {
+      'tool_id': 'A',
+      'args': {'flag': false},
+    }, 2);
     await until(() => timeline().seq == 2);
     overrides['session.events.since'] = {
       'events': [
@@ -194,7 +231,7 @@ void main() {
         {
           'type': 'tool.complete',
           'session_id': 'a1b2c3d4',
-          'payload': {'tool_id': 'A'},
+          'payload': {'tool_id': 'A', 'result': 'Sortie reçue'},
           'seq': 4,
         },
         {
@@ -222,6 +259,11 @@ void main() {
     expect(actions.map((a) => a.toolId), ['A', 'B']);
     expect(actions.map((a) => a.completed), [true, false]);
     expect(actions.every((a) => a.responseReceived), isTrue);
+    expect(actions.first.details, {
+      'args': {'flag': false},
+      'result': 'Sortie reçue',
+    });
+    expect(actions.last.details, isEmpty);
     expect(count('session.history'), 0);
     expect(count('prompt.submit'), 1);
   });
@@ -232,7 +274,7 @@ void main() {
       await start();
       await outbox.send(draft.key);
       emit('message.start', {}, 1);
-      emit('tool.start', {'tool_id': 'A'}, 2);
+      emit('tool.start', {'tool_id': 'A', 'args': 'ancien contexte'}, 2);
       emit('tool.complete', {'tool_id': 'A'}, 3);
       await until(() => timeline().seq == 3);
       final ready = jsonDecode(jsonEncode(h.transport.ready)) as Map;
@@ -255,6 +297,8 @@ void main() {
           .where((a) => a.toolId == 'A')
           .toList();
       expect(actions.map((a) => a.completed), [true, false]);
+      expect(actions.first.details, {'args': 'ancien contexte'});
+      expect(actions.last.details, isEmpty);
       emit('tool.complete', {'tool_id': 'A'}, 3);
       await until(() => timeline().seq == 3);
       expect(

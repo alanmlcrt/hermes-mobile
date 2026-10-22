@@ -8,11 +8,157 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/components/activity_group.dart';
 import 'package:hermes_mobile/ui/components/activity_line.dart';
+import 'package:hermes_mobile/ui/components/activity_details.dart';
 import 'package:hermes_mobile/ui/content.dart';
 import 'package:hermes_mobile/ui/gallery.dart';
 import 'package:hermes_mobile/ui/theme.dart';
 
 void main() {
+  testWidgets('sortie longue : deux axes, texte intégral et corps sans repli', (
+    tester,
+  ) async {
+    final values = [
+      for (var i = 0; i < 60; i++) 'Ligne $i ${'code ' * 30}',
+      '[truncated]',
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ActivityLine(
+            kind: ActivityKind.tool,
+            expanded: true,
+            details: {'result': values},
+            onChanged: (_) => fail('Le corps ne replie pas la ligne'),
+          ),
+        ),
+      ),
+    );
+    final text = tester.widget<Text>(
+      find
+          .descendant(
+            of: find.byType(SelectionArea),
+            matching: find.byType(Text),
+          )
+          .first,
+    );
+    expect(text.data, contains('Ligne 59'));
+    expect(text.data, contains('[truncated]'));
+    final scrolls = find.descendant(
+      of: find.byType(ActivityDetails),
+      matching: find.byType(Scrollable),
+    );
+    final vertical = tester
+        .stateList<ScrollableState>(scrolls)
+        .firstWhere((s) => s.axisDirection == AxisDirection.down);
+    final horizontal = tester
+        .stateList<ScrollableState>(scrolls)
+        .firstWhere((s) => s.axisDirection == AxisDirection.right);
+    expect(vertical.position.maxScrollExtent, greaterThan(0));
+    expect(horizontal.position.maxScrollExtent, greaterThan(0));
+    vertical.position.jumpTo(vertical.position.maxScrollExtent);
+    horizontal.position.jumpTo(horizontal.position.maxScrollExtent);
+    await tester.pump();
+    expect(find.byType(ActivityDetails), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('aucun contenu utilisable : ligne statique sans faux contrôle', (
+    tester,
+  ) async {
+    final details = ActivityDetailFields.decode({
+      'name': null,
+      'context': [],
+      'result': null,
+      'inline_diff': false,
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ActivityLine(
+            kind: ActivityKind.tool,
+            details: details,
+            onChanged: (_) => fail('Statique'),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(TextButton), findsNothing);
+    expect(find.byType(ActivityDetails), findsNothing);
+    expect(find.text(Content.activityTool), findsOneWidget);
+  });
+  testWidgets(
+    'détails : clavier, état annoncé, sélection et données sans exécution',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      var expanded = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, update) => ActivityLine(
+                kind: ActivityKind.tool,
+                details: const {
+                  'args': false,
+                  'args_text': 'fallback masqué',
+                  'result': {'error': 'reçu', 'exit_code': 1},
+                  'inline_diff': '- a\n+ b',
+                },
+                expanded: expanded,
+                onChanged: (v) => update(() => expanded = v),
+              ),
+            ),
+          ),
+        ),
+      );
+      final button = find.byType(TextButton);
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+      final focus = Focus.of(tester.element(find.text(Content.activityTool)));
+      focus.requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(expanded, isTrue);
+      expect(focus.hasFocus, isTrue);
+      expect(find.text('false'), findsOneWidget);
+      expect(find.text('fallback masqué'), findsNothing);
+      expect(find.text(Content.detailError), findsOneWidget);
+      expect(find.byType(SelectionArea), findsNWidgets(4));
+      expect(
+        tester
+            .getSemantics(find.bySemanticsLabel(Content.activityTool))
+            .flagsCollection
+            .isExpanded,
+        ui.Tristate.isTrue,
+      );
+      await tester.tap(find.text('false'));
+      await tester.pump();
+      expect(find.byType(ActivityDetails), findsOneWidget);
+      semantics.dispose();
+    },
+  );
+
+  test(
+    'sections : aucune erreur déduite, valeurs et secours présents seulement',
+    () {
+      expect(
+        ActivityDetails.sections({
+          'result': {'error': false, 'exit_code': 1},
+        }).containsKey(Content.detailError),
+        isFalse,
+      );
+      expect(ActivityDetails.sections({'args': [], 'result': 0}), {
+        Content.detailArguments: [],
+        Content.detailOutput: 0,
+      });
+      expect(
+        ActivityDetails.sections({
+          'args_text': 'reçu',
+          'result_text': '[truncated]',
+        }),
+        {Content.detailArguments: 'reçu', Content.detailOutput: '[truncated]'},
+      );
+      expect(ActivityDetails.sections({'name': '', 'args': null}), isEmpty);
+    },
+  );
   setUpAll(() async {
     if (!const bool.fromEnvironment('ACTIVITY_CAPTURES')) return;
     const fonts =
