@@ -17,6 +17,10 @@ sources:
 
 # Hermes Mobile — Expérience du compagnon
 
+## Complément approuvé — activités 3.1
+
+Au premier delta/interim non vide après une série d’au moins deux activités, la série se replie en « N activités » et indique combien n’ont pas de fin confirmée. Le choix manuel reste local et stable lors des mises à jour ; aucune reconstruction ou commande de repli ne lance d’appel Hermes ni ne déplace le focus. La fin reçue d’une action ne vaut ni réussite ni fin du travail ; seul `WorkStateLabel` porte le statut du travail. Lignes et commande native restent lisibles à 200 %, avec cible de commande de 48 px, état accessible replié/déplié et sans mouvement nouveau. Les contrats de présence, pause, chatouilles, fonds, suspension et placement Otc demeurent ceux approuvés ci-dessous.
+
 ## Contrat courant — lot 4 approuvé
 
 Alanc a retenu les quatre recommandations A (« fait tout ce que tu recommandes »). Ce contrat prévaut sur les pistes et arbitrages historiques de génération ci-dessous.

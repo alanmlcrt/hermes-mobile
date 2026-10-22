@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import 'components/activity_line.dart';
+import 'components/activity_group.dart';
 import 'components/composer.dart';
 import 'components/conversation_companion.dart';
 import 'components/history_row.dart';
@@ -84,14 +85,7 @@ class ComponentGallery extends StatelessWidget {
     ],
   );
 
-  static Widget _activityLines() => const Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      ActivityLine(kind: 'tool'),
-      SizedBox(height: Spacing.sm),
-      ActivityLine(kind: 'unknown'),
-    ],
-  );
+  static Widget _activityLines() => const ActivityPreview();
 
   static Widget _workStates() => Wrap(
     spacing: Spacing.md,
@@ -214,6 +208,105 @@ class ComponentGallery extends StatelessWidget {
   }
 }
 
+/// Données synthétiques pilotables, indépendantes de tout transport.
+class ActivityPreview extends StatefulWidget {
+  const ActivityPreview({super.key});
+  @override
+  State<ActivityPreview> createState() => _ActivityPreviewState();
+}
+
+class _ActivityPreviewState extends State<ActivityPreview> {
+  List<ActivityItem> _items = const [
+    ActivityItem(1, ActivityKind.tool, toolId: 'SYNTHETIC_A', started: true),
+  ];
+  bool _reply = false;
+  bool? _manual;
+  @override
+  Widget build(BuildContext context) {
+    final expanded = _manual ?? !_reply;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(GalleryContent.activitySynthetic),
+        if (_items.length >= 2)
+          ActivityGroup(
+            count: _items.length,
+            pending: _items.where((a) => !a.completed).length,
+            expanded: expanded,
+            onChanged: (value) => setState(() => _manual = value),
+          ),
+        if (_items.length < 2 || expanded)
+          for (final item in _items)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+              child: ActivityLine(kind: item.kind, completed: item.completed),
+            ),
+        if (_reply) const MessageBubble(text: GalleryContent.activityReplyText),
+        Wrap(
+          spacing: Spacing.sm,
+          children: [
+            TextButton(
+              onPressed: _reply
+                  ? null
+                  : () => setState(
+                      () => _items = [
+                        ..._items,
+                        ActivityItem(
+                          1,
+                          ActivityKind.tool,
+                          toolId: 'SYNTHETIC_${_items.length}',
+                          started: true,
+                        ),
+                      ],
+                    ),
+              child: const Text(GalleryContent.activitySecond),
+            ),
+            TextButton(
+              onPressed: () => setState(
+                () => _items = [
+                  _items.first.copyWith(completed: true),
+                  ..._items.skip(1),
+                ],
+              ),
+              child: const Text(GalleryContent.activityComplete),
+            ),
+            TextButton(
+              onPressed: _reply
+                  ? null
+                  : () => setState(
+                      () => _items = [
+                        ..._items,
+                        const ActivityItem(1, ActivityKind.unknown),
+                      ],
+                    ),
+              child: const Text(GalleryContent.activityUnknown),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _reply = true),
+              child: const Text(GalleryContent.activityReply),
+            ),
+            TextButton(
+              onPressed: () => setState(() {
+                _reply = false;
+                _manual = null;
+                _items = const [
+                  ActivityItem(
+                    1,
+                    ActivityKind.tool,
+                    toolId: 'SYNTHETIC_A',
+                    started: true,
+                  ),
+                ];
+              }),
+              child: const Text(GalleryContent.activityReset),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class ConversationCompanionPreview extends StatefulWidget {
   const ConversationCompanionPreview({super.key});
   @override
@@ -270,7 +363,7 @@ class _ConversationPreviewState extends State<ConversationCompanionPreview> {
               MessageBubble(
                 text: GalleryContent.sampleReply.substring(0, _textLength),
               ),
-            const ActivityLine(kind: 'tool'),
+            const ActivityLine(kind: ActivityKind.tool),
             Semantics(liveRegion: true, child: WorkStateLabel(state: _work)),
           ],
         ),

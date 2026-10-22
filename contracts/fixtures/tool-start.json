@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"event","params":{"type":"tool.start","session_id":"a1b2c3d4","payload":{"name":"SYNTHETIC"},"seq":5}}
+{"jsonrpc":"2.0","method":"event","params":{"type":"tool.start","session_id":"a1b2c3d4","payload":{"tool_id":"SYNTHETIC_TOOL_1","name":"SYNTHETIC","preview":"Exemple synthétique"},"seq":5}}

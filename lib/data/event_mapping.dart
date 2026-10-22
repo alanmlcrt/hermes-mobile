@@ -8,10 +8,18 @@ enum EventEffect { turnStart, textDelta, interim, terminal, activity, ignore }
 
 /// Résultat du mapping d'un événement : jamais de détail inventé.
 class MappedEvent {
-  const MappedEvent(this.effect, {this.workState, this.activityKind});
+  const MappedEvent(
+    this.effect, {
+    this.workState,
+    this.activityKind,
+    this.activityStarted = false,
+    this.activityCompleted = false,
+  });
   final EventEffect effect;
   final WorkState? workState;
-  final String? activityKind;
+  final ActivityKind? activityKind;
+  final bool activityStarted;
+  final bool activityCompleted;
 }
 
 /// Table déclarative `contracts/event-mapping.json`, décodée sans Flutter.
@@ -46,7 +54,11 @@ class EventMapping {
     return MappedEvent(
       effect,
       workState: work,
-      activityKind: entry['activityKind'] as String?,
+      activityKind: entry['activityKind'] == null
+          ? null
+          : ActivityKind.decode(entry['activityKind']),
+      activityStarted: entry['activityPhase'] == 'start',
+      activityCompleted: entry['activityPhase'] == 'complete',
     );
   }
 

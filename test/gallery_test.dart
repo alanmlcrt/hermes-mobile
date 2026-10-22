@@ -311,10 +311,10 @@ void main() {
     expect(find.byType(RabbitCompanion), findsNWidgets(4 * 5));
     expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(8));
     expect(find.byType(Composer), findsNWidgets(4));
-    // Trois états de connexion, deux lignes d'activité, six états du travail.
-    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 3 + 7)));
+    // Trois états de connexion et sept occurrences d'état de travail.
+    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 7)));
     expect(find.byType(MessageBubble), findsNWidgets(4 * 2));
-    expect(find.byType(ActivityLine), findsNWidgets(4 * 3));
+    expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
     for (final state in WorkState.values) {
       expect(
         find.descendant(

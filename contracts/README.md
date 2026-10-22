@@ -4,6 +4,14 @@ Référence officielle : **v0.22.2+1690 (main 9e01b44)**, commit `9e01b44dd23978
 
 Les fixtures sont **synthétiques**, avec des marqueurs de secrets fictifs. Le backend personnel n’a pas été contacté. Aucune équivalence avec le build de l’add-on n’est établie ; la capture 1.3/G1 et les vérifications sur téléphone restent ouvertes.
 
+### Activités compactes (3.1)
+
+Les [schémas officiels épinglés](https://github.com/NousResearch/hermes-agent/blob/9e01b44dd23978f9ff40b7837467f3a9f1582130/tui_gateway/contracts/events.py#L354-L387) définissent `tool.start` (`tool_id`, `name`, puis `context`, `args`, `args_text`, `preview`, `labels` optionnels) et `tool.complete` (même identité ; `args`, `duration_s`, `result`, `summary`, `result_text`, `inline_diff`, `todos`, `revision`, `labels` optionnels). L’[émetteur](https://github.com/NousResearch/hermes-agent/blob/9e01b44dd23978f9ff40b7837467f3a9f1582130/tui_gateway/tool_progress.py#L276-L362) reprend `tool_call_id` dans `tool_id` ; ses chemins et réglages conditionnent l’émission. Ces notifications ne font pas partie de l’extrait OpenRPC sélectionné localement.
+
+`fixtures/tool-start.json` et `tool-complete.json` sont des exemples synthétiques, jamais des captures de l’installation. Les champs documentés et leur disponibilité effective restent distincts (`capabilities.json.activityEvents.actual = unverified`). Seuls le mapping `tool`/`unknown`, l’ID opaque et les preuves de début/fin reçues servent à la projection ; ni le nom ni un emoji ne déterminent une famille précise. La fin d’action ne prouve aucune réussite ni fin du travail. Sans ID, chaque événement reste une entrée générique séparée.
+
+La projection persistée conserve ces preuves sans migration destructive. Les anciennes projections deviennent génériques sans fin supposée. `session.history` ne décode actuellement que le texte : une reprise par snapshot sans outils ne reconstitue aucune activité ; le rejeu peut seulement conserver les événements effectivement disponibles.
+
 `capabilities.json` sépare présence documentaire et état réel non vérifié. Seules les réponses effectives (GET profils, `gateway.ready`, `gateway.capabilities`) changent les états en mémoire. Les capacités futures mutantes restent non vérifiées ; aucun envoi ni création de conversation n’est utilisé comme sonde. `event-mapping.json` décrit les événements utilisés ici, avec un type inconnu explicite ; les états de travail hors périmètre restent nuls.
 
 Login JSON, cookies de session explicitement extraits, REST bearer, refresh puis relogin via coffre. Le ticket WS est un sous-protocole, sans secret dans l’URL ; les redirections sont refusées. Aucun POST de sélection globale.

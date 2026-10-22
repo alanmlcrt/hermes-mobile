@@ -18,6 +18,7 @@ void main() {
       'message.complete': EventEffect.terminal,
       'error': EventEffect.terminal,
       'tool.start': EventEffect.activity,
+      'tool.complete': EventEffect.activity,
       'gateway.ready': EventEffect.ignore,
       'future.synthetic': EventEffect.activity, // repli : type absent
     };
@@ -33,7 +34,7 @@ void main() {
       expect(mapped.effect, expected[params['type']], reason: file.path);
       seen++;
     }
-    expect(seen, 9); // dont deux gateway.ready
+    expect(seen, 10); // dont deux gateway.ready
   });
 
   test('statut de message.complete et repli inconnu', () {
@@ -46,11 +47,26 @@ void main() {
     expect(work(null), WorkState.unknown);
     final unknown = mapping.map('foo.bar', {});
     expect(unknown.effect, EventEffect.activity);
-    expect(unknown.activityKind, 'unknown');
+    expect(unknown.activityKind, ActivityKind.unknown);
     expect(mapping.map('error', {}).workState, WorkState.failed);
   });
 
+  test('début et fin proviennent du mapping, jamais du nom ou emoji', () {
+    final start = mapping.map('tool.start', {'name': 'browser', 'emoji': '🌍'});
+    final end = mapping.map('tool.complete', {});
+    expect(start.activityKind, ActivityKind.tool);
+    expect(start.activityStarted, isTrue);
+    expect(start.activityCompleted, isFalse);
+    expect(end.activityStarted, isFalse);
+    expect(end.activityCompleted, isTrue);
+    expect(end.workState, isNull);
+    expect(mapping.map('mcp.browser', {}).activityKind, ActivityKind.unknown);
+  });
+
   test('le fichier de mapping est déclaré en asset', () {
-    expect(File('pubspec.yaml').readAsStringSync(), contains(EventMapping.asset));
+    expect(
+      File('pubspec.yaml').readAsStringSync(),
+      contains(EventMapping.asset),
+    );
   });
 }

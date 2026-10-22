@@ -6,6 +6,14 @@ import 'profile.dart';
 /// État du travail distant ; distinct de l'état de la connexion.
 enum WorkState { sending, running, succeeded, failed, stopped, unknown }
 
+enum ActivityKind {
+  tool,
+  unknown;
+
+  static ActivityKind decode(Object? value) =>
+      value == 'tool' ? ActivityKind.tool : ActivityKind.unknown;
+}
+
 /// Pose courante de présentation, sans mesure de progression ni succès.
 /// Non persistée : la reprise reconstruit la pose depuis l'état courant.
 enum CompanionPhase { neutral, concentrating, reading }
@@ -42,7 +50,7 @@ sealed class TimelineItem {
         userRowId: json['row'] as int?,
       ),
       'resp' => ResponseItem(turn, json['text'] as String),
-      _ => ActivityItem(turn, json['kind'] as String),
+      _ => ActivityItem.fromJson(json),
     };
   }
 }
@@ -79,10 +87,63 @@ class ResponseItem extends TimelineItem {
 
 /// Ligne d'activité générique ; [kind] vient de la table de mapping.
 class ActivityItem extends TimelineItem {
-  const ActivityItem(super.turn, this.kind);
-  final String kind;
+  const ActivityItem(
+    super.turn,
+    this.kind, {
+    this.toolId,
+    this.started = false,
+    this.completed = false,
+    this.eventKey,
+    this.responseReceived = false,
+  });
+  final ActivityKind kind;
+  final String? toolId;
+  final bool started;
+  final bool completed;
+  final String? eventKey;
+  final bool responseReceived;
+
+  ActivityItem copyWith({
+    int? turn,
+    bool? started,
+    bool? completed,
+    bool? responseReceived,
+  }) => ActivityItem(
+    turn ?? this.turn,
+    kind,
+    toolId: toolId,
+    started: started ?? this.started,
+    completed: completed ?? this.completed,
+    eventKey: eventKey,
+    responseReceived: responseReceived ?? this.responseReceived,
+  );
+
+  static ActivityItem fromJson(Map<String, Object?> json) {
+    // Une ancienne projection ne prouve ni début, ni fin, ni famille fiable.
+    final modern = json['activityVersion'] == 1;
+    return ActivityItem(
+      json['turn'] as int,
+      modern ? ActivityKind.decode(json['kind']) : ActivityKind.unknown,
+      toolId: modern ? json['toolId'] as String? : null,
+      started: modern && json['started'] == true,
+      completed: modern && json['completed'] == true,
+      eventKey: modern ? json['eventKey'] as String? : null,
+      responseReceived: modern && json['responseReceived'] == true,
+    );
+  }
+
   @override
-  Map<String, Object?> toJson() => {'k': 'act', 'turn': turn, 'kind': kind};
+  Map<String, Object?> toJson() => {
+    'k': 'act',
+    'turn': turn,
+    'kind': kind.name,
+    'activityVersion': 1,
+    'toolId': toolId,
+    'started': started,
+    'completed': completed,
+    'eventKey': eventKey,
+    'responseReceived': responseReceived,
+  };
 }
 
 /// Projection immuable d'une conversation ; seul `ConversationRepository` la produit.

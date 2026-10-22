@@ -171,6 +171,131 @@ void main() {
     expect(row['replay_epoch'], 'synthetic-epoch');
   });
 
+  test('rejeu outils : fin corrélée et doublon écarté sans renvoi', () async {
+    await start();
+    await outbox.send(draft.key);
+    emit('message.start', {}, 1);
+    emit('tool.start', {'tool_id': 'A'}, 2);
+    await until(() => timeline().seq == 2);
+    overrides['session.events.since'] = {
+      'events': [
+        {
+          'type': 'tool.start',
+          'session_id': 'a1b2c3d4',
+          'payload': {'tool_id': 'A'},
+          'seq': 2,
+        },
+        {
+          'type': 'tool.start',
+          'session_id': 'a1b2c3d4',
+          'payload': {'tool_id': 'B'},
+          'seq': 3,
+        },
+        {
+          'type': 'tool.complete',
+          'session_id': 'a1b2c3d4',
+          'payload': {'tool_id': 'A'},
+          'seq': 4,
+        },
+        {
+          'type': 'message.delta',
+          'session_id': 'a1b2c3d4',
+          'payload': {'text': 'Réponse'},
+          'seq': 5,
+        },
+        {
+          'type': 'message.complete',
+          'session_id': 'a1b2c3d4',
+          'payload': {'status': 'complete'},
+          'seq': 6,
+        },
+      ],
+      'latest_seq': 6,
+      'truncated': false,
+      'count': 5,
+      'epoch': 'synthetic-epoch',
+      'open_requests': [],
+    };
+    await reconnect();
+    await until(() => timeline().seq == 6);
+    final actions = timeline().items.whereType<ActivityItem>().toList();
+    expect(actions.map((a) => a.toolId), ['A', 'B']);
+    expect(actions.map((a) => a.completed), [true, false]);
+    expect(actions.every((a) => a.responseReceived), isTrue);
+    expect(count('session.history'), 0);
+    expect(count('prompt.submit'), 1);
+  });
+
+  test(
+    'nouvel epoch et snapshot échoué : aucune fin héritée de l’ancien ID',
+    () async {
+      await start();
+      await outbox.send(draft.key);
+      emit('message.start', {}, 1);
+      emit('tool.start', {'tool_id': 'A'}, 2);
+      emit('tool.complete', {'tool_id': 'A'}, 3);
+      await until(() => timeline().seq == 3);
+      final ready = jsonDecode(jsonEncode(h.transport.ready)) as Map;
+      ready['params']['payload']['replay_epoch'] = 'synthetic-epoch-2';
+      h.transport.ready = Map<String, dynamic>.from(ready);
+      overrides['session.history'] = const RpcFail(5000);
+      await reconnect();
+      await until(() => conversation.resumeFailed(key));
+      expect(conversation.resumeFailed(key), isTrue);
+      // Faire avancer le curseur ne doit pas perdre le contexte des anciennes lignes.
+      emit('future.event', {}, 1);
+      emit('tool.start', {'tool_id': 'A'}, 2);
+      await until(
+        () =>
+            timeline().replayEpoch == 'synthetic-epoch-2' &&
+            timeline().seq == 2,
+      );
+      final actions = timeline().items
+          .whereType<ActivityItem>()
+          .where((a) => a.toolId == 'A')
+          .toList();
+      expect(actions.map((a) => a.completed), [true, false]);
+      emit('tool.complete', {'tool_id': 'A'}, 3);
+      await until(() => timeline().seq == 3);
+      expect(
+        timeline().items
+            .whereType<ActivityItem>()
+            .where((a) => a.toolId == 'A')
+            .map((a) => a.completed),
+        [true, true],
+      );
+      expect(timeline().workState, WorkState.unknown);
+      expect(count('prompt.submit'), 1);
+    },
+  );
+
+  test('snapshot textuel sans outils : aucune action reconstruite', () async {
+    await start();
+    await outbox.send(draft.key);
+    emit('message.start', {}, 1);
+    emit('tool.start', {'tool_id': 'A'}, 2);
+    await until(() => timeline().seq == 2);
+    overrides['session.events.since'] = {
+      'events': [],
+      'latest_seq': 2,
+      'truncated': true,
+      'count': 0,
+      'epoch': 'synthetic-epoch',
+      'open_requests': [],
+    };
+    overrides['session.history'] = {
+      'messages': [
+        {'role': 'user', 'text': 'Question', 'row_id': 42},
+        {'role': 'assistant', 'text': 'Réponse', 'row_id': 43},
+      ],
+      'count': 2,
+    };
+    await conversation.resync(key);
+    expect(timeline().items.whereType<ActivityItem>(), isEmpty);
+    expect(timeline().items.whereType<ResponseItem>().single.text, 'Réponse');
+    expect(count('prompt.submit'), 1);
+  });
+
   test(
     'rejeu sending sans start, reprise running : snapshot de la pose courante',
     () async {

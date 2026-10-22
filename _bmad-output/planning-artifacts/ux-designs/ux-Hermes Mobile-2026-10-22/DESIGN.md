@@ -62,6 +62,10 @@ components:
 
 # Hermes Mobile — Design du compagnon
 
+## Complément approuvé — activités 3.1
+
+Les activités utilisent `ActivityLine`, le thème et les tokens existants : illustration statique réservée de 24 px, texte multiligne, repère neutre « Fin reçue » uniquement sur événement de fin et commandes de groupe de 48 px. Les familles restent `tool`/`unknown` ; aucune animation ni détail d’action nouveau. Ce complément conserve intégralement les contrats Otc ci-dessous et leur construction paresseuse par blocs.
+
 ## Contrat courant — lot 4, présence pendant les réponses
 
 Les quatre options A sont approuvées par Alanc (« fait tout ce que tu recommandes »), dans la spec `spec-compagnon-lapin-lot-4.md`. Ce contrat remplace les propositions de génération et les arbitrages historiques ci-dessous.

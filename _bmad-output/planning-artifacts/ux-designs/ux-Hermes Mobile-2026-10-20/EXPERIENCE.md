@@ -11,6 +11,14 @@ sources:
 
 # Hermes Mobile — Expérience
 
+## Décisions approuvées — activités compactes 3.1 (22 octobre)
+
+Chaque action conserve son identité opaque par connexion, profil, session et tour ; début et fin du même `tool_id` mettent à jour la même ligne sans supposer de réussite. Une fin isolée ne crée pas de début. Sans ID ou pour un événement inconnu, conserver une entrée générique distincte, sans rapprochement par nom ou proximité. Une réponse et un terminal de tour ne terminent pas les actions.
+
+Le premier `message.delta` ou `message.interim` non vide après au moins deux activités consécutives replie leur groupe en « N activités », avec le nombre sans fin confirmée. Le choix manuel, indexé par identité stable et conservé dans la page pendant les mises à jour et le défilement, prévaut ; le focus ne se déplace pas automatiquement. La commande native annonce son état replié/déplié et garde une cible de 48 px. Ce repli ne provoque aucun appel Hermes. Les détails d’action et l’arrêt appartiennent à des stories ultérieures ; `WorkStateLabel` reste l’unique autorité du travail et sa région live reste près de la saisie.
+
+Le snapshot textuel actuel ne contient pas les outils : aucune activité n’est reconstruite à partir du texte. Les fixtures et schémas documentaires ne prouvent pas la disponibilité de ces événements sur l’installation. Les contrats Otc du 22 octobre prévalent sur les anciennes mentions de points de préparation ci-dessous.
+
 ## Foundation
 
 **Confirmé.** Application Android personnelle pour Alanc ; iPhone anticipé. L'application est l'interface de son Hermes existant : il choisit un profil et lui demande par conversation d'interagir avec un MCP déjà présent. Hermes possède les capacités et effectue le travail.

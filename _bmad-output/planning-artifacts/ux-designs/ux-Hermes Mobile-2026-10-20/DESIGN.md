@@ -29,6 +29,12 @@ theme:
 
 # Hermes Mobile — Design
 
+## Décisions approuvées — activités compactes 3.1 (22 octobre)
+
+Une ligne par action attestée, avec emplacement d’illustration statique de 24 px, texte multiligne et thème existant. La fin reçue porte un repère neutre et le texte « Fin reçue », accessible comme « Fin d’action reçue » ; aucune couleur de réussite ni second « Terminé ». Les commandes de groupe ont une cible minimale de 48 px. Seules les familles `tool` et `unknown` sont justifiées ; les événements sans ID et les anciennes projections restent génériques.
+
+Cette décision ne rouvre aucun contrat Otc : anatomie v5, fonds locaux, pause, chatouilles, suspension, réservation commune de 64 px et construction paresseuse du fil restent inchangés. Les mentions historiques de points de préparation ci-dessous sont remplacées par le contrat courant du lot 4 : Otc seul en porte l’intention. Aucun catalogue ou mouvement nouveau ne fait partie de 3.1.
+
 Premier cadrage issu des décisions d'Alanc. Les métadonnées `theme` expriment le thème système ; elles ne remplacent pas les tokens visuels encore vides. Ce brouillon ne constitue pas un système de composants prêt à implémenter.
 
 **Base visuelle acceptée pour le premier MVP.** Alanc approuve la direction compacte actuelle et demande de pouvoir la faire évoluer, jusqu’à une refonte ultérieure. Les [références acceptées](mockups/exchange-conversation.html) sont conservées dans `mockups/`. Cette acceptation ne clôt pas les tokens ou surfaces encore ouverts.

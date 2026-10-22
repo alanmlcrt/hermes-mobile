@@ -69,10 +69,15 @@ abstract final class Content {
   static const timelineTitle = 'Conversation';
   static const yourRequest = 'Votre demande';
   static const hermesReply = 'Réponse de Hermes';
-  static const activityTool = 'Hermes utilise un outil…';
-  static const activityUnknown = 'Hermes est en activité…';
-  static String activity(String kind) =>
-      kind == 'tool' ? activityTool : activityUnknown;
+  static const activityTool = 'Appel d’outil';
+  static const activityUnknown = 'Événement non reconnu';
+  static String activity(bool tool) => tool ? activityTool : activityUnknown;
+  static const activityEnd = 'Fin reçue';
+  static const activityEndAccessible = 'Fin d’action reçue';
+  static String activitySummary(int count, int pending) =>
+      '$count activités · $pending sans fin confirmée';
+  static const expandActivities = 'Déplier les activités';
+  static const collapseActivities = 'Replier les activités';
   static const workSending = 'Envoi…';
   static const workRunning = 'Hermes travaille…';
   static const workSucceeded = 'Terminé';
@@ -195,6 +200,14 @@ abstract final class GalleryContent {
   static const composerSection = 'Zone de saisie';
   static const messageSection = 'Message';
   static const activitySection = 'Ligne d’activité';
+  static const activitySynthetic = 'Activités fictives · aucun appel Hermes';
+  static const activitySecond = 'Deuxième ID';
+  static const activityComplete = 'Recevoir la fin';
+  static const activityUnknown = 'Événement inconnu';
+  static const activityReply = 'Recevoir une réponse';
+  static const activityReplyText =
+      'Voici la réponse fictive. Une action reste sans fin confirmée même pendant la réponse.';
+  static const activityReset = 'Recommencer';
   static const workStateSection = 'États du travail';
   static const sampleRequest = 'Peux-tu résumer ce fichier ? 🙂';
   static const sampleReply =

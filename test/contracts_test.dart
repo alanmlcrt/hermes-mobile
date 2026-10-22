@@ -9,6 +9,20 @@ Map<String, dynamic> contract(String name) =>
     jsonDecode(File('contracts/$name.json').readAsStringSync())
         as Map<String, dynamic>;
 void main() {
+  test(
+    'outils : contrat documentaire et fixtures explicitement synthétiques',
+    () {
+      final evidence = contract('capabilities')['activityEvents'];
+      expect(evidence['actual'], 'unverified');
+      expect(evidence['fixtures'], 'synthetic');
+      expect(evidence['families'], ['tool', 'unknown']);
+      for (final name in ['tool-start', 'tool-complete']) {
+        final payload = fixture(name)['params']['payload'];
+        expect(payload['tool_id'], 'SYNTHETIC_TOOL_1');
+        expect(payload['name'], 'SYNTHETIC');
+      }
+    },
+  );
   test('payload gateway.ready conforme aux champs requis et types du schéma embarqué', () {
     final document = contract('openrpc');
     bool matches(Object? value, Map schema) {
@@ -66,7 +80,10 @@ void main() {
       final release = contract('release');
       expect(release['tag'], 'v0.22.2');
       expect(release['commit'], '9e01b44dd23978f9ff40b7837467f3a9f1582130');
-      expect(release['baseTagCommit'], 'd923a5eb487a17c0a68801bba9ef0f56c81040a8');
+      expect(
+        release['baseTagCommit'],
+        'd923a5eb487a17c0a68801bba9ef0f56c81040a8',
+      );
       expect(release['evidence'], 'documentary');
       expect(release['realAcceptance'], 'open');
       expect(release['fixtures'], 'synthetic');
@@ -78,7 +95,18 @@ void main() {
       expect(openrpc['methods'], hasLength(13));
       expect(
         (openrpc['x-notifications'] as List).map((n) => n['name']),
-        containsAll(['gateway.ready', 'message.start', 'message.delta', 'message.complete', 'message.interim', 'error', 'session.info', 'status.update', 'sessions.changed', 'session.title']),
+        containsAll([
+          'gateway.ready',
+          'message.start',
+          'message.delta',
+          'message.complete',
+          'message.interim',
+          'error',
+          'session.info',
+          'status.update',
+          'sessions.changed',
+          'session.title',
+        ]),
       );
       void checkRefs(Object? value) {
         if (value is List) {

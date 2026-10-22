@@ -125,8 +125,8 @@ class ConversationRepository implements ConversationGateway {
     // soumission) : la bulle passe devant ses éléments.
     final items = [
       for (final existing in p.items)
-        if (turn == 1 && existing is ActivityItem && existing.turn == 0)
-          ActivityItem(turn, existing.kind)
+        if (existing is ActivityItem && existing.turn == 0)
+          existing.copyWith(turn: turn)
         else
           existing,
     ];
@@ -524,19 +524,67 @@ class ConversationRepository implements ConversationGateway {
         return _startTurn(p);
       case EventEffect.textDelta:
         final text = HermesRpc.eventText(e.payload);
-        return text == null ? p : _append(_ensureTurn(p), text);
+        return text == null || text.isEmpty ? p : _append(_ensureTurn(p), text);
       case EventEffect.interim:
         final text = HermesRpc.interimText(e.payload);
-        return text == null ? p : _append(_ensureTurn(p), text, sealed: true);
+        return text == null || text.isEmpty
+            ? p
+            : _append(_ensureTurn(p), text, sealed: true);
       case EventEffect.activity:
-        final last = p.items.lastOrNull;
-        final kind = m.activityKind ?? 'unknown';
-        // Une demande acceptée attend parfois encore message.start.
-        final turn = max(p.turns, p.userTurns);
-        if (last is ActivityItem && last.kind == kind && last.turn == turn) {
-          return p;
+        final rawId = e.payload['tool_id'];
+        final id =
+            m.activityKind == ActivityKind.tool &&
+                rawId is String &&
+                rawId.isNotEmpty
+            ? rawId
+            : null;
+        final kind = id == null ? ActivityKind.unknown : m.activityKind!;
+        // Un début reçu après le terminal précédent, mais avant tout accusé,
+        // reste provisoire : ne jamais reprendre la fin d'un ancien même ID.
+        final betweenTurns =
+            p.userTurns <= p.turns &&
+            (p.workState == WorkState.succeeded ||
+                p.workState == WorkState.failed ||
+                p.workState == WorkState.stopped);
+        final provisional =
+            betweenTurns &&
+            (m.activityStarted ||
+                p.items.any((item) => item is ActivityItem && item.turn == 0));
+        final turn = provisional ? 0 : max(p.turns, p.userTurns);
+        final items = [...p.items];
+        if (id != null) {
+          final at = items.indexWhere(
+            (item) =>
+                item is ActivityItem &&
+                item.turn == turn &&
+                item.toolId == id &&
+                _sameActivityContext(item, e),
+          );
+          if (at >= 0) {
+            final old = items[at] as ActivityItem;
+            items[at] = old.copyWith(
+              started: old.started || m.activityStarted,
+              completed: old.completed || m.activityCompleted,
+            );
+            return p.copyWith(items: items);
+          }
         }
-        return p.copyWith(items: [...p.items, ActivityItem(turn, kind)]);
+        items.add(
+          ActivityItem(
+            turn,
+            kind,
+            toolId: id,
+            started: m.activityStarted,
+            completed: m.activityCompleted,
+            eventKey: jsonEncode([
+              e.replayEpoch,
+              e.seq,
+              items.length,
+              e.generation,
+            ]),
+          ),
+        );
+        return p.copyWith(items: items);
       case EventEffect.terminal:
         return _finish(p, e, m);
       case EventEffect.ignore:
@@ -544,7 +592,31 @@ class ConversationRepository implements ConversationGateway {
     }
   }
 
+  // La clé garde le contexte d'origine même si une reprise échoue et que le
+  // curseur de la projection avance déjà sur la nouvelle socket.
+  static bool _sameActivityContext(ActivityItem item, GatewayEvent event) {
+    final key = item.eventKey;
+    if (key == null) return false;
+    try {
+      final parts = jsonDecode(key);
+      if (parts is! List || parts.isEmpty) return false;
+      if (parts.first != null) return parts.first == event.replayEpoch;
+      return event.replayEpoch == null &&
+          parts.length >= 4 &&
+          parts[3] == event.generation;
+    } on FormatException {
+      return false;
+    }
+  }
+
   static TimelineProjection _startTurn(TimelineProjection p) => p.copyWith(
+    items: [
+      for (final item in p.items)
+        if (item is ActivityItem && item.turn == 0)
+          item.copyWith(turn: p.turns + 1)
+        else
+          item,
+    ],
     turns: p.turns + 1,
     workState: WorkState.running,
     companionPhase: CompanionPhase.concentrating,
@@ -559,6 +631,22 @@ class ConversationRepository implements ConversationGateway {
     String text, {
     bool sealed = false,
   }) {
+    if (text.isEmpty) return p;
+    // Seul un fragment/interim non vide déclenche le repli, jamais le terminal.
+    final items = [...p.items];
+    var start = items.length;
+    while (start > 0 &&
+        items[start - 1] is ActivityItem &&
+        (items[start - 1].turn == p.turns ||
+            (items[start - 1].turn == 0 && p.turns == 1 && p.userTurns == 0))) {
+      start--;
+    }
+    if (items.length - start >= 2) {
+      for (var i = start; i < items.length; i++) {
+        items[i] = (items[i] as ActivityItem).copyWith(responseReceived: true);
+      }
+      p = p.copyWith(items: items);
+    }
     final last = p.items.lastOrNull;
     if (last is ResponseItem && last.turn == p.turns) {
       final joined = sealed ? '${last.text}\n\n$text' : '${last.text}$text';

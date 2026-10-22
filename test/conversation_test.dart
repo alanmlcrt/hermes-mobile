@@ -14,6 +14,8 @@ import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/components/message_bubble.dart';
+import 'package:hermes_mobile/ui/components/activity_group.dart';
+import 'package:hermes_mobile/ui/components/activity_line.dart';
 import 'package:hermes_mobile/ui/components/work_state_label.dart';
 import 'package:hermes_mobile/ui/components/conversation_companion.dart';
 import 'package:hermes_mobile/ui/components/rabbit_companion.dart';
@@ -152,8 +154,9 @@ void main() {
           method == 'prompt.submit' ? null : _happy(method, params);
       final sending = outbox.send(draft.key);
       await until(() => h.transport.frames.last['method'] == 'prompt.submit');
-      emit('tool.start', {}, seq: 1);
-      await until(() => timeline().seq == 1);
+      emit('tool.start', {'tool_id': 'before-ack'}, seq: 1);
+      emit('tool.complete', {'tool_id': 'before-ack'}, seq: 2);
+      await until(() => timeline().seq == 2);
       expect(timeline().items.whereType<ActivityItem>().single.turn, 0);
       h.transport.sockets.single.controller.add({
         'jsonrpc': '2.0',
@@ -163,6 +166,11 @@ void main() {
       await sending;
       expect(kinds(), [UserItem, ActivityItem]);
       expect(timeline().items.every((item) => item.turn == 1), isTrue);
+      final activity = timeline().items.whereType<ActivityItem>().single;
+      expect(activity.toolId, 'before-ack');
+      expect(activity.started, isTrue);
+      expect(activity.completed, isTrue);
+      expect(activity.eventKey, isNotNull);
       expect(timeline().turns, 0);
       expect(timeline().workState, WorkState.sending);
       expect(timeline().companionPhase, CompanionPhase.neutral);
@@ -338,10 +346,252 @@ void main() {
     emit('tool.start', {'name': 'SYNTHETIC'}, seq: 2);
     emit('tool.complete', {}, seq: 3);
     emit('foo.bar', {'x': 1}, seq: 4);
-    await until(() => timeline().items.whereType<ActivityItem>().length == 2);
+    await until(() => timeline().seq == 4);
     final activities = timeline().items.whereType<ActivityItem>().toList();
-    expect(activities.map((a) => a.kind), ['tool', 'unknown']);
+    expect(activities.map((a) => a.kind), [
+      ActivityKind.unknown,
+      ActivityKind.unknown,
+      ActivityKind.unknown,
+    ]);
     expect(timeline().workState, WorkState.running);
+  });
+
+  test(
+    'actions distinctes, fin corrélée, fin seule et événements anonymes',
+    () async {
+      await start();
+      await outbox.send(draft.key);
+      emit('message.start', {}, seq: 1);
+      emit('tool.start', {'tool_id': 'opaque-A', 'name': 'same'}, seq: 2);
+      emit('tool.start', {'tool_id': 'opaque-B', 'name': 'same'}, seq: 3);
+      emit('tool.complete', {'tool_id': 'opaque-A'}, seq: 4);
+      emit('tool.complete', {'tool_id': 'opaque-C'}, seq: 5);
+      emit('tool.complete', {'tool_id': 'opaque-C'}, seq: 5);
+      emit('tool.start', {'name': 'same'}, seq: 6);
+      emit('tool.complete', {'name': 'same'}, seq: 7);
+      emit('future.event', {'tool_id': 'opaque-A'}, seq: 8);
+      await until(() => timeline().seq == 8);
+      final actions = timeline().items.whereType<ActivityItem>().toList();
+      expect(actions.map((a) => a.toolId), [
+        'opaque-A',
+        'opaque-B',
+        'opaque-C',
+        null,
+        null,
+        null,
+      ]);
+      expect(actions.map((a) => a.completed), [
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+      ]);
+      expect(actions.map((a) => a.started), [
+        true,
+        true,
+        false,
+        true,
+        false,
+        false,
+      ]);
+      expect(
+        actions.skip(3).every((a) => a.kind == ActivityKind.unknown),
+        isTrue,
+      );
+      expect(timeline().workState, WorkState.running);
+      emit('message.delta', {'text': 'Réponse'}, seq: 9);
+      emit('message.complete', {
+        'text': 'Réponse',
+        'status': 'complete',
+      }, seq: 10);
+      await until(() => timeline().seq == 10);
+      expect(
+        timeline().items.whereType<ActivityItem>().every(
+          (a) => a.responseReceived,
+        ),
+        isTrue,
+      );
+      expect(
+        timeline().items.whereType<ActivityItem>().elementAt(1).completed,
+        isFalse,
+      );
+      await Future<void>.delayed(ConversationRepository.flushInterval * 2);
+      final relaunched = newConversation();
+      addTearDown(relaunched.dispose);
+      final loaded = await relaunched.load(key);
+      expect(
+        loaded.items.whereType<ActivityItem>().map((a) => a.toJson()),
+        timeline().items.whereType<ActivityItem>().map((a) => a.toJson()),
+      );
+      // Le même ID au tour suivant désigne une autre action.
+      emit('message.start', {}, seq: 11);
+      emit('tool.start', {'tool_id': 'opaque-A'}, seq: 12);
+      await until(() => timeline().seq == 12);
+      final next = timeline().items.whereType<ActivityItem>().last;
+      expect(next.turn, 2);
+      expect(next.completed, isFalse);
+    },
+  );
+
+  test('identités cloisonnées par connexion, profil et session', () async {
+    await start();
+    await outbox.send(draft.key);
+    final others = [
+      const TimelineKey(connection, profile, 'other-session'),
+      const TimelineKey(connection, ProfileKey('other-profile'), _stored),
+      const TimelineKey(ConnectionKey('other-connection'), profile, _stored),
+    ];
+    for (var i = 0; i < others.length; i++) {
+      conversation.bind(others[i], 'runtime-$i', h.repository.socketGeneration);
+      emit('tool.start', {'tool_id': 'same-id'}, session: 'runtime-$i', seq: 1);
+    }
+    emit('tool.complete', {'tool_id': 'same-id'}, seq: 1);
+    await until(
+      () =>
+          others.every((k) => conversation.projection(k).seq == 1) &&
+          timeline().seq == 1,
+    );
+    expect(timeline().items.whereType<ActivityItem>().single.completed, isTrue);
+    for (final other in others) {
+      expect(
+        conversation
+            .projection(other)
+            .items
+            .whereType<ActivityItem>()
+            .single
+            .completed,
+        isFalse,
+      );
+    }
+  });
+
+  for (final type in ['message.delta', 'message.interim', 'message.complete']) {
+    test('repli attesté uniquement au fragment non vide : $type', () async {
+      await start();
+      await outbox.send(draft.key);
+      emit('message.start', {}, seq: 1);
+      emit('tool.start', {'tool_id': 'A'}, seq: 2);
+      emit('tool.start', {'tool_id': 'B'}, seq: 3);
+      emit(type, {'text': '', 'status': 'complete'}, seq: 4);
+      await until(() => timeline().seq == 4);
+      expect(
+        timeline().items.whereType<ActivityItem>().any(
+          (a) => a.responseReceived,
+        ),
+        isFalse,
+      );
+      emit(type, {'text': 'Réponse', 'status': 'complete'}, seq: 5);
+      await until(() => timeline().seq == 5);
+      expect(
+        timeline().items.whereType<ActivityItem>().every(
+          (a) => a.responseReceived,
+        ),
+        type != 'message.complete',
+      );
+      expect(
+        timeline().items.whereType<ActivityItem>().any((a) => a.completed),
+        isFalse,
+      );
+    });
+  }
+
+  for (final previous in [false, true]) {
+    test(
+      'début provisoire, démarrage puis fin avant accusé, ancien tour $previous',
+      () async {
+        await start();
+        var seq = 0;
+        if (previous) {
+          await outbox.send(draft.key);
+          emit('message.start', {}, seq: ++seq);
+          emit('tool.start', {'tool_id': 'same-id'}, seq: ++seq);
+          emit('tool.complete', {'tool_id': 'same-id'}, seq: ++seq);
+          emit('message.complete', {'status': 'complete'}, seq: ++seq);
+          await until(() => timeline().seq == seq);
+          await outbox.saveText(draft.key, 'Demande suivante');
+        }
+        h.transport.rpc = (method, params) =>
+            method == 'prompt.submit' ? null : _happy(method, params);
+        final frames = h.transport.frames.length;
+        final sending = outbox.send(draft.key);
+        await until(
+          () =>
+              h.transport.frames.length > frames &&
+              h.transport.frames.last['method'] == 'prompt.submit',
+        );
+        emit('tool.start', {'tool_id': 'same-id'}, seq: ++seq);
+        await until(() => timeline().seq == seq);
+        expect(timeline().items.whereType<ActivityItem>().last.turn, 0);
+        emit('message.start', {}, seq: ++seq);
+        emit('tool.complete', {'tool_id': 'same-id'}, seq: ++seq);
+        await until(() => timeline().seq == seq);
+        h.transport.sockets.single.controller.add({
+          'jsonrpc': '2.0',
+          'id': h.transport.frames.last['id'],
+          'result': _result('prompt-submit'),
+        });
+        await sending;
+        final actions = timeline().items.whereType<ActivityItem>().toList();
+        expect(actions.length, previous ? 2 : 1);
+        expect(actions.map((a) => a.turn), previous ? [1, 2] : [1]);
+        expect(actions.every((a) => a.started && a.completed), isTrue);
+        expect(timeline().workState, WorkState.running);
+      },
+    );
+  }
+
+  test('projection ancienne : générique, sans phase ou identité inventée', () {
+    final old = TimelineItem.fromJson({
+      'k': 'act',
+      'turn': 1,
+      'kind': 'tool',
+    }) as ActivityItem;
+    expect(old.kind, ActivityKind.unknown);
+    expect(old.toolId, isNull);
+    expect(old.started, isFalse);
+    expect(old.completed, isFalse);
+    final item = ActivityItem(
+      0,
+      ActivityKind.tool,
+      toolId: 'A',
+      started: true,
+      completed: true,
+      eventKey: 'stable',
+      responseReceived: true,
+    );
+    expect(item.copyWith(turn: 1).toJson(), {...item.toJson(), 'turn': 1});
+  });
+
+  test('premier texte avant accusé : repli conservé au rattachement', () async {
+    await start();
+    h.transport.rpc = (method, params) =>
+        method == 'prompt.submit' ? null : _happy(method, params);
+    final sending = outbox.send(draft.key);
+    await until(() => h.transport.frames.last['method'] == 'prompt.submit');
+    emit('tool.start', {'tool_id': 'A'}, seq: 1);
+    emit('tool.start', {'tool_id': 'B'}, seq: 2);
+    emit('message.delta', {'text': 'Réponse'}, seq: 3);
+    await until(() => timeline().seq == 3);
+    expect(
+      timeline().items.whereType<ActivityItem>().every(
+        (a) => a.responseReceived,
+      ),
+      isTrue,
+    );
+    h.transport.sockets.single.controller.add({
+      'jsonrpc': '2.0',
+      'id': h.transport.frames.last['id'],
+      'result': _result('prompt-submit'),
+    });
+    await sending;
+    expect(
+      timeline().items.whereType<ActivityItem>().every(
+        (a) => a.turn == 1 && a.responseReceived,
+      ),
+      isTrue,
+    );
   });
 
   test(
@@ -455,6 +705,85 @@ void main() {
   }
 
   testWidgets(
+    'reconstruction du groupe : choix et focus stables, aucune action distante',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      tester.view.physicalSize = const Size(375, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final memory = MemoryConversation();
+      const k = TimelineKey(connection, profile, _stored);
+      const first = ActivityItem(
+        1,
+        ActivityKind.tool,
+        toolId: 'A',
+        eventKey: '1',
+      );
+      const second = ActivityItem(
+        1,
+        ActivityKind.tool,
+        toolId: 'B',
+        eventKey: '2',
+      );
+      TimelineProjection projection({
+        bool response = false,
+        bool complete = false,
+      }) => TimelineProjection(
+        turns: 1,
+        userTurns: 1,
+        workState: WorkState.running,
+        items: [
+          UserItem(1, 'Question', operation: const OperationKey('op')),
+          first.copyWith(responseReceived: response),
+          second.copyWith(responseReceived: response, completed: complete),
+          if (response)
+            ResponseItem(1, complete ? 'Réponse suivante' : 'Réponse'),
+        ],
+      );
+      memory.projections[k] = projection();
+      final (outbox, _) = await pumpView(
+        tester,
+        memory,
+        scale: 1,
+        size: const Size(375, 1800),
+      );
+      expect(find.byType(ActivityLine), findsNWidgets(2));
+      expect(find.text(Content.activityEnd), findsNothing);
+      memory.set(k, projection(response: true));
+      await tester.pumpAndSettle();
+      expect(find.byType(ActivityLine), findsNothing);
+      final summary = find.text(Content.activitySummary(2, 2));
+      await tester.tap(summary);
+      await tester.pump();
+      final focus = Focus.of(tester.element(summary));
+      focus.requestFocus();
+      await tester.pump();
+      expect(find.byType(ActivityLine), findsNWidgets(2));
+      memory.set(k, projection(response: true, complete: true));
+      await tester.pumpAndSettle();
+      expect(find.byType(ActivityLine), findsNWidgets(2));
+      expect(find.text(Content.activitySummary(2, 1)), findsOneWidget);
+      expect(find.text(Content.activityEnd), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          '${Content.activityTool}, ${Content.activityEndAccessible}',
+        ),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(Content.activityTool), findsOneWidget);
+      expect(focus.hasFocus, isTrue);
+      await tester.tap(find.byType(ActivityGroup));
+      await tester.pump();
+      memory.set(k, projection(response: true));
+      await tester.pumpAndSettle();
+      expect(find.byType(ActivityLine), findsNothing);
+      expect(outbox.sent, isEmpty);
+      expect(memory.listCalls, isEmpty);
+      semantics.dispose();
+    },
+  );
+
+  testWidgets(
     'plusieurs blocs par tour, une seule action et réservations anciennes',
     (tester) async {
       tester.view.physicalSize = const Size(1080, 6000);
@@ -472,7 +801,7 @@ void main() {
           const ResponseItem(1, 'Ancienne réponse'),
           UserItem(2, 'Maintenant', operation: const OperationKey('o-2')),
           const ResponseItem(2, 'Premier bloc'),
-          const ActivityItem(2, 'tool'),
+          const ActivityItem(2, ActivityKind.tool),
           const ResponseItem(2, 'Second bloc'),
         ],
         turns: 2,
@@ -514,7 +843,7 @@ void main() {
     final memory = MemoryConversation();
     const k = TimelineKey(ConnectionKey('c-1'), ProfileKey('default'), _stored);
     memory.projections[k] = const TimelineProjection(
-      items: [ActivityItem(0, 'tool')],
+      items: [ActivityItem(0, ActivityKind.tool)],
     );
     await pumpView(tester, memory, size: const Size(800, 1400), scale: 1);
     expect(find.byType(ConversationCompanion), findsNothing);
@@ -523,7 +852,7 @@ void main() {
       TimelineProjection(
         items: [
           UserItem(1, 'Demande', operation: const OperationKey('o-1')),
-          const ActivityItem(1, 'tool'),
+          const ActivityItem(1, ActivityKind.tool),
         ],
         userTurns: 1,
         workState: WorkState.sending,
@@ -538,6 +867,29 @@ void main() {
     expect(
       tester.widget<RabbitCompanion>(find.byType(RabbitCompanion)).pose,
       RabbitPose.rest,
+    );
+    memory.set(
+      k,
+      TimelineProjection(
+        items: [
+          UserItem(1, 'Demande', operation: const OperationKey('o-1')),
+          const ResponseItem(1, 'Réponse précédente'),
+          const ActivityItem(0, ActivityKind.tool, eventKey: 'provisional'),
+        ],
+        turns: 1,
+        userTurns: 1,
+        workState: WorkState.succeeded,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ConversationCompanion), findsOneWidget);
+    final previousReply = find.byWidgetPredicate(
+      (widget) =>
+          widget is MessageBubble && widget.text == 'Réponse précédente',
+    );
+    expect(
+      tester.getRect(find.byType(ActivityLine)).top,
+      greaterThanOrEqualTo(tester.getRect(previousReply).bottom),
     );
     await tester.pumpWidget(const SizedBox());
   });
@@ -884,7 +1236,7 @@ void main() {
           UserItem(1, 'Demande', operation: const OperationKey('o-1')),
           for (var i = 0; i < 60; i++) ...[
             ResponseItem(1, 'Bloc $i\n\n${'Paragraphe long. ' * 30}'),
-            const ActivityItem(1, 'tool'),
+            const ActivityItem(1, ActivityKind.tool),
           ],
         ],
         turns: 1,
@@ -914,7 +1266,7 @@ void main() {
           '# Titre\n\n- liste 🚀\n- **gras**\n\n'
           '```dart\nfinal ligneTresLongue = ${'valeur' * 30};\n```',
         ),
-        const ActivityItem(1, 'tool'),
+        const ActivityItem(1, ActivityKind.tool),
       ],
       workState: WorkState.succeeded,
       turns: 1,

@@ -1,5 +1,14 @@
 {
   "evidence":"documentary",
+  "activityEvents": {
+    "documented": "present",
+    "actual": "unverified",
+    "fixtures": "synthetic",
+    "source": "https://github.com/NousResearch/hermes-agent/blob/9e01b44dd23978f9ff40b7837467f3a9f1582130/tui_gateway/contracts/events.py#L354-L387",
+    "identity": "tool_id",
+    "families": ["tool", "unknown"],
+    "historyTools": "unavailable-in-current-decoder"
+  },
   "capabilities":[
     {"name":"profiles","required":true,"documented":"present","actual":"unverified","surface":"GET /api/profiles"},
     {"name":"websocket","required":true,"documented":"present","actual":"unverified","surface":"gateway.ready"},

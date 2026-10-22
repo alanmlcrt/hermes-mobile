@@ -4,6 +4,7 @@ import '../../models/draft.dart';
 import '../../models/profile.dart';
 import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
+import '../../ui/components/activity_group.dart';
 import '../../ui/components/composer.dart';
 import '../../ui/components/conversation_companion.dart';
 import '../../ui/components/message_bubble.dart';
@@ -47,6 +48,7 @@ class _DraftViewState extends State<DraftView> {
   bool _filled = false;
   int _clearTick = 0;
   bool _companionPaused = false;
+  final _activityExpansion = <Object, bool>{};
 
   @override
   void dispose() {
@@ -208,6 +210,10 @@ class _DraftViewState extends State<DraftView> {
       padding: const EdgeInsets.all(Spacing.md),
       itemCount: children.length,
       itemBuilder: (context, i) => children[i],
+      findChildIndexCallback: (key) {
+        final at = children.indexWhere((child) => child.key == key);
+        return at < 0 ? null : at;
+      },
     );
   }
 
@@ -296,10 +302,16 @@ class _DraftViewState extends State<DraftView> {
     if (work != null) groups.putIfAbsent(latestTurn, () => []);
     Widget block(TimelineItem item) => switch (item) {
       ResponseItem() => MessageBubble(text: item.text),
-      ActivityItem() => ActivityLine(kind: item.kind),
+      ActivityItem() => ActivityLine(
+        kind: item.kind,
+        completed: item.completed,
+      ),
       UserItem() => MessageBubble(text: item.text, fromUser: true),
     };
-    final turns = groups.keys.toList()..sort();
+    // Les activités provisoires du prochain envoi restent après l'historique,
+    // sans créer de réservation Otc avant l'accusé ou le démarrage serveur.
+    final turns = groups.keys.where((turn) => turn != 0).toList()..sort();
+    if (groups.containsKey(0)) turns.add(0);
     final entries = <Widget>[];
     for (final turn in turns) {
       final items = groups[turn]!;
@@ -310,13 +322,65 @@ class _DraftViewState extends State<DraftView> {
         }
         continue;
       }
-      final responses = <TimelineItem>[];
+      final responses = <Widget>[];
       for (final item in items) {
         if (item is UserItem) {
           entries.addAll([const SizedBox(height: Spacing.sm), block(item)]);
-        } else {
-          responses.add(item);
         }
+      }
+      for (var i = 0; i < items.length;) {
+        final item = items[i];
+        if (item is UserItem) {
+          i++;
+          continue;
+        }
+        if (item is! ActivityItem) {
+          responses.add(
+            KeyedSubtree(
+              key: ValueKey(('response', turn, i)),
+              child: block(item),
+            ),
+          );
+          i++;
+          continue;
+        }
+        var end = i + 1;
+        while (end < items.length && items[end] is ActivityItem) {
+          end++;
+        }
+        final activities = items.sublist(i, end).cast<ActivityItem>();
+        final groupId = (vm.draft?.key, turn, item.eventKey ?? i);
+        final expanded =
+            _activityExpansion[groupId] ??
+            !activities.any((a) => a.responseReceived);
+        if (activities.length >= 2) {
+          responses.add(
+            ActivityGroup(
+              key: ValueKey(groupId),
+              count: activities.length,
+              pending: activities.where((a) => !a.completed).length,
+              expanded: expanded,
+              onChanged: (value) =>
+                  setState(() => _activityExpansion[groupId] = value),
+            ),
+          );
+        }
+        if (activities.length < 2 || expanded) {
+          for (var offset = 0; offset < activities.length; offset++) {
+            final activity = activities[offset];
+            responses.add(
+              KeyedSubtree(
+                key: ValueKey((
+                  'activity',
+                  turn,
+                  activity.eventKey ?? i + offset,
+                )),
+                child: block(activity),
+              ),
+            );
+          }
+        }
+        i = end;
       }
       final current = turn == latestTurn;
       if (current && work != null) {
@@ -347,15 +411,16 @@ class _DraftViewState extends State<DraftView> {
               work == WorkState.stopped,
           active: !vm.resyncing,
           paused: _companionPaused,
-          child: responses.isEmpty
-              ? const SizedBox.shrink()
-              : block(responses.first),
+          child: responses.isEmpty ? const SizedBox.shrink() : responses.first,
         ),
       );
       for (final item in responses.skip(1)) {
         entries.addAll([
-          const SizedBox(height: Spacing.sm),
-          ConversationCompanionContinuation(child: block(item)),
+          Padding(
+            key: item.key,
+            padding: const EdgeInsets.only(top: Spacing.sm),
+            child: ConversationCompanionContinuation(child: item),
+          ),
         ]);
       }
     }

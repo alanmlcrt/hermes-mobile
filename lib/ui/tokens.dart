@@ -32,6 +32,11 @@ abstract final class IconSizes {
   static const double lg = 32;
 }
 
+abstract final class ActivityTokens {
+  static const double illustration = 24;
+  static const double command = 48;
+}
+
 /// Durées de mouvement. À lire via `motionDuration` (theme.dart), qui
 /// respecte la préférence « mouvement réduit » du système.
 abstract final class Motion {
