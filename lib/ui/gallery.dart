@@ -10,6 +10,7 @@ import 'components/work_state_label.dart';
 import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
+import 'components/rabbit_companion.dart';
 import '../models/history.dart';
 import '../models/profile.dart';
 import '../models/timeline.dart';
@@ -147,6 +148,7 @@ class ComponentGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sections = <(String, Widget Function())>[
+      (GalleryContent.rabbitSection, () => const _RabbitPreview()),
       (GalleryContent.statusLabelSection, _statusLabels),
       (GalleryContent.sectionCardSection, _sectionCard),
       (
@@ -201,6 +203,66 @@ class ComponentGallery extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RabbitPreview extends StatefulWidget {
+  const _RabbitPreview();
+
+  @override
+  State<_RabbitPreview> createState() => _RabbitPreviewState();
+}
+
+class _RabbitPreviewState extends State<_RabbitPreview> {
+  bool _paused = false;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        GalleryContent.rabbitName,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      const SizedBox(height: Spacing.sm),
+      Wrap(
+        spacing: Spacing.md,
+        runSpacing: Spacing.md,
+        crossAxisAlignment: WrapCrossAlignment.end,
+        children: [
+          for (final (size, label) in [
+            (RabbitTokens.large, GalleryContent.rabbitLarge),
+            (RabbitTokens.compact, GalleryContent.rabbitCompact),
+            (RabbitTokens.minimum, GalleryContent.rabbitMinimum),
+          ])
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RabbitTokens.backdrop,
+                    borderRadius: BorderRadius.circular(Radii.lg),
+                  ),
+                  child: RabbitCompanion(
+                    name: GalleryContent.rabbitName,
+                    size: size,
+                    paused: _paused,
+                  ),
+                ),
+                const SizedBox(height: Spacing.xs),
+                Text(label),
+              ],
+            ),
+        ],
+      ),
+      const SizedBox(height: Spacing.sm),
+      TextButton(
+        onPressed: () => setState(() => _paused = !_paused),
+        child: Text(
+          _paused ? GalleryContent.resumeRabbit : GalleryContent.pauseRabbit,
+        ),
+      ),
+    ],
+  );
 }
 
 class _VariantFrame extends StatelessWidget {

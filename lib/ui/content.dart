@@ -2,6 +2,8 @@
 // Vocabulaire du quotidien : pas de jargon technique en avant.
 
 abstract final class Content {
+  static const companionFallback = 'Compagnon';
+  static String tickleCompanion(String name) => 'Chatouiller $name';
   static const appTitle = 'Hermes Mobile';
   static const homePlaceholder = 'Bienvenue dans Hermes Mobile';
   static const connectTitle = 'Connecter Hermes';
@@ -153,6 +155,13 @@ abstract final class ConnectionLabels {
 
 /// Libellés et données fictives de la galerie de composants.
 abstract final class GalleryContent {
+  static const rabbitSection = 'Compagnon lapin';
+  static const rabbitName = 'Otc';
+  static const rabbitLarge = '180 px';
+  static const rabbitCompact = '64 px';
+  static const rabbitMinimum = '48 px';
+  static const pauseRabbit = 'Mettre les animations en pause';
+  static const resumeRabbit = 'Reprendre les animations';
   static const title = 'Galerie de composants';
 
   static const variantLight = 'Clair';

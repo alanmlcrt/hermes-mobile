@@ -19,3 +19,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-3-reponse-en-direct.md`
   summary: Appariement des bulles utilisateur aux tours robuste aux tours lancés par un autre client sur la même session.
   evidence: `accepted()` apparie par position (`userTurns + 1`) ; un tour démarré ailleurs décale les liaisons.
+
+- source_spec: spec-compagnon-lapin-lot-1.md
+  summary: Réconcilier les descriptions historiques de teinte et la maquette de contexte avec la planche v5.
+  evidence: Sources UX préexistantes suivies à la demande utilisateur ; table taupe et ancien SVG à oreille pliée malgré la priorité v5 explicitement blanche sans pli. Aucun changement métier causé par ce lot.
