@@ -69,4 +69,21 @@ void main() {
       contains(EventMapping.asset),
     );
   });
+
+  test('toutes les familles fictives restent sans association serveur', () {
+    for (final kind in ActivityKind.values) {
+      final payload = {
+        'name': kind.name,
+        'emoji': '💻',
+        'args': {'family': kind.name},
+      };
+      expect(
+        mapping.map('future.${kind.name}', payload).activityKind,
+        ActivityKind.unknown,
+      );
+      for (final event in ['tool.start', 'tool.complete']) {
+        expect(mapping.map(event, payload).activityKind, ActivityKind.tool);
+      }
+    }
+  });
 }

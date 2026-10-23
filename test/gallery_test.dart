@@ -15,6 +15,65 @@ import 'package:hermes_mobile/ui/theme.dart';
 import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
+  testWidgets('18 entrées comparables et pause commune atteignable à 200 %', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: const Scaffold(
+          body: SingleChildScrollView(child: ActivityPreview()),
+        ),
+      ),
+    );
+    await tester.pump();
+    for (final kind in ActivityKind.values) {
+      final row = find.byKey(ValueKey('catalogue-${kind.name}'));
+      await tester.ensureVisible(row);
+      await tester.pump();
+      final examples = tester
+          .widgetList<ActivityIllustration>(
+            find.descendant(
+              of: row,
+              matching: find.byType(ActivityIllustration),
+            ),
+          )
+          .toList();
+      expect(examples.map((w) => w.kind), [kind, kind]);
+      expect(examples.map((w) => w.paused), [false, true]);
+      expect(
+        find.text(GalleryContent.activityCatalogItem(kind)),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
+    await tester.ensureVisible(find.text(GalleryContent.pauseActivities));
+    await tester.tap(find.text(GalleryContent.pauseActivities));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .getSize(
+            find.widgetWithText(TextButton, GalleryContent.resumeActivities),
+          )
+          .height,
+      greaterThanOrEqualTo(48),
+    );
+    expect(
+      tester
+          .widgetList<ActivityIllustration>(find.byType(ActivityIllustration))
+          .every((w) => w.paused),
+      isTrue,
+    );
+    expect(tester.binding.transientCallbackCount, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets('activité : détails conservés après fin et repli du groupe', (
     tester,
   ) async {
@@ -402,24 +461,27 @@ void main() {
     expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 7)));
     expect(find.byType(MessageBubble), findsNWidgets(4 * 2));
     expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
-    expect(find.byType(ActivityIllustration), findsNWidgets(4 * 5));
+    expect(
+      find.byType(ActivityIllustration),
+      findsNWidgets(4 * (2 * ActivityKind.values.length + 2)),
+    );
     expect(
       find.byWidgetPredicate(
         (w) => w is CustomPaint && w.painter is CodeActivityPainter,
       ),
-      findsNWidgets(4),
+      findsNWidgets(8),
     );
     expect(
       find.byWidgetPredicate(
         (w) => w is CustomPaint && w.painter is ToolActivityPainter,
       ),
-      findsNWidgets(4 * 3),
+      findsNWidgets(4 * 4),
     );
     expect(
       find.byWidgetPredicate(
         (w) => w is CustomPaint && w.painter is UnknownActivityPainter,
       ),
-      findsNWidgets(4),
+      findsNWidgets(8),
     );
     for (final state in WorkState.values) {
       expect(

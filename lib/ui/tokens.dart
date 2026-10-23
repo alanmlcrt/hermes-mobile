@@ -33,6 +33,289 @@ abstract final class IconSizes {
 }
 
 abstract final class ActivityTokens {
+  // Motifs vectoriels sur 32 unités, affichés dans le slot commun de 24 px.
+  // Les contours fixes restent séparés des pièces mobiles.
+  static Path _lines(List<List<double>> lines) {
+    final path = Path();
+    for (final line in lines) {
+      path.moveTo(line[0], line[1]);
+      for (var i = 2; i < line.length; i += 2) {
+        path.lineTo(line[i], line[i + 1]);
+      }
+    }
+    return path;
+  }
+
+  static Path _box(double x, double y, double w, double h) => Path()
+    ..addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(x, y, w, h),
+        const Radius.circular(2),
+      ),
+    );
+  static Path _circle(double x, double y, double r) =>
+      Path()..addOval(Rect.fromCircle(center: Offset(x, y), radius: r));
+  static Path get _paper => _lines([
+    [7, 3, 20, 3, 26, 9, 26, 29, 7, 29, 7, 3],
+    [20, 3, 20, 9, 26, 9],
+  ]);
+  static Path get _textLines => _lines([
+    [11, 13, 22, 13],
+    [11, 18, 20, 18],
+    [11, 23, 22, 23],
+  ]);
+  static Path get _browser => _box(3, 5, 26, 23)
+    ..addPath(
+      _lines([
+        [3, 11, 29, 11],
+        [7, 8, 8, 8],
+        [12, 8, 13, 8],
+      ]),
+      Offset.zero,
+    );
+  static Path get _lens => _circle(21, 20, 5)
+    ..addPath(
+      _lines([
+        [25, 24, 29, 28],
+      ]),
+      Offset.zero,
+    );
+  static Path get _picture => _box(4, 4, 24, 24);
+  static Path get _landscape => _circle(22, 10, 2)
+    ..addPath(
+      _lines([
+        [7, 25, 13, 17, 18, 22, 22, 18, 26, 24],
+      ]),
+      Offset.zero,
+    );
+  static final familyDrawings = <String, ActivityFamilyDrawing>{
+    'fileCreate': ActivityFamilyDrawing(
+      fixed: _paper,
+      moving: _textLines,
+      reveal: true,
+    ),
+    'fileEdit': ActivityFamilyDrawing(
+      fixed: _paper
+        ..addPath(
+          _lines([
+            [11, 14, 19, 14],
+            [11, 23, 18, 23],
+          ]),
+          Offset.zero,
+        ),
+      moving: _lines([
+        [17, 19, 26, 10, 29, 13, 20, 22, 16, 23, 17, 19],
+        [25, 11, 28, 14],
+      ]),
+      travel: const Offset(1, -2),
+    ),
+    'webSearch': ActivityFamilyDrawing(
+      fixed: _browser
+        ..addPath(
+          _lines([
+            [7, 15, 17, 15],
+            [7, 20, 13, 20],
+            [7, 24, 14, 24],
+          ]),
+          Offset.zero,
+        ),
+      moving: _lens,
+      travel: const Offset(-1, -1),
+    ),
+    'webBrowse': ActivityFamilyDrawing(
+      fixed: _browser
+        ..addPath(
+          _lines([
+            [7, 16, 23, 16],
+            [7, 21, 16, 21],
+            [7, 25, 14, 25],
+          ]),
+          Offset.zero,
+        ),
+      moving: _lines([
+        [19, 18, 21, 28, 23, 24, 28, 23, 19, 18],
+      ]),
+      travel: const Offset(1, -1),
+    ),
+    'fileRead': ActivityFamilyDrawing(
+      fixed: _paper..addPath(_textLines, Offset.zero),
+      moving: _lines([
+        [10, 17, 23, 17],
+      ]),
+      travel: const Offset(0, 6),
+    ),
+    'command': ActivityFamilyDrawing(
+      fixed: _browser
+        ..addPath(
+          _lines([
+            [7, 15, 10, 18, 7, 21],
+            [13, 18, 22, 18],
+          ]),
+          Offset.zero,
+        ),
+      moving: _lines([
+        [7, 24, 19, 24],
+        [25, 16, 25, 20],
+      ]),
+      reveal: true,
+    ),
+    'fileSearch': ActivityFamilyDrawing(
+      fixed: _lines([
+        [3, 11, 3, 27, 27, 27, 29, 15, 3, 15],
+        [3, 11, 12, 11, 15, 15],
+      ]),
+      moving: _box(10, 5, 10, 16)..addPath(_lens, Offset.zero),
+      travel: const Offset(0, -2),
+    ),
+    'imageCreate': ActivityFamilyDrawing(
+      fixed: _picture..addPath(_landscape, Offset.zero),
+      moving:
+          _lines([
+            [13, 17, 23, 6, 26, 9, 16, 20, 13, 17],
+          ])..addPath(
+            Path()
+              ..moveTo(13, 17)
+              ..cubicTo(7, 17, 12, 23, 6, 25)
+              ..cubicTo(12, 28, 18, 25, 16, 20)
+              ..close(),
+            Offset.zero,
+          ),
+      travel: const Offset(2, 2),
+    ),
+    'imageAnalyze': ActivityFamilyDrawing(
+      fixed: _picture..addPath(_landscape, Offset.zero),
+      moving: _lines([
+        [9, 14, 9, 10, 13, 10],
+        [17, 10, 21, 10, 21, 14],
+        [9, 18, 9, 22, 13, 22],
+        [17, 22, 21, 22, 21, 18],
+      ])..addPath(_circle(15, 16, 1), Offset.zero),
+      travel: const Offset(3, 2),
+    ),
+    'memory': ActivityFamilyDrawing(
+      fixed: _box(7, 8, 19, 21)
+        ..addPath(
+          _lines([
+            [11, 8, 11, 29],
+            [4, 12, 9, 12],
+            [4, 18, 9, 18],
+            [4, 24, 9, 24],
+          ]),
+          Offset.zero,
+        ),
+      moving: _box(15, 3, 10, 14)
+        ..addPath(
+          _lines([
+            [18, 7, 22, 7],
+            [18, 11, 22, 11],
+          ]),
+          Offset.zero,
+        ),
+      travel: const Offset(0, 1),
+    ),
+    'delegate': ActivityFamilyDrawing(
+      fixed: _box(11, 3, 10, 8)
+        ..addPath(
+          _lines([
+            [16, 11, 16, 16, 7, 16, 7, 21],
+            [16, 16, 25, 16, 25, 21],
+          ]),
+          Offset.zero,
+        )
+        ..addPath(_box(2, 21, 10, 8), Offset.zero)
+        ..addPath(_box(20, 21, 10, 8), Offset.zero),
+      moving: _circle(7, 17, 1.8)..addPath(_circle(25, 17, 1.8), Offset.zero),
+      travel: const Offset(0, 3),
+      filled: true,
+    ),
+    'organize': ActivityFamilyDrawing(
+      fixed: _paper,
+      moving: _box(11, 12, 3, 3)
+        ..addPath(_box(11, 18, 3, 3), Offset.zero)
+        ..addPath(_box(11, 24, 3, 3), Offset.zero)
+        ..addPath(
+          _lines([
+            [18, 14, 23, 14],
+            [18, 20, 22, 20],
+            [18, 26, 23, 26],
+          ]),
+          Offset.zero,
+        ),
+      reveal: true,
+    ),
+    'skill': ActivityFamilyDrawing(
+      fixed: _lines([
+        [
+          16,
+          8,
+          9,
+          5,
+          3,
+          6,
+          3,
+          25,
+          9,
+          24,
+          16,
+          28,
+          23,
+          24,
+          29,
+          25,
+          29,
+          6,
+          23,
+          5,
+          16,
+          8,
+          16,
+          28,
+        ],
+        [7, 11, 12, 13],
+        [7, 17, 12, 19],
+      ]),
+      moving: _lines([
+        [16, 8, 24, 6, 24, 24, 16, 28],
+        [19, 13, 22, 12],
+        [19, 19, 22, 18],
+      ]),
+      travel: const Offset(-3, 0),
+    ),
+    'schedule': ActivityFamilyDrawing(
+      fixed: _box(4, 6, 20, 22)
+        ..addPath(
+          _lines([
+            [4, 12, 24, 12],
+            [9, 3, 9, 8],
+            [19, 3, 19, 8],
+            [8, 17, 14, 17],
+            [8, 22, 12, 22],
+          ]),
+          Offset.zero,
+        )
+        ..addPath(_circle(23, 23, 7), Offset.zero)
+        ..addPath(
+          _lines([
+            [23, 23, 26, 25],
+          ]),
+          Offset.zero,
+        ),
+      moving: _lines([
+        [23, 23, 23, 18],
+      ]),
+      pivot: const Offset(23, 23),
+      rotation: 1,
+    ),
+    'preparation': ActivityFamilyDrawing(
+      fixed: Path(),
+      moving: _circle(16, 8.8, 2.7)
+        ..addPath(_circle(22.24, 19.6, 2.7), Offset.zero)
+        ..addPath(_circle(9.76, 19.6, 2.7), Offset.zero),
+      pivot: const Offset(16, 16),
+      rotation: 1,
+      filled: true,
+    ),
+  };
   static const double detailHeight = 240;
   static const String detailFont = 'monospace';
   static const double illustration = 24;
@@ -88,6 +371,26 @@ abstract final class ActivityTokens {
   static const Offset unknownCenter = Offset(16, 16);
   static const double unknownOrbitRadius = 7.2;
   static const double unknownDotRadius = 2.7;
+}
+
+/// Géométrie et mouvement d’un motif du catalogue, indépendants des événements.
+class ActivityFamilyDrawing {
+  const ActivityFamilyDrawing({
+    required this.fixed,
+    required this.moving,
+    this.travel = Offset.zero,
+    this.pivot = Offset.zero,
+    this.rotation = 0,
+    this.reveal = false,
+    this.filled = false,
+  });
+  final Path fixed;
+  final Path moving;
+  final Offset travel;
+  final Offset pivot;
+  final double rotation;
+  final bool reveal;
+  final bool filled;
 }
 
 /// Durées de mouvement. À lire via `motionDuration` (theme.dart), qui

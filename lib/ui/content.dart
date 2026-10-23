@@ -84,6 +84,21 @@ abstract final class Content {
   static String activityLabel(ActivityKind kind) => switch (kind) {
     ActivityKind.tool => activityTool,
     ActivityKind.code => activityCode,
+    ActivityKind.fileCreate => 'Création du fichier',
+    ActivityKind.webSearch => 'Recherche en cours',
+    ActivityKind.fileRead => 'Lecture du fichier',
+    ActivityKind.command => 'Exécution d’une commande',
+    ActivityKind.webBrowse => 'Navigation sur le web',
+    ActivityKind.fileEdit => 'Modification du fichier',
+    ActivityKind.fileSearch => 'Recherche de fichiers',
+    ActivityKind.imageCreate => 'Création d’une image',
+    ActivityKind.memory => 'Mémorisation',
+    ActivityKind.delegate => 'Travail en parallèle',
+    ActivityKind.organize => 'Organisation du travail',
+    ActivityKind.imageAnalyze => 'Analyse de l’image',
+    ActivityKind.skill => 'Consultation d’un savoir-faire',
+    ActivityKind.schedule => 'Programmation',
+    ActivityKind.preparation => 'Préparation de la réponse',
     ActivityKind.unknown => activityUnknown,
   };
   static const activityEnd = 'Fin reçue';
@@ -215,6 +230,14 @@ abstract final class GalleryContent {
   static const messageSection = 'Message';
   static const activitySection = 'Ligne d’activité';
   static const activitySynthetic = 'Activités fictives · aucun appel Hermes';
+  static const activityAnimated = 'Animé';
+  static const activityStationary = 'Immobile';
+  static const activityDemonstration =
+      'Démonstration du catalogue · familles fictives';
+  static const activityRealContract =
+      'Scénario fictif · le contrat réel conserve outil et événement inconnu';
+  static const activityPreparationNote =
+      'Préparation : démonstration uniquement ; en conversation, Otc conserve ce rôle.';
   static const activityCatalog = 'Catalogue d’illustrations';
   static String activityCatalogItem(ActivityKind kind) =>
       '${Content.activityLabel(kind)} (${kind.name})';
@@ -222,7 +245,7 @@ abstract final class GalleryContent {
   static const resumeActivities = 'Reprendre les illustrations';
   static const activitySecond = 'Deuxième ID';
   static const activityComplete = 'Recevoir la fin';
-  static const activityCode = 'Ajouter code';
+  static const activityCode = 'Ajouter code fictif';
   static const activityUnknown = 'Événement inconnu';
   static const activityReply = 'Recevoir une réponse';
   static const activityReplyText =

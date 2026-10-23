@@ -19,6 +19,12 @@ sources:
 
 ## Complément approuvé — illustrations d’activité 3.3
 
+### Catalogue complété — story 3.4
+
+Les 17 familles et le repli sont comparables dans la galerie avec leur variante immobile. Le bouton de pause commun reste une commande native et atteignable après agrandissement à 200 %. Le contrôleur de 3.3 immobilise chaque famille sous mouvement réduit, pause, fin reçue, hors viewport, `Offstage`, route couverte et arrière-plan ; il reprend au retour visible sans modifier le travail. Les dessins restent décoratifs auprès de leurs libellés et ne créent aucune région live supplémentaire.
+
+La préparation à trois points n’est montrée que dans le catalogue fictif, sans ajout de ligne dans la conversation. Les événements réels conservent leur mapping `tool`/`unknown`, indépendamment du nom, des arguments ou d’un emoji. [Preuves et limites](../../../implementation-artifacts/story-3-4-verification/verification.md).
+
 Le bouton « Mettre les animations en pause » de la conversation immobilise simultanément Otc et les illustrations d’activité (`ActivityIllustration`), tout comme le mouvement réduit système, la fin reçue (`completed: true`), le défilement hors du viewport, `Offstage` et le passage en arrière-plan. Remplacer une entrée dans `ActivityCatalog` ne modifie ni le décodage serveur (`EventMapping`), ni `ConversationRepository`, ni les contrats Otc.
 
 ## Complément approuvé — activités 3.1

@@ -241,29 +241,7 @@ class _ActivityPreviewState extends State<ActivityPreview> {
       children: [
         const Text(GalleryContent.activitySynthetic),
         const SizedBox(height: Spacing.xs),
-        const Text(GalleryContent.activityCatalog),
-        const SizedBox(height: Spacing.xs),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final kind in ActivityKind.values)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-                child: Row(
-                  children: [
-                    ActivityIllustration(kind: kind, paused: _paused),
-                    const SizedBox(width: Spacing.xs),
-                    Expanded(
-                      child: Text(
-                        GalleryContent.activityCatalogItem(kind),
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+        const Text(GalleryContent.activityRealContract),
         const SizedBox(height: Spacing.xs),
         if (_items.length >= 2)
           ActivityGroup(
@@ -389,6 +367,44 @@ class _ActivityPreviewState extends State<ActivityPreview> {
             ),
           ],
         ),
+        const SizedBox(height: Spacing.md),
+        const Text(GalleryContent.activityCatalog),
+        const Text(GalleryContent.activityDemonstration),
+        const Text(GalleryContent.activityPreparationNote),
+        for (final kind in ActivityKind.values)
+          Padding(
+            key: ValueKey('catalogue-${kind.name}'),
+            padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(GalleryContent.activityCatalogItem(kind)),
+                const SizedBox(height: Spacing.xs),
+                Wrap(
+                  spacing: Spacing.md,
+                  runSpacing: Spacing.xs,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ActivityIllustration(kind: kind, paused: _paused),
+                        const SizedBox(width: Spacing.xs),
+                        const Text(GalleryContent.activityAnimated),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ActivityIllustration(kind: kind, paused: true),
+                        const SizedBox(width: Spacing.xs),
+                        const Text(GalleryContent.activityStationary),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -450,10 +466,7 @@ class _ConversationPreviewState extends State<ConversationCompanionPreview> {
               MessageBubble(
                 text: GalleryContent.sampleReply.substring(0, _textLength),
               ),
-            ActivityLine(
-              kind: ActivityKind.tool,
-              paused: _paused || !_active,
-            ),
+            ActivityLine(kind: ActivityKind.tool, paused: _paused || !_active),
             Semantics(liveRegion: true, child: WorkStateLabel(state: _work)),
           ],
         ),

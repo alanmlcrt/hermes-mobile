@@ -6,13 +6,13 @@ import 'package:flutter/rendering.dart';
 
 import '../../models/timeline.dart';
 import '../tokens.dart';
+import 'activity_family_painters.dart';
 
-typedef ActivityPainterBuilder =
-    CustomPainter Function({
-      required Color color,
-      required double progress,
-      required bool stationary,
-    });
+typedef ActivityPainterBuilder = CustomPainter Function({
+  required Color color,
+  required double progress,
+  required bool stationary,
+});
 
 /// Entrée du catalogue de présentation : dessin, variante immobile et rythme
 /// issus de [ActivityTokens], sans dépendance au transport ni à la persistance.
@@ -51,6 +51,51 @@ class ActivityCatalog {
   static const _defaultEntries = <ActivityKind, ActivityCatalogEntry>{
     ActivityKind.code: codeEntry,
     ActivityKind.tool: toolEntry,
+    ActivityKind.fileCreate: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.fileCreate,
+    ),
+    ActivityKind.webSearch: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.webSearch,
+    ),
+    ActivityKind.fileRead: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.fileRead,
+    ),
+    ActivityKind.command: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.command,
+    ),
+    ActivityKind.webBrowse: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.webBrowse,
+    ),
+    ActivityKind.fileEdit: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.fileEdit,
+    ),
+    ActivityKind.fileSearch: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.fileSearch,
+    ),
+    ActivityKind.imageCreate: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.imageCreate,
+    ),
+    ActivityKind.memory: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.memory,
+    ),
+    ActivityKind.delegate: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.delegate,
+    ),
+    ActivityKind.organize: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.organize,
+    ),
+    ActivityKind.imageAnalyze: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.imageAnalyze,
+    ),
+    ActivityKind.skill: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.skill,
+    ),
+    ActivityKind.schedule: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.schedule,
+    ),
+    ActivityKind.preparation: ActivityCatalogEntry(
+      painter: FamilyActivityPainter.preparation,
+    ),
     ActivityKind.unknown: unknownEntry,
   };
 
@@ -554,10 +599,7 @@ class ToolActivityPainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.translate(
-      ActivityTokens.toolPivot.dx,
-      ActivityTokens.toolPivot.dy,
-    );
+    canvas.translate(ActivityTokens.toolPivot.dx, ActivityTokens.toolPivot.dy);
     canvas.rotate(wrenchAngle);
     canvas.translate(
       -ActivityTokens.toolPivot.dx,

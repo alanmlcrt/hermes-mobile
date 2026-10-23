@@ -64,6 +64,12 @@ components:
 
 ## Complément approuvé — illustrations d’activité 3.3
 
+### Catalogue complété — story 3.4
+
+`ActivityKind` et `ActivityCatalog` comprennent les 17 familles de la maquette du 20 octobre et le repli `unknown`. Les dessins vectoriels occupent toujours 24 × 24 px ; les nouvelles géométries et leurs mouvements locaux sont centralisés dans `ActivityTokens`, les peintres dans `activity_family_painters.dart`. Feuille/crayon, loupe/pointeur, barre de lecture, console, dossier/loupe, pinceau/cible, carnet, assistants, liste, livre et calendrier/horloge accompagnent leurs libellés. Le châssis code reste fixe. La galerie présente chaque motif animé et immobile dans les variantes existantes, avec pause commune et données explicitement fictives.
+
+Les familles locales ne créent aucune classification distante : seuls `tool` et `unknown` restent associés au contrat courant. `preparation` porte son propre libellé mais partage les trois points du repli ; sa démonstration reste en galerie, Otc gardant seul ce rôle dans la conversation. [Preuves et limites](../../../implementation-artifacts/story-3-4-verification/verification.md).
+
 Les activités remplacent l’icône statique de 3.1 par `ActivityIllustration` (24 × 24 px) pilotée par `ActivityCatalog` (indexé par `ActivityKind` : `code` à châssis fixe aux traits épais + lignes/curseur mobiles, `tool` à clé oscillante + impulsion, `unknown` / repli à trois petits points en rotation sans bulle). Otc reste seul porteur de la préparation de réponse au niveau du tour (lot 4 inchangé). Toute ligne terminée (`completed: true`), en pause (`_companionPaused`), sous mouvement réduit, hors écran ou en arrière-plan affiche sa variante immobile sans timer actif.
 
 ## Complément approuvé — activités 3.1
