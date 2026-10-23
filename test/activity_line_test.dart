@@ -17,6 +17,29 @@ import 'package:hermes_mobile/ui/theme.dart';
 import 'package:hermes_mobile/ui/tokens.dart';
 
 void main() {
+  testWidgets('sans illustration : texte aligné sans emplacement réservé', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ActivityLine(
+            kind: ActivityKind.tool,
+            showIllustration: false,
+            completed: true,
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(ActivityIllustration), findsNothing);
+    expect(find.text(Content.activityEnd), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(Content.activityTool)).dx,
+      tester.getTopLeft(find.byType(ActivityLine)).dx,
+    );
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
   testWidgets('sortie longue : deux axes, texte intégral et corps sans repli', (
     tester,
   ) async {

@@ -466,7 +466,11 @@ class _ConversationPreviewState extends State<ConversationCompanionPreview> {
               MessageBubble(
                 text: GalleryContent.sampleReply.substring(0, _textLength),
               ),
-            ActivityLine(kind: ActivityKind.tool, paused: _paused || !_active),
+            ActivityLine(
+              kind: ActivityKind.tool,
+              showIllustration: false,
+              paused: _paused || !_active,
+            ),
             Semantics(liveRegion: true, child: WorkStateLabel(state: _work)),
           ],
         ),

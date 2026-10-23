@@ -13,6 +13,7 @@ class ActivityLine extends StatelessWidget {
     required this.kind,
     this.completed = false,
     this.paused = false,
+    this.showIllustration = true,
     this.catalog = ActivityCatalog.standard,
     this.details = const {},
     this.expanded = false,
@@ -23,6 +24,9 @@ class ActivityLine extends StatelessWidget {
   final ActivityKind kind;
   final bool completed;
   final bool paused;
+
+  /// Désactivé dans la conversation, où Otc porte seul la présence animée.
+  final bool showIllustration;
   final ActivityCatalog catalog;
   final Map<String, Object?> details;
   final bool expanded;
@@ -39,13 +43,15 @@ class ActivityLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ActivityIllustration(
-            kind: kind,
-            completed: completed,
-            paused: paused,
-            catalog: catalog,
-          ),
-          const SizedBox(width: Spacing.sm),
+          if (showIllustration) ...[
+            ActivityIllustration(
+              kind: kind,
+              completed: completed,
+              paused: paused,
+              catalog: catalog,
+            ),
+            const SizedBox(width: Spacing.sm),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -62,6 +62,10 @@ components:
 
 # Hermes Mobile — Design du compagnon
 
+## Clarification du 23 octobre — Otc seul en conversation
+
+Alanc demande « Otc seul » avec les animations déjà approuvées des epics 1 et 2. Cette clarification prévaut sur l’affichage des illustrations d’activité décrit plus bas : la conversation et son aperçu montrent Otc avec sa chorégraphie existante (regards au repos, chatouilles, concentration au démarrage confirmé, regard vers le texte, retour au repos), puis les lignes d’action en texte avec leurs détails et fins reçues. Aucun petit dessin d’activité ni emplacement vide n’est ajouté à ces lignes. Le catalogue des 17 familles reste une référence isolée de la galerie développeur. Les chevrons de dépliage et les commandes métier restent présents.
+
 ## Complément approuvé — illustrations d’activité 3.3
 
 ### Catalogue complété — story 3.4

@@ -14,6 +14,7 @@ import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/components/activity_group.dart';
 import 'package:hermes_mobile/ui/components/activity_line.dart';
+import 'package:hermes_mobile/ui/components/activity_catalog.dart';
 import 'package:hermes_mobile/ui/components/activity_details.dart';
 import 'package:hermes_mobile/ui/components/work_state_label.dart';
 import 'package:hermes_mobile/ui/content.dart';
@@ -174,6 +175,7 @@ void main() {
             await tester.sendKeyEvent(LogicalKeyboardKey.enter);
             await tester.pumpAndSettle();
             expect(find.byType(ActivityDetails), findsOneWidget);
+            expect(find.byType(ActivityIllustration), findsNothing);
             final loads = conversation.loaded.length;
             conversation.set(key, projection(complete: true));
             await tester.pumpAndSettle();
@@ -184,6 +186,7 @@ void main() {
             expect(focus.hasFocus, isTrue);
             expect(find.byType(ActivityDetails), findsOneWidget);
             expect(find.text(Content.detailOutput), findsOneWidget);
+            expect(find.byType(ActivityIllustration), findsNothing);
             expect(
               tester
                   .getSemantics(

@@ -17,6 +17,10 @@ sources:
 
 # Hermes Mobile — Expérience du compagnon
 
+## Clarification du 23 octobre — Otc seul en conversation
+
+Otc est le seul compagnon animé de la conversation, conformément à la précision d’Alanc. Les lignes d’action gardent leur texte, détails dépliables, focus et preuve de fin reçue, sans illustration décorative ni espace réservé à un dessin. Les poses, regards et chatouilles approuvés sont conservés, ainsi que la pause locale, le mouvement réduit, la suspension et l’unique région live du statut. Le scénario de conversation de la galerie suit ce rendu ; le catalogue développeur demeure une démonstration séparée. Cette décision prévaut sur les compléments historiques ci-dessous.
+
 ## Complément approuvé — illustrations d’activité 3.3
 
 ### Catalogue complété — story 3.4

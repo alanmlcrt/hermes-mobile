@@ -178,12 +178,16 @@ void main() {
           .map((paint) => paint.painter)
           .whereType<RabbitPainter>()
           .single;
+      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(find.byType(ActivityLine), findsOneWidget);
       await tester.tap(find.text(GalleryContent.companionStart));
       await tester.pump();
       expect(current().concentrating, isTrue);
+      expect(find.byType(ActivityIllustration), findsNothing);
       await tester.tap(find.text(GalleryContent.companionText));
       await tester.pump();
       expect(current().gaze, 1);
+      expect(find.byType(ActivityIllustration), findsNothing);
       final firstText = tester
           .widget<MessageBubble>(find.byType(MessageBubble))
           .text;
@@ -205,6 +209,7 @@ void main() {
         findsOneWidget,
       );
       expect(current().tickled, isTrue);
+      expect(find.byType(ActivityIllustration), findsNothing);
       expect(
         tester.widget<MessageBubble>(find.byType(MessageBubble)).text,
         received,
@@ -213,6 +218,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
       expect(current().gaze, 0);
       expect(current().tickled, isFalse);
+      expect(find.byType(ActivityIllustration), findsNothing);
       await tester.tap(find.widgetWithText(TextButton, Content.workUnknown));
       await tester.pump();
       expect(
@@ -238,6 +244,7 @@ void main() {
       await tester.tap(find.text(GalleryContent.companionShow));
       await tester.pump();
       expect(current().gaze, 1);
+      expect(find.byType(ActivityIllustration), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -463,7 +470,7 @@ void main() {
     expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
     expect(
       find.byType(ActivityIllustration),
-      findsNWidgets(4 * (2 * ActivityKind.values.length + 2)),
+      findsNWidgets(4 * (2 * ActivityKind.values.length + 1)),
     );
     expect(
       find.byWidgetPredicate(
@@ -475,7 +482,7 @@ void main() {
       find.byWidgetPredicate(
         (w) => w is CustomPaint && w.painter is ToolActivityPainter,
       ),
-      findsNWidgets(4 * 4),
+      findsNWidgets(4 * 3),
     );
     expect(
       find.byWidgetPredicate(

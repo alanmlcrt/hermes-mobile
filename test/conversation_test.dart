@@ -1587,7 +1587,7 @@ void main() {
   });
 
   testWidgets(
-    'DraftView : pause de la page immobilise les illustrations d’activité sans toucher WorkState ni Otc',
+    'DraftView : Otc seul, activités textuelles et pause sans changement du travail',
     (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1;
@@ -1615,17 +1615,12 @@ void main() {
         companionPhase: CompanionPhase.concentrating,
       );
       await pumpView(tester, memory, size: const Size(800, 1200), scale: 1);
-      ToolActivityPainter currentPainter() => tester
-          .widgetList<CustomPaint>(
-            find.descendant(
-              of: find.byType(ActivityIllustration),
-              matching: find.byType(CustomPaint),
-            ),
-          )
-          .map((p) => p.painter)
-          .whereType<ToolActivityPainter>()
-          .single;
+      RabbitCompanion currentRabbit() =>
+          tester.widget<RabbitCompanion>(find.byType(RabbitCompanion));
       expect(find.byType(ActivityLine), findsOneWidget);
+      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(find.text(Content.activityTool), findsOneWidget);
+      expect(currentRabbit().pose, RabbitPose.concentrating);
       expect(
         tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
         isFalse,
@@ -1636,7 +1631,7 @@ void main() {
       );
       await tester.pump(ActivityTokens.rest);
       await tester.pump(const Duration(milliseconds: 200));
-      expect(currentPainter().stationary, isFalse);
+      expect(find.byType(ActivityIllustration), findsNothing);
 
       await tester.tap(find.text(Content.pauseCompanion));
       await tester.pump();
@@ -1644,7 +1639,8 @@ void main() {
         tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
         isTrue,
       );
-      expect(currentPainter().stationary, isTrue);
+      expect(currentRabbit().paused, isTrue);
+      expect(currentRabbit().pose, RabbitPose.concentrating);
       expect(find.text(Content.workRunning), findsOneWidget);
 
       await tester.tap(find.text(Content.resumeCompanion));
@@ -1655,7 +1651,8 @@ void main() {
       );
       await tester.pump(ActivityTokens.rest);
       await tester.pump(const Duration(milliseconds: 200));
-      expect(currentPainter().stationary, isFalse);
+      expect(currentRabbit().paused, isFalse);
+      expect(find.byType(ActivityIllustration), findsNothing);
 
       memory.resyncingKeys.add(k);
       memory.set(k, memory.projections[k]!);
@@ -1664,9 +1661,9 @@ void main() {
         tester.widget<ActivityLine>(find.byType(ActivityLine)).paused,
         isTrue,
       );
-      expect(currentPainter().stationary, isTrue);
+      expect(currentRabbit().pose, RabbitPose.rest);
       await tester.pump(ActivityTokens.rest + ActivityTokens.cycle);
-      expect(currentPainter().stationary, isTrue);
+      expect(find.byType(ActivityIllustration), findsNothing);
       expect(tester.binding.transientCallbackCount, 0);
       await tester.pumpWidget(const SizedBox());
     },
