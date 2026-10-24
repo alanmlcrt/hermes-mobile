@@ -1,0 +1,370 @@
+<!DOCTYPE html><html class="" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-secondary-fixed-variant": "#554424",
+          "primary-container": "#d1bc90",
+          "on-tertiary": "#ffffff",
+          "error-container": "#ffdad6",
+          "surface-variant": "#e7e1dc",
+          "on-secondary-container": "#73603d",
+          "secondary": "#6e5c3a",
+          "on-secondary": "#ffffff",
+          "tertiary": "#5a5d77",
+          "on-tertiary-container": "#484b64",
+          "on-primary-fixed-variant": "#534523",
+          "secondary-fixed": "#f9dfb4",
+          "primary-fixed-dim": "#dac498",
+          "surface-tint": "#6d5d38",
+          "inverse-on-surface": "#f6f0ea",
+          "primary-fixed": "#f7e0b2",
+          "surface-container-high": "#ede7e2",
+          "secondary-fixed-dim": "#dcc39a",
+          "primary": "#6d5d38",
+          "tertiary-container": "#babcda",
+          "background": "#fff8f3",
+          "surface-dim": "#dfd9d4",
+          "error": "#ba1a1a",
+          "on-primary-fixed": "#251a00",
+          "on-surface-variant": "#4c463c",
+          "tertiary-fixed-dim": "#c2c4e3",
+          "surface-container": "#f3ede7",
+          "surface-bright": "#fff8f3",
+          "surface-container-highest": "#e7e1dc",
+          "on-background": "#1d1b18",
+          "outline-variant": "#cec5b7",
+          "on-error-container": "#93000a",
+          "on-primary-container": "#5a4b28",
+          "outline": "#7d766a",
+          "on-secondary-fixed": "#261901",
+          "surface-container-low": "#f9f3ed",
+          "on-primary": "#ffffff",
+          "tertiary-fixed": "#dfe0ff",
+          "surface": "#fff8f3",
+          "secondary-container": "#f6dcb1",
+          "inverse-primary": "#dac498",
+          "on-surface": "#1d1b18",
+          "inverse-surface": "#32302d",
+          "surface-container-lowest": "#ffffff",
+          "on-tertiary-fixed": "#171a30",
+          "on-error": "#ffffff",
+          "on-tertiary-fixed-variant": "#42455e"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-xs": "0.25rem",
+          "space-sm": "0.5rem",
+          "space-md": "1rem",
+          "space-xl": "2rem",
+          "gutter": "1.5rem",
+          "space-lg": "1.5rem",
+          "margin": "2rem"
+        },
+        "fontFamily": {
+          "body-md": [
+            "Inter"
+          ],
+          "headline-lg": [
+            "Be Vietnam Pro"
+          ],
+          "label-md": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "body-md": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }
+</script></head>
+<body class="bg-background font-body-md text-on-background flex flex-col min-h-screen">
+<header class="fixed top-0 w-full z-50 pt-safe bg-background/80 backdrop-blur-xl border-b border-outline-variant/20">
+<div class="h-16 px-4 flex items-center justify-between gap-2">
+<div class="flex items-center min-w-[44px]">
+<button class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors rounded-full" onclick="history.back()">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+</div>
+<div class="flex flex-col items-center justify-center flex-1">
+<div class="flex items-center gap-1.5 font-headline-lg text-sm font-semibold text-on-surface">
+<span class="w-2 h-2 rounded-full bg-secondary inline-block"></span>
+        Chief of Staff
+      </div>
+</div>
+<div class="flex items-center gap-2 min-w-[44px] justify-end"></div>
+</div>
+</header>
+<main class="flex-1 flex flex-col relative w-full px-4 pt-20 pb-32 bg-background">
+<div class="flex flex-col w-full max-w-lg mx-auto gap-6 pb-6">
+<!-- Hero Profile Section inside Bento Card -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant/30 flex flex-col items-center relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary-container/20 rounded-full blur-2xl pointer-events-none"></div>
+<!-- Persona Avatar -->
+<div class="relative mb-3">
+<div class="w-20 h-20 rounded-full bg-gradient-to-tr from-tertiary-container via-primary-container to-secondary-container flex items-center justify-center text-on-primary shadow-md ring-4 ring-surface-container-low">
+<span class="material-symbols-outlined text-[40px]">psychology</span>
+</div>
+<span class="absolute bottom-0 right-0 w-5 h-5 bg-secondary rounded-full flex items-center justify-center text-on-secondary shadow-sm ring-2 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px]">auto_fix_high</span>
+</span>
+</div>
+<!-- Name & Role -->
+<h1 class="font-headline-lg text-2xl font-bold text-on-surface text-center mb-0.5">Chief of Staff</h1>
+<p class="font-body-md text-sm text-on-surface-variant text-center mb-5">AI Executive Assistant</p>
+<!-- Quick Action Buttons -->
+<div class="grid grid-cols-3 gap-2 w-full">
+
+<button class="flex flex-col items-center justify-center py-2.5 px-2 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-all active:scale-95 group border border-outline-variant/10" onclick="toggleAction('search')">
+<div class="w-9 h-9 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary mb-1 group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">search</span>
+</div>
+<span class="font-label-md text-xs font-medium text-on-surface">Recherche</span>
+</button>
+
+</div>
+</div>
+<!-- Bento Grid Section: Chat Customization & Profile Settings -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Bento Card: Personnalisation du chat -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col gap-4">
+<h2 class="font-label-lg text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">palette</span>
+          Personnalisation du chat
+        </h2>
+<!-- Couleur du chat -->
+<div class="flex items-center justify-between pb-3 border-b border-surface-container">
+<div>
+<p class="font-medium text-sm text-on-surface">Couleur du chat</p>
+<p class="text-xs text-on-surface-variant">Thème visuel</p>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="w-5 h-5 rounded-full bg-blue-600 ring-2 ring-offset-1 ring-primary scale-110 transition-transform theme-swatch" data-color="blue" onclick="setThemeColor('blue')"></button>
+<button class="w-5 h-5 rounded-full bg-purple-600 hover:scale-110 transition-transform theme-swatch" data-color="purple" onclick="setThemeColor('purple')"></button>
+<button class="w-5 h-5 rounded-full bg-orange-500 hover:scale-110 transition-transform theme-swatch" data-color="orange" onclick="setThemeColor('orange')"></button>
+<button class="w-5 h-5 rounded-full bg-emerald-600 hover:scale-110 transition-transform theme-swatch" data-color="emerald" onclick="setThemeColor('emerald')"></button>
+</div>
+</div>
+<!-- Arrière-plan -->
+<div class="flex items-center justify-between pb-3 border-b border-surface-container">
+<div>
+<p class="font-medium text-sm text-on-surface">Arrière-plan</p>
+<p class="text-xs text-on-surface-variant">Gradient</p>
+</div>
+<select class="bg-surface-container text-xs text-on-surface px-2.5 py-1.5 rounded-xl focus:outline-none border border-outline-variant/20">
+<option>Lumina Clair</option>
+<option>Mode Sombre</option>
+<option>Aurore</option>
+</select>
+</div>
+<!-- Sons et alertes -->
+<div class="flex items-center justify-between">
+<div>
+<p class="font-medium text-sm text-on-surface">Sons et alertes</p>
+<p class="text-xs text-on-surface-variant">Effets sonores</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-9 h-5 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Bento Card: Paramètres du profil de l'agent -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col gap-4">
+<h2 class="font-label-lg text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+          Paramètres du profil
+        </h2>
+<!-- Avatar & Icon -->
+<div class="flex items-center justify-between pb-3 border-b border-surface-container">
+<div>
+<p class="font-medium text-sm text-on-surface">Avatar et icône</p>
+<p class="text-xs text-on-surface-variant">Psychologie &amp; Focus</p>
+</div>
+<button class="bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-medium px-3 py-1.5 rounded-xl transition-colors">
+            Modifier
+          </button>
+</div>
+<!-- Mémoire et instructions -->
+<div class="flex items-center justify-between">
+<div>
+<p class="font-medium text-sm text-on-surface">Mémoire &amp; Instructions</p>
+<p class="text-xs text-on-surface-variant">3 directives actives</p>
+</div>
+<button class="bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-medium px-3 py-1.5 rounded-xl transition-colors">
+            Gérer
+          </button>
+</div>
+</div>
+</div>
+<!-- Bento Card: Fichiers et médias partagés -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col gap-3">
+<div class="flex items-center justify-between mb-1">
+<h2 class="font-label-lg text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">folder</span>
+          Fichiers et médias
+        </h2>
+<span class="text-xs font-medium text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">12 fichiers</span>
+</div>
+<div class="flex flex-col gap-2">
+<!-- File Item 1 -->
+<div class="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/10">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">description</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-on-surface truncate">Rapport_Strategique_Q3.docx</p>
+<p class="text-xs text-on-surface-variant">Google Docs • 2.4 Mo • Hier</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface transition-colors shrink-0">
+<span class="material-symbols-outlined text-[16px]">download</span>
+</button>
+</div>
+<!-- File Item 2 -->
+<div class="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/10">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">link</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-on-surface truncate">notion.so/roadmap-exec-2025</p>
+<p class="text-xs text-on-surface-variant">Lien externe • Il y a 3 jours</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface transition-colors shrink-0">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+<!-- File Item 3 -->
+<div class="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/10">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">table_chart</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-on-surface truncate">Export_Finances_Synthese.csv</p>
+<p class="text-xs text-on-surface-variant">Tableur • 840 Ko • 12 Oct</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface transition-colors shrink-0">
+<span class="material-symbols-outlined text-[16px]">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Destructive Actions Section -->
+<div class="flex flex-col gap-2.5 pt-2">
+<button class="w-full py-3.5 px-4 rounded-2xl bg-surface-container-lowest hover:bg-error-container/20 text-error font-medium text-sm flex items-center justify-center gap-2 transition-all active:scale-98 border border-outline-variant/30 shadow-sm" onclick="showAlert('Historique effacé avec succès')">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+        Effacer l'historique de la conversation
+      </button>
+<button class="w-full py-3.5 px-4 rounded-2xl bg-surface-container-lowest hover:bg-surface-container text-on-surface-variant font-medium text-sm flex items-center justify-center gap-2 transition-all active:scale-98 border border-outline-variant/30 shadow-sm" onclick="showAlert('Agent archivé')">
+<span class="material-symbols-outlined text-[18px]">block</span>
+        Bloquer / Archiver l'agent
+      </button>
+</div>
+</div>
+<!-- Simple toast notification element -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-xs font-medium px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50" id="toast" style="opacity: 0;">Notifications activées</div>
+<script>
+    let isMuted = false;
+    function toggleMute() {
+      isMuted = !isMuted;
+      const btn = document.getElementById('mute-icon');
+      const text = document.getElementById('mute-text');
+      const bg = document.getElementById('mute-icon-bg');
+      if (isMuted) {
+        btn.innerText = 'notifications_off';
+        text.innerText = 'Actif';
+        bg.classList.add('bg-error-container', 'text-error');
+        bg.classList.remove('bg-primary-container/20', 'text-primary');
+        showToast('Notifications désactivées');
+      } else {
+        btn.innerText = 'notifications';
+        text.innerText = 'Silencieux';
+        bg.classList.remove('bg-error-container', 'text-error');
+        bg.classList.add('bg-primary-container/20', 'text-primary');
+        showToast('Notifications activées');
+      }
+    }
+
+    function toggleAction(action) {
+      if(action === 'message') showToast('Ouverture de la session de chat...');
+      if(action === 'search') showToast('Recherche dans l\'historique...');
+    }
+
+    function setThemeColor(color) {
+      document.querySelectorAll('.theme-swatch').forEach(el => {
+        el.classList.remove('ring-2', 'ring-offset-1', 'ring-primary', 'scale-110');
+      });
+      const selected = document.querySelector(`[data-color="${color}"]`);
+      if(selected) {
+        selected.classList.add('ring-2', 'ring-offset-1', 'ring-primary', 'scale-110');
+      }
+      showToast('Thème mis à jour : ' + color);
+    }
+
+    function showAlert(msg) {
+      showToast(msg);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 2500);
+    }
+  </script>
+</main>
+<div class="fixed bottom-0 w-full z-50 pb-safe bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none">
+<div class="px-4 pb-3 pt-1 pointer-events-auto max-w-lg mx-auto w-full">
+<div class="flex items-center gap-2 bg-surface-container-lowest/90 backdrop-blur-xl px-3 py-1.5 rounded-full border border-outline-variant/30 shadow-lg">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+<div class="flex-1 py-1">
+<input class="w-full bg-transparent text-sm text-on-surface placeholder:text-outline focus:outline-none" placeholder="Ask anything..." type="text">
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary shadow-sm hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+
+
+</body></html>
