@@ -134,4 +134,17 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'state TEXT NOT NULL, error_code TEXT, created_at TEXT NOT NULL)',
     );
   },
+  (db) async {
+    await db.execute(
+      'CREATE TABLE outbox_attachments ('
+      'attachment_key TEXT PRIMARY KEY COLLATE BINARY, '
+      'draft_key TEXT NOT NULL COLLATE BINARY, '
+      'name TEXT NOT NULL, media_type TEXT NOT NULL, bytes INTEGER NOT NULL, '
+      'state TEXT NOT NULL, position INTEGER NOT NULL, created_at TEXT NOT NULL)',
+    );
+    await db.execute(
+      'CREATE INDEX outbox_attachments_draft '
+      'ON outbox_attachments (draft_key, position)',
+    );
+  },
 ];

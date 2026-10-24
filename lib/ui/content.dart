@@ -3,6 +3,32 @@
 import '../models/timeline.dart';
 
 abstract final class Content {
+  static const attachments = 'Pièces jointes';
+  static const attachmentText = 'Texte';
+  static const attachmentPdf = 'PDF';
+  static const attachmentOffice = 'Word';
+  static const attach = 'Joindre';
+  static const photos = 'Photos';
+  static const files = 'Fichiers';
+  static const attachmentSelected = 'Sélectionné localement';
+  static const attachmentMissing =
+      'Copie locale absente. Retirez cette pièce puis sélectionnez-la à nouveau.';
+  static const attachmentSendBlocked =
+      'L’envoi des pièces jointes n’est pas encore disponible. Le texte et les pièces sont conservés.';
+  static const attachmentFormats =
+      'PNG, JPEG, texte (.txt), PDF et Word (.docx). JPEG : sélection locale autorisée ; réception par Hermes à vérifier.';
+  static const attachmentLoading = 'Copie de la pièce jointe…';
+  static const remove = 'Retirer';
+  static String removeAttachment(String name) => 'Retirer $name';
+  static String fileSize(int bytes) =>
+      '${(bytes / (1024 * 1024)).toStringAsFixed(2)} Mo ($bytes octets)';
+  static String attachmentLimit(String category, int bytes) =>
+      '$category : ${fileSize(bytes)} maximum par fichier';
+  static String attachmentTypeRefused(String type) =>
+      'Type non pris en charge : $type.';
+  static String attachmentSizeRefused(int bytes) =>
+      'Fichier trop volumineux. Limite : ${fileSize(bytes)}.';
+  static String attachmentCountLimit(int count) => '$count pièces maximum';
   static const detailName = 'Nom';
   static const detailContext = 'Contexte';
   static const detailArguments = 'Arguments';
@@ -238,6 +264,14 @@ abstract final class Content {
     _ => name,
   };
   static String error(String code) => switch (code) {
+    'attachment.permission' => 'L’accès aux fichiers a été refusé. Autorisez-le dans les réglages puis réessayez.',
+    'attachment.selection' =>
+      'La sélection a échoué. Réessayez de choisir votre fichier.',
+    'attachment.type' => 'Ce type de fichier n’est pas pris en charge.',
+    'attachment.size' => 'Le fichier dépasse la limite affichée pour son type.',
+    'attachment.busy' =>
+      'Attendez la fin de l’opération en cours pour modifier les pièces.',
+    'attachment.send_blocked' => attachmentSendBlocked,
     'stop.stale' => 'La cible de l’arrêt a changé. Aucun arrêt transmis.',
     'stop.not_interrupted' =>
       'Hermes n’a pas accepté l’arrêt. Le travail reste suivi.',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/attachment_picker.dart';
+
 import '../features/connection/connection_view.dart';
 import '../features/connection/connection_view_model.dart';
 import '../features/conversation/continuation_view.dart';
@@ -193,6 +195,7 @@ class AppRoutes {
             // Clé par brouillon : un autre brouillon ne réutilise pas l'état de la page.
             key: ValueKey(state.pathParameters['draftKey']),
             create: () => DraftViewModel(
+              picker: const DeviceAttachmentPicker(),
               outbox: outbox,
               gateway: gateway,
               conversation: conversation,
@@ -248,6 +251,7 @@ class AppRoutes {
               profile: profile,
               session: session,
               createViewModel: (key) => DraftViewModel(
+                picker: const DeviceAttachmentPicker(),
                 outbox: outbox,
                 gateway: gateway,
                 conversation: conversation,

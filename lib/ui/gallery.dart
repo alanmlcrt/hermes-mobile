@@ -6,6 +6,8 @@ import 'components/activity_catalog.dart';
 import 'components/activity_line.dart';
 import 'components/activity_group.dart';
 import 'components/composer.dart';
+import 'components/attachment_list.dart';
+import '../models/attachment.dart';
 import 'components/conversation_companion.dart';
 import 'components/history_row.dart';
 import 'components/message_bubble.dart';
@@ -147,6 +149,29 @@ class ComponentGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sections = <(String, Widget Function())>[
+      (
+        Content.attachments,
+        () => AttachmentList(
+          attachments: const [
+            Attachment(
+              key: 'photo',
+              name: 'photo.jpg',
+              mediaType: 'image/jpeg',
+              bytes: 1024,
+              localPath: '',
+              missing: true,
+            ),
+            Attachment(
+              key: 'document',
+              name: 'document.pdf',
+              mediaType: 'application/pdf',
+              bytes: 2048,
+              localPath: '',
+            ),
+          ],
+          onRemove: (_) {},
+        ),
+      ),
       (GalleryContent.rabbitSection, () => const _RabbitPreview()),
       (Content.backgroundTitle, () => const _BackgroundPreview()),
       (

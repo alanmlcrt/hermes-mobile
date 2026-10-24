@@ -9,6 +9,7 @@ import 'package:hermes_mobile/data/storage/secret_store.dart';
 import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
+import 'package:hermes_mobile/models/attachment.dart';
 import 'package:hermes_mobile/models/history.dart';
 import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
@@ -246,6 +247,28 @@ class Harness {
 }
 
 class MemoryOutbox implements OutboxGateway {
+  final pieces = <DraftKey, List<Attachment>>{};
+  @override
+  Future<List<AttachmentLimit>> attachmentLimits() async => const [];
+  @override
+  Future<List<Attachment>> attachments(DraftKey key) async =>
+      pieces[key] ?? const [];
+  @override
+  Future<void> addAttachment(DraftKey key, PickedFile file) async {
+    (pieces[key] ??= []).add(
+      Attachment(
+        key: 'piece-${pieces[key]?.length ?? 0}',
+        name: file.name,
+        mediaType: file.mediaType,
+        bytes: file.data?.length ?? 0,
+        localPath: file.path ?? 'synthetic',
+      ),
+    );
+  }
+
+  @override
+  Future<void> removeAttachment(DraftKey key, String attachmentKey) async =>
+      pieces[key]?.removeWhere((a) => a.key == attachmentKey);
   final drafts = <DraftKey, Draft>{};
   final statuses = <DraftKey, SendStatus>{};
   final sent = <DraftKey>[];
@@ -260,7 +283,20 @@ class MemoryOutbox implements OutboxGateway {
   @override
   SendStatus status(DraftKey key) => statuses[key] ?? const SendStatus();
   @override
-  Future<void> send(DraftKey key) async => sent.add(key);
+  Future<void> send(DraftKey key) async {
+    if ((pieces[key] ?? const []).isNotEmpty) {
+      setStatus(
+        key,
+        const SendStatus(
+          state: OperationState.failed,
+          errorCode: 'attachment.send_blocked',
+        ),
+      );
+      return;
+    }
+    sent.add(key);
+  }
+
   bool failSave = false;
   bool failOpen = false;
   bool failRead = false;
@@ -342,7 +378,7 @@ class MemoryOutbox implements OutboxGateway {
       if (status(target.key).busy || status(key).busy) {
         throw const AppError('draft.profile_busy');
       }
-      if (target.body.isEmpty) {
+      if (target.body.isEmpty && (pieces[target.key] ?? const []).isEmpty) {
         drafts.remove(target.key);
       } else {
         drafts[target.key] = on(target, d.profile);
@@ -411,6 +447,7 @@ class MemoryConversation implements ConversationGateway {
     if (listError != null) throw listError!;
     return lists[(connection, profile)] ?? const [];
   }
+
   @override
   Future<void> dispose() async {}
 }

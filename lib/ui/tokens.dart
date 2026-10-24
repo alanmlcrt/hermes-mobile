@@ -65,6 +65,11 @@ abstract final class Spacing {
   static const double xl = 32;
 }
 
+abstract final class AttachmentTokens {
+  static const double preview = 48;
+  static const int cacheWidth = 192;
+}
+
 /// Rayons d'arrondi.
 abstract final class Radii {
   static const double sm = 8;

@@ -1,4 +1,5 @@
 import 'connection.dart';
+import 'attachment.dart';
 import 'profile.dart';
 
 /// Identité locale d'un brouillon, distincte de toute session Hermes.
@@ -82,6 +83,11 @@ abstract interface class StopGateway {
 
 /// Brouillons locaux ; aucun appel Hermes.
 abstract interface class OutboxGateway {
+  Future<List<AttachmentLimit>> attachmentLimits();
+  Future<List<Attachment>> attachments(DraftKey key);
+  Future<void> addAttachment(DraftKey key, PickedFile file);
+  Future<void> removeAttachment(DraftKey key, String attachmentKey);
+
   /// Brouillon « nouvelle conversation » du couple, créé s'il n'existe pas.
   /// Ne rend jamais un brouillon qui a déjà une session.
   Future<Draft> openNewDraft(ConnectionKey connection, ProfileKey profile);

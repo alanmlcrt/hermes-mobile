@@ -10,6 +10,7 @@ class Composer extends StatelessWidget {
   const Composer({
     super.key,
     this.controller,
+    this.onAttach,
     this.onChanged,
     this.onSend,
     this.stopping = false,
@@ -19,6 +20,7 @@ class Composer extends StatelessWidget {
     this.hint = Content.composerLabel,
   });
   final TextEditingController? controller;
+  final VoidCallback? onAttach;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onSend;
   final bool stopping;
@@ -52,6 +54,15 @@ class Composer extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                if (onAttach != null)
+                  SizedBox.square(
+                    dimension: Layout.stopButton,
+                    child: IconButton(
+                      tooltip: Content.attach,
+                      onPressed: onAttach,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ),
                 Expanded(
                   child: TextField(
                     controller: controller,

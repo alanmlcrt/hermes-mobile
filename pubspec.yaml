@@ -21,6 +21,7 @@ dependencies:
   go_router: 18.1.1
   flutter_markdown_plus: 1.0.12
   file_picker: 13.1.0
+  path_provider: 2.1.6
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,7 @@ flutter:
   uses-material-design: true
   assets:
     - contracts/event-mapping.json
+    - contracts/file-limits.json
   # Inter (OFL, assets/fonts/OFL.txt), sous-ensemble latin.
   fonts:
     - family: Inter

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../models/app_error.dart';
+import '../../models/attachment.dart';
 import '../../models/connection.dart';
 import '../../models/connection_gateway.dart';
 import '../../models/draft.dart';
@@ -16,6 +17,7 @@ class DraftViewModel extends ChangeNotifier {
     required this.gateway,
     required this.conversation,
     required this.key,
+    this.picker,
   }) {
     _subscription = gateway.snapshots.listen((_) => _notify());
     _outboxChanges = outbox.changes.listen(_onOutbox);
@@ -28,6 +30,80 @@ class DraftViewModel extends ChangeNotifier {
   final ConnectionGateway gateway;
   final ConversationGateway conversation;
   final DraftKey key;
+  final AttachmentPicker? picker;
+  List<Attachment> attachments = const [];
+  List<AttachmentLimit> attachmentLimits = const [];
+  bool attachmentBusy = false;
+  String? attachmentError;
+
+  Future<void> loadAttachmentLimits() async {
+    try {
+      attachmentLimits = await outbox.attachmentLimits();
+    } catch (_) {
+      error = const AppError('storage.unavailable');
+    }
+    _notify();
+  }
+
+  Future<void> pickAttachments(AttachmentSource source) async {
+    if (attachmentBusy || picker == null || sendStatus.busy) return;
+    attachmentBusy = true;
+    attachmentError = null;
+    _notify();
+    try {
+      final picked = await picker!.pick(source);
+      for (final file in picked) {
+        try {
+          await outbox.addAttachment(key, file);
+        } on AppError catch (e) {
+          final limit = attachmentLimits
+              .where(
+                (l) =>
+                    l.mediaTypes.contains(file.mediaType) ||
+                    file.mediaType == 'image/jpeg' &&
+                        l.category == AttachmentCategory.image,
+              )
+              .firstOrNull;
+          attachmentError = e.code == 'attachment.type'
+              ? Content.attachmentTypeRefused(file.mediaType)
+              : e.code == 'attachment.size' && limit != null
+              ? Content.attachmentSizeRefused(limit.maxBytes)
+              : Content.error(e.code);
+        }
+      }
+    } on AppError catch (e) {
+      attachmentError = Content.error(e.code);
+    } catch (_) {
+      attachmentError = Content.error('attachment.selection');
+    } finally {
+      try {
+        attachments = await outbox.attachments(key);
+      } catch (_) {
+        error = const AppError('storage.unavailable');
+      }
+      attachmentBusy = false;
+      _notify();
+    }
+  }
+
+  Future<void> removeAttachment(Attachment attachment) async {
+    if (attachmentBusy || sendStatus.busy) return;
+    attachmentBusy = true;
+    attachmentError = null;
+    _notify();
+    try {
+      await outbox.removeAttachment(key, attachment.key);
+      attachments = await outbox.attachments(key);
+    } on AppError catch (e) {
+      attachmentError = Content.error(e.code);
+    } catch (_) {
+      attachmentError = Content.error('storage.unavailable');
+    } finally {
+      attachmentBusy = false;
+      _notify();
+    }
+  }
+
   late final StreamSubscription<ConnectionSnapshot> _subscription;
   late final StreamSubscription<DraftKey> _outboxChanges;
   late final StreamSubscription<TimelineKey> _timelineChanges;
@@ -76,6 +152,7 @@ class DraftViewModel extends ChangeNotifier {
   Future<void> _load() async {
     try {
       draft = await outbox.draft(key);
+      attachments = await outbox.attachments(key);
       _text = draft?.body ?? '';
       if (draft == null) error = const AppError('draft.not_found');
       await _loadTimeline();
@@ -136,6 +213,8 @@ class DraftViewModel extends ChangeNotifier {
 
   /// Raison pour laquelle « Envoyer » est désactivé, ou null s'il est actif.
   String? get blockedReason {
+    if (attachments.isNotEmpty) return Content.attachmentSendBlocked;
+    if (attachmentBusy) return Content.attachmentLoading;
     final snapshot = gateway.snapshot;
     final status = sendStatus;
     if (status.busy) return Content.sending;
@@ -174,6 +253,11 @@ class DraftViewModel extends ChangeNotifier {
   }
 
   Future<void> send() {
+    if (attachments.isNotEmpty || attachmentBusy) {
+      attachmentError = Content.attachmentSendBlocked;
+      _notify();
+      return Future<void>.value();
+    }
     _sentText = _text;
     return outbox.send(key);
   }
@@ -222,6 +306,11 @@ class DraftViewModel extends ChangeNotifier {
 
   Future<void> _onOutbox(DraftKey changed) async {
     if (changed != key) return;
+    try {
+      attachments = await outbox.attachments(key);
+    } catch (_) {
+      error = const AppError('storage.unavailable');
+    }
     if (draft != null && draft!.storedSessionId == null) {
       try {
         final fresh = await outbox.draft(key);

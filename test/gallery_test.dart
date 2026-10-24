@@ -4,6 +4,7 @@ import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/components/activity_catalog.dart';
 import 'package:hermes_mobile/ui/components/activity_line.dart';
 import 'package:hermes_mobile/ui/components/composer.dart';
+import 'package:hermes_mobile/ui/components/attachment_list.dart';
 import 'package:hermes_mobile/ui/components/message_bubble.dart';
 import 'package:hermes_mobile/ui/components/work_state_label.dart';
 import 'package:hermes_mobile/ui/components/section_card.dart';
@@ -466,7 +467,7 @@ void main() {
       GalleryContent.variantReducedMotion,
     ]) {
       // Une fois par composant, dont le scénario conversation pilotable.
-      expect(find.text(variant), findsNWidgets(12), reason: variant);
+      expect(find.text(variant), findsNWidgets(13), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -508,6 +509,7 @@ void main() {
     expect(find.byType(RabbitCompanion), findsNWidgets(4 * 5));
     expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(8));
     expect(find.byType(Composer), findsNWidgets(8));
+    expect(find.byType(AttachmentList), findsNWidgets(4));
     // Trois états de connexion et quatre états de travail en libellé ; envoi
     // et travail en cours sont des bulles à trois points.
     expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 4 + 2)));

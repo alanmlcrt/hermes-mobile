@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../models/draft.dart';
+import '../../models/attachment.dart';
 import '../../models/profile.dart';
 import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/activity_group.dart';
 import '../../ui/components/appear.dart';
 import '../../ui/components/composer.dart';
+import '../../ui/components/attachment_list.dart';
 import '../../ui/components/message_bubble.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/components/status_label.dart';
@@ -139,7 +141,10 @@ class _DraftViewState extends State<DraftView> {
                   // Défile si la saisie dépasse l'écran (texte 200 %, paysage).
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight: vm.showStop || vm.stopStatus != null
+                      maxHeight:
+                          vm.showStop ||
+                              vm.stopStatus != null ||
+                              vm.attachments.isNotEmpty
                           ? (viewport.maxHeight - Layout.threadMinHeight).clamp(
                               0,
                               viewport.maxHeight,
@@ -185,8 +190,32 @@ class _DraftViewState extends State<DraftView> {
                               null => const SizedBox.shrink(),
                             },
                           ),
+                          AttachmentList(
+                            attachments: vm.attachments,
+                            onRemove: vm.attachmentBusy || vm.sendStatus.busy
+                                ? null
+                                : vm.removeAttachment,
+                          ),
+                          if (vm.attachments.isNotEmpty)
+                            const Text(Content.attachmentSendBlocked),
+                          if (vm.attachmentError != null)
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(vm.attachmentError!),
+                            ),
+                          if (vm.attachmentBusy)
+                            Semantics(
+                              liveRegion: true,
+                              child: const Text(Content.attachmentLoading),
+                            ),
                           if (draft != null)
                             Composer(
+                              onAttach:
+                                  vm.picker == null ||
+                                      vm.attachmentBusy ||
+                                      vm.sendStatus.busy
+                                  ? null
+                                  : _selectAttachments,
                               hint: Content.writeTo(name!),
                               controller: _controller,
                               onChanged: vm.update,
@@ -222,6 +251,18 @@ class _DraftViewState extends State<DraftView> {
             );
     },
   );
+
+  Future<void> _selectAttachments() async {
+    await _viewModel.loadAttachmentLimits();
+    if (!mounted || _viewModel.attachmentLimits.isEmpty) return;
+    final source = await showModalBottomSheet<AttachmentSource>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) =>
+          AttachmentSelectionSheet(limits: _viewModel.attachmentLimits),
+    );
+    if (source != null && mounted) await _viewModel.pickAttachments(source);
+  }
 
   /// État du travail affiché au-dessus de la saisie : rien une fois terminé,
   /// ni pendant que la réponse s'écrit (elle montre déjà que Hermes répond).

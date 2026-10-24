@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/app_error.dart';
+import '../models/attachment.dart';
 import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
@@ -10,6 +11,8 @@ import '../models/profile.dart';
 import '../models/timeline.dart';
 import 'conversation_repository.dart';
 import 'hermes_adapter.dart';
+import 'file_limits.dart';
+import 'storage/attachment_files.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
 /// base partagée.
@@ -21,7 +24,11 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     this.timeout = rpcTimeout,
     this.onStep,
     this.conversation,
+    AttachmentFiles? attachmentFiles,
+    Future<FileLimits> Function()? loadFileLimits,
   }) : _now = now ?? (() => DateTime.now().toUtc()) {
+    _attachmentFiles = attachmentFiles ?? AttachmentFiles();
+    _loadFileLimits = loadFileLimits ?? FileLimits.load;
     _events = gateway.events.listen(_onEvent);
     conversation?.resumer = this;
   }
@@ -29,6 +36,152 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   final ConnectionGateway gateway;
   final DateTime Function() _now;
   final Duration timeout;
+  late final AttachmentFiles _attachmentFiles;
+  late final Future<FileLimits> Function() _loadFileLimits;
+  final _attachmentWrites = <DraftKey, Future<void>>{};
+
+  @override
+  Future<List<AttachmentLimit>> attachmentLimits() async =>
+      (await _loadFileLimits()).limits;
+
+  @override
+  Future<List<Attachment>> attachments(DraftKey key) async {
+    final rows = await database.query(
+      'outbox_attachments',
+      where: 'draft_key = ?',
+      whereArgs: [key.value],
+      orderBy: 'position, rowid',
+    );
+    return [for (final row in rows) await _attachment(key, row)];
+  }
+
+  Future<Attachment> _attachment(DraftKey key, Map<String, Object?> row) async {
+    final file = await _attachmentFiles.file(
+      key,
+      row['attachment_key'] as String,
+    );
+    return Attachment(
+      key: row['attachment_key'] as String,
+      name: row['name'] as String,
+      mediaType: row['media_type'] as String,
+      bytes: row['bytes'] as int,
+      localPath: file.path,
+      missing: !await file.exists(),
+    );
+  }
+
+  Future<void> _writeAttachment(DraftKey key, Future<void> Function() work) {
+    if (status(key).busy) {
+      return Future.error(const AppError('attachment.busy'));
+    }
+    final next = (_attachmentWrites[key] ?? Future<void>.value())
+        .catchError((_) {})
+        .then((_) async {
+          try {
+            await work();
+          } on AppError {
+            rethrow;
+          } catch (_) {
+            throw const AppError('storage.unavailable');
+          }
+          if (!_changes.isClosed) _changes.add(key);
+        });
+    _attachmentWrites[key] = next;
+    void finished() {
+      if (identical(_attachmentWrites[key], next)) {
+        _attachmentWrites.remove(key);
+      }
+    }
+
+    next.then((_) => finished(), onError: (Object _) => finished());
+    return next;
+  }
+
+  @override
+  Future<void> addAttachment(DraftKey key, PickedFile picked) =>
+      _writeAttachment(key, () async {
+        if (await draft(key) == null) throw const AppError('draft.not_found');
+        final limits = await _loadFileLimits();
+        final type = picked.mediaType;
+        final maximum = limits.maxBytesFor(type);
+        if (maximum == null) throw const AppError('attachment.type');
+        final refusal = limits.refusal(
+          type,
+          await _attachmentFiles.length(picked),
+        );
+        if (refusal != null) throw AppError(refusal);
+        final attachmentKey = randomUuid();
+        final file = await _attachmentFiles.copy(
+          key,
+          attachmentKey,
+          picked,
+          maximum,
+        );
+        try {
+          final position =
+              (await database.rawQuery(
+                    'SELECT MAX(position) AS p FROM outbox_attachments WHERE draft_key = ?',
+                    [key.value],
+                  )).single['p']
+                  as int?;
+          await database.insert('outbox_attachments', {
+            'attachment_key': attachmentKey,
+            'draft_key': key.value,
+            'name': picked.name,
+            'media_type': type,
+            'bytes': await file.length(),
+            'state': AttachmentState.selected.name,
+            'position': (position ?? -1) + 1,
+            'created_at': _now().toIso8601String(),
+          });
+        } catch (_) {
+          await _attachmentFiles.remove(key, attachmentKey);
+          rethrow;
+        }
+      });
+
+  @override
+  Future<void> removeAttachment(DraftKey key, String attachmentKey) =>
+      _writeAttachment(key, () async {
+        final rows = await database.query(
+          'outbox_attachments',
+          where: 'draft_key = ? AND attachment_key = ?',
+          whereArgs: [key.value, attachmentKey],
+        );
+        if (rows.isEmpty) return;
+        // Garder une sauvegarde privée jusqu’au commit : un échec SQLite après
+        // suppression des octets doit encore permettre de restaurer la pièce.
+        final original = await _attachmentFiles.file(key, attachmentKey);
+        final backup = await _attachmentFiles.file(key, randomUuid());
+        final exists = await original.exists();
+        if (exists) await original.copy(backup.path);
+        var cleanupBackup = false;
+        try {
+          await database.transaction((t) async {
+            await t.delete(
+              'outbox_attachments',
+              where: 'draft_key = ? AND attachment_key = ?',
+              whereArgs: [key.value, attachmentKey],
+            );
+            await _attachmentFiles.remove(key, attachmentKey);
+          });
+          cleanupBackup = true;
+        } catch (_) {
+          if (exists && !await original.exists()) {
+            await backup.rename(original.path);
+          }
+          cleanupBackup = true;
+          rethrow;
+        } finally {
+          // Après le commit, un reliquat de sauvegarde ne doit pas transformer
+          // un retrait réussi en erreur ni empêcher la restauration précédente.
+          try {
+            if (cleanupBackup && await backup.exists()) await backup.delete();
+          } catch (_) {
+            /* nettoyage différé du reliquat privé */
+          }
+        }
+      });
 
   /// Observateur du pipeline nommé (tests, diagnostic) ; jamais de contenu.
   final void Function(String step)? onStep;
@@ -294,6 +447,9 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       // Les saisies en vol (source et cible) sont écrites avant de déplacer
       // les textes.
       await Future.wait(_writes.values.map((w) => w.catchError((_) {})));
+      await Future.wait(
+        _attachmentWrites.values.map((w) => w.catchError((_) {})),
+      );
       await database.transaction((t) async {
         final rows = await t.query(
           'outbox_drafts',
@@ -316,7 +472,20 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           if (status(target.key).busy || status(key).busy) {
             throw const AppError('draft.profile_busy');
           }
-          if (target.body.isEmpty) {
+          final pieces = await t.query(
+            'outbox_attachments',
+            where: 'draft_key = ?',
+            whereArgs: [target.key.value],
+            limit: 1,
+          );
+          if (target.body.isEmpty &&
+              pieces.isEmpty &&
+              !_attachmentWrites.containsKey(target.key)) {
+            await t.delete(
+              'outbox_attachments',
+              where: 'draft_key = ?',
+              whereArgs: [target.key.value],
+            );
             await t.delete(
               'outbox_operations',
               where: 'draft_key = ?',
@@ -557,6 +726,18 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       // Les saisies en vol sont écrites avant de figer le texte envoyé.
       await (_writes[key] ?? Future.value()).catchError((_) {});
       final found = await this.draft(key);
+      // Jusqu’à 4.3, ne jamais envoyer le texte seul d’un brouillon avec pièces.
+      await (_attachmentWrites[key] ?? Future<void>.value()).catchError((_) {});
+      if ((await attachments(key)).isNotEmpty) {
+        _set(
+          key,
+          const SendStatus(
+            state: OperationState.failed,
+            errorCode: 'attachment.send_blocked',
+          ),
+        );
+        return;
+      }
       if (found == null || found.body.trim().isEmpty) {
         _set(key);
         return;
@@ -916,6 +1097,9 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     await _events?.cancel();
     await Future.wait(_stopping.values);
     await Future.wait(_writes.values.map((w) => w.catchError((_) {})));
+    await Future.wait(
+      _attachmentWrites.values.map((w) => w.catchError((_) {})),
+    );
     await _changes.close();
   }
 
