@@ -1,6 +1,7 @@
 // Libellés d'interface (UX-DR22), séparés des styles.
 // Vocabulaire du quotidien : pas de jargon technique en avant.
 import '../models/timeline.dart';
+import '../models/attachment.dart';
 
 abstract final class Content {
   static const attachments = 'Pièces jointes';
@@ -13,10 +14,31 @@ abstract final class Content {
   static const attachmentSelected = 'Sélectionné localement';
   static const attachmentMissing =
       'Copie locale absente. Retirez cette pièce puis sélectionnez-la à nouveau.';
-  static const attachmentSendBlocked =
-      'L’envoi des pièces jointes n’est pas encore disponible. Le texte et les pièces sont conservés.';
+  static const attachmentSendBlocked = attachmentRetryRequired;
+  static const attachmentRetryRequired =
+      'Une pièce doit être retirée ou faire l’objet d’un nouvel essai explicite.';
+  static const attachmentJpegUnverified =
+      'JPEG : envoi bloqué jusqu’à la vérification de ce format. Retirez cette pièce.';
+  static const attachmentVisionUnknown =
+      'La réception de l’image peut être confirmée ; son analyse dépend du profil Hermes.';
+  static const attachmentRetry = 'Réessayer';
+  static String retryAttachment(String name) => 'Réessayer l’envoi de $name';
+  static String attachmentStatus(
+    AttachmentState state,
+    bool sent,
+    String? errorCode,
+  ) => switch (state) {
+    AttachmentState.selected => attachmentSelected,
+    AttachmentState.uploading => 'Téléversement en cours',
+    AttachmentState.uploaded => 'Téléversé, réception à vérifier',
+    AttachmentState.received => 'Reçu dans la conversation',
+    AttachmentState.failed =>
+      'Envoi refusé : ${error(errorCode ?? 'attachment.refused')}',
+    AttachmentState.uncertain =>
+      'Réception incertaine : ${error(errorCode ?? 'attachment.unknown')}',
+  };
   static const attachmentFormats =
-      'PNG, JPEG, texte (.txt), PDF et Word (.docx). JPEG : sélection locale autorisée ; réception par Hermes à vérifier.';
+      'PNG, texte (.txt), PDF et Word (.docx). JPEG peut être sélectionné, mais son envoi reste bloqué jusqu’à vérification.';
   static const attachmentLoading = 'Copie de la pièce jointe…';
   static const remove = 'Retirer';
   static String removeAttachment(String name) => 'Retirer $name';
@@ -271,6 +293,13 @@ abstract final class Content {
     'attachment.size' => 'Le fichier dépasse la limite affichée pour son type.',
     'attachment.busy' =>
       'Attendez la fin de l’opération en cours pour modifier les pièces.',
+    'attachment.jpeg_unverified' => attachmentJpegUnverified,
+    'attachment.retry_required' => attachmentRetryRequired,
+    'attachment.refused' => 'Hermes a refusé cette pièce.',
+    'attachment.unknown' => 'Le résultat du téléversement est incertain. Vérifiez la conversation avant un nouvel essai.',
+    'attachment.missing' => attachmentMissing,
+    'attachment.retained' => 'Cette copie reste conservée pour vérifier la réception dans la conversation.',
+    'attachment.scope_changed' => 'La conversation cible a changé. Retirez cette pièce et sélectionnez-la de nouveau.',
     'attachment.send_blocked' => attachmentSendBlocked,
     'stop.stale' => 'La cible de l’arrêt a changé. Aucun arrêt transmis.',
     'stop.not_interrupted' =>

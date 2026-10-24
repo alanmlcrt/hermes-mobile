@@ -104,6 +104,20 @@ class DraftViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> retryAttachment(Attachment attachment) async {
+    if (attachmentBusy || sendStatus.busy) return;
+    try {
+      await outbox.retryAttachment(key, attachment.key);
+      attachments = await outbox.attachments(key);
+      attachmentError = null;
+    } on AppError catch (e) {
+      attachmentError = Content.error(e.code);
+    } catch (_) {
+      attachmentError = Content.error('storage.unavailable');
+    }
+    _notify();
+  }
+
   late final StreamSubscription<ConnectionSnapshot> _subscription;
   late final StreamSubscription<DraftKey> _outboxChanges;
   late final StreamSubscription<TimelineKey> _timelineChanges;
@@ -213,8 +227,18 @@ class DraftViewModel extends ChangeNotifier {
 
   /// Raison pour laquelle « Envoyer » est désactivé, ou null s'il est actif.
   String? get blockedReason {
-    if (attachments.isNotEmpty) return Content.attachmentSendBlocked;
     if (attachmentBusy) return Content.attachmentLoading;
+    if (attachments.any((a) => !a.sent && a.mediaType == 'image/jpeg')) {
+      return Content.attachmentJpegUnverified;
+    }
+    if (attachments.any(
+      (a) =>
+          !a.sent &&
+          (a.state == AttachmentState.failed ||
+              a.state == AttachmentState.uncertain),
+    )) {
+      return Content.attachmentRetryRequired;
+    }
     final snapshot = gateway.snapshot;
     final status = sendStatus;
     if (status.busy) return Content.sending;
@@ -234,7 +258,9 @@ class DraftViewModel extends ChangeNotifier {
     if (conversation?.state != CapabilityState.present) {
       return Content.sendCapabilityPending;
     }
-    if (_text.trim().isEmpty) return Content.sendEmpty;
+    if (_text.trim().isEmpty && !attachments.any((a) => !a.sent)) {
+      return Content.sendEmpty;
+    }
     return null;
   }
 
@@ -253,11 +279,6 @@ class DraftViewModel extends ChangeNotifier {
   }
 
   Future<void> send() {
-    if (attachments.isNotEmpty || attachmentBusy) {
-      attachmentError = Content.attachmentSendBlocked;
-      _notify();
-      return Future<void>.value();
-    }
     _sentText = _text;
     return outbox.send(key);
   }

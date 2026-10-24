@@ -12,6 +12,7 @@ import '../models/timeline.dart';
 import 'conversation_repository.dart';
 import 'hermes_adapter.dart';
 import 'file_limits.dart';
+import 'attachment_transport.dart';
 import 'storage/attachment_files.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
@@ -39,6 +40,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   late final AttachmentFiles _attachmentFiles;
   late final Future<FileLimits> Function() _loadFileLimits;
   final _attachmentWrites = <DraftKey, Future<void>>{};
+  final _receiptChecks = <DraftKey, Future<void>>{};
 
   @override
   Future<List<AttachmentLimit>> attachmentLimits() async =>
@@ -46,6 +48,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
 
   @override
   Future<List<Attachment>> attachments(DraftKey key) async {
+    await _recover(key);
     final rows = await database.query(
       'outbox_attachments',
       where: 'draft_key = ?',
@@ -67,8 +70,30 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       bytes: row['bytes'] as int,
       localPath: file.path,
       missing: !await file.exists(),
+      state: AttachmentState.values.byName(row['state'] as String),
+      reference: row['reference'] as String?,
+      errorCode: row['error_code'] as String?,
+      sent: row['sent'] == 1,
     );
   }
+
+  @override
+  Future<void> retryAttachment(DraftKey key, String attachmentKey) =>
+      _writeAttachment(key, () async {
+        await database.update(
+          'outbox_attachments',
+          {'state': AttachmentState.selected.name, 'error_code': null},
+          where:
+              'draft_key = ? AND attachment_key = ? AND sent = 0 '
+              'AND state IN (?, ?)',
+          whereArgs: [
+            key.value,
+            attachmentKey,
+            AttachmentState.failed.name,
+            AttachmentState.uncertain.name,
+          ],
+        );
+      });
 
   Future<void> _writeAttachment(DraftKey key, Future<void> Function() work) {
     if (status(key).busy) {
@@ -149,6 +174,9 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           whereArgs: [key.value, attachmentKey],
         );
         if (rows.isEmpty) return;
+        if (rows.single['sent'] == 1) {
+          throw const AppError('attachment.retained');
+        }
         // Garder une sauvegarde privée jusqu’au commit : un échec SQLite après
         // suppression des octets doit encore permettre de restaurer la pièce.
         final original = await _attachmentFiles.file(key, attachmentKey);
@@ -557,6 +585,26 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   /// opération redevient visible ; un envoi interrompu est « incertain ».
   Future<void> _recover(DraftKey key) async {
     if (!_recovered.add(key) || _status[key] != null) return;
+    await database.update(
+      'outbox_attachments',
+      {
+        'state': AttachmentState.uncertain.name,
+        'error_code': 'attachment.unknown',
+      },
+      where: 'draft_key = ? AND state = ?',
+      whereArgs: [key.value, AttachmentState.uploading.name],
+    );
+    await database.rawUpdate(
+      'UPDATE outbox_operation_attachments SET state = ?, error_code = ? '
+      'WHERE state = ? AND operation_key IN '
+      '(SELECT operation_key FROM outbox_operations WHERE draft_key = ?)',
+      [
+        AttachmentState.uncertain.name,
+        'attachment.unknown',
+        AttachmentState.uploading.name,
+        key.value,
+      ],
+    );
     final rows = await database.query(
       'outbox_operations',
       where: 'draft_key = ?',
@@ -623,6 +671,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       } else if (event.type == HermesRpc.turnEnd ||
           event.type == HermesRpc.sessionError) {
         _turns.remove(entry.key);
+        unawaited(_checkPendingReceipts(entry.key, entry.value.id));
       } else {
         continue;
       }
@@ -700,6 +749,14 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   static String _idempotencyKey(Draft draft) =>
       '${draft.profile.value}/${draft.key.value}';
 
+  void _assertAttachmentScope(Draft draft, int generation) {
+    if (gateway.snapshot.connection?.key != draft.connection ||
+        gateway.socketGeneration != generation ||
+        gateway.snapshot.link != LinkState.connected) {
+      throw const AppError('attachment.scope_changed');
+    }
+  }
+
   @override
   Future<void> send(DraftKey key) async {
     // Gardes synchrones : aucun second envoi ne passe avant le premier await.
@@ -722,23 +779,62 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     _set(key, const SendStatus(state: OperationState.preparing));
     final operation = OperationKey.create();
     final Draft draft;
+    final List<Attachment> pieces;
     try {
-      // Les saisies en vol sont écrites avant de figer le texte envoyé.
-      await (_writes[key] ?? Future.value()).catchError((_) {});
-      final found = await this.draft(key);
-      // Jusqu’à 4.3, ne jamais envoyer le texte seul d’un brouillon avec pièces.
-      await (_attachmentWrites[key] ?? Future<void>.value()).catchError((_) {});
-      if ((await attachments(key)).isNotEmpty) {
+      // Un prompt peut avoir été accepté malgré l'échec de son commit local.
+      final unresolved = await database.rawQuery(
+        'SELECT operation_key FROM outbox_operations o WHERE draft_key = ? '
+        'AND state IN (?, ?) AND (error_code IS NULL OR error_code = ?) '
+        'AND EXISTS (SELECT 1 FROM outbox_operation_attachments a '
+        'WHERE a.operation_key = o.operation_key)',
+        [
+          key.value,
+          OperationState.sending.name,
+          OperationState.unknown.name,
+          'send.unknown',
+        ],
+      );
+      if (unresolved.isNotEmpty) {
         _set(
           key,
           const SendStatus(
-            state: OperationState.failed,
-            errorCode: 'attachment.send_blocked',
+            state: OperationState.unknown,
+            errorCode: 'send.unknown',
           ),
         );
         return;
       }
-      if (found == null || found.body.trim().isEmpty) {
+      // Les saisies en vol sont écrites avant de figer le texte envoyé.
+      await (_writes[key] ?? Future.value()).catchError((_) {});
+      final found = await this.draft(key);
+      await (_attachmentWrites[key] ?? Future<void>.value()).catchError((_) {});
+      pieces = (await attachments(key)).where((a) => !a.sent).toList();
+      if (pieces.any((a) => a.mediaType == 'image/jpeg')) {
+        _set(
+          key,
+          const SendStatus(
+            state: OperationState.failed,
+            errorCode: 'attachment.jpeg_unverified',
+          ),
+        );
+        return;
+      }
+      if (pieces.any(
+        (a) =>
+            a.state == AttachmentState.failed ||
+            a.state == AttachmentState.uncertain ||
+            a.state == AttachmentState.uploading,
+      )) {
+        _set(
+          key,
+          const SendStatus(
+            state: OperationState.failed,
+            errorCode: 'attachment.retry_required',
+          ),
+        );
+        return;
+      }
+      if (found == null || (found.body.trim().isEmpty && pieces.isEmpty)) {
         _set(key);
         return;
       }
@@ -761,6 +857,28 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           'WHERE draft_key = ?',
           [_idempotencyKey(draft), key.value],
         );
+        for (var index = 0; index < pieces.length; index++) {
+          final piece = pieces[index];
+          await t.update(
+            'outbox_attachments',
+            {
+              'operation_key': operation.value,
+              'connection_key': draft.connection.value,
+              'profile_key': draft.profile.value,
+            },
+            where: 'draft_key = ? AND attachment_key = ? AND sent = 0',
+            whereArgs: [key.value, piece.key],
+          );
+          await t.insert('outbox_operation_attachments', {
+            'operation_key': operation.value,
+            'attachment_key': piece.key,
+            'position': index,
+            'connection_key': draft.connection.value,
+            'profile_key': draft.profile.value,
+            'state': piece.state.name,
+            'reference': piece.reference,
+          });
+        }
       });
     } catch (_) {
       _set(
@@ -775,9 +893,129 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     }
 
     var runtime = '';
+    var generation = g.socketGeneration;
+    late final List<Attachment> sentPieces;
+    late final String prompt;
     try {
+      if (pieces.isNotEmpty) _assertAttachmentScope(draft, generation);
       runtime = await ensureSession(key);
-      onStep?.call('attachments'); // Epic 4
+      if (pieces.isNotEmpty) _assertAttachmentScope(draft, generation);
+      if (status(key).turnActive) {
+        await _finish(
+          key,
+          operation,
+          OperationState.failed,
+          'send.turn_active',
+          true,
+        );
+        return;
+      }
+      onStep?.call('attachments');
+      final scoped = await this.draft(key);
+      if (scoped == null ||
+          scoped.connection != draft.connection ||
+          scoped.profile != draft.profile ||
+          scoped.storedSessionId != _storedIds[key]) {
+        throw const AppError('attachment.scope_changed');
+      }
+      await database.transaction((t) async {
+        await t.update(
+          'outbox_operations',
+          {'stored_session_id': scoped.storedSessionId},
+          where: 'operation_key = ?',
+          whereArgs: [operation.value],
+        );
+        await t.update(
+          'outbox_operation_attachments',
+          {'stored_session_id': scoped.storedSessionId},
+          where: 'operation_key = ?',
+          whereArgs: [operation.value],
+        );
+      });
+      for (final piece in pieces) {
+        if (piece.state == AttachmentState.uploaded) {
+          final rows = await database.query(
+            'outbox_attachments',
+            columns: [
+              'connection_key',
+              'profile_key',
+              'stored_session_id',
+              'reference',
+            ],
+            where: 'attachment_key = ?',
+            whereArgs: [piece.key],
+          );
+          if (rows.length != 1 ||
+              rows.single['connection_key'] != draft.connection.value ||
+              rows.single['profile_key'] != draft.profile.value ||
+              rows.single['stored_session_id'] != scoped.storedSessionId ||
+              rows.single['reference'] != piece.reference) {
+            throw const AppError('attachment.scope_changed');
+          }
+        }
+      }
+      final transport = AttachmentTransport(g, timeout);
+      for (final piece in pieces) {
+        if (piece.state == AttachmentState.uploaded) continue;
+        await database.rawUpdate(
+          'UPDATE outbox_attachments SET state = ?, stored_session_id = ?, '
+          'error_code = NULL, attempts = attempts + 1 '
+          'WHERE attachment_key = ? AND operation_key = ?',
+          [
+            AttachmentState.uploading.name,
+            scoped.storedSessionId,
+            piece.key,
+            operation.value,
+          ],
+        );
+        await database.update(
+          'outbox_operation_attachments',
+          {'state': AttachmentState.uploading.name},
+          where: 'operation_key = ? AND attachment_key = ?',
+          whereArgs: [operation.value, piece.key],
+        );
+        if (!_changes.isClosed) _changes.add(key);
+        _assertAttachmentScope(draft, generation);
+        final result = await transport.upload(piece, draft.profile, runtime);
+        final state = switch (result.outcome) {
+          AttachOutcome.uploaded => AttachmentState.uploaded,
+          AttachOutcome.refused => AttachmentState.failed,
+          AttachOutcome.uncertain => AttachmentState.uncertain,
+        };
+        await database.update(
+          'outbox_attachments',
+          {
+            'state': state.name,
+            'reference': result.reference,
+            'error_code': result.errorCode,
+          },
+          where: 'attachment_key = ? AND operation_key = ?',
+          whereArgs: [piece.key, operation.value],
+        );
+        await database.update(
+          'outbox_operation_attachments',
+          {
+            'state': state.name,
+            'reference': result.reference,
+            'error_code': result.errorCode,
+          },
+          where: 'operation_key = ? AND attachment_key = ?',
+          whereArgs: [operation.value, piece.key],
+        );
+        if (!_changes.isClosed) _changes.add(key);
+        if (state != AttachmentState.uploaded) {
+          await _finish(
+            key,
+            operation,
+            state == AttachmentState.uncertain
+                ? OperationState.unknown
+                : OperationState.failed,
+            result.errorCode ?? 'attachment.unknown',
+            false,
+          );
+          return;
+        }
+      }
       onStep?.call('notificationTracking'); // Epic 5, non bloquant
       if (status(key).turnActive) {
         // Session reprise en plein tour : rien n'est soumis.
@@ -799,9 +1037,46 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         OperationState.sending,
         rowWatermark: watermark,
       );
+      sentPieces = (await attachments(key))
+          .where((a) => pieces.any((p) => p.key == a.key))
+          .toList();
+      prompt = [
+        for (final piece in sentPieces) piece.reference!,
+        if (draft.body.trim().isNotEmpty) draft.body,
+      ].join('\n');
     } catch (error) {
-      // Rien n'a été soumis : l'échec est certain, un renvoi manuel est permis.
-      await _finish(key, operation, OperationState.failed, _code(error), true);
+      // A write may have reached Hermes before local persistence failed.
+      var inFlight = 0;
+      try {
+        inFlight = await database.update(
+          'outbox_attachments',
+          {
+            'state': AttachmentState.uncertain.name,
+            'error_code': 'attachment.unknown',
+          },
+          where: 'operation_key = ? AND state = ?',
+          whereArgs: [operation.value, AttachmentState.uploading.name],
+        );
+        await database.update(
+          'outbox_operation_attachments',
+          {
+            'state': AttachmentState.uncertain.name,
+            'error_code': 'attachment.unknown',
+          },
+          where: 'operation_key = ? AND state = ?',
+          whereArgs: [operation.value, AttachmentState.uploading.name],
+        );
+      } catch (_) {
+        inFlight = 1;
+      }
+      if (inFlight > 0 && !_changes.isClosed) _changes.add(key);
+      await _finish(
+        key,
+        operation,
+        inFlight > 0 ? OperationState.unknown : OperationState.failed,
+        inFlight > 0 ? 'attachment.unknown' : _code(error),
+        inFlight == 0,
+      );
       return;
     }
     _set(key, const SendStatus(state: OperationState.sending));
@@ -809,9 +1084,10 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     var recovered = false;
     while (true) {
       try {
+        if (pieces.isNotEmpty) _assertAttachmentScope(draft, generation);
         final result = await g.call(
           'prompt.submit',
-          HermesRpc.submitParams(runtime, draft.body),
+          HermesRpc.submitParams(runtime, prompt),
           timeout: timeout,
         );
         final accepted = HermesRpc.submitted(result);
@@ -824,7 +1100,15 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
             false,
           );
         } else {
-          await _accept(key, operation, draft, accepted.userRowId);
+          await _accept(
+            key,
+            operation,
+            draft,
+            accepted.userRowId,
+            attachments: sentPieces,
+            runtime: runtime,
+            submittedPrompt: prompt,
+          );
         }
         return;
       } on RpcError catch (error) {
@@ -834,6 +1118,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           _runtime.remove(key);
           try {
             runtime = await ensureSession(key);
+            generation = _runtime[key]!.generation;
             continue;
           } catch (error) {
             await _finish(
@@ -923,8 +1208,11 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     DraftKey key,
     OperationKey operation,
     Draft draft,
-    int? userRowId,
-  ) async {
+    int? userRowId, {
+    List<Attachment> attachments = const [],
+    String? runtime,
+    String? submittedPrompt,
+  }) async {
     try {
       await _commitAccepted(
         key,
@@ -933,16 +1221,176 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         clearRevision: draft.revision,
       );
     } catch (_) {
-      /* acceptée côté serveur : l'écran l'indique même si la base échoue */
+      await _finish(
+        key,
+        operation,
+        OperationState.unknown,
+        'send.unknown',
+        false,
+      );
+      return;
     }
     // Après la base : la bulle n'apparaît que pour une demande réellement acceptée.
     await conversation?.accepted(
       TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
       operation,
-      draft.body,
+      [
+        if (draft.body.isNotEmpty) draft.body,
+        for (final piece in attachments) piece.name,
+      ].join('\n'),
       userRowId: userRowId,
     );
+    if (attachments.isNotEmpty && runtime != null && submittedPrompt != null) {
+      await _confirmReceipts(
+        key,
+        operation,
+        attachments,
+        runtime,
+        userRowId,
+        submittedPrompt,
+      );
+    }
     _set(key, const SendStatus(state: OperationState.accepted));
+  }
+
+  Future<void> _confirmReceipts(
+    DraftKey key,
+    OperationKey operation,
+    List<Attachment> pieces,
+    String runtime,
+    int? userRowId,
+    String submittedPrompt,
+  ) async {
+    try {
+      final scope = await draft(key);
+      final cached = _runtime[key];
+      if (scope == null || cached == null || cached.id != runtime) return;
+      _assertAttachmentScope(scope, cached.generation);
+      final history = await gateway.call(
+        'session.history',
+        HermesRpc.historyParams(runtime),
+        timeout: timeout,
+      );
+      _assertAttachmentScope(scope, cached.generation);
+      final messages = history['messages'];
+      if (messages is! List) return;
+      final operationRows = await database.query(
+        'outbox_operations',
+        columns: ['row_watermark'],
+        where: 'operation_key = ?',
+        whereArgs: [operation.value],
+      );
+      final watermark = operationRows.singleOrNull?['row_watermark'] as int?;
+      final candidates = <Map>[];
+      for (final message in messages) {
+        if (message is! Map ||
+            message['role'] != 'user' ||
+            (userRowId != null
+                ? message['row_id'] != userRowId
+                : watermark == null ||
+                      message['row_id'] is! int ||
+                      (message['row_id'] as int) <= watermark)) {
+          continue;
+        }
+        final raw = message['content'] ?? message['text'];
+        if (raw is String && raw.contains(submittedPrompt)) {
+          candidates.add(message);
+        }
+      }
+      if (candidates.length != 1) return;
+      for (final message in candidates) {
+        final raw = (message['content'] ?? message['text']) as String;
+        final promptAt = raw.indexOf(submittedPrompt);
+        if (promptAt < 0) continue;
+        // References in the submitted prompt are echoes, never receipt proof.
+        final serverOnly = raw.replaceRange(
+          promptAt,
+          promptAt + submittedPrompt.length,
+          '',
+        );
+        for (final piece in pieces) {
+          final reference = piece.reference;
+          if (reference == null) continue;
+          final evidence = piece.isImage
+              ? RegExp(r'@image:[^\s]+')
+                    .allMatches(serverOnly)
+                    .any((m) => m.group(0) == reference)
+              : serverOnly.contains('--- Attached Context ---') &&
+                    RegExp(
+                      '(^|[\\s\\[(])${RegExp.escape(reference)}'
+                      r'($|[\s\])])',
+                    ).hasMatch(
+                      serverOnly.substring(
+                        serverOnly.indexOf('--- Attached Context ---'),
+                      ),
+                    );
+          if (evidence) {
+            await database.update(
+              'outbox_attachments',
+              {'state': AttachmentState.received.name},
+              where: 'attachment_key = ? AND draft_key = ? AND sent = 1',
+              whereArgs: [piece.key, key.value],
+            );
+            await database.update(
+              'outbox_operation_attachments',
+              {'state': AttachmentState.received.name},
+              where: 'attachment_key = ? AND operation_key = ?',
+              whereArgs: [piece.key, operation.value],
+            );
+          }
+        }
+      }
+      if (!_changes.isClosed) _changes.add(key);
+    } catch (_) {
+      // No history proof: retain the truthful uploaded/unverified state.
+    }
+  }
+
+  Future<void> _checkPendingReceipts(DraftKey key, String runtime) =>
+      _receiptChecks[key] ??= _readPendingReceipts(key, runtime).whenComplete(
+        () {
+          _receiptChecks.remove(key);
+        },
+      );
+
+  Future<void> _readPendingReceipts(DraftKey key, String runtime) async {
+    try {
+      final pending = await database.query(
+        'outbox_operations',
+        where: 'draft_key = ? AND state = ?',
+        whereArgs: [key.value, OperationState.accepted.name],
+      );
+      final local = await attachments(key);
+      for (final op in pending) {
+        final operation = OperationKey(op['operation_key'] as String);
+        final snapshots = await database.query(
+          'outbox_operation_attachments',
+          where: 'operation_key = ?',
+          whereArgs: [operation.value],
+          orderBy: 'position',
+        );
+        final keys = snapshots.map((r) => r['attachment_key']).toSet();
+        final pieces = local
+            .where((a) => a.sent && keys.contains(a.key))
+            .toList();
+        if (!pieces.any((a) => a.state == AttachmentState.uploaded)) continue;
+        final body = op['body'] as String;
+        final prompt = [
+          for (final row in snapshots) row['reference'] as String,
+          if (body.trim().isNotEmpty) body,
+        ].join('\n');
+        await _confirmReceipts(
+          key,
+          operation,
+          pieces,
+          runtime,
+          op['user_row_id'] as int?,
+          prompt,
+        );
+      }
+    } catch (_) {
+      // Les preuves manquantes restent en attente, sans répétition d'envoi.
+    }
   }
 
   Future<void> _commitAccepted(
@@ -960,6 +1408,12 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       },
       where: 'operation_key = ?',
       whereArgs: [operation.value],
+    );
+    await t.update(
+      'outbox_attachments',
+      {'sent': 1},
+      where: 'draft_key = ? AND operation_key = ?',
+      whereArgs: [key.value, operation.value],
     );
     // Seule la version envoyée est retirée ; une saisie plus récente reste.
     // Un rapprochement ne prouve pas l'envoi : le texte reste alors en place.
@@ -1046,6 +1500,9 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     Resumed state,
     List<int> userRows,
   ) async {
+    for (final draft in await _draftsOf(key)) {
+      await _checkPendingReceipts(draft, state.runtime);
+    }
     final ops = await _unknownOperations(key);
     if (ops.length != 1) return;
     final op = ops.single;
@@ -1074,6 +1531,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           .toList();
       if (fresh.length == 1) {
         await _commitAccepted(draft, operation, fresh.single);
+        await _checkPendingReceipts(draft, state.runtime);
         _set(draft, const SendStatus(state: OperationState.accepted));
       } else if (fresh.isEmpty &&
           !state.running &&
@@ -1095,6 +1553,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   @override
   Future<void> dispose() async {
     await _events?.cancel();
+    await Future.wait(_receiptChecks.values);
     await Future.wait(_stopping.values);
     await Future.wait(_writes.values.map((w) => w.catchError((_) {})));
     await Future.wait(

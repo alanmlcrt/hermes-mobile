@@ -29,6 +29,42 @@ void main() {
       openConnectionDatabase(factory: databaseFactoryFfi, path: path);
 
   test(
+    'migration v11 to v12 preserves selected attachment and adds scope',
+    () async {
+      var database = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 11,
+          onCreate: (db, version) async {
+            for (final migration in connectionMigrations.take(version)) {
+              await migration(db);
+            }
+          },
+        ),
+      );
+      await database.insert('outbox_attachments', {
+        'attachment_key': 'piece-1',
+        'draft_key': 'draft-1',
+        'name': 'a.pdf',
+        'media_type': 'application/pdf',
+        'bytes': 3,
+        'state': 'selected',
+        'position': 0,
+        'created_at': '2026-10-24T00:00:00Z',
+      });
+      await database.close();
+      database = await open();
+      final row = (await database.query('outbox_attachments')).single;
+      expect(row['name'], 'a.pdf');
+      expect(row['sent'], 0);
+      expect(row['attempts'], 0);
+      expect(row['stored_session_id'], isNull);
+      expect(await database.query('outbox_operation_attachments'), isEmpty);
+      await database.close();
+    },
+  );
+
+  test(
     'migration v9 : accents préexistants conservés, arrêts ajoutés',
     () async {
       var database = await databaseFactoryFfi.openDatabase(

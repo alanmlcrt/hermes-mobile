@@ -269,6 +269,8 @@ class MemoryOutbox implements OutboxGateway {
   @override
   Future<void> removeAttachment(DraftKey key, String attachmentKey) async =>
       pieces[key]?.removeWhere((a) => a.key == attachmentKey);
+  @override
+  Future<void> retryAttachment(DraftKey key, String attachmentKey) async {}
   final drafts = <DraftKey, Draft>{};
   final statuses = <DraftKey, SendStatus>{};
   final sent = <DraftKey>[];
@@ -284,16 +286,6 @@ class MemoryOutbox implements OutboxGateway {
   SendStatus status(DraftKey key) => statuses[key] ?? const SendStatus();
   @override
   Future<void> send(DraftKey key) async {
-    if ((pieces[key] ?? const []).isNotEmpty) {
-      setStatus(
-        key,
-        const SendStatus(
-          state: OperationState.failed,
-          errorCode: 'attachment.send_blocked',
-        ),
-      );
-      return;
-    }
     sent.add(key);
   }
 

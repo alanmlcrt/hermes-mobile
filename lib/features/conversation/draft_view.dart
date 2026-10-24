@@ -195,9 +195,12 @@ class _DraftViewState extends State<DraftView> {
                             onRemove: vm.attachmentBusy || vm.sendStatus.busy
                                 ? null
                                 : vm.removeAttachment,
+                            onRetry: vm.attachmentBusy || vm.sendStatus.busy
+                                ? null
+                                : vm.retryAttachment,
                           ),
-                          if (vm.attachments.isNotEmpty)
-                            const Text(Content.attachmentSendBlocked),
+                          if (vm.attachments.any((a) => a.isImage))
+                            const Text(Content.attachmentVisionUnknown),
                           if (vm.attachmentError != null)
                             Semantics(
                               liveRegion: true,

@@ -1,6 +1,13 @@
 import 'dart:typed_data';
 
-enum AttachmentState { selected }
+enum AttachmentState {
+  selected,
+  uploading,
+  uploaded,
+  received,
+  failed,
+  uncertain,
+}
 
 enum AttachmentCategory { text, image, pdf, office }
 
@@ -15,6 +22,9 @@ class Attachment {
     required this.localPath,
     this.missing = false,
     this.state = AttachmentState.selected,
+    this.reference,
+    this.errorCode,
+    this.sent = false,
   });
   final String key;
   final String name;
@@ -23,6 +33,9 @@ class Attachment {
   final String localPath;
   final bool missing;
   final AttachmentState state;
+  final String? reference;
+  final String? errorCode;
+  final bool sent;
   bool get isImage => mediaType == 'image/png' || mediaType == 'image/jpeg';
 }
 

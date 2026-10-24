@@ -147,4 +147,41 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'ON outbox_attachments (draft_key, position)',
     );
   },
+  (db) async {
+    await db.execute(
+      'ALTER TABLE outbox_operations ADD COLUMN stored_session_id TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN operation_key TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN connection_key TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN profile_key TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN stored_session_id TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN reference TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN error_code TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN sent INTEGER NOT NULL DEFAULT 0',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0',
+    );
+    await db.execute(
+      'CREATE TABLE outbox_operation_attachments ('
+      'operation_key TEXT NOT NULL, attachment_key TEXT NOT NULL, '
+      'position INTEGER NOT NULL, connection_key TEXT NOT NULL, '
+      'profile_key TEXT NOT NULL, stored_session_id TEXT, '
+      'state TEXT NOT NULL, reference TEXT, error_code TEXT, '
+      'PRIMARY KEY (operation_key, attachment_key))',
+    );
+  },
 ];

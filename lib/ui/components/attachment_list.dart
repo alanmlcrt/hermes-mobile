@@ -7,9 +7,15 @@ import '../content.dart';
 import '../tokens.dart';
 
 class AttachmentList extends StatelessWidget {
-  const AttachmentList({super.key, required this.attachments, this.onRemove});
+  const AttachmentList({
+    super.key,
+    required this.attachments,
+    this.onRemove,
+    this.onRetry,
+  });
   final List<Attachment> attachments;
   final ValueChanged<Attachment>? onRemove;
+  final ValueChanged<Attachment>? onRetry;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,25 +63,55 @@ class AttachmentList extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text(
-                  a.missing
-                      ? Content.attachmentMissing
-                      : Content.attachmentSelected,
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    '${Content.attachmentStatus(a.state, a.sent, a.errorCode)}'
+                    '${a.missing && !a.sent ? ' ${Content.attachmentMissing}' : ''}',
+                  ),
                 ),
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
-                  child: Semantics(
-                    label: Content.removeAttachment(a.name),
-                    child: TextButton(
-                      onPressed: onRemove == null ? null : () => onRemove!(a),
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(
-                          Layout.stopButton,
-                          Layout.stopButton,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: Spacing.sm,
+                    runSpacing: Spacing.xs,
+                    children: [
+                      if (!a.sent &&
+                          (a.state == AttachmentState.failed ||
+                              a.state == AttachmentState.uncertain))
+                        Semantics(
+                          label: Content.retryAttachment(a.name),
+                          child: TextButton(
+                            onPressed: onRetry == null
+                                ? null
+                                : () => onRetry!(a),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(
+                                Layout.stopButton,
+                                Layout.stopButton,
+                              ),
+                            ),
+                            child: const Text(Content.attachmentRetry),
+                          ),
                         ),
-                      ),
-                      child: const Text(Content.remove),
-                    ),
+                      if (!a.sent)
+                        Semantics(
+                          label: Content.removeAttachment(a.name),
+                          child: TextButton(
+                            onPressed: onRemove == null
+                                ? null
+                                : () => onRemove!(a),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(
+                                Layout.stopButton,
+                                Layout.stopButton,
+                              ),
+                            ),
+                            child: const Text(Content.remove),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],

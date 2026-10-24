@@ -77,7 +77,7 @@ void main() {
       outbox.setStatus(draft.key, const SendStatus());
       await tester.pump();
       expect(vm.attachments.single.key, piece.key);
-      expect(vm.blockedReason, Content.attachmentSendBlocked);
+      expect(vm.blockedReason, contains('Hors ligne'));
       outbox.pieces[draft.key] = [];
       outbox.setStatus(draft.key, const SendStatus());
       await tester.pump();
@@ -87,7 +87,7 @@ void main() {
     },
   );
   testWidgets(
-    'sheet limits, select, named removal, blocked VM send and denied permission preserve draft',
+    'sheet limits, select, named removal, VM send and denied permission preserve draft',
     (tester) async {
       final h = Harness();
       final outbox = LimitedMemoryOutbox();
@@ -136,7 +136,7 @@ void main() {
       expect(find.text('application/pdf'), findsOneWidget);
       expect(find.text(Content.fileSize(3)), findsOneWidget);
       await vm.send();
-      expect(outbox.sent, isEmpty);
+      expect(outbox.sent, [draft.key]);
       expect(outbox.drafts[draft.key]!.body, 'à conserver');
       expect(vm.attachments, hasLength(1));
       expect(
@@ -259,9 +259,29 @@ void main() {
                   bytes: 123,
                   localPath: '',
                   missing: true,
+                  state: AttachmentState.failed,
+                  errorCode: 'attachment.refused',
+                ),
+                Attachment(
+                  key: 'b',
+                  name: 'Transféré.pdf',
+                  mediaType: 'application/pdf',
+                  bytes: 123,
+                  localPath: '',
+                  state: AttachmentState.uploaded,
+                ),
+                Attachment(
+                  key: 'c',
+                  name: 'Reçu.pdf',
+                  mediaType: 'application/pdf',
+                  bytes: 123,
+                  localPath: '',
+                  state: AttachmentState.received,
+                  sent: true,
                 ),
               ],
               onRemove: (_) {},
+              onRetry: (_) {},
             ),
             AttachmentSelectionSheet(
               limits: await LimitedMemoryOutbox().attachmentLimits(),

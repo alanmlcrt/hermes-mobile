@@ -11,7 +11,6 @@ import 'package:hermes_mobile/data/storage/attachment_files.dart';
 import 'package:hermes_mobile/data/storage/database.dart';
 import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/attachment.dart';
-import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
 
@@ -64,7 +63,7 @@ void main() {
       loadFileLimits: () async => limits,
     );
     draft = await outbox.openNewDraft(
-      const ConnectionKey('c'),
+      h.repository.snapshot.connection!.key,
       const ProfileKey('default'),
     );
   }
@@ -77,6 +76,7 @@ void main() {
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('hermes-attachments-');
     h = Harness();
+    await h.connect();
     await open();
     await outbox.saveText(draft.key, 'texte conservé');
   });
@@ -191,23 +191,29 @@ void main() {
       expect(await File(piece.localPath).readAsBytes(), bytes);
     },
   );
-  test(
-    'attached draft blocks repository send before any session or prompt',
-    () async {
-      await h.connect();
-      await outbox.addAttachment(draft.key, picked('a.pdf', 'application/pdf'));
-      final before = h.transport.frames.length;
-      await outbox.send(draft.key);
-      expect(outbox.status(draft.key).errorCode, 'attachment.send_blocked');
-      expect(h.transport.frames.length, before);
-      expect(await db.query('outbox_operations'), isEmpty);
-      expect((await outbox.draft(draft.key))!.body, 'texte conservé');
-      expect(await outbox.attachments(draft.key), hasLength(1));
-    },
-  );
+  test('refused attachment blocks prompt and preserves draft', () async {
+    await h.connect();
+    h.transport.rpc = (method, params) => switch (method) {
+      'session.create' => Map<String, dynamic>.from(
+        fixture('session-create')['result'] as Map,
+      ),
+      'file.attach' => {'attached': false},
+      _ => null,
+    };
+    await outbox.addAttachment(draft.key, picked('a.pdf', 'application/pdf'));
+    await outbox.send(draft.key);
+    expect(outbox.status(draft.key).errorCode, 'attachment.refused');
+    expect(
+      h.transport.frames.where((f) => f['method'] == 'prompt.submit'),
+      isEmpty,
+    );
+    expect(await db.query('outbox_operations'), hasLength(1));
+    expect((await outbox.draft(draft.key))!.body, 'texte conservé');
+    expect(await outbox.attachments(draft.key), hasLength(1));
+  });
   test('profile change preserves attachment-only target draft', () async {
     final target = await outbox.openNewDraft(
-      const ConnectionKey('c'),
+      draft.connection,
       const ProfileKey('other'),
     );
     await outbox.addAttachment(target.key, picked('a.pdf', 'application/pdf'));
@@ -224,12 +230,18 @@ void main() {
     final paused = PausedCopy(directory);
     await open(files: paused);
     await h.connect();
+    h.transport.rpc = (method, params) => switch (method) {
+      'session.create' => Map<String, dynamic>.from(
+        fixture('session-create')['result'] as Map,
+      ),
+      'file.attach' => {'attached': false},
+      _ => null,
+    };
     final adding = outbox.addAttachment(
       draft.key,
       picked('a.pdf', 'application/pdf'),
     );
     await paused.started.future;
-    final before = h.transport.frames.length;
     final sending = outbox.send(draft.key);
     await expectLater(
       outbox.addAttachment(draft.key, picked('b.pdf', 'application/pdf')),
@@ -242,8 +254,11 @@ void main() {
     paused.release.complete();
     await adding;
     await sending;
-    expect(h.transport.frames.length, before);
-    expect(outbox.status(draft.key).errorCode, 'attachment.send_blocked');
+    expect(
+      h.transport.frames.where((f) => f['method'] == 'prompt.submit'),
+      isEmpty,
+    );
+    expect(outbox.status(draft.key).errorCode, 'attachment.refused');
     expect((await outbox.draft(draft.key))!.body, 'texte conservé');
     expect(await outbox.attachments(draft.key), hasLength(1));
   });

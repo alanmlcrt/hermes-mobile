@@ -87,6 +87,7 @@ abstract interface class OutboxGateway {
   Future<List<Attachment>> attachments(DraftKey key);
   Future<void> addAttachment(DraftKey key, PickedFile file);
   Future<void> removeAttachment(DraftKey key, String attachmentKey);
+  Future<void> retryAttachment(DraftKey key, String attachmentKey);
 
   /// Brouillon « nouvelle conversation » du couple, créé s'il n'existe pas.
   /// Ne rend jamais un brouillon qui a déjà une session.
