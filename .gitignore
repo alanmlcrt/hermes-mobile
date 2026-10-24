@@ -11,6 +11,7 @@ android/key.properties
 
 # Flutter / Dart
 .dart_tool/
+test/failures/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
