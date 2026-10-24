@@ -148,7 +148,15 @@ void main() {
       }
       expect(methods['sourceRoot'], contains(release['commit'] as String));
       final capabilities = contract('capabilities')['capabilities'] as List;
-      expect(capabilities.every((c) => c['actual'] == 'unverified'), isTrue);
+      expect(
+        capabilities.every(
+          (c) =>
+              c['actual'] == 'unverified' ||
+              // Seule file.attach peut être mesurée sur l'installation.
+              c['name'] == 'file.attach',
+        ),
+        isTrue,
+      );
       final harness = Harness();
       addTearDown(harness.repository.dispose);
       expect(
@@ -208,5 +216,293 @@ void main() {
     ).listSync().whereType<File>()) {
       scan(jsonDecode(file.readAsStringSync()));
     }
+  });
+  test(
+    'limites de fichiers : catégories complètes et aucune valeur non mesurée',
+    () {
+      final fileLimits = contract('file-limits');
+      expect(fileLimits['schemaVersion'], 1);
+      expect([
+        'unmeasured',
+        'install-measured',
+      ], contains(fileLimits['evidence']));
+      final measured = fileLimits['evidence'] == 'install-measured';
+      final install = fileLimits['install'] as Map;
+      expect(install['profile'], 'dedicated-test-profile');
+      if (measured) {
+        expect(install['build'], isA<String>());
+        expect(install['build'], isNotEmpty);
+        expect(install['measuredAt'], isA<String>());
+        expect(DateTime.tryParse(install['measuredAt'] as String), isNotNull);
+        expect(install['finishedAt'], isA<String>());
+        final started = DateTime.parse(install['measuredAt'] as String);
+        final finished = DateTime.parse(install['finishedAt'] as String);
+        expect(finished.isBefore(started), isFalse);
+      } else {
+        expect(install['build'], isNull);
+        expect(install['measuredAt'], isNull);
+        expect(install['finishedAt'], isNull);
+      }
+
+      final corpus = fileLimits['corpus'] as Map;
+      expect(corpus['tracked'], isFalse);
+      expect(corpus['complete'], isA<bool>());
+      expect(
+        corpus['location'],
+        '_bmad-output/implementation-artifacts/corpus-pieces-jointes/',
+      );
+      final categories = (corpus['categories'] as List)
+          .map((entry) => (entry as Map)['category'] as String)
+          .toList();
+      expect(categories, ['text', 'image', 'pdf', 'office']);
+
+      final limits = fileLimits['limits'] as Map;
+      expect(limits.keys.length, categories.length);
+      expect(limits.keys, containsAll(categories));
+      final unverified = (fileLimits['unverified'] as List).cast<String>();
+      expect(unverified.toSet().length, unverified.length);
+      expect(unverified.contains('corpus.complete'), corpus['complete'] != true);
+
+      for (final category in categories) {
+        final limit = limits[category] as Map;
+        final maxBytes = limit['maxBytes'];
+        final maxCount = limit['maxCount'];
+        expect(maxBytes, anyOf(isNull, isA<int>()));
+        expect(maxCount, anyOf(isNull, isA<int>()));
+        if (maxBytes is int) expect(maxBytes, greaterThan(0));
+        if (maxCount is int) expect(maxCount, greaterThan(0));
+        expect(limit['maxBytesVerified'], isA<bool>());
+        expect(limit['maxCountVerified'], isA<bool>());
+        if (limit['maxBytesVerified'] != true) expect(maxBytes, isNull);
+        if (limit['maxCountVerified'] != true) expect(maxCount, isNull);
+        expect(
+          limit['verified'],
+          limit['maxBytesVerified'] == true ||
+              limit['maxCountVerified'] == true,
+        );
+        expect(
+          unverified.contains('limits.$category.maxBytes'),
+          limit['maxBytesVerified'] != true,
+        );
+        expect(
+          unverified.contains('limits.$category.maxCount'),
+          limit['maxCountVerified'] != true,
+        );
+        final threshold = limit['threshold'] as Map;
+        for (final key in ['bytes', 'count']) {
+          expect([
+            'not-measured',
+            'lower-bound',
+            'between',
+          ], contains(threshold[key]));
+        }
+        final observed = limit['observed'] as Map;
+        for (final key in [
+          'acceptedBytes',
+          'refusedBytes',
+          'acceptedCounts',
+          'refusedCounts',
+          'unverifiedBytes',
+          'unverifiedCounts',
+          'mediaTypes',
+          'receipts',
+        ]) {
+          expect(observed[key], isA<List>(), reason: '$category.$key');
+        }
+        final acceptedBytes = (observed['acceptedBytes'] as List).cast<int>();
+        final refusedBytes = (observed['refusedBytes'] as List).cast<int>();
+        int? ceiling;
+        for (final bytes in refusedBytes) {
+          if (ceiling == null || bytes < ceiling) ceiling = bytes;
+        }
+        final acceptable = acceptedBytes
+            .where((bytes) => ceiling == null || bytes < ceiling)
+            .toList();
+        final expectedMax = acceptable.isEmpty
+            ? null
+            : acceptable.reduce((a, b) => a > b ? a : b);
+        expect(maxBytes, expectedMax, reason: '$category.maxBytes');
+        expect(limit['evidence'], isA<List>());
+        if (maxBytes is int) {
+          expect(limit['evidence'], isNotEmpty);
+          for (final entry in (limit['evidence'] as List).cast<Map>()) {
+            expect(entry['bytes'], lessThanOrEqualTo(maxBytes));
+            expect(entry['count'], isA<int>());
+          }
+        } else {
+          expect(limit['evidence'], isEmpty);
+        }
+        for (final receipt in (observed['receipts'] as List).cast<String>()) {
+          expect(
+            const {
+              'history-attached-context',
+              'history-image-reference',
+            },
+            contains(receipt.split(':').last),
+          );
+        }
+        if (!measured) {
+          for (final entry in observed.entries) {
+            expect(entry.value, isEmpty, reason: '$category.${entry.key}');
+          }
+          expect(limit['evidence'], isEmpty);
+        }
+      }
+
+      final transports = fileLimits['transports'] as Map;
+      expect(transports.keys.toSet(), {
+        'file.attach',
+        'rest.image-upload',
+        'image.attach_bytes',
+      });
+      for (final entry in transports.entries) {
+        final transport = entry.value as Map;
+        expect(['pinned', 'outside-pinned'], contains(transport['contract']));
+        expect(transport['parameters'], isA<List>());
+        expect([
+          'present',
+          'absent',
+          'unverified',
+        ], contains(transport['status']));
+        if (!measured) {
+          expect(transport['status'], 'unverified');
+          expect(transport['proof'], isNull);
+        } else if (transport['status'] == 'present') {
+          expect(unverified, isNot(contains('transports.${entry.key}')));
+          final proof = transport['proof'] as Map;
+          expect(proof['pieces'], isA<int>());
+          expect(proof['pieces'], greaterThan(0));
+          expect(proof['repetitions'], isA<int>());
+          expect(proof['repetitions'], greaterThan(0));
+          expect(proof['attempts'], isA<int>());
+          expect(
+            proof['attempts'],
+            greaterThanOrEqualTo(proof['pieces'] as int),
+          );
+          expect(
+            proof['attempts'],
+            lessThanOrEqualTo(
+              (proof['pieces'] as int) * (proof['repetitions'] as int),
+            ),
+          );
+          for (final key in [
+            'accepted',
+            'refused',
+            'unverified',
+            'absent',
+            'partial',
+            'received',
+          ]) {
+            expect(proof[key], isA<int>(), reason: '${entry.key}.$key');
+            expect(proof[key], greaterThanOrEqualTo(0));
+          }
+          expect(
+            (proof['accepted'] as int) +
+                (proof['refused'] as int) +
+                (proof['unverified'] as int) +
+                (proof['absent'] as int),
+            proof['pieces'],
+            reason: '${entry.key}: catégories mutuellement exclusives',
+          );
+          expect(proof['received'], greaterThanOrEqualTo(proof['accepted'] as int));
+          expect(proof['receipts'], isA<List>());
+          expect(
+            proof['accepted'],
+            greaterThan(0),
+            reason: '${entry.key}: present exige un reçu accepté',
+          );
+        } else {
+          expect(unverified, contains('transports.${entry.key}'));
+          final proof = transport['proof'];
+          if (proof is Map) expect(proof['accepted'], 0);
+        }
+      }
+
+      final vision = fileLimits['vision'] as Map;
+      expect(vision['profile'], anyOf(isNull, 'dedicated-test-profile'));
+      expect(vision['analyzesImages'], anyOf(isNull, isA<bool>()));
+      expect(
+        unverified.contains('vision.analyzesImages'),
+        vision['analyzesImages'] == null,
+      );
+      expect(unverified.contains('vision.model'), vision['model'] == null);
+
+      final fileAttach =
+          (contract('capabilities')['capabilities'] as List).singleWhere(
+            (entry) => entry['name'] == 'file.attach',
+          ) as Map;
+      final fileAttachTransport = transports['file.attach'] as Map;
+      if (fileAttach['actual'] != 'unverified') {
+        expect(measured, isTrue);
+        expect(['present', 'absent'], contains(fileAttach['actual']));
+        expect(fileAttach['actual'], fileAttachTransport['status']);
+        expect(fileAttach['evidence'], 'install-measured');
+        expect(fileAttach['measuredAt'], install['measuredAt']);
+        expect(fileAttach['source'], 'contracts/file-limits.json');
+      } else if (measured) {
+        expect(fileAttachTransport['status'], 'unverified');
+      }
+    },
+  );
+  test('limites de fichiers sans chemin, identifiant ni secret', () {
+    final fileLimits = contract('file-limits');
+    void scan(Object? value, [String key = '']) {
+      if (value is Map) {
+        for (final entry in value.entries) {
+          expect(
+            const {
+              'path',
+              'filePath',
+              'fileName',
+              'name',
+              'token',
+              'password',
+              'secret',
+            },
+            isNot(contains(entry.key)),
+            reason: 'champ interdit : ${entry.key}',
+          );
+          scan(entry.value, entry.key as String);
+        }
+      } else if (value is List) {
+        for (final item in value) {
+          scan(item, key);
+        }
+      } else if (value is String) {
+        expect(
+          RegExp(r'(^|[^\w])[A-Za-z]:[\\/]').hasMatch(value),
+          isFalse,
+          reason: key,
+        );
+        expect(
+          RegExp(r'(^|[^\w])/(home|Users|root)/').hasMatch(value),
+          isFalse,
+          reason: key,
+        );
+        expect(value, isNot(contains('file://')), reason: key);
+        expect(RegExp(r'Bearer\s').hasMatch(value), isFalse, reason: key);
+        expect(
+          RegExp(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.').hasMatch(value),
+          isFalse,
+          reason: key,
+        );
+        expect(
+          RegExp(r'[\w.+-]+@[\w-]+\.[\w.]+').hasMatch(value),
+          isFalse,
+          reason: key,
+        );
+        expect(value, isNot(contains('hermes_session')), reason: key);
+      }
+    }
+
+    scan(fileLimits);
+    final corpus = fileLimits['corpus'] as Map;
+    expect(corpus['location'], startsWith('_bmad-output/'));
+    expect(corpus['location'], isNot(startsWith('/')));
+    expect((fileLimits['install'] as Map)['profile'], 'dedicated-test-profile');
+    expect(
+      (fileLimits['vision'] as Map)['profile'],
+      anyOf(isNull, 'dedicated-test-profile'),
+    );
   });
 }

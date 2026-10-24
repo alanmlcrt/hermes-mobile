@@ -80,8 +80,11 @@
       "name": "file.attach",
       "required": false,
       "documented": "present",
-      "actual": "unverified",
-      "surface": "openrpc"
+      "actual": "present",
+      "surface": "openrpc",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-24T15:15:13.312844Z",
+      "source": "contracts/file-limits.json"
     },
     {
       "name": "session.interrupt",

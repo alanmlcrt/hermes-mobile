@@ -9,6 +9,14 @@ android/key.properties
 # FVM
 .fvm/
 
+# Corpus de mesure des pièces jointes (hors dépôt)
+_bmad-output/implementation-artifacts/corpus-pieces-jointes/
+
+# Sorties brutes des campagnes de mesure (le contrat fait foi)
+_bmad-output/implementation-artifacts/mesure-finale.json
+_bmad-output/implementation-artifacts/essai-*.json
+_bmad-output/implementation-artifacts/.diff-*.patch
+
 # Flutter / Dart
 .dart_tool/
 test/failures/
@@ -32,3 +40,4 @@ android/captures/
 android/app/debug/
 android/app/profile/
 android/app/release/
+_bmad-output/implementation-artifacts/.hermes-mesure.env
