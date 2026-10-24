@@ -10,6 +10,11 @@ String companionPaletteLabel(CompanionPalette palette) => switch (palette) {
   CompanionPalette.lavenderPeach => Content.lavenderPeach,
   CompanionPalette.mintSky => Content.mintSky,
   CompanionPalette.roseLilac => Content.roseLilac,
+  CompanionPalette.peachSun => Content.peachSun,
+  CompanionPalette.oceanMist => Content.oceanMist,
+  CompanionPalette.sageSand => Content.sageSand,
+  CompanionPalette.coralRose => Content.coralRose,
+  CompanionPalette.pearl => Content.pearl,
 };
 
 class CompanionBackgroundEditor extends StatefulWidget {
@@ -51,6 +56,42 @@ class _CompanionBackgroundEditorState extends State<CompanionBackgroundEditor> {
     }
   }
 
+  /// Pastille seule, sans légende visible : le nom reste annoncé. Fusionnée
+  /// pour que le focus clavier et la sémantique désignent la même pastille.
+  Widget _swatch(BuildContext context, CompanionPalette palette) {
+    final scheme = Theme.of(context).colorScheme;
+    final selected = _palette == palette;
+    final label = companionPaletteLabel(palette);
+    return MergeSemantics(
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: _saving ? null : () => setState(() => _palette = palette),
+        child: Semantics(
+          button: true,
+          selected: selected,
+          liveRegion: selected,
+          label: selected ? '$label — ${Content.backgroundSelected}' : label,
+          excludeSemantics: true,
+          child: Container(
+            width: Layout.swatch,
+            height: Layout.swatch,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: paletteGradient(palette),
+              border: Border.all(
+                color: selected ? scheme.emphasis : scheme.outlineVariant,
+                width: selected ? Layout.swatchSelected : Layout.swatchBorder,
+              ),
+            ),
+            child: selected
+                ? const Icon(Icons.check, color: RabbitTokens.ink)
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_saving,
@@ -70,6 +111,7 @@ class _CompanionBackgroundEditorState extends State<CompanionBackgroundEditor> {
                 palette: _palette,
                 child: RabbitCompanion(
                   name: Content.companionName,
+                  size: RabbitTokens.preview,
                   paused: _paused,
                 ),
               ),
@@ -84,27 +126,18 @@ class _CompanionBackgroundEditorState extends State<CompanionBackgroundEditor> {
                 _paused ? Content.resumeCompanion : Content.pauseCompanion,
               ),
             ),
-            for (final palette in CompanionPalette.values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: Spacing.sm),
-                child: MergeSemantics(
-                  child: Semantics(
-                    selected: _palette == palette,
-                    liveRegion: _palette == palette,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, RabbitTokens.minimum),
-                      ),
-                      onPressed: _saving
-                          ? null
-                          : () => setState(() => _palette = palette),
-                      child: Text(
-                        '${companionPaletteLabel(palette)}${_palette == palette ? ' — ${Content.backgroundSelected}' : ''}',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // Palette prête à l'emploi : pastilles en grille, légende sous
+            // chacune ; l'état sélectionné est annoncé, pas seulement coloré.
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: Spacing.md,
+              runSpacing: Spacing.md,
+              children: [
+                for (final palette in CompanionPalette.values)
+                  _swatch(context, palette),
+              ],
+            ),
+            const SizedBox(height: Spacing.md),
             if (_error)
               Semantics(
                 liveRegion: true,

@@ -5,6 +5,17 @@ import 'package:flutter/material.dart';
 import '../../models/companion_background.dart';
 import '../tokens.dart';
 
+LinearGradient paletteGradient(CompanionPalette palette) => switch (palette) {
+  CompanionPalette.lavenderPeach => RabbitTokens.backdrop,
+  CompanionPalette.mintSky => RabbitTokens.mintSky,
+  CompanionPalette.roseLilac => RabbitTokens.roseLilac,
+  CompanionPalette.peachSun => RabbitTokens.peachSun,
+  CompanionPalette.oceanMist => RabbitTokens.oceanMist,
+  CompanionPalette.sageSand => RabbitTokens.sageSand,
+  CompanionPalette.coralRose => RabbitTokens.coralRose,
+  CompanionPalette.pearl => RabbitTokens.pearl,
+};
+
 /// Le filtre appartient au fond uniquement : le visage reste net.
 class CompanionBackdrop extends StatelessWidget {
   const CompanionBackdrop({
@@ -26,13 +37,7 @@ class CompanionBackdrop extends StatelessWidget {
               sigmaY: RabbitTokens.frostSigma,
             ),
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: switch (palette) {
-                  CompanionPalette.lavenderPeach => RabbitTokens.backdrop,
-                  CompanionPalette.mintSky => RabbitTokens.mintSky,
-                  CompanionPalette.roseLilac => RabbitTokens.roseLilac,
-                },
-              ),
+              decoration: BoxDecoration(gradient: paletteGradient(palette)),
             ),
           ),
         ),

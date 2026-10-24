@@ -14,6 +14,10 @@ import 'package:hermes_mobile/ui/gallery.dart';
 import 'package:hermes_mobile/ui/theme.dart';
 import 'package:hermes_mobile/ui/tokens.dart';
 
+/// Otc est retiré de l'interface en attendant sa refonte (2026-10-23) :
+/// ces tests reviendront avec lui.
+const otcRemoved = true;
+
 void main() {
   testWidgets('18 entrées comparables et pause commune atteignable à 200 %', (
     tester,
@@ -178,16 +182,34 @@ void main() {
           .map((paint) => paint.painter)
           .whereType<RabbitPainter>()
           .single;
-      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ActivityLine),
+          matching: find.byType(ActivityIllustration),
+        ),
+        findsNothing,
+      );
       expect(find.byType(ActivityLine), findsOneWidget);
       await tester.tap(find.text(GalleryContent.companionStart));
       await tester.pump();
       expect(current().concentrating, isTrue);
-      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ActivityLine),
+          matching: find.byType(ActivityIllustration),
+        ),
+        findsNothing,
+      );
       await tester.tap(find.text(GalleryContent.companionText));
       await tester.pump();
       expect(current().gaze, 1);
-      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ActivityLine),
+          matching: find.byType(ActivityIllustration),
+        ),
+        findsNothing,
+      );
       final firstText = tester
           .widget<MessageBubble>(find.byType(MessageBubble))
           .text;
@@ -209,7 +231,13 @@ void main() {
         findsOneWidget,
       );
       expect(current().tickled, isTrue);
-      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ActivityLine),
+          matching: find.byType(ActivityIllustration),
+        ),
+        findsNothing,
+      );
       expect(
         tester.widget<MessageBubble>(find.byType(MessageBubble)).text,
         received,
@@ -218,7 +246,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
       expect(current().gaze, 0);
       expect(current().tickled, isFalse);
-      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ActivityLine),
+          matching: find.byType(ActivityIllustration),
+        ),
+        findsNothing,
+      );
       await tester.tap(find.widgetWithText(TextButton, Content.workUnknown));
       await tester.pump();
       expect(
@@ -244,9 +278,16 @@ void main() {
       await tester.tap(find.text(GalleryContent.companionShow));
       await tester.pump();
       expect(current().gaze, 1);
-      expect(find.byType(ActivityIllustration), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ActivityLine),
+          matching: find.byType(ActivityIllustration),
+        ),
+        findsNothing,
+      );
       await tester.pumpWidget(const SizedBox());
     },
+    skip: otcRemoved,
   );
   testWidgets(
     'éditeur galerie suit le mouvement réduit système pendant son ouverture',
@@ -304,14 +345,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(action);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(Content.mintSky));
+    await tester.tap(find.bySemanticsLabel(RegExp('^${Content.mintSky}')));
     await tester.tap(find.text(Content.backgroundApply));
     await tester.pumpAndSettle();
     expect(find.text(Content.backgroundSaveError), findsOneWidget);
     await tester.tap(find.text(Content.backgroundRetry));
     await tester.pumpAndSettle();
     expect(find.text(Content.backgroundSaveError), findsNothing);
-    expect(find.text(Content.mintSky), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('^${Content.mintSky}')),
+      findsOneWidget,
+    );
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets('chaque aperçu visible applique Pause et Reprendre au lapin', (
@@ -422,7 +466,7 @@ void main() {
       GalleryContent.variantReducedMotion,
     ]) {
       // Une fois par composant, dont le scénario conversation pilotable.
-      expect(find.text(variant), findsNWidgets(11), reason: variant);
+      expect(find.text(variant), findsNWidgets(12), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -463,14 +507,16 @@ void main() {
     expect(find.byType(SectionCard), findsNWidgets(4));
     expect(find.byType(RabbitCompanion), findsNWidgets(4 * 5));
     expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(8));
-    expect(find.byType(Composer), findsNWidgets(4));
-    // Trois états de connexion et sept occurrences d'état de travail.
-    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 7)));
+    expect(find.byType(Composer), findsNWidgets(8));
+    // Trois états de connexion et quatre états de travail en libellé ; envoi
+    // et travail en cours sont des bulles à trois points.
+    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 4 + 2)));
     expect(find.byType(MessageBubble), findsNWidgets(4 * 2));
     expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
     expect(
       find.byType(ActivityIllustration),
-      findsNWidgets(4 * (2 * ActivityKind.values.length + 1)),
+      // + les trois bulles « Hermes travaille » (illustration à points).
+      findsNWidgets(4 * (2 * ActivityKind.values.length + 1 + 3)),
     );
     expect(
       find.byWidgetPredicate(
@@ -488,7 +534,8 @@ void main() {
       find.byWidgetPredicate(
         (w) => w is CustomPaint && w.painter is UnknownActivityPainter,
       ),
-      findsNWidgets(8),
+      // + les trois bulles « Hermes travaille ».
+      findsNWidgets(4 * (2 + 3)),
     );
     for (final state in WorkState.values) {
       expect(
@@ -496,7 +543,9 @@ void main() {
           of: find.byType(WorkStateLabel),
           matching: find.text(WorkStateLabel.label(state)),
         ),
-        findsNWidgets(state == WorkState.sending ? 8 : 4),
+        findsNWidgets(
+          state == WorkState.sending || state == WorkState.stopped ? 8 : 4,
+        ),
         reason: state.name,
       );
     }

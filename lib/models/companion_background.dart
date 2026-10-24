@@ -4,7 +4,12 @@ import 'profile.dart';
 enum CompanionPalette {
   lavenderPeach('lavender_peach'),
   mintSky('mint_sky'),
-  roseLilac('rose_lilac');
+  roseLilac('rose_lilac'),
+  peachSun('peach_sun'),
+  oceanMist('ocean_mist'),
+  sageSand('sage_sand'),
+  coralRose('coral_rose'),
+  pearl('pearl');
 
   const CompanionPalette(this.id);
   final String id;

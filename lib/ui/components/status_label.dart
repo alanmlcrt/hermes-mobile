@@ -25,9 +25,7 @@ class StatusLabel extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
+              style: Theme.of(context).textTheme.labelLarge
                   ?.copyWith(color: scheme.content),
             ),
           ),

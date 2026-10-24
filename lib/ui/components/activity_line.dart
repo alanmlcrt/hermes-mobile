@@ -25,91 +25,199 @@ class ActivityLine extends StatelessWidget {
   final bool completed;
   final bool paused;
 
-  /// Désactivé dans la conversation, où Otc porte seul la présence animée.
+  /// Petit dessin animé de l'activité en cours (catalogue des familles).
   final bool showIllustration;
   final ActivityCatalog catalog;
   final Map<String, Object?> details;
   final bool expanded;
   final ValueChanged<bool>? onChanged;
 
+  /// Capsule d'activité : dessin de la famille et libellé ; une fois
+  /// terminée, coche à la couleur du profil doublée du texte.
+  Widget _pill(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final style = theme.textTheme.labelMedium;
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: scheme.card,
+          shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sm + Spacing.xs,
+            vertical: Spacing.xs,
+          ),
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: Spacing.xs,
+            children: [
+              if (showIllustration)
+                ActivityIllustration(
+                  kind: kind,
+                  completed: completed,
+                  paused: paused,
+                  catalog: catalog,
+                ),
+              Text(label, style: style?.copyWith(fontWeight: FontWeight.w600)),
+              if (completed) ...[
+                Icon(Icons.check, size: IconSizes.sm, color: scheme.accent),
+                Text(
+                  Content.activityEnd,
+                  style: style?.copyWith(color: scheme.muted),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Carte d'outil : dessin, libellé et état sur une ligne, l'appel lui-même
+  /// (commande, fichier, requête) en dessous, en chasse fixe ; les détails
+  /// se déplient dans la même carte.
+  Widget _card(
+    BuildContext context,
+    String label,
+    String? summary,
+    bool expandable,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final style = theme.textTheme.labelLarge;
+    final header = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showIllustration) ...[
+          ActivityIllustration(
+            kind: kind,
+            completed: completed,
+            paused: paused,
+            catalog: catalog,
+          ),
+          const SizedBox(width: Spacing.sm),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: Spacing.xs,
+                children: [
+                  Text(
+                    label,
+                    style: style?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  if (completed) ...[
+                    Icon(Icons.check, size: IconSizes.sm, color: scheme.accent),
+                    Text(
+                      Content.activityEnd,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.muted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (summary != null) ...[
+                const SizedBox(height: Spacing.xs),
+                Text(
+                  kind == ActivityKind.command ? '\$ $summary' : summary,
+                  maxLines: expanded ? null : 1,
+                  overflow: expanded ? null : TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: ActivityTokens.detailFont,
+                    color: scheme.muted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (expandable)
+          Icon(
+            expanded ? Icons.expand_less : Icons.expand_more,
+            size: IconSizes.md,
+            color: scheme.muted,
+          ),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.all(Spacing.sm + Spacing.xs),
+      child: header,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final label = Content.activityLabel(kind);
     final scheme = Theme.of(context).colorScheme;
-    final heading = Semantics(
-      container: true,
-      label: completed ? '$label, ${Content.activityEndAccessible}' : label,
-      excludeSemantics: true,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final summary = ActivityDetails.summary(details);
+    final expandable =
+        onChanged != null && ActivityDetails.sections(details).isNotEmpty;
+    final spoken = completed
+        ? '$label, ${Content.activityEndAccessible}'
+        : label;
+    if (summary == null && !expandable) {
+      return Semantics(
+        container: true,
+        label: spoken,
+        excludeSemantics: true,
+        child: _pill(context, label),
+      );
+    }
+    final card = ExcludeSemantics(
+      child: _card(context, label, summary, expandable),
+    );
+    // Sans AnimatedSize : à durée nulle il se redessine pendant sa mise en page.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.card,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(color: scheme.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (showIllustration) ...[
-            ActivityIllustration(
-              kind: kind,
-              completed: completed,
-              paused: paused,
-              catalog: catalog,
-            ),
-            const SizedBox(width: Spacing.sm),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: Theme.of(context).textTheme.labelLarge),
-                if (completed)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.horizontal_rule,
-                        size: IconSizes.sm,
-                        color: scheme.content,
+          Semantics(
+            container: true,
+            label: spoken,
+            value: summary,
+            expanded: expandable ? expanded : null,
+            hint: !expandable
+                ? null
+                : expanded
+                ? Content.collapseDetails
+                : Content.expandDetails,
+            child: expandable
+                ? TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      foregroundColor: scheme.content,
+                      alignment: AlignmentDirectional.centerStart,
+                      minimumSize: const Size(
+                        ActivityTokens.command,
+                        ActivityTokens.command,
                       ),
-                      const SizedBox(width: Spacing.xs),
-                      const Flexible(child: Text(Content.activityEnd)),
-                    ],
-                  ),
-              ],
-            ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(Radii.lg),
+                      ),
+                    ),
+                    onPressed: () => onChanged!(!expanded),
+                    child: card,
+                  )
+                : card,
           ),
+          if (expandable && expanded) ...[
+            Divider(color: scheme.line),
+            ActivityDetails(details: details),
+          ],
         ],
       ),
-    );
-    if (onChanged == null || ActivityDetails.sections(details).isEmpty) {
-      return heading;
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Semantics(
-          container: true,
-          label: completed ? '$label, ${Content.activityEndAccessible}' : label,
-          expanded: expanded,
-          hint: expanded ? Content.collapseDetails : Content.expandDetails,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              minimumSize: const Size(
-                ActivityTokens.command,
-                ActivityTokens.command,
-              ),
-              alignment: Alignment.centerLeft,
-            ),
-            onPressed: () => onChanged!(!expanded),
-            child: Row(
-              children: [
-                Expanded(child: ExcludeSemantics(child: heading)),
-                ExcludeSemantics(
-                  child: Icon(
-                    expanded ? Icons.expand_less : Icons.expand_more,
-                    size: IconSizes.md,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (expanded) ActivityDetails(details: details),
-      ],
     );
   }
 }

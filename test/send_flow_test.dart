@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:hermes_mobile/data/storage/migrations.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hermes_mobile/data/outbox_repository.dart';
 import 'package:hermes_mobile/data/storage/database.dart';
@@ -488,7 +490,7 @@ void main() {
     );
     h = Harness();
     outbox = OutboxRepository(database, gateway: h.repository);
-    expect(await database.getVersion(), 8);
+    expect(await database.getVersion(), connectionMigrations.length);
     final row = (await database.query('outbox_drafts')).single;
     expect(row['body'], 'gardé');
     expect(row['revision'], 0);

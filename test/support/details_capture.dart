@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hermes_mobile/features/profiles/profile_accents.dart';
 import 'package:hermes_mobile/features/conversation/draft_view.dart';
 import 'package:hermes_mobile/features/conversation/draft_view_model.dart';
 import 'package:hermes_mobile/models/connection.dart';
@@ -150,7 +151,7 @@ void main() {
                     conversation: conversation,
                     key: draft.key,
                   ),
-                  onOpenProfiles: (_) async => null,
+                  accents: ProfileAccents(h.repository),
                 ),
               ),
             );
@@ -160,6 +161,16 @@ void main() {
                 (w) => w is ActivityLine && w.details['name'] == 'SYNTHETIC',
               ),
               matching: find.byType(TextButton),
+            );
+            await tester.scrollUntilVisible(
+              command(),
+              -100,
+              scrollable: find
+                  .descendant(
+                    of: find.byType(ListView).first,
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
             );
             await tester.ensureVisible(command());
             final focus = Focus.of(
@@ -175,7 +186,13 @@ void main() {
             await tester.sendKeyEvent(LogicalKeyboardKey.enter);
             await tester.pumpAndSettle();
             expect(find.byType(ActivityDetails), findsOneWidget);
-            expect(find.byType(ActivityIllustration), findsNothing);
+            expect(
+              find.descendant(
+                of: find.byType(ActivityLine),
+                matching: find.byType(ActivityIllustration),
+              ),
+              findsOneWidget,
+            );
             final loads = conversation.loaded.length;
             conversation.set(key, projection(complete: true));
             await tester.pumpAndSettle();
@@ -186,7 +203,13 @@ void main() {
             expect(focus.hasFocus, isTrue);
             expect(find.byType(ActivityDetails), findsOneWidget);
             expect(find.text(Content.detailOutput), findsOneWidget);
-            expect(find.byType(ActivityIllustration), findsNothing);
+            expect(
+              find.descendant(
+                of: find.byType(ActivityLine),
+                matching: find.byType(ActivityIllustration),
+              ),
+              findsOneWidget,
+            );
             expect(
               tester
                   .getSemantics(

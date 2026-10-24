@@ -33,13 +33,47 @@ class ActivityDetails extends StatelessWidget {
     };
   }
 
+  /// L'appel en une ligne (commande, chemin, requête, adresse…), d'après
+  /// les arguments reçus ; nul si rien de lisible.
+  static String? summary(Map<String, Object?> details) {
+    String? line(Object? value) {
+      if (value is! String) return null;
+      final text = value.trim();
+      return text.isEmpty ? null : text.split('\n').first;
+    }
+
+    final args = details['args'];
+    if (args is Map) {
+      for (final key in const [
+        'command',
+        'code',
+        'path',
+        'file_path',
+        'query',
+        'url',
+        'pattern',
+        'prompt',
+        'goal',
+        'name',
+      ]) {
+        final value = line(args[key]);
+        if (value != null) return value;
+      }
+    }
+    // Comme pour les sections : des arguments reçus masquent leur repli.
+    return line(details['context']) ??
+        (details.containsKey('args')
+            ? null
+            : line(details['args_text']) ?? line(details['preview']));
+  }
+
   static String _text(Object value) => value is String
       ? value
       : const JsonEncoder.withIndent('  ').convert(value);
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(Spacing.sm),
+    padding: const EdgeInsets.all(Spacing.sm + Spacing.xs),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -84,37 +118,47 @@ class _DetailSectionState extends State<_DetailSection> {
           header: true,
           child: Text(
             widget.title,
-            style: Theme.of(context).textTheme.labelLarge,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.muted,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const SizedBox(height: Spacing.xs),
-        ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxHeight: ActivityTokens.detailHeight,
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.codeSurface,
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          child: SelectionArea(
-            child: Scrollbar(
-              controller: _vertical,
-              thumbVisibility: true,
-              child: SingleChildScrollView(
+          padding: const EdgeInsets.only(left: Spacing.sm, top: Spacing.sm),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: ActivityTokens.detailHeight,
+            ),
+            child: SelectionArea(
+              child: Scrollbar(
                 controller: _vertical,
-                primary: false,
-                child: Scrollbar(
-                  controller: _horizontal,
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _vertical,
+                  primary: false,
+                  child: Scrollbar(
                     controller: _horizontal,
-                    primary: false,
-                    scrollDirection: Axis.horizontal,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: Spacing.sm,
-                        bottom: Spacing.sm,
-                      ),
-                      child: Text(
-                        widget.text,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(fontFamily: ActivityTokens.detailFont),
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      controller: _horizontal,
+                      primary: false,
+                      scrollDirection: Axis.horizontal,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          right: Spacing.sm,
+                          bottom: Spacing.sm,
+                        ),
+                        child: Text(
+                          widget.text,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontFamily: ActivityTokens.detailFont),
+                        ),
                       ),
                     ),
                   ),

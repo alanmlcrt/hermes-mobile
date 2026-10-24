@@ -162,6 +162,22 @@ class ComponentGallery extends StatelessWidget {
       (GalleryContent.messageSection, _messages),
       (GalleryContent.activitySection, _activityLines),
       (GalleryContent.workStateSection, _workStates),
+      (
+        Content.stopDemo,
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Composer(stopping: true, onStop: () {}),
+            const Text(Content.stopReminder),
+            const StatusLabel(
+              icon: Icons.stop_circle_outlined,
+              label: Content.stopRequested,
+            ),
+            const WorkStateLabel(state: WorkState.stopped),
+            const Text(Content.stopUnknown),
+          ],
+        ),
+      ),
       (GalleryContent.historySection, _history),
       (
         Content.profilesTitle,

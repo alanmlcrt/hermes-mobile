@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hermes_mobile/features/profiles/profile_accents.dart';
 import 'package:hermes_mobile/features/conversation/draft_view.dart';
 import 'package:hermes_mobile/features/conversation/draft_view_model.dart';
 import 'package:hermes_mobile/models/connection.dart';
@@ -109,7 +110,7 @@ void main() {
                 conversation: conversation,
                 key: draft.key,
               ),
-              onOpenProfiles: (_) async => null,
+              accents: ProfileAccents(h.repository),
             ),
           ),
         );

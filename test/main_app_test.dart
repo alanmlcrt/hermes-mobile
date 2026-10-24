@@ -16,6 +16,11 @@ import 'package:hermes_mobile/ui/components/companion_background_editor.dart';
 import 'package:hermes_mobile/ui/content.dart';
 
 import 'support/connection_fakes.dart';
+import 'support/home_helper.dart';
+
+/// Otc est retiré de l'interface en attendant sa refonte (2026-10-23) :
+/// ces tests reviendront avec lui.
+const otcRemoved = true;
 
 void main() {
   Future<(_BackgroundAppGateway, _AppBackgrounds)> openBackgroundApp(
@@ -32,6 +37,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    // Accueil : les réglages mènent à l'écran du profil et de son compagnon.
+    await tester.tap(find.byTooltip(Content.settings));
+    await tester.pumpAndSettle();
     expect(find.byType(ProfileCompanionPanel), findsOneWidget);
     await tester.tap(find.text(Content.backgroundTitle));
     await tester.pumpAndSettle();
@@ -42,7 +50,7 @@ void main() {
     'MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon',
     (tester) async {
       final (_, store) = await openBackgroundApp(tester);
-      await tester.tap(find.text(Content.mintSky));
+      await tester.tap(find.bySemanticsLabel(RegExp('^${Content.mintSky}')));
       await tester.pump();
       CompanionPalette panelPalette() => tester
           .widget<ProfileCompanionPanel>(
@@ -62,15 +70,17 @@ void main() {
       await tester.tap(find.text(Content.backgroundTitle));
       await tester.pumpAndSettle();
       expect(
-        find.text('${Content.mintSky} — ${Content.backgroundSelected}'),
+        find.bySemanticsLabel(
+          '${Content.mintSky} — ${Content.backgroundSelected}',
+        ),
         findsOneWidget,
       );
-      await tester.tap(find.text(Content.roseLilac));
+      await tester.tap(find.bySemanticsLabel(RegExp('^${Content.roseLilac}')));
       await tester.tap(find.text(Content.backgroundCancel));
       await tester.pumpAndSettle();
       await tester.tap(find.text(Content.backgroundTitle));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(Content.roseLilac));
+      await tester.tap(find.bySemanticsLabel(RegExp('^${Content.roseLilac}')));
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(panelPalette(), CompanionPalette.mintSky);
@@ -78,6 +88,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
     },
+    skip: otcRemoved,
   );
 
   for (final fail in [false, true]) {
@@ -99,6 +110,7 @@ void main() {
         expect(gateway.disposed, isTrue);
         expect(tester.takeException(), isNull);
       },
+      skip: otcRemoved,
     );
   }
   for (final brightness in Brightness.values) {
@@ -116,6 +128,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await enterHome(tester);
 
       final label = find.text(Content.connectTitle);
       expect(label, findsOneWidget);

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' show PointMode;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -290,16 +291,29 @@ class _RabbitCompanionState extends State<RabbitCompanion>
                           RabbitTokens.glance.inMilliseconds;
                       final envelope = _glancing
                           ? (t < travel
-                                ? Curves.easeInOut.transform(t / travel)
+                                ? Curves.easeInOutBack.transform(t / travel)
                                 : t > 1 - travel
-                                ? Curves.easeInOut.transform((1 - t) / travel)
+                                ? Curves.easeInOutBack.transform(
+                                    (1 - t) / travel,
+                                  )
                                 : 1.0)
                           : 0.0;
                       final reaction = _reacting && !_fixedReaction
                           ? math.sin(t * math.pi)
                           : 0.0;
+                      final life = _reacting && !_fixedReaction
+                          ? _hopLife(t)
+                          : _glancing
+                          ? _glanceLife(t, envelope, travel, _direction)
+                          : _Life.still;
                       return CustomPaint(
                         painter: RabbitPainter(
+                          blink: life.blink,
+                          lift: life.lift,
+                          squash: life.squash,
+                          earSway: life.earSway,
+                          earSwayRight: life.earSwayRight,
+                          earSpread: life.earSpread,
                           gaze: _reacting
                               ? reaction
                               : widget.pose == RabbitPose.reading &&
@@ -337,6 +351,142 @@ class _RabbitCompanionState extends State<RabbitCompanion>
       ),
     );
   }
+}
+
+/// Paramètres secondaires d'un geste, calculés à partir de sa progression.
+class _Life {
+  const _Life({
+    this.blink = 0,
+    this.lift = 0,
+    this.squash = 0,
+    this.earSway = 0,
+    this.earSwayRight = 0,
+    this.earSpread = 0,
+  });
+  static const still = _Life();
+  final double blink;
+  final double lift;
+  final double squash;
+  final double earSway;
+  final double earSwayRight;
+  final double earSpread;
+}
+
+/// Clignement : la paupière tombe vite puis se relève plus lentement.
+double _blink(double t, double start, double length) {
+  final u = (t - start) / length;
+  if (u <= 0 || u >= 1) return 0;
+  const close = .35;
+  final s = u < close
+      ? math.sin(u / close * math.pi / 2)
+      : math.cos((u - close) / (1 - close) * math.pi / 2);
+  return s * s;
+}
+
+/// Silhouette de peluche : un œuf plus étroit au menton, légèrement bosselé
+/// comme un tissu rembourré.
+final Path _headShape = () {
+  final head = RabbitTokens.head;
+  final path = Path();
+  const steps = 72;
+  for (var i = 0; i <= steps; i++) {
+    final a = i / steps * 2 * math.pi;
+    final lumps =
+        1 +
+        RabbitTokens.headLumps *
+            (math.sin(3 * a + .7) + .6 * math.sin(5 * a + 2.1));
+    final x =
+        head.center.dx +
+        head.width /
+            2 *
+            math.cos(a) *
+            (1 - RabbitTokens.eggTaper * math.sin(a)) *
+            lumps;
+    final y = head.center.dy + head.height / 2 * math.sin(a) * lumps;
+    if (i == 0) {
+      path.moveTo(x, y);
+    } else {
+      path.lineTo(x, y);
+    }
+  }
+  return path..close();
+}();
+
+/// Points du grain de feutre, tirés une fois sur la face avant de la tête.
+final List<Offset> _grain = () {
+  final random = math.Random(RabbitTokens.grainSeed);
+  final head = RabbitTokens.head;
+  final points = <Offset>[];
+  while (points.length < RabbitTokens.grainCount) {
+    final x = random.nextDouble() * 2 - 1;
+    final y = random.nextDouble() * 2 - 1;
+    if (x * x + y * y >= 1) continue;
+    points.add(
+      Offset(
+        head.center.dx + x * head.width / 2,
+        head.center.dy + y * head.height / 2,
+      ),
+    );
+  }
+  return points;
+}();
+
+/// Oscillation amortie lancée à [start] (secondes), éteinte en fin de geste
+/// pour que le retour au repos ne saute pas.
+double _wobble(double seconds, double start, double t) {
+  final s = seconds - start;
+  if (s <= 0) return 0;
+  return math.exp(-RabbitTokens.wobbleDamping * s) *
+      math.sin(s * RabbitTokens.wobbleFrequency * 2 * math.pi) *
+      math.min(1, (1 - t) * 5);
+}
+
+/// Regard de côté : clignement au départ, léger étirement pendant les
+/// rotations, oreilles qui traînent derrière la tête puis la rattrapent.
+_Life _glanceLife(double t, double envelope, double travel, double direction) {
+  final seconds = t * RabbitTokens.glance.inMilliseconds / 1000;
+  final back = (1 - travel) * RabbitTokens.glance.inMilliseconds / 1000;
+  double drag(double delay) =>
+      -direction *
+      RabbitTokens.earDrag *
+      (_wobble(seconds, delay, t) - _wobble(seconds, back + delay, t));
+  return _Life(
+    blink: _blink(t, .02, .2),
+    squash: RabbitTokens.turnStretch * math.sin(envelope * math.pi),
+    earSway: drag(0),
+    earSwayRight: drag(RabbitTokens.earDelay),
+  );
+}
+
+/// Chatouille : tassement d'anticipation, saut étiré, atterrissage amorti.
+_Life _hopLife(double t) {
+  const takeoff = .12;
+  const landing = .5;
+  final seconds = t * RabbitTokens.tickle.inMilliseconds / 1000;
+  final air = t > takeoff && t < landing
+      ? math.sin((t - takeoff) / (landing - takeoff) * math.pi)
+      : 0.0;
+  final squash = t < takeoff
+      ? -RabbitTokens.hopSquash * math.sin(t / takeoff * math.pi)
+      : t < landing
+      ? RabbitTokens.hopStretch * air
+      : -RabbitTokens.hopSquash *
+            _wobble(
+              seconds,
+              landing * RabbitTokens.tickle.inMilliseconds / 1000,
+              t,
+            );
+  return _Life(
+    lift: -RabbitTokens.hopHeight * air,
+    squash: squash,
+    earSpread:
+        RabbitTokens.earFlop *
+        _wobble(
+          seconds,
+          takeoff * RabbitTokens.tickle.inMilliseconds / 1000,
+          t,
+        ),
+  );
 }
 
 /// Observe retained layer composition, including ancestor-only layout or
@@ -421,12 +571,35 @@ class RabbitPainter extends CustomPainter {
     this.wiggle = 0,
     this.tickled = false,
     this.concentrating = false,
+    this.blink = 0,
+    this.lift = 0,
+    this.squash = 0,
+    this.earSway = 0,
+    this.earSwayRight = 0,
+    this.earSpread = 0,
   });
   final double gaze;
   final double gazeDown;
   final double wiggle;
   final bool tickled;
   final bool concentrating;
+
+  /// 0 yeux ouverts, 1 fermés.
+  final double blink;
+
+  /// Décalage vertical du corps (repère de vue, négatif vers le haut).
+  final double lift;
+
+  /// Étirement vertical à volume à peu près constant, ancré au sol.
+  final double squash;
+
+  /// Inertie d'un regard sur l'oreille gauche, puis la droite (décalée, pour
+  /// que les deux ne bougent jamais comme un seul bloc).
+  final double earSway;
+  final double earSwayRight;
+
+  /// Ouverture symétrique des oreilles (saut).
+  final double earSpread;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -439,7 +612,6 @@ class RabbitPainter extends CustomPainter {
       (size.height - RabbitTokens.viewHeight * scale) / 2,
     );
     canvas.scale(scale);
-    final coat = Paint()..color = RabbitTokens.coat;
     final outline = Paint()
       ..color = RabbitTokens.outline
       ..style = PaintingStyle.stroke
@@ -455,64 +627,221 @@ class RabbitPainter extends CustomPainter {
         RabbitTokens.faceStroke,
         RabbitTokens.minimumFaceStroke / scale,
       )
-      ..strokeCap = StrokeCap.round;
-    void ear(Path outside, Path inside, Offset pivot, double angle) {
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final head = RabbitTokens.head;
+    final center = head.center;
+    final rx = head.width / 2;
+    final ry = head.height / 2;
+    final yaw = gaze * RabbitTokens.maxYaw;
+    final pitch = gazeDown * RabbitTokens.maxPitch;
+
+    // Ombre de contact : reste au sol et se resserre pendant le saut.
+    final shadowBox = RabbitTokens.groundShadow;
+    final spread = 1 + lift * RabbitTokens.shadowShrink;
+    canvas.save();
+    canvas.translate(shadowBox.center.dx, shadowBox.center.dy);
+    canvas.scale(spread * shadowBox.width / shadowBox.height, spread);
+    final shadowCircle = Rect.fromCircle(
+      center: Offset.zero,
+      radius: shadowBox.height / 2,
+    );
+    canvas.drawOval(
+      shadowCircle,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: [RabbitTokens.shadow, RabbitTokens.shadowClear],
+        ).createShader(shadowCircle),
+    );
+    canvas.restore();
+
+    final ground = RabbitTokens.groundPivot;
+    canvas.translate(ground.dx, ground.dy + lift);
+    canvas.scale(1 - squash * .6, 1 + squash);
+    canvas.translate(-ground.dx, -ground.dy);
+
+    // Oreilles plantées sur le crâne : elles glissent autour de la tête et
+    // s'amincissent en tournant, avec un dégradé qui suit la lumière.
+    final outside = RabbitTokens.ear;
+    final inside = RabbitTokens.earInside;
+    final earBounds = outside.getBounds();
+    final earCoat = Paint()
+      ..shader = const LinearGradient(
+        colors: [RabbitTokens.coat, RabbitTokens.coatShade],
+      ).createShader(earBounds);
+    final earInner = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [RabbitTokens.innerEar, RabbitTokens.innerEarDeep],
+      ).createShader(inside.getBounds());
+    void ear(double side, Offset pivot, double angle) {
+      final longitude = side * RabbitTokens.earLongitude + yaw;
       canvas.save();
-      canvas.translate(pivot.dx, pivot.dy);
+      canvas.translate(
+        center.dx + rx * RabbitTokens.earRadius * math.sin(longitude),
+        pivot.dy,
+      );
       canvas.rotate(angle);
-      canvas.translate(-pivot.dx, -pivot.dy);
-      canvas.drawPath(outside, coat);
+      canvas.scale(
+        math.cos(longitude) /
+            math.cos(RabbitTokens.earLongitude) *
+            (side > 0 ? RabbitTokens.rightEarFlare : 1),
+        1,
+      );
+      canvas.drawPath(outside, earCoat);
       canvas.drawPath(outside, outline);
-      canvas.drawPath(inside, Paint()..color = RabbitTokens.innerEar);
+      canvas.drawPath(inside, earInner);
       canvas.restore();
     }
 
+    final follow = gaze * RabbitTokens.earFollow;
     ear(
-      RabbitTokens.leftEar,
-      RabbitTokens.leftInner,
+      -1,
       RabbitTokens.leftPivot,
-      wiggle * RabbitTokens.earWiggle,
+      RabbitTokens.leftEarAngle +
+          wiggle * RabbitTokens.earWiggle +
+          follow +
+          earSway -
+          earSpread,
     );
     ear(
-      RabbitTokens.rightEar,
-      RabbitTokens.rightInner,
+      1,
       RabbitTokens.rightPivot,
-      -wiggle * RabbitTokens.earWiggle,
+      RabbitTokens.rightEarAngle -
+          wiggle * RabbitTokens.earWiggle +
+          follow +
+          earSwayRight +
+          earSpread,
     );
+
+    // Tête : œuf de peluche éclairé, la lumière ne tourne pas avec le
+    // visage ; il penche légèrement du côté où il regarde.
     canvas.save();
-    canvas.translate(
-      RabbitTokens.headPivot.dx + gaze * RabbitTokens.turnDistance,
-      RabbitTokens.headPivot.dy,
+    canvas.translate(RabbitTokens.headPivot.dx, RabbitTokens.headPivot.dy);
+    canvas.rotate(
+      wiggle * RabbitTokens.headTilt + gaze * RabbitTokens.headRoll,
     );
-    canvas.rotate(wiggle * RabbitTokens.headTilt);
-    canvas.scale(1 - gaze.abs() * RabbitTokens.headForeshortening, 1);
     canvas.translate(-RabbitTokens.headPivot.dx, -RabbitTokens.headPivot.dy);
-    canvas.drawOval(RabbitTokens.head, coat);
-    canvas.drawOval(RabbitTokens.head, outline);
-    canvas.translate(
-      RabbitTokens.headPivot.dx + gaze * RabbitTokens.gazeDistance,
-      gazeDown * RabbitTokens.gazeDistance,
+    canvas.drawPath(
+      _headShape,
+      Paint()
+        ..shader = RadialGradient(
+          center: Alignment(RabbitTokens.light.dx, RabbitTokens.light.dy),
+          radius: RabbitTokens.lightReach,
+          colors: const [
+            RabbitTokens.coat,
+            RabbitTokens.coatShade,
+            RabbitTokens.coatDeep,
+          ],
+          stops: const [0, .55, 1],
+        ).createShader(head),
     );
-    canvas.scale(1 - gaze.abs() * RabbitTokens.faceForeshortening, 1);
-    canvas.translate(-RabbitTokens.headPivot.dx, 0);
+    // Les traits qui passent derrière le bord de la sphère disparaissent.
+    canvas.save();
+    canvas.clipPath(_headShape);
+
+    // Chaque point du visage dessiné de face est replacé sur l'ellipsoïde
+    // tourné (lacet puis tangage) : les traits épousent la courbure.
+    final cosYaw = math.cos(yaw);
+    final sinYaw = math.sin(yaw);
+    final cosPitch = math.cos(pitch);
+    final sinPitch = math.sin(pitch);
+    (Offset, double) place(Offset flat) {
+      final x = (flat.dx - center.dx) / rx;
+      final y = (flat.dy - center.dy) / ry;
+      final z = math.sqrt(math.max(0, 1 - x * x - y * y));
+      final turnedX = x * cosYaw + z * sinYaw;
+      final turnedZ = z * cosYaw - x * sinYaw;
+      final tiltedY = y * cosPitch + turnedZ * sinPitch;
+      return (
+        Offset(center.dx + rx * turnedX, center.dy + ry * tiltedY),
+        turnedZ * cosPitch - y * sinPitch,
+      );
+    }
+
+    Offset project(Offset flat) => place(flat).$1;
+
+    // Grain de feutre fixé à la surface : il tourne avec la tête, seuls les
+    // points encore face à nous sont peints.
+    final dark = <Offset>[];
+    final light = <Offset>[];
+    for (var i = 0; i < _grain.length; i++) {
+      final (point, depth) = place(_grain[i]);
+      if (depth > 0) (i.isEven ? dark : light).add(point);
+    }
+    final grain = Paint()
+      ..strokeWidth = RabbitTokens.grainSize
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPoints(
+      PointMode.points,
+      dark,
+      grain..color = RabbitTokens.grainDark,
+    );
+    canvas.drawPoints(
+      PointMode.points,
+      light,
+      grain..color = RabbitTokens.grainLight,
+    );
+
+    // ponytail: rééchantillonnage à chaque image, quelques contours courts.
+    Path wrap(Path flat) {
+      final wrapped = Path();
+      for (final contour in flat.computeMetrics()) {
+        final steps = math.max(
+          8,
+          (contour.length / RabbitTokens.wrapStep).ceil(),
+        );
+        for (var i = 0; i <= steps; i++) {
+          final point = project(
+            contour.getTangentForOffset(contour.length * i / steps)!.position,
+          );
+          if (i == 0) {
+            wrapped.moveTo(point.dx, point.dy);
+          } else {
+            wrapped.lineTo(point.dx, point.dy);
+          }
+        }
+        if (contour.isClosed) wrapped.close();
+      }
+      return wrapped;
+    }
+
+    // Coutures de la peluche : front et milieu du visage.
+    canvas.drawPath(
+      wrap(RabbitTokens.seams),
+      Paint()
+        ..color = RabbitTokens.seam
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = RabbitTokens.seamStroke
+        ..strokeCap = StrokeCap.round,
+    );
+
+    final open =
+        (concentrating ? RabbitTokens.concentrationEyeScale : 1.0) *
+        (1 - blink * RabbitTokens.blinkClosure);
     if (tickled) {
-      canvas.drawPath(RabbitTokens.happyEyes, line);
+      canvas.drawPath(wrap(RabbitTokens.happyEyes), line);
     } else {
       for (final eye in [RabbitTokens.leftEye, RabbitTokens.rightEye]) {
-        canvas.drawOval(
-          concentrating
-              ? Rect.fromCenter(
-                  center: eye.center,
-                  width: eye.width,
-                  height: eye.height * RabbitTokens.concentrationEyeScale,
-                )
-              : eye,
+        canvas.drawPath(
+          wrap(
+            Path()..addOval(
+              Rect.fromCenter(
+                center: eye.center,
+                width: eye.width,
+                height: eye.height * open,
+              ),
+            ),
+          ),
           ink,
         );
       }
     }
-    canvas.drawPath(RabbitTokens.nose, ink);
-    canvas.drawPath(RabbitTokens.mouth, line);
+    canvas.drawPath(wrap(RabbitTokens.mouth), line);
+    canvas.drawPath(wrap(RabbitTokens.nose), ink);
+    canvas.restore();
+    canvas.drawPath(_headShape, outline);
     canvas.restore();
   }
 
@@ -522,5 +851,11 @@ class RabbitPainter extends CustomPainter {
       oldDelegate.gazeDown != gazeDown ||
       oldDelegate.wiggle != wiggle ||
       oldDelegate.tickled != tickled ||
-      oldDelegate.concentrating != concentrating;
+      oldDelegate.concentrating != concentrating ||
+      oldDelegate.blink != blink ||
+      oldDelegate.lift != lift ||
+      oldDelegate.squash != squash ||
+      oldDelegate.earSway != earSway ||
+      oldDelegate.earSwayRight != earSwayRight ||
+      oldDelegate.earSpread != earSpread;
 }

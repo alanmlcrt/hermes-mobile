@@ -26,6 +26,7 @@ class ConversationRepository implements ConversationGateway {
     DateTime Function()? now,
     this.timeout = rpcTimeout,
   }) : _now = now ?? (() => DateTime.now().toUtc()) {
+    _lastSelectedProfile = gateway.snapshot.selectedProfile;
     _events = gateway.events.listen(_onEvent);
     _snapshots = gateway.snapshots.listen(_onSnapshot);
   }
@@ -38,6 +39,32 @@ class ConversationRepository implements ConversationGateway {
   /// Posé par l'outbox : seul appelant de `session.resume`.
   SessionResumer? resumer;
   final _bindings = <TimelineKey, ({String runtime, int generation})>{};
+  final _stopRevisions = <TimelineKey, int>{};
+  final _pendingBoundaries = <TimelineKey, int>{};
+  ProfileKey? _lastSelectedProfile;
+
+  /// Lecture sans attente : une fin reçue mais encore en file invalide déjà la cible.
+  StopTarget? stopTarget(TimelineKey key) {
+    final binding = _bindings[key];
+    final p = projection(key);
+    if (binding == null ||
+        binding.generation != gateway.socketGeneration ||
+        gateway.snapshot.link != LinkState.connected ||
+        gateway.snapshot.connection?.key != key.connection ||
+        resyncing(key) ||
+        (_pendingBoundaries[key] ?? 0) > 0 ||
+        p.workState != WorkState.running) {
+      return null;
+    }
+    return StopTarget(
+      key,
+      binding.runtime,
+      binding.generation,
+      p.turns,
+      _stopRevisions[key] ?? 0,
+    );
+  }
+
   final _cache = <TimelineKey, TimelineProjection>{};
   final _queues = <TimelineKey, Future<void>>{};
   final _changes = StreamController<TimelineKey>.broadcast(sync: true);
@@ -93,6 +120,7 @@ class ConversationRepository implements ConversationGateway {
     if (previous?.runtime == runtime && previous?.generation == generation) {
       return;
     }
+    _stopRevisions.update(key, (v) => v + 1, ifAbsent: () => 1);
     // La resynchronisation décide elle-même du curseur.
     if (_resyncing.contains(key)) return;
     // Mémoire aussitôt : une resynchronisation déjà en file ne rejoue pas l'ancien curseur.
@@ -147,14 +175,29 @@ class ConversationRepository implements ConversationGateway {
     for (final entry in _bindings.entries) {
       if (entry.value.runtime == event.sessionId &&
           entry.value.generation == event.generation) {
+        if (_isDuplicate(projection(entry.key), event)) continue;
         final effect = mapping.map(event.type, event.payload).effect;
+        final boundary =
+            effect == EventEffect.turnStart || effect == EventEffect.terminal;
+        if (boundary) {
+          _stopRevisions.update(entry.key, (v) => v + 1, ifAbsent: () => 1);
+          _pendingBoundaries.update(entry.key, (v) => v + 1, ifAbsent: () => 1);
+        }
         // Le flux de texte est écrit par lots ; début et fin de tour aussitôt.
         final streaming =
             effect == EventEffect.textDelta ||
             effect == EventEffect.interim ||
             effect == EventEffect.activity;
         unawaited(
-          _enqueue(entry.key, (p) => _apply(p, event), immediate: !streaming),
+          _enqueue(
+            entry.key,
+            (p) => _apply(p, event),
+            immediate: !streaming,
+          ).whenComplete(() {
+            if (boundary) {
+              _pendingBoundaries.update(entry.key, (v) => v - 1);
+            }
+          }),
         );
       }
     }
@@ -163,6 +206,15 @@ class ConversationRepository implements ConversationGateway {
   /// Perte de socket : un tour en cours n'est ni terminé ni échoué, il n'est
   /// plus synchronisé.
   void _onSnapshot(ConnectionSnapshot snapshot) {
+    final profileChanged = snapshot.selectedProfile != _lastSelectedProfile;
+    _lastSelectedProfile = snapshot.selectedProfile;
+    for (final key in _bindings.keys) {
+      if (snapshot.link != LinkState.connected ||
+          snapshot.connection?.key != key.connection ||
+          profileChanged) {
+        _stopRevisions.update(key, (v) => v + 1, ifAbsent: () => 1);
+      }
+    }
     if (snapshot.link == LinkState.connected) {
       // Une fois par nouvelle socket, pour les fils affichés ou actifs.
       if (gateway.socketGeneration == _seenGeneration || !_canResync) return;
@@ -261,6 +313,7 @@ class ConversationRepository implements ConversationGateway {
     final resumer = this.resumer;
     if (resumer == null || _disposed) return;
     _resyncing.add(key);
+    _stopRevisions.update(key, (v) => v + 1, ifAbsent: () => 1);
     try {
       final before = _bindings[key];
       final current = _cache[key] ?? await _read(key);
@@ -499,12 +552,15 @@ class ConversationRepository implements ConversationGateway {
         )
       : null;
 
+  static bool _isDuplicate(TimelineProjection p, GatewayEvent e) =>
+      e.seq != null &&
+      p.seq != null &&
+      p.replayEpoch == e.replayEpoch &&
+      e.seq! <= p.seq!;
+
   TimelineProjection? _apply(TimelineProjection p, GatewayEvent e) {
     final seq = e.seq;
-    if (seq != null &&
-        p.seq != null &&
-        p.replayEpoch == e.replayEpoch &&
-        seq <= p.seq!) {
+    if (_isDuplicate(p, e)) {
       return null;
     }
     return _reduce(p, e, mapping.map(e.type, e.payload)).copyWith(
@@ -538,7 +594,11 @@ class ConversationRepository implements ConversationGateway {
                 rawId.isNotEmpty
             ? rawId
             : null;
-        final kind = id == null ? ActivityKind.unknown : m.activityKind!;
+        final kind = id == null
+            ? ActivityKind.unknown
+            : m.activityKind == ActivityKind.tool
+            ? ActivityKind.forTool(e.payload['name'])
+            : m.activityKind!;
         // Un début reçu après le terminal précédent, mais avant tout accusé,
         // reste provisoire : ne jamais reprendre la fin d'un ancien même ID.
         final betweenTurns =

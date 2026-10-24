@@ -32,3 +32,17 @@ Les textes peuvent être expurgés ou tronqués par le serveur : leurs marqueurs
 conservés et l’interface ne promet pas une sortie complète. Un snapshot textuel ne
 reconstitue aucun détail. Toutes les fixtures outil sont synthétiques ; la
 disponibilité sur une installation réelle reste **unverified**.
+# Arrêt du travail (story 3.5)
+
+`session.interrupt` est documenté dans le contrat OpenRPC versionné : runtime
+`session_id`, `profile`, et `expected_hosted_task_id` optionnel. Le mobile ne
+reçoit pas d'identité de tâche hébergée fiable ; il omet ce dernier champ et
+revérifie son repère local de tour avant transmission. Cela ne garantit pas
+l'isolation entre clients distants.
+
+La réponse `interrupted` / `not_interrupted` est un résultat RPC, jamais un
+terminal. Seul `message.complete.status=interrupted` confirme l'arrêt dans la
+projection. Refus, méthode absente, réponse invalide et résultat incertain sont
+affichés ; aucun protocole alternatif ni renvoi automatique n'est utilisé.
+Ces preuves documentaires et les tests synthétiques ne valident pas
+l'installation personnelle de Hermes.

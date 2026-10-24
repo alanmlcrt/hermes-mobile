@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hermes_mobile/features/profiles/profile_accents.dart';
 import 'package:hermes_mobile/features/conversation/draft_view.dart';
 import 'package:hermes_mobile/features/conversation/draft_view_model.dart';
 import 'package:hermes_mobile/models/connection.dart';
@@ -66,7 +67,7 @@ Future<MemoryConversation> page(
           conversation: memory,
           key: draft.key,
         ),
-        onOpenProfiles: (_) async => null,
+        accents: ProfileAccents(harness.repository),
       ),
     ),
   );
@@ -200,6 +201,7 @@ void main() {
       );
       final memory = await page(tester, projection([history, first, second]));
       await tester.ensureVisible(command('A'));
+      await tester.pumpAndSettle();
       await tester.tap(command('A'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
@@ -212,9 +214,12 @@ void main() {
             )
             .first,
       );
+      await tester.ensureVisible(command('B'));
+      await tester.pumpAndSettle();
       await tester.tap(command('B'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(command('A'));
+      await tester.pumpAndSettle();
       await tester.tap(command('A'));
       await tester.pumpAndSettle();
       expect(tester.widget<ActivityLine>(action('A')).expanded, isFalse);

@@ -23,3 +23,25 @@
 - source_spec: spec-compagnon-lapin-lot-1.md
   summary: Réconcilier les descriptions historiques de teinte et la maquette de contexte avec la planche v5.
   evidence: Sources UX préexistantes suivies à la demande utilisateur ; table taupe et ancien SVG à oreille pliée malgré la priorité v5 explicitement blanche sans pli. Aucun changement métier causé par ce lot.
+
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Distinguer chargement, erreur et liste vide sur l’accueil, empêcher l’ouverture prématurée d’un brouillon et permettre l’actualisation.
+  evidence: Blind 3/4/5 et Edge 2 : FutureBuilder ignore hasError, onTap reste actif et _latest est final ; comportement antérieur à 3.5.
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Rendre les pastilles de couleur activables au lecteur d’écran.
+  evidence: Blind 6 et Edge 3 : Semantics excludeSemantics masque InkResponse sans exposer onTap ; réglages préexistants.
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Protéger les sélections de couleur concurrentes contre le rollback d’une ancienne écriture échouée.
+  evidence: Blind 7 : ProfileAccents.choose restaure previous sans vérifier la sélection actuelle ; module préexistant inchangé.
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Faire tenir les identifiants de profil longs avec texte agrandi dans les réglages.
+  evidence: Blind 8 : Text(profile.value) non contraint dans ListTile.trailing ; surface préexistante.
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Regrouper l’historique par date calendaire, y compris lors du passage à l’heure d’été.
+  evidence: Edge 4 : durée entre deux minuits locaux de 23 h ramenée à zéro jour par inDays ; fonction antérieure à 3.5.
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Vérifier la sélection et la persistance des accents via leurs consommateurs.
+  evidence: Verification 1 : aucune assertion sur choose/store.save, réouverture SQLite et isolement ; le test de migration écrit directement le SQL. Surface préexistante.
+- source_spec: `spec-3-5-arret-travail.md`
+  summary: Vérifier la classification d’un outil reconnu depuis les événements du repository jusqu’à la projection persistée.
+  evidence: Verification 2 : forTool est testé seul ; le branchement repository préexistait à 3.5 et aucun scénario reçu reconnu ne le couvre.

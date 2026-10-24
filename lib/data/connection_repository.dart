@@ -59,6 +59,7 @@ class ConnectionRepository implements ConnectionGateway {
     Capability('session.events.since', CapabilityState.unverified),
     Capability('session.create.idempotency_key', CapabilityState.unverified),
     Capability('file.attach', CapabilityState.unverified),
+    Capability('session.interrupt', CapabilityState.unverified),
   ];
   @override
   ConnectionSnapshot get snapshot => _snapshot;

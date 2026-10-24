@@ -115,4 +115,23 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'PRIMARY KEY (origin, connection_key, profile_key))',
     );
   },
+  (db) async {
+    await db.execute(
+      'CREATE TABLE profile_accents ('
+      'origin TEXT NOT NULL COLLATE BINARY, '
+      'connection_key TEXT NOT NULL COLLATE BINARY, '
+      'profile_key TEXT NOT NULL COLLATE BINARY, accent_id TEXT NOT NULL, '
+      'PRIMARY KEY (origin, connection_key, profile_key))',
+    );
+  },
+  (db) async {
+    await db.execute(
+      'CREATE TABLE outbox_stops ('
+      'operation_key TEXT PRIMARY KEY, draft_key TEXT NOT NULL, '
+      'connection_key TEXT NOT NULL, profile_key TEXT NOT NULL, '
+      'stored_session_id TEXT NOT NULL, runtime TEXT NOT NULL, '
+      'generation INTEGER NOT NULL, observed_turn INTEGER NOT NULL, '
+      'state TEXT NOT NULL, error_code TEXT, created_at TEXT NOT NULL)',
+    );
+  },
 ];

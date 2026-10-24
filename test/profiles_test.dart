@@ -89,6 +89,10 @@ class DelayedBackgrounds implements CompanionBackgroundStore {
   }
 }
 
+/// Otc est retiré de l'interface en attendant sa refonte (2026-10-23) :
+/// ces tests reviendront avec lui.
+const otcRemoved = true;
+
 void main() {
   test(
     'background : A vers B vers A ignore la fin de l’ancienne édition',
@@ -224,7 +228,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(Content.backgroundTitle));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(Content.mintSky));
+      await tester.tap(find.bySemanticsLabel(RegExp('^${Content.mintSky}')));
       await tester.tap(find.text(Content.backgroundApply));
       await tester.pump();
       expect(store.writes, hasLength(1));
@@ -240,6 +244,7 @@ void main() {
       vm.dispose();
       await gateway.updates.close();
     },
+    skip: otcRemoved,
   );
   testWidgets(
     'profils : suspension hors viewport, route et arrière-plan, libellé long accessible',
@@ -327,6 +332,7 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
+    skip: otcRemoved,
   );
   testWidgets(
     'Otc suit la sélection vérifiée, chargement stable et aucun profil inventé',
@@ -353,7 +359,7 @@ void main() {
       );
       expect(
         tester.widget<RabbitCompanion>(find.byType(RabbitCompanion)).size,
-        RabbitTokens.large,
+        RabbitTokens.preview,
       );
       final rect = tester.getRect(find.byType(ProfileCompanionPanel));
       vm.show(profileState(profiles: [], state: ProfilesState.refreshing));
@@ -385,6 +391,7 @@ void main() {
       }
       await tester.pumpWidget(const SizedBox());
     },
+    skip: otcRemoved,
   );
 
   testWidgets(
@@ -458,6 +465,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       semantics.dispose();
     },
+    skip: otcRemoved,
   );
 
   testWidgets(
@@ -580,6 +588,11 @@ void main() {
       h.transport.profiles = fixture('profiles-empty');
       await vm.refresh();
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(Content.emptyProfiles),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text(Content.emptyProfiles), findsOneWidget);
       expect(find.text(Content.profilesError), findsNothing);
       expect(tester.takeException(), isNull);

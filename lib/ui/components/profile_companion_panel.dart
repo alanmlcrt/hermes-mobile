@@ -41,68 +41,78 @@ class _ProfileCompanionPanelState extends State<ProfileCompanionPanel> {
         ? Content.companionFallback
         : name;
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(Radii.lg),
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              displayName,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
+    // En-tête de profil (style Grok) : compagnon centré, nom, actions en pilules.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: CompanionBackdrop(
+              palette: widget.palette,
+              child: RabbitCompanion(
+                name: displayName,
+                size: RabbitTokens.preview,
+                active: widget.active,
+                paused: _paused,
               ),
             ),
-            const SizedBox(height: Spacing.sm),
-            Center(
-              child: CompanionBackdrop(
-                palette: widget.palette,
-                child: RabbitCompanion(
-                  name: displayName,
-                  active: widget.active,
-                  paused: _paused,
-                ),
-              ),
+          ),
+          const SizedBox(height: Spacing.md),
+          Text(
+            displayName,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: Spacing.sm),
-            if (widget.backgroundLoading)
-              Semantics(
-                container: true,
-                liveRegion: true,
-                child: const Text(Content.backgroundLoading),
-              ),
-            if (widget.backgroundError) ...[
-              Semantics(
-                liveRegion: true,
-                child: const Text(Content.backgroundReadError),
-              ),
-              TextButton(
-                onPressed: widget.onRetryBackground,
-                child: const Text(Content.backgroundRetry),
-              ),
-            ],
-            if (widget.onBackground != null ||
-                widget.backgroundLoading ||
-                widget.backgroundError)
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, RabbitTokens.minimum),
-                ),
-                onPressed: widget.backgroundLoading || widget.backgroundError
-                    ? null
-                    : widget.onBackground,
-                child: const Text(Content.backgroundTitle),
-              ),
+          ),
+          const SizedBox(height: Spacing.sm),
+          if (widget.backgroundLoading)
+            Semantics(
+              container: true,
+              liveRegion: true,
+              child: const Text(Content.backgroundLoading),
+            ),
+          if (widget.backgroundError) ...[
+            Semantics(
+              liveRegion: true,
+              child: const Text(Content.backgroundReadError),
+            ),
             TextButton(
-              onPressed: () => setState(() => _paused = !_paused),
-              child: Text(
-                _paused ? Content.resumeCompanion : Content.pauseCompanion,
-              ),
+              onPressed: widget.onRetryBackground,
+              child: const Text(Content.backgroundRetry),
             ),
           ],
-        ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: Spacing.sm,
+            runSpacing: Spacing.sm,
+            children: [
+              if (widget.onBackground != null ||
+                  widget.backgroundLoading ||
+                  widget.backgroundError)
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, RabbitTokens.minimum),
+                  ),
+                  onPressed: widget.backgroundLoading || widget.backgroundError
+                      ? null
+                      : widget.onBackground,
+                  child: const Text(Content.backgroundTitle),
+                ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, RabbitTokens.minimum),
+                ),
+                onPressed: () => setState(() => _paused = !_paused),
+                child: Text(
+                  _paused ? Content.resumeCompanion : Content.pauseCompanion,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

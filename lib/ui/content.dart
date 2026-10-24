@@ -25,6 +25,11 @@ abstract final class Content {
   static const lavenderPeach = 'Lavande et pêche';
   static const mintSky = 'Menthe et ciel';
   static const roseLilac = 'Rose et lilas';
+  static const peachSun = 'Pêche et soleil';
+  static const oceanMist = 'Océan et brume';
+  static const sageSand = 'Sauge et sable';
+  static const coralRose = 'Corail et rose';
+  static const pearl = 'Gris perle';
   static const backgroundSelected = 'Sélectionnée';
   static const companionName = 'Otc';
   static const companionFallback = 'Compagnon';
@@ -57,6 +62,16 @@ abstract final class Content {
   static const localSelection =
       'Ce choix est mémorisé uniquement sur ce téléphone.';
   static const capabilitiesTitle = 'Fonctions disponibles';
+  static const profilesSection = 'Profils';
+  static const serverSection = 'Serveur';
+  static const wordmark = 'Hermes';
+  static const greeting = 'Comment puis-je t’aider ?';
+  static const suggestions = [
+    'Résume-moi un long texte',
+    'Écris un script bash',
+    'Aide-moi à planifier ma semaine',
+    'Explique-moi un concept simplement',
+  ];
   static const unverified = 'Non vérifiée';
   static const missing = 'Indisponible';
   static const acceptanceOpen =
@@ -85,7 +100,7 @@ abstract final class Content {
     ActivityKind.tool => activityTool,
     ActivityKind.code => activityCode,
     ActivityKind.fileCreate => 'Création du fichier',
-    ActivityKind.webSearch => 'Recherche en cours',
+    ActivityKind.webSearch => 'Recherche sur le web',
     ActivityKind.fileRead => 'Lecture du fichier',
     ActivityKind.command => 'Exécution d’une commande',
     ActivityKind.webBrowse => 'Navigation sur le web',
@@ -103,21 +118,56 @@ abstract final class Content {
   };
   static const activityEnd = 'Fin reçue';
   static const activityEndAccessible = 'Fin d’action reçue';
-  static String activitySummary(int count, int pending) =>
-      '$count activités · $pending sans fin confirmée';
+  static String activitySummary(int count, int pending) => pending == 0
+      ? '$count actions terminées'
+      : '$count actions · $pending en cours';
   static const expandActivities = 'Déplier les activités';
   static const collapseActivities = 'Replier les activités';
   static const workSending = 'Envoi…';
   static const workRunning = 'Hermes travaille…';
   static const workSucceeded = 'Terminé';
   static const workFailed = 'Erreur';
-  static const workStopped = 'Arrêté';
+  static const workStopped = 'Arrêt confirmé';
+  static const stop = 'Arrêter';
+  static const stopRequested = 'Arrêt demandé';
+  static const stopPreparing = 'Préparation de l’arrêt…';
+  static const stopUnknown =
+      'Issue de l’arrêt inconnue. Aucun renvoi automatique.';
+  static const stopDemo = 'Arrêt du travail — démonstration fictive';
+  static const stopReminder =
+      'L’arrêt n’annule pas les actions déjà effectuées.';
   static const workUnknown = 'Non synchronisé';
   static const draftKept = 'Votre texte reste affiché sur cet écran.';
   static String draftProfile(String name) => 'Profil : $name';
   static const chooseProfileHint = 'Ouvre la liste des profils';
   static const chooseProfile = 'Choisir le profil';
   static const conversations = 'Conversations';
+  static const openConversationsHint = 'Ouvre les conversations de ce profil';
+  static String writeTo(String name) => 'Écrire à $name';
+  static String conversationCount(int n) =>
+      n == 1 ? '1 conversation' : '$n conversations';
+
+  // Réglages d'un profil (refonte 2026-10-23).
+  static const profileSettings = 'Réglages du profil';
+  static const nameFromHermes = 'Nom repris du profil Hermes';
+  static const appearance = 'Apparence';
+  static const profileColor = 'Couleur du profil';
+  static const profileColorHint = 'Avatar, bouton d’envoi, repères';
+  static const profileColorFailed = 'Couleur non enregistrée. Réessaie.';
+  static const profileSection = 'Profil';
+  static const identifier = 'Identifiant';
+  static const connectionRow = 'Connexion';
+  static const change = 'Changer';
+  static const allProfiles = 'Tous les profils';
+  static String accentName(String id) => switch (id) {
+    'indigo' => 'Indigo',
+    'blue' => 'Bleu',
+    'violet' => 'Violet',
+    'teal' => 'Sarcelle',
+    'orange' => 'Orange',
+    'raspberry' => 'Framboise',
+    _ => id,
+  };
   static const historyLoading = 'Chargement des conversations…';
   static const historyEmpty = 'Aucune conversation pour ce profil';
   static const historyError =
@@ -140,9 +190,40 @@ abstract final class Content {
     return '${two(d.day)}/${two(d.month)}/${d.year} à ${two(d.hour)}:${two(d.minute)}';
   }
 
+  /// Tranche de date du menu latéral (style Grok), en jours calendaires.
+  static String historyBucket(DateTime date, DateTime now) {
+    final d = date.toLocal();
+    final n = now.toLocal();
+    final days = DateTime(
+      n.year,
+      n.month,
+      n.day,
+    ).difference(DateTime(d.year, d.month, d.day)).inDays;
+    if (days <= 0) return 'Aujourd’hui';
+    if (days == 1) return 'Hier';
+    if (days < 7) return '7 derniers jours';
+    if (days < 30) return '30 derniers jours';
+    return 'Plus ancien';
+  }
+
+  static const settings = 'Profils et réglages';
+  static const home = 'Accueil';
+  static const homeNoConversation = 'Aucune conversation pour l’instant';
+
+  /// Heure si aujourd'hui, sinon jour/mois (liste d'accueil).
+  static String homeTime(DateTime date, DateTime now) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final d = date.toLocal();
+    final n = now.toLocal();
+    return d.year == n.year && d.month == n.month && d.day == n.day
+        ? '${two(d.hour)}:${two(d.minute)}'
+        : '${two(d.day)}/${two(d.month)}';
+  }
+
   static const profileFixture = 'Principal';
   static const profileFixtureKey = 'default';
-  static String profileName(String label, String key) => '$label ($key)';
+  static String profileName(String label, String key) =>
+      label == key ? label : '$label ($key)';
   static String capability(String name) => switch (name) {
     'profiles' => 'Liste des profils',
     'websocket' => 'Connexion en direct',
@@ -157,6 +238,10 @@ abstract final class Content {
     _ => name,
   };
   static String error(String code) => switch (code) {
+    'stop.stale' => 'La cible de l’arrêt a changé. Aucun arrêt transmis.',
+    'stop.not_interrupted' =>
+      'Hermes n’a pas accepté l’arrêt. Le travail reste suivi.',
+    'stop.unknown' => stopUnknown,
     'connection.invalid_origin' => 'Adresse invalide. Utilisez HTTPS ou HTTP sur un sous-domaine ts.net, sans chemin ni identifiants.',
     'auth.refused' => 'Authentification refusée. Vérifiez votre mot de passe.',
     'auth.password_required' => 'Saisissez votre mot de passe Hermes.',

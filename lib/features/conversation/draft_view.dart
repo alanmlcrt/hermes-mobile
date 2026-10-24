@@ -5,37 +5,44 @@ import '../../models/profile.dart';
 import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/activity_group.dart';
+import '../../ui/components/appear.dart';
 import '../../ui/components/composer.dart';
-import '../../ui/components/conversation_companion.dart';
 import '../../ui/components/message_bubble.dart';
-import '../../ui/components/profile_choice.dart';
+import '../../ui/components/profile_avatar.dart';
 import '../../ui/components/status_label.dart';
 import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
+import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
+import '../profiles/profile_accents.dart';
 import 'draft_view_model.dart';
 
 class DraftView extends StatefulWidget {
   const DraftView({
     super.key,
     required this.create,
-    required this.onOpenProfiles,
+    required this.accents,
     this.continuation = false,
-    this.onOpenHistory,
+    this.onHome,
+    this.onHistory,
     this.onNewConversation,
   });
 
   /// Le ViewModel vit aussi longtemps que la page, pas que le rendu.
   final DraftViewModel Function() create;
 
-  /// [pick] : l'écran renvoie le profil choisi (brouillon neuf seulement).
-  final Future<ProfileKey?> Function(bool pick) onOpenProfiles;
+  /// Couleur du profil de la conversation.
+  final ProfileAccents accents;
 
   /// Suite d'une conversation existante (route `/c/...`), pas un brouillon neuf.
   final bool continuation;
 
-  /// Historique du profil de cette conversation (ou du brouillon neuf).
-  final void Function(ProfileKey profile)? onOpenHistory;
+  /// Retour à l'accueil (choix du profil à qui parler).
+  final VoidCallback? onHome;
+
+  /// Conversations du profil (feuille du bas), ouvertes depuis la pastille
+  /// du nom.
+  final void Function(ProfileKey profile)? onHistory;
   final void Function(ProfileKey profile)? onNewConversation;
   @override
   State<DraftView> createState() => _DraftViewState();
@@ -47,11 +54,14 @@ class _DraftViewState extends State<DraftView> {
   late final _viewModel = widget.create();
   bool _filled = false;
   int _clearTick = 0;
-  bool _companionPaused = false;
   final _activityExpansion = <Object, bool>{};
   final _detailExpansion = <Object, bool>{};
   final _activityKeys = <Object, GlobalKey>{};
   TimelineProjection? _renderedTimeline;
+
+  /// Éléments du fil déjà affichés : seuls les nouveaux arrivent en fondu.
+  final _appeared = <Key>{};
+  bool _appearReady = false;
   Size? _threadViewport;
 
   @override
@@ -64,7 +74,7 @@ class _DraftViewState extends State<DraftView> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: _viewModel,
+    listenable: Listenable.merge([_viewModel, widget.accents]),
     builder: (context, _) {
       final vm = _viewModel;
       final draft = vm.draft;
@@ -78,30 +88,41 @@ class _DraftViewState extends State<DraftView> {
       }
       final profile = vm.profile;
       final blocked = vm.blockedReason;
-      return Scaffold(
+      final name = profile == null
+          ? draft?.profile.value
+          : Content.profileName(profile.label, profile.key.value);
+      final scaffold = Scaffold(
         appBar: AppBar(
-          title: Text(
-            widget.continuation
-                ? Content.timelineTitle
-                : Content.newConversation,
-          ),
+          leading: widget.onHome == null
+              ? null
+              : Center(
+                  child: IconButton.filledTonal(
+                    tooltip: Content.home,
+                    onPressed: widget.onHome,
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                ),
+          title: draft == null
+              ? Text(
+                  widget.continuation
+                      ? Content.timelineTitle
+                      : Content.newConversation,
+                )
+              : _profilePill(context, draft, name!),
           actions: [
-            // Le libellé agrandi ne doit pas déborder de la barre étroite.
-            if (!ConversationCompanion.sideBySide(
-              context,
-              MediaQuery.sizeOf(context).width,
-            ))
-              IconButton(
-                tooltip: Content.profilesTitle,
-                onPressed: () => _openProfiles(vm),
-                icon: const Icon(Icons.people_outline),
-              )
-            else
-              TextButton(
-                onPressed: () => _openProfiles(vm),
-                child: const Text(Content.profilesTitle),
+            if (draft != null &&
+                widget.continuation &&
+                widget.onNewConversation != null)
+              IconButton.filledTonal(
+                tooltip: Content.newConversation,
+                onPressed: () => widget.onNewConversation!(draft.profile),
+                icon: const Icon(Icons.add),
               ),
+            const SizedBox(width: Spacing.sm),
           ],
+          shape: Border(
+            bottom: BorderSide(color: Theme.of(context).colorScheme.line),
+          ),
         ),
         body: SafeArea(
           child: LayoutBuilder(
@@ -112,11 +133,18 @@ class _DraftViewState extends State<DraftView> {
                   child: _thread(context, vm, draft, profile, viewport.biggest),
                 ),
                 // Sans brouillon chargé, une saisie écraserait le texte stocké.
-                if (draft != null || vm.timeline.workState != null)
+                if (draft != null ||
+                    (vm.timeline.workState != null &&
+                        vm.timeline.workState != WorkState.succeeded))
                   // Défile si la saisie dépasse l'écran (texte 200 %, paysage).
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight: viewport.maxHeight * 0.5,
+                      maxHeight: vm.showStop || vm.stopStatus != null
+                          ? (viewport.maxHeight - Layout.threadMinHeight).clamp(
+                              0,
+                              viewport.maxHeight,
+                            )
+                          : viewport.maxHeight * .5,
                     ),
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(Spacing.md),
@@ -124,22 +152,58 @@ class _DraftViewState extends State<DraftView> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (vm.timeline.workState case final work?) ...[
-                            // Toujours monté, même pendant la lecture d'un ancien
-                            // bloc très éloigné de la fin du fil paresseux.
-                            Semantics(
-                              liveRegion: true,
-                              child: WorkStateLabel(state: work),
-                            ),
-                            const SizedBox(height: Spacing.sm),
-                          ],
+                          // Toujours monté, même pendant la lecture d'un ancien
+                          // bloc très éloigné de la fin du fil paresseux. Les
+                          // trois points s'effacent dès que Hermes écrit.
+                          AnimatedSwitcher(
+                            duration: motionDuration(context, Motion.short),
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                  opacity: animation,
+                                  child: SizeTransition(
+                                    sizeFactor: animation,
+                                    alignment: Alignment.topCenter,
+                                    child: child,
+                                  ),
+                                ),
+                            child: switch (_shownWork(vm)) {
+                              final work? => Padding(
+                                // Un changement d'état remplace le texte
+                                // sans rejouer l'arrivée.
+                                key: const ValueKey('work'),
+                                padding: const EdgeInsets.only(
+                                  bottom: Spacing.sm,
+                                ),
+                                child: Semantics(
+                                  liveRegion: true,
+                                  child: WorkStateLabel(
+                                    state: work,
+                                    localStatus: vm.stopText,
+                                  ),
+                                ),
+                              ),
+                              null => const SizedBox.shrink(),
+                            },
+                          ),
                           if (draft != null)
                             Composer(
+                              hint: Content.writeTo(name!),
                               controller: _controller,
                               onChanged: vm.update,
                               onSend: blocked == null ? vm.send : null,
+                              stopping: vm.showStop,
+                              onStop: vm.canStop ? vm.stop : null,
                               disabledReason: blocked,
-                              status: vm.statusText,
+                              status: _shownWork(vm) == null
+                                  ? vm.statusText
+                                  : null,
+                            ),
+                          if (vm.showStop ||
+                              vm.stopStatus != null ||
+                              vm.timeline.workState == WorkState.stopped)
+                            const Padding(
+                              padding: EdgeInsets.only(top: Spacing.xs),
+                              child: Text(Content.stopReminder),
                             ),
                         ],
                       ),
@@ -150,8 +214,28 @@ class _DraftViewState extends State<DraftView> {
           ),
         ),
       );
+      return draft == null
+          ? scaffold
+          : AccentScope(
+              accent: widget.accents.of(draft.profile),
+              child: scaffold,
+            );
     },
   );
+
+  /// État du travail affiché au-dessus de la saisie : rien une fois terminé,
+  /// ni pendant que la réponse s'écrit (elle montre déjà que Hermes répond).
+  static WorkState? _shownWork(DraftViewModel vm) {
+    final work = vm.timeline.workState;
+    if (vm.stopText != null) return work ?? WorkState.unknown;
+    if (work == WorkState.succeeded && vm.stopStatus != null) return work;
+    if (work == WorkState.succeeded) return null;
+    if (work == WorkState.running &&
+        vm.companionPhase == CompanionPhase.reading) {
+      return null;
+    }
+    return work;
+  }
 
   /// Fil paresseux au-dessus de la saisie ; suit le dernier élément quand
   /// l'utilisateur est déjà en bas.
@@ -178,25 +262,6 @@ class _DraftViewState extends State<DraftView> {
         !c.hasClients ||
         c.position.maxScrollExtent - c.position.pixels < Spacing.md;
     final children = <Widget>[
-      if (draft != null) _profileRow(context, vm, draft, profile),
-      if (draft != null &&
-          (widget.onOpenHistory != null ||
-              (widget.continuation && widget.onNewConversation != null)))
-        Wrap(
-          spacing: Spacing.sm,
-          children: [
-            if (widget.onOpenHistory != null)
-              TextButton(
-                onPressed: () => widget.onOpenHistory!(draft.profile),
-                child: const Text(Content.conversations),
-              ),
-            if (widget.continuation && widget.onNewConversation != null)
-              TextButton(
-                onPressed: () => widget.onNewConversation!(draft.profile),
-                child: const Text(Content.newConversation),
-              ),
-          ],
-        ),
       if (vm.resumeFailed)
         Semantics(liveRegion: true, child: const Text(Content.resumeFailed)),
       if (vm.error != null)
@@ -217,17 +282,40 @@ class _DraftViewState extends State<DraftView> {
           ),
         ),
       ..._timeline(context, vm),
+      if (draft != null &&
+          !widget.continuation &&
+          vm.timeline.items.isEmpty &&
+          vm.timeline.workState == null)
+        _welcome(context, vm, viewport),
     ];
     if (atBottom && (timelineChanged || viewportChanged) && !readingDetails) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (c.hasClients) c.jumpTo(c.position.maxScrollExtent);
       });
     }
+    // Au premier affichage, le fil déjà là ne s'anime pas.
+    if (!_appearReady) {
+      _appeared.addAll(children.map((child) => child.key).nonNulls);
+      if (draft != null) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _appearReady = true,
+        );
+      }
+    }
     return ListView.builder(
       controller: c,
       padding: const EdgeInsets.all(Spacing.md),
       itemCount: children.length,
-      itemBuilder: (context, i) => children[i],
+      itemBuilder: (context, i) {
+        final child = children[i];
+        final key = child.key;
+        if (key == null) return child;
+        return Appear(
+          key: key,
+          animate: _appearReady && _appeared.add(key),
+          child: child,
+        );
+      },
       findChildIndexCallback: (key) {
         final at = children.indexWhere((child) => child.key == key);
         return at < 0 ? null : at;
@@ -235,71 +323,111 @@ class _DraftViewState extends State<DraftView> {
     );
   }
 
-  /// Profil du brouillon : bouton de choix tant que la conversation est neuve,
-  /// texte seul ensuite. Région live : le profil choisi est annoncé.
-  Widget _profileRow(
-    BuildContext context,
-    DraftViewModel vm,
-    Draft draft,
-    Profile? profile,
-  ) {
-    final name = profile == null
-        ? draft.profile.value
-        : Content.profileName(profile.label, profile.key.value);
-    final label = Content.draftProfile(name);
-    if (!vm.canChooseProfile) return Text(label);
-    return Align(
-      alignment: Alignment.centerLeft,
-      // Fusionné : le bouton lui-même est la région live annonçant le profil.
+  /// Pastille d'en-tête : avatar et nom du profil ; ouvre ses conversations.
+  /// Région live : le profil de la conversation est annoncé en entier.
+  Widget _profilePill(BuildContext context, Draft draft, String name) {
+    final scheme = Theme.of(context).colorScheme;
+    final open = widget.onHistory == null
+        ? null
+        : () => widget.onHistory!(draft.profile);
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ProfileAvatar(label: name, size: Layout.avatarSmall),
+        const SizedBox(width: Spacing.sm),
+        Flexible(
+          child: ExcludeSemantics(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        if (open != null) ...[
+          const SizedBox(width: Spacing.xs),
+          ExcludeSemantics(
+            child: Icon(
+              Icons.expand_more,
+              size: IconSizes.sm,
+              color: scheme.muted,
+            ),
+          ),
+        ],
+      ],
+    );
+    return Tooltip(
+      message: Content.conversations,
+      excludeFromSemantics: true,
       child: MergeSemantics(
         child: Semantics(
           liveRegion: true,
-          hint: Content.chooseProfileHint,
-          child: TextButton.icon(
-            onPressed: vm.sendStatus.busy ? null : () => _pick(context, vm),
-            icon: const Icon(Icons.expand_more),
-            label: Text(label),
+          label: Content.draftProfile(name),
+          hint: open == null ? null : Content.openConversationsHint,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: scheme.card,
+              foregroundColor: scheme.content,
+              disabledForegroundColor: scheme.content,
+              shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+              padding: const EdgeInsetsDirectional.only(
+                start: Spacing.xs,
+                end: Spacing.sm + Spacing.xs,
+              ),
+            ),
+            onPressed: open,
+            child: row,
           ),
         ),
       ),
     );
   }
 
-  Future<void> _pick(BuildContext context, DraftViewModel vm) async {
-    final chosen = await showModalBottomSheet<ProfileKey>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(Spacing.md),
-              child: Semantics(
-                header: true,
-                child: Text(
-                  Content.chooseProfile,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+  /// Conversation neuve : avatar du profil, question, suggestions qui
+  /// pré-remplissent la saisie sans l'envoyer.
+  Widget _welcome(BuildContext context, DraftViewModel vm, Size viewport) {
+    final theme = Theme.of(context);
+    final profile = vm.profile;
+    final name = profile == null
+        ? vm.draft!.profile.value
+        : Content.profileName(profile.label, profile.key.value);
+    return Padding(
+      padding: EdgeInsets.only(top: viewport.height * Layout.welcomeTop),
+      child: Column(
+        children: [
+          ProfileAvatar(label: name, size: Layout.avatarWelcome),
+          const SizedBox(height: Spacing.md),
+          Semantics(
+            header: true,
+            child: Text(
+              Content.greeting,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
             ),
-            for (final p in vm.gateway.snapshot.profiles)
-              ProfileChoice(
-                profile: p,
-                selected: p.key == vm.draft?.profile,
-                onTap: () => Navigator.of(context).pop(p.key),
-              ),
-          ],
-        ),
+          ),
+          const SizedBox(height: Spacing.lg),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: Spacing.sm,
+            runSpacing: Spacing.sm,
+            children: [
+              for (final text in Content.suggestions)
+                ActionChip(
+                  label: Text(text),
+                  onPressed: () {
+                    _controller.text = text;
+                    vm.update(text);
+                  },
+                ),
+            ],
+          ),
+        ],
       ),
     );
-    if (chosen != null && mounted) await vm.selectProfile(chosen);
-  }
-
-  /// « Mes profils » depuis un brouillon neuf renvoie le profil choisi.
-  Future<void> _openProfiles(DraftViewModel vm) async {
-    final chosen = await widget.onOpenProfiles(vm.canChooseProfile);
-    if (chosen != null && mounted) await vm.selectProfile(chosen);
   }
 
   /// Éléments du fil ; rebâti sans aucun appel (état dans la projection).
@@ -315,6 +443,8 @@ class _DraftViewState extends State<DraftView> {
     // des entrées distinctes du ListView.builder (pas de Column de tout le tour).
     final groups = <int, List<TimelineItem>>{};
     for (final item in timeline.items) {
+      // Signaux internes de Hermes (usage, raisonnement…) : rien à montrer.
+      if (item is ActivityItem && item.kind == ActivityKind.unknown) continue;
       (groups[item.turn] ??= []).add(item);
     }
     if (work != null) groups.putIfAbsent(latestTurn, () => []);
@@ -328,9 +458,8 @@ class _DraftViewState extends State<DraftView> {
                 item.eventKey,
               ), GlobalKey.new),
         kind: item.kind,
-        showIllustration: false,
         completed: item.completed,
-        paused: _companionPaused || vm.resyncing,
+        paused: vm.resyncing,
         details: item.details,
         expanded:
             _detailExpansion[(vm.draft?.key, item.eventKey ?? item)] ?? false,
@@ -350,15 +479,27 @@ class _DraftViewState extends State<DraftView> {
       final items = groups[turn]!;
       if (turn == 0) {
         // Activités préalables à l'accusé : visibles mais pas encore un tour.
-        for (final item in items) {
-          entries.addAll([const SizedBox(height: Spacing.sm), block(item)]);
+        for (final (index, item) in items.indexed) {
+          entries.add(
+            Padding(
+              key: ValueKey(('early', index)),
+              padding: const EdgeInsets.only(top: Spacing.sm),
+              child: block(item),
+            ),
+          );
         }
         continue;
       }
       final responses = <Widget>[];
-      for (final item in items) {
+      for (final (index, item) in items.indexed) {
         if (item is UserItem) {
-          entries.addAll([const SizedBox(height: Spacing.sm), block(item)]);
+          entries.add(
+            Padding(
+              key: ValueKey(('user', turn, index)),
+              padding: const EdgeInsets.only(top: Spacing.sm),
+              child: block(item),
+            ),
+          );
         }
       }
       for (var i = 0; i < items.length;) {
@@ -423,56 +564,19 @@ class _DraftViewState extends State<DraftView> {
         }
         i = end;
       }
-      final current = turn == latestTurn;
-      if (current && work != null) {
+      // ponytail: Otc retiré en attendant sa refonte ; il reprendra sa place
+      // en tête des réponses du tour (vm.companionPhase).
+      for (final item in responses) {
         entries.add(
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () =>
-                  setState(() => _companionPaused = !_companionPaused),
-              icon: Icon(_companionPaused ? Icons.play_arrow : Icons.pause),
-              label: Text(
-                _companionPaused
-                    ? Content.resumeCompanion
-                    : Content.pauseCompanion,
-              ),
-            ),
-          ),
-        );
-      }
-      entries.add(
-        ConversationCompanion(
-          key: ValueKey('companion-turn-$turn'),
-          current: current,
-          phase: vm.companionPhase,
-          resting:
-              work == WorkState.succeeded ||
-              work == WorkState.failed ||
-              work == WorkState.stopped,
-          active: !vm.resyncing,
-          paused: _companionPaused,
-          child: responses.isEmpty ? const SizedBox.shrink() : responses.first,
-        ),
-      );
-      for (final item in responses.skip(1)) {
-        entries.addAll([
           Padding(
             key: item.key,
             padding: const EdgeInsets.only(top: Spacing.sm),
-            child: ConversationCompanionContinuation(child: item),
+            child: item,
           ),
-        ]);
+        );
       }
     }
     return [
-      Semantics(
-        header: true,
-        child: Text(
-          Content.timelineTitle,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-      ),
       ...entries,
       if (work == WorkState.failed && timeline.errorCode != null) ...[
         const SizedBox(height: Spacing.xs),

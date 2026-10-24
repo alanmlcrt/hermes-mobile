@@ -18,27 +18,60 @@ class ActivityGroup extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    expanded: expanded,
-    hint: expanded ? Content.collapseActivities : Content.expandActivities,
-    child: TextButton(
-      style: TextButton.styleFrom(
-        minimumSize: const Size(ActivityTokens.command, ActivityTokens.command),
-        alignment: Alignment.centerLeft,
-      ),
-      onPressed: () => onChanged(!expanded),
-      child: Row(
-        children: [
-          ExcludeSemantics(
-            child: Icon(
-              expanded ? Icons.expand_less : Icons.expand_more,
-              size: IconSizes.md,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      expanded: expanded,
+      hint: expanded ? Content.collapseActivities : Content.expandActivities,
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(
+              ActivityTokens.command,
+              ActivityTokens.command,
+            ),
+            foregroundColor: scheme.content,
+            backgroundColor: scheme.card,
+            shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+            padding: const EdgeInsetsDirectional.only(
+              start: Spacing.sm + Spacing.xs,
+              end: Spacing.md,
             ),
           ),
-          const SizedBox(width: Spacing.sm),
-          Expanded(child: Text(Content.activitySummary(count, pending))),
-        ],
+          onPressed: () => onChanged(!expanded),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                child: Icon(
+                  pending == 0 ? Icons.check : Icons.more_horiz,
+                  size: IconSizes.sm,
+                  color: scheme.accent,
+                ),
+              ),
+              const SizedBox(width: Spacing.sm),
+              Flexible(
+                child: Text(
+                  Content.activitySummary(count, pending),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: Spacing.xs),
+              ExcludeSemantics(
+                child: Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: IconSizes.sm,
+                  color: scheme.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

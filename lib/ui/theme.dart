@@ -1,34 +1,167 @@
-// Thème central : Dynamic Color si disponible, palette de secours sinon.
+// Thème central (refonte 2026-10-23) : neutres gris-bleu, police Inter,
+// accent du profil en `secondary` (AccentScope). Dynamic Color seulement si
+// un schéma est fourni.
 import 'package:flutter/material.dart';
 
+import '../models/profile_accent.dart';
 import 'tokens.dart';
 
-/// Graine neutre de la palette de secours (sans couleur de marque).
-/// Valeur provisoire jusqu'à G4.
-const Color _fallbackSeed = Color(0xFF808080);
-
-/// Palette de secours claire/sombre, utilisée quand le système ne fournit
-/// pas de couleurs dynamiques (Android < 12).
-ColorScheme fallbackColorScheme(Brightness brightness) => ColorScheme.fromSeed(
-      seedColor: _fallbackSeed,
-      brightness: brightness,
-      dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-    );
+/// Palette de l'app, claire/sombre (DESIGN.md, ux-Hermes Mobile-2026-10-23).
+ColorScheme fallbackColorScheme(Brightness brightness) {
+  final dark = brightness == Brightness.dark;
+  final ink = dark ? Palette.inkDark : Palette.inkLight;
+  final bg = dark ? Palette.bgDark : Palette.bgLight;
+  final chip = dark ? Palette.chipDark : Palette.chipLight;
+  return ColorScheme.fromSeed(
+    seedColor: AccentTokens.of(ProfileAccent.indigo),
+    brightness: brightness,
+  ).copyWith(
+    primary: ink,
+    onPrimary: bg,
+    secondary: AccentTokens.of(ProfileAccent.indigo),
+    onSecondary: AccentTokens.onAccent,
+    secondaryContainer: chip,
+    onSecondaryContainer: ink,
+    surface: bg,
+    onSurface: ink,
+    onSurfaceVariant: dark ? Palette.mutedDark : Palette.mutedLight,
+    surfaceContainerLowest: dark ? Palette.bgDark : Palette.cardLight,
+    surfaceContainerLow: dark ? Palette.cardDark : Palette.cardLight,
+    surfaceContainer: dark ? Palette.bubbleDark : Palette.bubbleLight,
+    surfaceContainerHigh: chip,
+    surfaceContainerHighest: dark ? Palette.codeDark : Palette.codeLight,
+    outline: dark ? Palette.outlineDark : Palette.outlineLight,
+    outlineVariant: dark ? Palette.lineDark : Palette.lineLight,
+    error: dark ? Palette.errorDark : Palette.errorLight,
+    inverseSurface: ink,
+    onInverseSurface: bg,
+    scrim: Palette.scrim,
+    surfaceTint: Colors.transparent,
+  );
+}
 
 /// Construit le thème à partir du schéma dynamique [dynamicScheme] fourni par
-/// `DynamicColorBuilder`, ou de la palette de secours s'il est `null`.
+/// `DynamicColorBuilder`, ou de la palette de l'app s'il est `null`.
 ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
   final scheme = dynamicScheme ?? fallbackColorScheme(brightness);
-  return ThemeData(
+  final rounded = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(Radii.lg),
+  );
+  final base = ThemeData(
     colorScheme: scheme,
     brightness: scheme.brightness,
+    fontFamily: Fonts.family,
+  );
+  return base.copyWith(
     scaffoldBackgroundColor: scheme.canvas,
-    cardTheme: CardThemeData(
-      elevation: Elevations.card,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Radii.md),
+    // Transitions de page homogènes : fondu glissé (Android).
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {TargetPlatform.android: FadeForwardsPageTransitionsBuilder()},
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: scheme.canvas,
+      foregroundColor: scheme.content,
+      surfaceTintColor: Colors.transparent,
+      elevation: Elevations.flat,
+      scrolledUnderElevation: Elevations.flat,
+      centerTitle: true,
+      titleTextStyle: base.textTheme.titleMedium?.copyWith(
+        color: scheme.content,
+        fontWeight: FontWeight.w600,
       ),
+    ),
+    cardTheme: CardThemeData(
+      elevation: Elevations.flat,
+      margin: EdgeInsets.zero,
+      color: scheme.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.xl),
+        side: BorderSide(color: scheme.line),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: scheme.emphasis,
+        foregroundColor: scheme.emphasisContent,
+        shape: const StadiumBorder(),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: scheme.content,
+        side: BorderSide(color: scheme.outline),
+        shape: const StadiumBorder(),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: scheme.content,
+        shape: const StadiumBorder(),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: scheme.card,
+      hintStyle: TextStyle(color: scheme.onSurfaceVariant),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        borderSide: BorderSide(color: scheme.outline),
+      ),
+    ),
+    listTileTheme: ListTileThemeData(
+      shape: rounded,
+      iconColor: scheme.onSurfaceVariant,
+      selectedColor: scheme.content,
+      selectedTileColor: scheme.surfaceContainerHigh,
+      subtitleTextStyle: base.textTheme.bodySmall?.copyWith(
+        color: scheme.onSurfaceVariant,
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: scheme.card,
+      surfaceTintColor: Colors.transparent,
+      showDragHandle: true,
+      dragHandleColor: scheme.line,
+      dragHandleSize: const Size(
+        Layout.sheetHandleWidth,
+        Layout.sheetHandleHeight,
+      ),
+      modalBarrierColor: scheme.scrim,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.pill)),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: scheme.card,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.xl),
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(Layout.headerButton),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: scheme.card,
+      side: BorderSide(color: scheme.line),
+      shape: const StadiumBorder(),
+    ),
+    dividerTheme: DividerThemeData(color: scheme.line, space: 1),
+    progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.accent),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: scheme.inverseSurface,
+      behavior: SnackBarBehavior.floating,
+      shape: rounded,
     ),
     iconTheme: IconThemeData(color: scheme.content, size: IconSizes.md),
   );

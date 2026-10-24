@@ -7,8 +7,6 @@ import '../../ui/tokens.dart';
 import '../../ui/components/status_label.dart';
 import '../../ui/components/section_card.dart';
 import '../../ui/components/profile_choice.dart';
-import '../../ui/components/profile_companion_panel.dart';
-import '../../ui/components/companion_background_editor.dart';
 import 'profiles_view_model.dart';
 
 class ProfilesView extends StatefulWidget {
@@ -26,41 +24,43 @@ class ProfilesView extends StatefulWidget {
   final VoidCallback onChangeServer;
 
   /// À désactiver si la surface est conservée dans une sous-vue masquée.
+  // ponytail: sans effet tant qu'Otc est retiré de cet écran.
   final bool active;
   @override
   State<ProfilesView> createState() => _ProfilesViewState();
 }
 
 class _ProfilesViewState extends State<ProfilesView> {
-  (String, ConnectionKey, ProfileKey)? _verifiedSelection;
-  bool _editingBackground = false;
-
-  Future<void> _editBackground() async {
-    if (_editingBackground) return;
-    final vm = widget.viewModel;
-    final identity = vm.backgroundIdentity;
-    if (identity == null || vm.backgroundLoading || vm.backgroundError) return;
-    _editingBackground = true;
-    final navigator = Navigator.of(context);
-    final route = MaterialPageRoute<void>(
-      builder: (_) => CompanionBackgroundEditor(
-        initialPalette: vm.palette,
-        onApply: (palette) => vm.saveBackground(identity, palette),
-      ),
+  /// Groupe de réglages : intertitre discret, carte arrondie.
+  /// Sans AnimatedSize : à durée nulle il se redessine pendant sa mise en page.
+  Widget _group(BuildContext context, String title, List<Widget> children) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: Spacing.md, bottom: Spacing.sm),
+          child: Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            ),
+          ),
+        ),
+      ],
     );
-    void identityChanged() {
-      if (vm.backgroundIdentity != identity && route.isActive) {
-        navigator.removeRoute(route);
-      }
-    }
-
-    vm.addListener(identityChanged);
-    try {
-      await navigator.push(route);
-    } finally {
-      _editingBackground = false;
-      vm.removeListener(identityChanged);
-    }
   }
 
   @override
@@ -72,20 +72,6 @@ class _ProfilesViewState extends State<ProfilesView> {
       final loading =
           state.profilesState == ProfilesState.loading ||
           state.profilesState == ProfilesState.refreshing;
-      final selected = state.selectedProfile;
-      final identity = state.connection != null && selected != null
-          ? (
-              parseOrigin(state.connection!.origin.toString()).toString(),
-              state.connection!.key,
-              selected,
-            )
-          : null;
-      final present = state.profiles.any((profile) => profile.key == selected);
-      final knownSelection =
-          selected != null &&
-          state.connection != null &&
-          (present || (loading && _verifiedSelection == identity));
-      _verifiedSelection = knownSelection ? identity : null;
       final (icon, label) = switch (state.link) {
         LinkState.connected => (
           Icons.cloud_done_outlined,
@@ -97,6 +83,8 @@ class _ProfilesViewState extends State<ProfilesView> {
           ConnectionLabels.offline,
         ),
       };
+      final note = Theme.of(context).textTheme.bodySmall
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
       return Scaffold(
         appBar: AppBar(title: const Text(Content.profilesTitle)),
         body: SafeArea(
@@ -106,83 +94,76 @@ class _ProfilesViewState extends State<ProfilesView> {
               padding: const EdgeInsets.all(Spacing.md),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                if (knownSelection) ...[
-                  ProfileCompanionPanel(
-                    key: ValueKey(identity),
-                    active: widget.active,
-                    palette: viewModel.palette,
-                    backgroundLoading: viewModel.backgroundLoading,
-                    backgroundError: viewModel.backgroundError,
-                    onRetryBackground: viewModel.loadBackground,
-                    onBackground: _editBackground,
-                  ),
+                _group(context, Content.serverSection, [
+                  StatusLabel(icon: icon, label: label),
+                  const SizedBox(height: Spacing.xs),
+                  Text(state.connection?.origin.toString() ?? '', style: note),
                   const SizedBox(height: Spacing.md),
-                ],
-                StatusLabel(icon: icon, label: label),
-                const SizedBox(height: Spacing.md),
-                Text(state.connection?.origin.toString() ?? ''),
-                const SizedBox(height: Spacing.md),
-                Wrap(
-                  spacing: Spacing.sm,
-                  runSpacing: Spacing.sm,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: loading || state.busy
-                          ? null
-                          : viewModel.refresh,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text(Content.refresh),
-                    ),
-                    if (state.link != LinkState.connected)
-                      OutlinedButton(
-                        onPressed: state.busy ? null : viewModel.reconnect,
-                        child: const Text(Content.retry),
+                  Wrap(
+                    spacing: Spacing.sm,
+                    runSpacing: Spacing.sm,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: loading || state.busy
+                            ? null
+                            : viewModel.refresh,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text(Content.refresh),
                       ),
-                    TextButton(
-                      onPressed: state.busy ? null : widget.onChangeServer,
-                      child: const Text(Content.changeServer),
-                    ),
-                  ],
-                ),
-                if (loading)
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      state.profilesState == ProfilesState.refreshing
-                          ? Content.refreshingProfiles
-                          : Content.loadingProfiles,
-                    ),
+                      if (state.link != LinkState.connected)
+                        OutlinedButton(
+                          onPressed: state.busy ? null : viewModel.reconnect,
+                          child: const Text(Content.retry),
+                        ),
+                      TextButton(
+                        onPressed: state.busy ? null : widget.onChangeServer,
+                        child: const Text(Content.changeServer),
+                      ),
+                    ],
                   ),
-                if (state.profilesState == ProfilesState.empty)
-                  const Text(Content.emptyProfiles),
-                if (state.profilesState == ProfilesState.error)
-                  const Text(Content.profilesError),
-                if (state.error != null)
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(Content.error(state.error!.code)),
-                  ),
+                  if (state.error != null)
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(Content.error(state.error!.code)),
+                    ),
+                ]),
                 const SizedBox(height: Spacing.md),
-                for (final profile in state.profiles)
-                  ProfileChoice(
-                    profile: profile,
-                    selected: state.selectedProfile == profile.key,
-                    onTap: state.busy
-                        ? null
-                        : () async {
-                            await viewModel.select(profile.key);
-                            // Un seul retour, et seulement si le choix est
-                            // enregistré.
-                            if (!context.mounted ||
-                                ModalRoute.of(context)?.isCurrent != true ||
-                                viewModel.snapshot.selectedProfile !=
-                                    profile.key) {
-                              return;
-                            }
-                            widget.onPicked?.call(profile.key);
-                          },
-                  ),
-                const Text(Content.localSelection),
+                _group(context, Content.profilesSection, [
+                  if (loading)
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        state.profilesState == ProfilesState.refreshing
+                            ? Content.refreshingProfiles
+                            : Content.loadingProfiles,
+                      ),
+                    ),
+                  if (state.profilesState == ProfilesState.empty)
+                    const Text(Content.emptyProfiles),
+                  if (state.profilesState == ProfilesState.error)
+                    const Text(Content.profilesError),
+                  for (final profile in state.profiles)
+                    ProfileChoice(
+                      profile: profile,
+                      selected: state.selectedProfile == profile.key,
+                      onTap: state.busy
+                          ? null
+                          : () async {
+                              await viewModel.select(profile.key);
+                              // Un seul retour, et seulement si le choix
+                              // est enregistré.
+                              if (!context.mounted ||
+                                  ModalRoute.of(context)?.isCurrent != true ||
+                                  viewModel.snapshot.selectedProfile !=
+                                      profile.key) {
+                                return;
+                              }
+                              widget.onPicked?.call(profile.key);
+                            },
+                    ),
+                  const SizedBox(height: Spacing.sm),
+                  Text(Content.localSelection, style: note),
+                ]),
                 const SizedBox(height: Spacing.lg),
                 SectionCard(
                   title: Content.capabilitiesTitle,

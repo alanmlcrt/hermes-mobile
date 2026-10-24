@@ -13,6 +13,10 @@ RabbitPainter pose(WidgetTester tester) => tester
     .whereType<RabbitPainter>()
     .single;
 
+/// Otc est retiré de l'interface en attendant sa refonte (2026-10-23) :
+/// ces tests reviendront avec lui.
+const otcRemoved = true;
+
 void main() {
   testWidgets('échelle non linéaire du corps et regard vers le texte dessous', (
     tester,
@@ -98,6 +102,7 @@ void main() {
       expect(pose(tester).gaze, 1);
       await tester.pumpWidget(const SizedBox());
     },
+    skip: otcRemoved,
   );
 
   testWidgets(

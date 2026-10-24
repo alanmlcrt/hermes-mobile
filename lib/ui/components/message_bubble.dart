@@ -4,8 +4,8 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../content.dart';
 import '../tokens.dart';
 
-/// Message du fil : la demande d'Alanc en texte brut, la réponse de Hermes en
-/// Markdown (emojis, listes, blocs de code défilant horizontalement). Aucune
+/// Message du fil, en bulle : la demande d'Alanc en texte brut, la réponse de
+/// Hermes en Markdown (emojis, listes, blocs de code défilant horizontalement). Aucune
 /// animation d'apparition.
 class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.text, this.fromUser = false});
@@ -18,7 +18,7 @@ class MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final body = fromUser
-        ? Text(text, style: TextStyle(color: scheme.bubbleContent))
+        ? Text(text, style: TextStyle(color: scheme.emphasisContent))
         : MarkdownBody(
             data: text,
             // Aucune image distante : une URL de modèle ne déclenche pas de requête.
@@ -37,19 +37,32 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
           );
+    final label = fromUser ? Content.yourRequest : Content.hermesReply;
+    // Deux bulles pleines : grise pour Hermes, encre pour Alanc.
     return Align(
       alignment: fromUser
           ? AlignmentDirectional.centerEnd
           : AlignmentDirectional.centerStart,
-      child: Semantics(
-        container: true,
-        label: fromUser ? Content.yourRequest : Content.hermesReply,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: fromUser ? scheme.bubbleSurface : scheme.canvas,
-            borderRadius: BorderRadius.circular(Radii.md),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * Layout.bubbleMaxWidth,
+        ),
+        child: Semantics(
+          container: true,
+          label: label,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: fromUser ? scheme.emphasis : scheme.bubbleSurface,
+              borderRadius: BorderRadius.circular(Radii.bubble),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.md,
+                vertical: Spacing.sm + Spacing.xs,
+              ),
+              child: body,
+            ),
           ),
-          child: Padding(padding: const EdgeInsets.all(Spacing.md), child: body),
         ),
       ),
     );

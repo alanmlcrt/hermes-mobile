@@ -46,6 +46,37 @@ enum ActivityKind {
     'preparation' => ActivityKind.preparation,
     _ => ActivityKind.unknown,
   };
+
+  /// Famille d'un outil Hermes d'après son nom (`tool.start`), `tool` si le
+  /// nom est absent ou inconnu. Noms : hermes-agent/tools (recherche du
+  /// 20/10, .working/hermes-tool-activity-research.md).
+  static ActivityKind forTool(Object? name) {
+    if (name is! String) return ActivityKind.tool;
+    final tool = name.trim().split(RegExp(r'\s')).first;
+    if (tool.startsWith('browser_')) {
+      return tool == 'browser_vision'
+          ? ActivityKind.imageAnalyze
+          : ActivityKind.webBrowse;
+    }
+    if (tool.startsWith('cronjob')) return ActivityKind.schedule;
+    return switch (tool) {
+      'terminal' || 'process' => ActivityKind.command,
+      'execute_code' => ActivityKind.code,
+      'read_file' => ActivityKind.fileRead,
+      'write_file' => ActivityKind.fileCreate,
+      'patch' => ActivityKind.fileEdit,
+      'search_files' => ActivityKind.fileSearch,
+      'web_search' => ActivityKind.webSearch,
+      'web_extract' => ActivityKind.webBrowse,
+      'image_generate' => ActivityKind.imageCreate,
+      'vision_analyze' => ActivityKind.imageAnalyze,
+      'memory' || 'session_search' => ActivityKind.memory,
+      'skills_list' || 'skill_view' || 'skill_manage' => ActivityKind.skill,
+      'delegate_task' || 'mixture_of_agents' => ActivityKind.delegate,
+      'todo' => ActivityKind.organize,
+      _ => ActivityKind.tool,
+    };
+  }
 }
 
 /// Pose courante de présentation, sans mesure de progression ni succès.
@@ -66,6 +97,32 @@ class TimelineKey {
       session == other.session;
   @override
   int get hashCode => Object.hash(connection, profile, session);
+}
+
+/// Repère local observé, jamais présenté comme identité de tour serveur.
+class StopTarget {
+  const StopTarget(
+    this.key,
+    this.runtime,
+    this.generation,
+    this.turn,
+    this.revision,
+  );
+  final TimelineKey key;
+  final String runtime;
+  final int generation;
+  final int turn;
+  final int revision;
+  @override
+  bool operator ==(Object other) =>
+      other is StopTarget &&
+      key == other.key &&
+      runtime == other.runtime &&
+      generation == other.generation &&
+      turn == other.turn &&
+      revision == other.revision;
+  @override
+  int get hashCode => Object.hash(key, runtime, generation, turn, revision);
 }
 
 sealed class TimelineItem {

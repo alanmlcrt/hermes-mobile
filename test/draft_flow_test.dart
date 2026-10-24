@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hermes_mobile/features/profiles/profile_accents.dart';
 import 'package:hermes_mobile/features/conversation/draft_view.dart';
 import 'package:hermes_mobile/features/conversation/draft_view_model.dart';
 import 'package:hermes_mobile/main.dart';
@@ -12,6 +13,7 @@ import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/ui/content.dart';
 
 import 'support/connection_fakes.dart';
+import 'support/home_helper.dart';
 
 /// Requêtes connues de l'Epic 1 ; toute autre (session, envoi) est interdite.
 const _epic1Paths = {
@@ -50,12 +52,22 @@ void main() {
     (tester) async {
       final h = await _launched();
       final outbox = MemoryOutbox();
-      await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+      await tester.pumpWidget(
+        MainApp(
+          gateway: h.repository,
+          outbox: outbox,
+          conversation: MemoryConversation(),
+        ),
+      );
       await tester.pumpAndSettle();
+      await enterHome(tester);
       final draft = outbox.drafts.values.single;
       expect(draft.profile.value, 'default');
       expect(_location(tester), '/draft/${draft.key.value}');
-      expect(find.text(Content.draftProfile('Principal (default)')), findsOne);
+      expect(
+        find.bySemanticsLabel(Content.draftProfile('Principal (default)')),
+        findsOne,
+      );
       await tester.enterText(find.byType(TextField), '/cmd abc 🚀');
       await tester.pumpAndSettle();
       expect(outbox.drafts[draft.key]!.body, '/cmd abc 🚀');
@@ -80,9 +92,14 @@ void main() {
       relaunched.store.value = h.store.value;
       relaunched.secrets.values.addAll(h.secrets.values);
       await tester.pumpWidget(
-        MainApp(gateway: relaunched.repository, outbox: outbox, conversation: MemoryConversation()),
+        MainApp(
+          gateway: relaunched.repository,
+          outbox: outbox,
+          conversation: MemoryConversation(),
+        ),
       );
       await tester.pumpAndSettle();
+      await enterHome(tester);
       expect(outbox.drafts, hasLength(1));
       expect(_location(tester), '/draft/${draft.key.value}');
       expect(find.text('/cmd abc 🚀'), findsOne);
@@ -91,8 +108,10 @@ void main() {
           expect(_epic1Paths, contains(request.uri.path));
         }
       }
-      // Lien vers « Mes profils ».
-      await tester.tap(find.text(Content.profilesTitle));
+      // « Mes profils » depuis l'accueil.
+      await tester.tap(find.byTooltip(Content.home));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(Content.settings));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
       expect(find.text('Travail (travail)'), findsOne);
@@ -105,8 +124,15 @@ void main() {
   ) async {
     final h = await _launched(profilesStatus: 500);
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: outbox,
+        conversation: MemoryConversation(),
+      ),
+    );
     await tester.pumpAndSettle();
+    await enterHome(tester);
     expect(find.text(Content.profilesError), findsOne);
     expect(outbox.drafts, isEmpty);
     expect(tester.takeException(), isNull);
@@ -117,9 +143,16 @@ void main() {
   ) async {
     final h = await _launched();
     final outbox = MemoryOutbox()..failOpen = true;
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: outbox,
+        conversation: MemoryConversation(),
+      ),
+    );
     await tester.pumpAndSettle();
-    expect(_location(tester), '/');
+    await enterHome(tester);
+    expect(Uri.parse(_location(tester)).path, '/');
     expect(find.text('Principal (default)'), findsOne);
     expect(outbox.drafts, isEmpty);
     expect(tester.takeException(), isNull);
@@ -133,8 +166,15 @@ void main() {
       choice: const ProfileKey('travail'),
     );
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: outbox,
+        conversation: MemoryConversation(),
+      ),
+    );
     await tester.pumpAndSettle();
+    await enterHome(tester);
     final draft = outbox.drafts.values.single;
     expect(draft.profile, const ProfileKey('travail'));
     expect(_location(tester), '/draft/${draft.key.value}');
@@ -149,8 +189,15 @@ void main() {
     // de test simulée.
     h.transport.ticketStatus = 500;
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: outbox,
+        conversation: MemoryConversation(),
+      ),
+    );
     await tester.pumpAndSettle();
+    await enterHome(tester);
     await tester.enterText(find.byType(TextField), 'gardé');
     await tester.pumpAndSettle();
     h.transport.profilesStatus = 401;
@@ -184,7 +231,7 @@ void main() {
               conversation: MemoryConversation(),
               key: failRead ? draft.key : const DraftKey('inconnu'),
             ),
-            onOpenProfiles: (_) async => null,
+            accents: ProfileAccents(h.repository),
           ),
         ),
       );
@@ -202,21 +249,28 @@ void main() {
     final h = await _launched();
     if (ready != null) h.transport.ready = ready;
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: outbox,
+        conversation: MemoryConversation(),
+      ),
+    );
     await tester.pumpAndSettle();
+    await enterHome(tester);
     return (h, outbox, outbox.drafts.keys.single);
   }
 
-  Finder sendButton() => find.widgetWithText(FilledButton, Content.send);
+  Finder sendButton() => find.widgetWithIcon(IconButton, Icons.arrow_upward);
   bool sendEnabled(WidgetTester tester) =>
-      tester.widget<FilledButton>(sendButton()).onPressed != null;
+      tester.widget<IconButton>(sendButton()).onPressed != null;
 
   testWidgets('envoi actif : texte saisi, connecté, tour terminé', (
     tester,
   ) async {
     final (_, outbox, key) = await openDraft(tester);
     expect(sendEnabled(tester), isFalse);
-    expect(find.text(Content.sendEmpty), findsOne);
+    expect(_announced(Content.sendEmpty), findsWidgets);
     await tester.enterText(find.byType(TextField), 'ma demande');
     await tester.pumpAndSettle();
     expect(sendEnabled(tester), isTrue);
@@ -226,29 +280,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tour en cours : saisie enregistrée, bouton désactivé et raison', (
-    tester,
-  ) async {
-    final semantics = tester.ensureSemantics();
-    final (_, outbox, key) = await openDraft(tester);
-    await tester.enterText(find.byType(TextField), 'première');
-    outbox.setStatus(key, const SendStatus(turnActive: true));
-    await tester.pumpAndSettle();
-    expect(sendEnabled(tester), isFalse);
-    expect(find.text(Content.turnActive), findsOne);
-    await tester.enterText(find.byType(TextField), 'seconde en cours');
-    await tester.pumpAndSettle();
-    expect(outbox.drafts[key]!.body, 'seconde en cours');
-    expect(sendEnabled(tester), isFalse);
-    expect(
-      tester.getSemantics(find.text(Content.turnActive)),
-      matchesSemantics(label: Content.turnActive, isLiveRegion: true),
-    );
-    outbox.setStatus(key, const SendStatus());
-    await tester.pumpAndSettle();
-    expect(sendEnabled(tester), isTrue);
-    semantics.dispose();
-  });
+  testWidgets(
+    'tour en cours : saisie enregistrée, bouton désactivé et raison',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final (_, outbox, key) = await openDraft(tester);
+      await tester.enterText(find.byType(TextField), 'première');
+      outbox.setStatus(key, const SendStatus(turnActive: true));
+      await tester.pumpAndSettle();
+      expect(sendEnabled(tester), isFalse);
+      expect(_announced(Content.turnActive), findsWidgets);
+      await tester.enterText(find.byType(TextField), 'seconde en cours');
+      await tester.pumpAndSettle();
+      expect(outbox.drafts[key]!.body, 'seconde en cours');
+      expect(sendEnabled(tester), isFalse);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(Content.turnActive)),
+        matchesSemantics(label: Content.turnActive, isLiveRegion: true),
+      );
+      outbox.setStatus(key, const SendStatus());
+      await tester.pumpAndSettle();
+      expect(sendEnabled(tester), isTrue);
+      semantics.dispose();
+    },
+  );
 
   testWidgets('envoi en cours puis résultat incertain : annoncé, explicite', (
     tester,
@@ -257,14 +312,17 @@ void main() {
     await tester.enterText(find.byType(TextField), 'texte');
     outbox.setStatus(key, const SendStatus(state: OperationState.sending));
     await tester.pumpAndSettle();
-    expect(find.text(Content.sending), findsOne);
+    expect(_announced(Content.sending), findsWidgets);
     expect(sendEnabled(tester), isFalse);
     outbox.setStatus(
       key,
-      const SendStatus(state: OperationState.unknown, errorCode: 'send.unknown'),
+      const SendStatus(
+        state: OperationState.unknown,
+        errorCode: 'send.unknown',
+      ),
     );
     await tester.pumpAndSettle();
-    expect(find.text(Content.error('send.unknown')), findsOne);
+    expect(_announced(Content.error('send.unknown')), findsWidgets);
     expect(find.text('texte'), findsOne);
     // Un nouvel envoi n'est possible que par action explicite.
     expect(sendEnabled(tester), isTrue);
@@ -291,7 +349,7 @@ void main() {
         }
         outbox.setStatus(key, const SendStatus(state: OperationState.accepted));
         await tester.pumpAndSettle();
-        expect(find.text(Content.sendAccepted), findsOne);
+        expect(_announced(Content.sendAccepted), findsWidgets);
         expect(
           tester.widget<TextField>(find.byType(TextField)).controller!.text,
           typedMore ? 'abc suite' : '',
@@ -309,7 +367,7 @@ void main() {
     );
     await tester.enterText(find.byType(TextField), 'texte');
     await tester.pumpAndSettle();
-    expect(find.text(Content.sendCapabilityMissing), findsOne);
+    expect(_announced(Content.sendCapabilityMissing), findsWidgets);
     expect(sendEnabled(tester), isFalse);
     expect(outbox.sent, isEmpty);
     expect(h.transport.frames.where((f) => f['id'] != 'capabilities'), isEmpty);
@@ -326,95 +384,17 @@ void main() {
     final (_, outbox, key) = await openDraft(tester);
     outbox.setStatus(
       key,
-      const SendStatus(state: OperationState.unknown, errorCode: 'send.unknown'),
+      const SendStatus(
+        state: OperationState.unknown,
+        errorCode: 'send.unknown',
+      ),
     );
     await tester.pumpAndSettle();
-    expect(find.text(Content.error('send.unknown')), findsOne);
+    expect(_announced(Content.error('send.unknown')), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
-  final toTravail = Content.draftProfile('Travail (travail)');
   final fromDefault = Content.draftProfile('Principal (default)');
-
-  for (final scaled in [false, true]) {
-    testWidgets(
-      'sélecteur : profil rattaché, annoncé, texte intact, choix enregistré'
-      '${scaled ? ' (200 %)' : ''}',
-      (tester) async {
-        if (scaled) {
-          tester.view.physicalSize = const Size(375, 700);
-          tester.view.devicePixelRatio = 1;
-          tester.platformDispatcher.textScaleFactorTestValue = 2;
-          addTearDown(tester.view.reset);
-          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-        }
-        final semantics = tester.ensureSemantics();
-        final (h, outbox, key) = await openDraft(tester);
-        await tester.enterText(find.byType(TextField), 'abc');
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(fromDefault));
-        await tester.pumpAndSettle();
-        // Le profil actif est identifiable sans couleur seule.
-        expect(find.text(Content.selected), findsOne);
-        await tester.tap(find.text('Travail (travail)'));
-        await tester.pumpAndSettle();
-        expect(outbox.drafts.keys.single, key);
-        expect(outbox.drafts[key]!.profile, const ProfileKey('travail'));
-        expect(outbox.drafts[key]!.body, 'abc');
-        expect(_location(tester), '/draft/${key.value}');
-        expect(find.text('abc'), findsOne);
-        expect(
-          tester.getSemantics(find.text(toTravail)),
-          matchesSemantics(
-            label: toTravail,
-            isButton: true,
-            hasEnabledState: true,
-            isEnabled: true,
-            hasTapAction: true,
-            hasFocusAction: true,
-            isFocusable: true,
-            isLiveRegion: true,
-          ),
-        );
-        expect(h.repository.snapshot.selectedProfile, const ProfileKey('travail'));
-        for (final request in h.transport.requests) {
-          expect(_epic1Paths, contains(request.uri.path));
-        }
-        expect(tester.takeException(), isNull);
-        semantics.dispose();
-      },
-    );
-  }
-
-  testWidgets('sélecteur désactivé pendant un envoi', (tester) async {
-    final (_, outbox, key) = await openDraft(tester);
-    outbox.setStatus(key, const SendStatus(state: OperationState.sending));
-    await tester.pumpAndSettle();
-    final button = find.ancestor(
-      of: find.text(fromDefault),
-      matching: find.byType(TextButton),
-    );
-    expect(tester.widget<TextButton>(button).onPressed, isNull);
-  });
-
-  testWidgets('« Mes profils » depuis un brouillon neuf rattache le choix', (
-    tester,
-  ) async {
-    final (_, outbox, key) = await openDraft(tester);
-    await tester.enterText(find.byType(TextField), 'abc');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(Content.profilesTitle));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
-    await tester.tap(find.text('Travail (travail)'));
-    // Le retour part après l'écriture du choix, hors de toute image.
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-    await tester.pumpAndSettle();
-    expect(_location(tester), '/draft/${key.value}');
-    expect(outbox.drafts[key]!.profile, const ProfileKey('travail'));
-    expect(find.text(toTravail), findsOne);
-    expect(find.text('abc'), findsOne);
-  });
 
   testWidgets('perte d’authentification sur « Mes profils » : connexion', (
     tester,
@@ -422,9 +402,15 @@ void main() {
     final h = await _launched();
     h.transport.ticketStatus = 500;
     final outbox = MemoryOutbox();
-    await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: outbox,
+        conversation: MemoryConversation(),
+      ),
+    );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(Content.profilesTitle));
+    await tester.tap(find.byTooltip(Content.settings));
     await tester.pumpAndSettle();
     h.transport.profilesStatus = 401;
     h.transport.refreshStatus = 401;
@@ -435,59 +421,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('notification de profils sur le brouillon : « Mes profils » '
-      'ne se rouvre pas', (tester) async {
-    final (h, outbox, key) = await openDraft(tester);
-    await tester.tap(find.text(Content.profilesTitle));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
-    await tester.tap(find.text('Travail (travail)'));
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-    await tester.pumpAndSettle();
-    expect(find.text(toTravail), findsOne);
-    await h.repository.refreshProfiles();
-    await tester.pumpAndSettle();
-    expect(find.text(toTravail), findsOne);
-    expect(find.text(Content.profilesTitle), findsOne);
-    expect(find.text(Content.localSelection), findsNothing);
-    expect(outbox.drafts[key]!.profile, const ProfileKey('travail'));
-  });
-
-  testWidgets('« Mes profils » : sélection en échec, brouillon inchangé', (
+  testWidgets('notification de profils sur le brouillon : il reste ouvert', (
     tester,
   ) async {
     final (h, outbox, key) = await openDraft(tester);
-    await tester.tap(find.text(Content.profilesTitle));
+    await h.repository.refreshProfiles();
+    await tester.pumpAndSettle();
+    expect(_location(tester), '/draft/${key.value}');
+    expect(find.text(Content.localSelection), findsNothing);
+    expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
+  });
+
+  testWidgets('« Mes profils » : sélection en échec, erreur dite', (
+    tester,
+  ) async {
+    final h = await _launched();
+    await tester.pumpWidget(
+      MainApp(
+        gateway: h.repository,
+        outbox: MemoryOutbox(),
+        conversation: MemoryConversation(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(Content.settings));
     await tester.pumpAndSettle();
     h.store.failSave = true;
     await tester.scrollUntilVisible(find.text('Travail (travail)'), 200);
+    await tester.ensureVisible(find.text('Travail (travail)'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Travail (travail)'));
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
-    // Reste sur « Mes profils » avec l'erreur ; le brouillon ne bouge pas.
     expect(find.text(Content.localSelection), findsOne);
-    expect(
-      find.text(Content.error('storage.unavailable')),
-      findsOne,
-    );
-    expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
-  });
-
-  testWidgets('écriture échouée : brouillon et profil inchangés, erreur dite', (
-    tester,
-  ) async {
-    final (_, outbox, key) = await openDraft(tester);
-    await tester.tap(find.text(fromDefault));
-    await tester.pumpAndSettle();
-    outbox.failSave = true;
-    await tester.tap(find.text('Travail (travail)'));
-    await tester.pumpAndSettle();
-    expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
-    expect(find.text(fromDefault), findsOne);
-    expect(
-      find.text('${Content.error('storage.unavailable')} ${Content.draftKept}'),
-      findsOne,
-    );
+    expect(find.text(Content.error('storage.unavailable')), findsOne);
   });
 
   testWidgets('conversation commencée : profil en lecture seule, inchangé', (
@@ -504,7 +471,6 @@ void main() {
       body: 'suite',
       storedSessionId: 's-1',
     );
-    bool? picked;
     await tester.pumpWidget(
       MaterialApp(
         home: DraftView(
@@ -514,27 +480,17 @@ void main() {
             conversation: MemoryConversation(),
             key: key,
           ),
-          onOpenProfiles: (pick) async {
-            picked = pick;
-            return const ProfileKey('travail');
-          },
+          accents: ProfileAccents(h.repository),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text(fromDefault), findsOne);
-    expect(
-      find.ancestor(
-        of: find.textContaining(Content.draftProfile('')),
-        matching: find.byType(TextButton),
-      ),
-      findsNothing,
-    );
-    await tester.tap(find.text(Content.profilesTitle));
-    await tester.pumpAndSettle();
-    expect(picked, isFalse);
+    expect(find.bySemanticsLabel(fromDefault), findsOne);
+    // Aucun choix de profil dans une conversation : seul l'accueil choisit.
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+    expect(find.byTooltip(Content.profilesTitle), findsNothing);
     expect(outbox.drafts[key]!.profile, const ProfileKey('default'));
-    expect(find.text(fromDefault), findsOne);
+    expect(find.bySemanticsLabel(fromDefault), findsOne);
   });
 
   for (final size in [const Size(375, 700), const Size(700, 375)]) {
@@ -549,13 +505,22 @@ void main() {
       final semantics = tester.ensureSemantics();
       final h = await _launched();
       final outbox = MemoryOutbox();
-      await tester.pumpWidget(MainApp(gateway: h.repository, outbox: outbox, conversation: MemoryConversation()));
+      await tester.pumpWidget(
+        MainApp(
+          gateway: h.repository,
+          outbox: outbox,
+          conversation: MemoryConversation(),
+        ),
+      );
       await tester.pumpAndSettle();
+      await enterHome(tester);
       final field = find.byType(TextField);
       expect(
-        tester.getSemantics(find.bySemanticsLabel(Content.composerLabel)),
+        tester.getSemantics(
+          find.bySemanticsLabel(Content.writeTo('Principal (default)')),
+        ),
         matchesSemantics(
-          label: Content.composerLabel,
+          label: Content.writeTo('Principal (default)'),
           isTextField: true,
           isMultiline: true,
           isFocusable: true,
@@ -566,7 +531,7 @@ void main() {
         ),
       );
       final send = find.ancestor(
-        of: find.text(Content.send),
+        of: find.byTooltip(Content.send),
         matching: find.byType(Semantics),
       );
       expect(
@@ -605,3 +570,11 @@ void main() {
     });
   }
 }
+
+/// Statut ou raison de blocage : annoncé (région live ou indication du bouton
+/// d'envoi), plus affiché sous la saisie.
+Finder _announced(String text) => find.byWidgetPredicate(
+  (w) =>
+      w is Semantics &&
+      (w.properties.label == text || w.properties.hint == text),
+);

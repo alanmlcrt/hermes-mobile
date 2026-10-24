@@ -5,28 +5,42 @@ import '../content.dart';
 import '../tokens.dart';
 
 /// Une conversation de l'historique : titre (sinon aperçu, sinon libellé
-/// générique), date locale et nombre de messages, annoncés d'un bloc.
+/// générique), date locale et nombre de messages, annoncés d'un bloc ; la
+/// conversation ouverte est teintée de la couleur du profil.
 class HistoryRow extends StatelessWidget {
-  const HistoryRow({super.key, required this.session, this.onTap});
+  const HistoryRow({
+    super.key,
+    required this.session,
+    this.onTap,
+    this.selected = false,
+  });
   final SessionSummary session;
+  final bool selected;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final date = session.startedAt;
+    final scheme = Theme.of(context).colorScheme;
     return ListTile(
+      selected: selected,
+      selectedColor: scheme.content,
+      selectedTileColor: scheme.accent.withValues(alpha: Palette.accentTint),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+      ),
       title: Text(
         session.title ?? session.preview ?? Content.untitledConversation,
-        maxLines: 2,
+        maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
+      visualDensity: VisualDensity.compact,
       subtitle: Text(
         [
           if (date != null) Content.historyDate(date),
           Content.messageCount(session.messageCount),
         ].join(' · '),
       ),
-      trailing: const ExcludeSemantics(child: Icon(Icons.chevron_right)),
       onTap: onTap,
     );
   }

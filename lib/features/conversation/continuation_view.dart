@@ -5,6 +5,7 @@ import '../../models/draft.dart';
 import '../../models/profile.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
+import '../profiles/profile_accents.dart';
 import 'draft_view.dart';
 import 'draft_view_model.dart';
 
@@ -18,8 +19,9 @@ class ContinuationView extends StatefulWidget {
     required this.profile,
     required this.session,
     required this.createViewModel,
-    required this.onOpenProfiles,
-    required this.onOpenHistory,
+    required this.accents,
+    required this.onHome,
+    required this.onHistory,
     required this.onNewConversation,
   });
   final OutboxGateway outbox;
@@ -27,8 +29,9 @@ class ContinuationView extends StatefulWidget {
   final ProfileKey profile;
   final String session;
   final DraftViewModel Function(DraftKey key) createViewModel;
-  final Future<ProfileKey?> Function(bool pick) onOpenProfiles;
-  final void Function(ProfileKey profile) onOpenHistory;
+  final ProfileAccents accents;
+  final VoidCallback onHome;
+  final void Function(ProfileKey profile) onHistory;
   final void Function(ProfileKey profile) onNewConversation;
   @override
   State<ContinuationView> createState() => _ContinuationViewState();
@@ -52,8 +55,9 @@ class _ContinuationViewState extends State<ContinuationView> {
         return DraftView(
           continuation: true,
           create: () => widget.createViewModel(draft.key),
-          onOpenProfiles: widget.onOpenProfiles,
-          onOpenHistory: widget.onOpenHistory,
+          accents: widget.accents,
+          onHome: widget.onHome,
+          onHistory: widget.onHistory,
           onNewConversation: widget.onNewConversation,
         );
       }

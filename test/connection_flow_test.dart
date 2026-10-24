@@ -8,6 +8,7 @@ import 'package:hermes_mobile/ui/content.dart';
 import 'package:hermes_mobile/ui/theme.dart';
 
 import 'support/connection_fakes.dart';
+import 'support/home_helper.dart';
 
 void main() {
   testWidgets(
@@ -15,9 +16,14 @@ void main() {
     (tester) async {
       final h = Harness();
       await tester.pumpWidget(
-        MainApp(gateway: h.repository, outbox: MemoryOutbox(), conversation: MemoryConversation()),
+        MainApp(
+          gateway: h.repository,
+          outbox: MemoryOutbox(),
+          conversation: MemoryConversation(),
+        ),
       );
       await tester.pumpAndSettle();
+      await enterHome(tester);
       await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
         'flutter/navigation',
         const JSONMethodCodec().encodeMethodCall(
@@ -42,9 +48,14 @@ void main() {
     (tester) async {
       final h = Harness();
       await tester.pumpWidget(
-        MainApp(gateway: h.repository, outbox: MemoryOutbox(), conversation: MemoryConversation()),
+        MainApp(
+          gateway: h.repository,
+          outbox: MemoryOutbox(),
+          conversation: MemoryConversation(),
+        ),
       );
       await tester.pumpAndSettle();
+      await enterHome(tester);
       await tester.enterText(
         find.byType(TextField).first,
         'http://desktop.ts.net:9119',
@@ -65,8 +76,9 @@ void main() {
       await tester.ensureVisible(find.text(Content.signIn));
       await tester.tap(find.text(Content.signIn));
       await tester.pumpAndSettle();
+      await enterHome(tester);
       expect(
-        find.text(Content.profilesTitle),
+        find.byTooltip(Content.home),
         findsOneWidget,
         reason:
             'auth=${h.repository.snapshot.authenticated}, busy=${h.repository.snapshot.busy}, '
@@ -74,10 +86,12 @@ void main() {
       );
       // Accueil : nouvelle conversation sur le profil par défaut.
       expect(
-        find.text(Content.draftProfile('Principal (default)')),
+        find.bySemanticsLabel(Content.draftProfile('Principal (default)')),
         findsOneWidget,
       );
-      await tester.tap(find.text(Content.profilesTitle));
+      await tester.tap(find.byTooltip(Content.home));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(Content.settings));
       await tester.pumpAndSettle();
       expect(find.text('Principal (default)'), findsOneWidget);
       expect(find.text(ConnectionLabels.connected), findsOneWidget);

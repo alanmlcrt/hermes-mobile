@@ -49,15 +49,21 @@ void main() {
   }
 
   Future<void> focusCommand(WidgetTester tester, String label) async {
-    await tester.scrollUntilVisible(find.text(label), 100);
+    final swatch = find.bySemanticsLabel(RegExp('^${RegExp.escape(label)}'));
+    await tester.scrollUntilVisible(swatch, 100);
     await tester.pumpAndSettle();
+    // Bouton texte, sinon pastille sans légende visible.
+    final text = find.text(label);
+    final target = text.evaluate().isNotEmpty
+        ? text
+        : find.descendant(of: swatch, matching: find.byType(Container));
     for (var i = 0; i < 16; i++) {
-      if (Focus.of(tester.element(find.text(label))).hasPrimaryFocus) break;
+      if (Focus.of(tester.element(target)).hasPrimaryFocus) break;
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pumpAndSettle();
     }
     expect(
-      Focus.of(tester.element(find.text(label))).hasPrimaryFocus,
+      Focus.of(tester.element(target)).hasPrimaryFocus,
       isTrue,
       reason: label,
     );
@@ -106,7 +112,7 @@ void main() {
     await open(tester, (_) async {
       writes++;
     });
-    await tester.tap(find.text(Content.mintSky));
+    await tester.tap(find.bySemanticsLabel(RegExp('^${Content.mintSky}')));
     await tester.pump();
     expect(
       tester.widget<CompanionBackdrop>(find.byType(CompanionBackdrop)).palette,
@@ -132,12 +138,14 @@ void main() {
         if (calls == 1) throw StateError('failed');
         await pending.future;
       });
-      await tester.tap(find.text(Content.roseLilac));
+      await tester.tap(find.bySemanticsLabel(RegExp('^${Content.roseLilac}')));
       await tester.tap(find.text(Content.backgroundApply));
       await tester.pumpAndSettle();
       expect(find.text(Content.backgroundSaveError), findsOneWidget);
       expect(
-        find.text('${Content.roseLilac} — ${Content.backgroundSelected}'),
+        find.bySemanticsLabel(
+          '${Content.roseLilac} — ${Content.backgroundSelected}',
+        ),
         findsOneWidget,
       );
       await tester.tap(find.text(Content.backgroundRetry));
@@ -181,7 +189,7 @@ void main() {
           brightness: brightness,
           scale: 2,
         );
-        final selected = find.text(
+        final selected = find.bySemanticsLabel(
           '${Content.lavenderPeach} — ${Content.backgroundSelected}',
         );
         await tester.scrollUntilVisible(selected, 100);
@@ -200,7 +208,9 @@ void main() {
         expect(
           tester
               .getSemantics(
-                find.text('${Content.mintSky} — ${Content.backgroundSelected}'),
+                find.bySemanticsLabel(
+                  '${Content.mintSky} — ${Content.backgroundSelected}',
+                ),
               )
               .getSemanticsData()
               .flagsCollection
@@ -213,7 +223,7 @@ void main() {
         expect(
           tester
               .getSemantics(
-                find.text(
+                find.bySemanticsLabel(
                   '${Content.roseLilac} — ${Content.backgroundSelected}',
                 ),
               )

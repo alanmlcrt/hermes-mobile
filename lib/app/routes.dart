@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/connection/connection_view.dart';
@@ -8,6 +8,9 @@ import '../features/conversation/draft_view.dart';
 import '../features/conversation/draft_view_model.dart';
 import '../features/history/history_view.dart';
 import '../features/history/history_view_model.dart';
+import '../features/home/home_view.dart';
+import '../features/profiles/profile_accents.dart';
+import '../features/profiles/profile_settings_view.dart';
 import '../features/profiles/profiles_view.dart';
 import '../features/profiles/profiles_view_model.dart';
 import '../models/connection.dart';
@@ -15,6 +18,7 @@ import '../models/companion_background.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
 import '../models/profile.dart';
+import '../models/profile_accent.dart';
 import '../models/timeline.dart';
 
 /// Seul décideur de l'écran d'ouverture : notification (Epic 5), puis
@@ -56,8 +60,28 @@ String conversationPath(
     '/c/${Uri.encodeComponent(connection.value)}/'
     '${Uri.encodeComponent(profile.value)}/${Uri.encodeComponent(session)}';
 
-String historyPath(ProfileKey profile) =>
-    '/history/${Uri.encodeComponent(profile.value)}';
+/// Conversations d'un profil (feuille du bas) ; [current] y est surlignée.
+String historyPath(ProfileKey profile, {String? current}) => Uri(
+  path: '/history/${Uri.encodeComponent(profile.value)}',
+  queryParameters: current == null ? null : {'current': current},
+).toString();
+
+String profileSettingsPath(ProfileKey profile) =>
+    '/profile/${Uri.encodeComponent(profile.value)}';
+
+/// Page présentée en feuille du bas, au-dessus de la page qui l'a ouverte.
+class _SheetPage<T> extends Page<T> {
+  const _SheetPage({super.key, required this.child});
+  final Widget child;
+  @override
+  Route<T> createRoute(BuildContext context) => ModalBottomSheetRoute<T>(
+    settings: this,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    builder: (_) => child,
+  );
+}
 
 class _Refresh extends ChangeNotifier {
   void ping() => notifyListeners();
@@ -69,8 +93,10 @@ class AppRoutes {
     OutboxGateway outbox,
     ConversationGateway conversation, {
     CompanionBackgroundStore? backgrounds,
+    ProfileAccentStore? accents,
   }) {
     connection = ConnectionViewModel(gateway);
+    this.accents = ProfileAccents(gateway, accents);
     profiles = ProfilesViewModel(gateway, backgrounds: backgrounds);
     router = GoRouter(
       refreshListenable: _refresh,
@@ -82,7 +108,9 @@ class AppRoutes {
           ).toString();
         }
         final path = state.uri.path;
-        if (path == '/') {
+        if (path == '/' &&
+            (state.uri.queryParameters.containsKey('profile') ||
+                _noProfiles(gateway.snapshot))) {
           return resolveLaunchTarget(
             gateway,
             outbox,
@@ -92,6 +120,7 @@ class AppRoutes {
         // Perte d'authentification : retour à l'écran de connexion.
         if (!gateway.snapshot.authenticated &&
             (path == '/profiles' ||
+                path.startsWith('/profile/') ||
                 path.startsWith('/draft/') ||
                 path.startsWith('/history/') ||
                 path.startsWith('/c/'))) {
@@ -116,15 +145,47 @@ class AppRoutes {
           path: '/',
           builder: (context, state) => ListenableBuilder(
             listenable: profiles,
-            builder: (context, _) => gateway.snapshot.authenticated
+            builder: (context, _) => !gateway.snapshot.authenticated
+                ? _connection(context)
+                : _noProfiles(gateway.snapshot)
                 ? _profiles(context)
-                : _connection(context),
+                : HomeView(
+                    gateway: gateway,
+                    conversation: conversation,
+                    accents: this.accents,
+                    onOpen: (profile, session) {
+                      final connection = gateway.snapshot.connection;
+                      context.go(
+                        session == null || connection == null
+                            ? _newConversation(profile)
+                            : conversationPath(
+                                connection.key,
+                                profile,
+                                session,
+                              ),
+                      );
+                    },
+                    onSettings: () => context.push('/profiles'),
+                  ),
           ),
         ),
         GoRoute(
           path: '/profiles',
-          builder: (context, state) =>
-              _profiles(context, pick: state.extra == true),
+          builder: (context, state) => _profiles(context),
+        ),
+        GoRoute(
+          path: '/profile/:profile',
+          builder: (context, state) => ProfileSettingsView(
+            key: ValueKey(state.pathParameters['profile']),
+            gateway: gateway,
+            accents: this.accents,
+            profile: ProfileKey(state.pathParameters['profile']!),
+            onChangeServer: () {
+              connection.edit();
+              context.go('/pair');
+            },
+            onAllProfiles: () => context.push('/profiles'),
+          ),
         ),
         GoRoute(
           path: '/draft/:draftKey',
@@ -137,35 +198,43 @@ class AppRoutes {
               conversation: conversation,
               key: DraftKey(state.pathParameters['draftKey']!),
             ),
-            onOpenProfiles: (pick) =>
-                context.push<ProfileKey>('/profiles', extra: pick),
-            onOpenHistory: (p) => context.push(historyPath(p)),
+            accents: this.accents,
+            onHome: () => context.go('/'),
+            onHistory: (p) => context.push(historyPath(p)),
           ),
         ),
         GoRoute(
           path: '/history/:profile',
-          builder: (context, state) => HistoryView(
-            key: ValueKey(state.pathParameters['profile']),
-            create: () => HistoryViewModel(
-              gateway: gateway,
-              conversation: conversation,
-              profile: ProfileKey(state.pathParameters['profile']!),
-            ),
-            onOpen: (session) {
-              final connection = gateway.snapshot.connection;
-              if (connection == null) return;
-              context.push(
-                conversationPath(
-                  connection.key,
-                  ProfileKey(state.pathParameters['profile']!),
-                  session,
+          pageBuilder: (context, state) {
+            final profile = ProfileKey(state.pathParameters['profile']!);
+            final current = state.uri.queryParameters['current'];
+            return _SheetPage(
+              key: state.pageKey,
+              child: HistoryView(
+                key: ValueKey(state.pathParameters['profile']),
+                create: () => HistoryViewModel(
+                  gateway: gateway,
+                  conversation: conversation,
+                  profile: profile,
                 ),
-              );
-            },
-            onNewConversation: (p) => context.go(
-              Uri(path: '/', queryParameters: {'profile': p.value}).toString(),
-            ),
-          ),
+                accents: this.accents,
+                current: current,
+                onOpen: (session) {
+                  final connection = gateway.snapshot.connection;
+                  if (connection == null) return;
+                  if (session == current) {
+                    context.pop();
+                    return;
+                  }
+                  context.go(
+                    conversationPath(connection.key, profile, session),
+                  );
+                },
+                onNewConversation: (p) => context.go(_newConversation(p)),
+                onSettings: (p) => context.push(profileSettingsPath(p)),
+              ),
+            );
+          },
         ),
         GoRoute(
           path: '/c/:connection/:profile/:session',
@@ -184,15 +253,10 @@ class AppRoutes {
                 conversation: conversation,
                 key: key,
               ),
-              onOpenProfiles: (pick) =>
-                  context.push<ProfileKey>('/profiles', extra: pick),
-              onOpenHistory: (p) => context.push(historyPath(p)),
-              onNewConversation: (p) => context.go(
-                Uri(
-                  path: '/',
-                  queryParameters: {'profile': p.value},
-                ).toString(),
-              ),
+              accents: this.accents,
+              onHome: () => context.go('/'),
+              onHistory: (p) => context.push(historyPath(p, current: session)),
+              onNewConversation: (p) => context.go(_newConversation(p)),
             );
           },
         ),
@@ -213,19 +277,37 @@ class AppRoutes {
       final now = gateway.snapshot.authenticated;
       final home = router.routeInformationProvider.value.uri.path == '/';
       if (now == authenticated && !home) return;
+      final lost = authenticated && !now;
       authenticated = now;
+      // Une page empilée (« Mes profils », réglages) ne survit pas à la perte
+      // d'authentification : retour à la racine, qui affiche la connexion.
+      if (lost && router.canPop()) {
+        router.go('/');
+        return;
+      }
       _refresh.ping();
     };
     profiles.addListener(_onProfiles);
   }
   late final ConnectionViewModel connection;
   late final ProfilesViewModel profiles;
+  late final ProfileAccents accents;
   final _refresh = _Refresh();
   late final VoidCallback _onProfiles;
   late final GoRouter router;
-  Widget _profiles(BuildContext context, {bool pick = false}) => ProfilesView(
+
+  /// Aucun profil connu une fois la liste reçue (vide ou en échec). Pendant
+  /// son chargement, l'accueil s'affiche et attend : le lancement ne saute
+  /// pas directement dans une conversation.
+  static bool _noProfiles(ConnectionSnapshot snapshot) =>
+      snapshot.profiles.isEmpty &&
+      snapshot.profilesState != ProfilesState.initial &&
+      snapshot.profilesState != ProfilesState.loading &&
+      snapshot.profilesState != ProfilesState.refreshing;
+  static String _newConversation(ProfileKey profile) =>
+      Uri(path: '/', queryParameters: {'profile': profile.value}).toString();
+  Widget _profiles(BuildContext context) => ProfilesView(
     viewModel: profiles,
-    onPicked: pick ? (key) => context.pop(key) : null,
     onChangeServer: () {
       connection.edit();
       context.go('/pair');
@@ -241,6 +323,7 @@ class AppRoutes {
     connection.dispose();
     profiles.removeListener(_onProfiles);
     profiles.dispose();
+    accents.dispose();
     _refresh.dispose();
   }
 }

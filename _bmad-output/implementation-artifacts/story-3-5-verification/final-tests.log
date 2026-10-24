@@ -1,0 +1,773 @@
+Resolving dependencies...
+
+Downloading packages...
+
+  code_assets 1.2.1 (2.1.0 available)
+
+  cross_file 0.3.5+5 (0.4.0 available)
+
+  hooks 2.0.2 (2.2.0 available)
+
+  material_color_utilities 0.13.0 (0.13.1 available)
+
+  meta 1.18.3 (1.19.0 available)
+
+  native_toolchain_c 0.19.2 (0.19.5 available)
+
+  objective_c 9.5.0 (9.6.2 available)
+
+  petitparser 7.0.2 (7.1.0 available)
+
+  record_use 0.6.0 (1.1.1 available)
+
+  sqflite 2.4.4+2 (2.4.5 available)
+
+  sqflite_android 2.4.4+1 (2.4.5 available)
+
+  sqflite_common_ffi 2.4.0+3 (2.4.4 available)
+
+  sqflite_platform_interface 2.4.2 (2.4.3 available)
+
+  sqlite3 3.5.2 (3.7.1 available)
+
+  test_api 0.7.12 (0.7.15 available)
+
+  vector_math 2.4.0 (2.4.3 available)
+
+  xml 7.0.1 (7.1.0 available)
+
+Got dependencies!
+
+17 packages have newer versions incompatible with dependency constraints.
+
+Try `flutter pub outdated` for more information.
+
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart
+
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_catalog_test.dart: 17 familles dédiées, repli, décodage et JSON compatible
+
+00:00 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:00 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:02 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:02 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:02 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:03 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:03 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:03 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:04 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:04 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:04 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:04 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:04 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:04 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:05 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:05 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:05 +28: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:06 +29: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:07 +30: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:08 +31: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:08 +32: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:09 +33: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:10 +34: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:10 +35: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:10 +36: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:11 +37: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:11 +38: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:11 +39: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:11 +40: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:11 +41: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:11 +42: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +43: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +44: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +45: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +46: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +47: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +48: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +49: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +50: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +51: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +52: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +53: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +54: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +55: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +56: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +57: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +58: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +59: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +60: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +61: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +62: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +63: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:12 +64: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:13 +65: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:13 +66: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:13 +67: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:13 +68: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:13 +69: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:13 +70: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:14 +71: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:14 +72: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:14 +73: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +74: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +75: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +76: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +77: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +78: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +79: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +80: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +81: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:15 +82: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +83: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +84: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +85: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +86: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +87: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +88: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:16 +89: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +90: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +91: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +92: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +92 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +93 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +94 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +95 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +96 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +97 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:17 +98 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +99 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +100 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +101 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +102 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +103 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +104 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +105 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +106 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +107 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +108 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +109 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:18 +110 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:19 +111 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:19 +112 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:19 +113 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:19 +114 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+
+00:19 +115 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:19 +116 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:19 +117 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:19 +118 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:19 +119 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:19 +120 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +121 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +122 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +123 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +124 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +125 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +126 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +127 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +128 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +129 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +130 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +131 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +132 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +133 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:20 +134 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +135 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +136 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +137 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +138 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +138 ~2: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +138 ~3: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +138 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +139 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +140 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +141 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +142 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:21 +143 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +144 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +145 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +146 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +147 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +148 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +149 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +150 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +151 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +152 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +153 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +154 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +155 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +156 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +157 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +158 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +159 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +160 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +161 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:22 +162 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +163 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +164 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +165 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +166 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +167 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +168 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +169 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +170 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +171 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:23 +172 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:24 +173 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:24 +174 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:24 +175 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:24 +176 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+
+00:24 +177 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp suit le thème du téléphone (Brightness.dark)
+
+00:24 +178 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp suit le thème du téléphone (Brightness.dark)
+
+00:25 +179 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp suit le thème du téléphone (Brightness.dark)
+
+00:25 +180 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp suit le thème du téléphone (Brightness.dark)
+
+00:25 +181 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +182 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +183 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +184 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +185 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +186 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +187 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +187 ~5: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +187 ~6: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +187 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:25 +187 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:26 +188 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:26 +189 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:26 +190 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:26 +191 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:26 +191 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:26 +192 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +193 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +194 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +195 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +196 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +197 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +198 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +199 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:27 +200 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +201 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +202 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +203 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +204 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +205 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +206 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +207 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +208 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +209 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +210 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +211 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:28 +212 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:29 +213 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:29 +214 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+
+00:29 +215 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +216 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +217 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +218 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +219 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +220 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +221 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +222 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +223 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +224 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +225 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:29 +226 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +227 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +228 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +229 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +230 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +231 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +232 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:30 +233 ~9: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +233 ~10: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +233 ~11: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +233 ~12: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +233 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +234 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +235 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +236 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +237 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +238 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +239 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +240 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +241 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +242 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +243 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +244 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +245 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +246 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +247 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:30 +248 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +249 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +250 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +251 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +252 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +253 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +254 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +255 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +256 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +257 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +258 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +259 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +260 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:31 +261 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:32 +262 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:32 +263 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:32 +264 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:32 +265 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:32 +266 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+
+00:32 +267 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +268 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +269 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +270 ~13: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +270 ~14: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +270 ~15: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +270 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +271 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +272 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +273 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +274 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:32 +275 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +276 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +277 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +278 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +279 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +280 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +281 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +282 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +283 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +284 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +285 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +286 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +287 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +288 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:33 +289 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +290 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +291 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +292 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +293 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +294 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +295 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +296 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +297 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +298 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +299 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +300 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +301 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +302 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +303 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +304 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +305 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +306 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +307 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:34 +308 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +309 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +310 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +311 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +312 ~16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +312 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +313 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +314 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +315 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:35 +316 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:36 +317 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:36 +318 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:36 +319 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:36 +320 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:36 +321 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:37 +322 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:37 +323 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:37 +324 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:37 +325 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:38 +326 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:38 +327 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:38 +328 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:38 +329 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:38 +330 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:39 +331 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+
+00:39 +332 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: DraftView réelle : arrêt, annonce unique, terminal, clavier et captures
+
+00:39 +333 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+
+00:40 +334 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+
+00:41 +335 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+
+00:41 +336 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:41 +337 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:41 +338 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:43 +339 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+
+00:44 +340 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine file d'attente non vide sans ligne : reste unknown
+
+00:44 +341 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+
+00:45 +342 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+
+00:45 +343 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque composant rendu dans les quatre variantes
+
+00:46 +344 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: SectionCard respecte le mouvement réduit
+
+00:46 +345 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: StatusLabel annonce son libellé
+
+00:46 +346 ~17: All tests passed!

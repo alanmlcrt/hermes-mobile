@@ -13,7 +13,7 @@ import 'hermes_adapter.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
 /// base partagée.
-class OutboxRepository implements OutboxGateway, SessionResumer {
+class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   OutboxRepository(
     this.database, {
     required this.gateway,
@@ -41,7 +41,191 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
   final _runtime = <DraftKey, ({String id, int generation})>{};
   final _turns = <DraftKey, int>{};
   final _storedIds = <DraftKey, String>{};
+  final _timelineKeys = <DraftKey, TimelineKey>{};
   final _ensuring = <DraftKey, Future<String>>{};
+  final _stopping = <DraftKey, Future<void>>{};
+  final _stopLocks = <TimelineKey>{};
+  final _stopAttempted = <(TimelineKey, int)>{};
+  static (TimelineKey, int) _stopScope(StopTarget target) =>
+      (target.key, target.turn);
+  final _stops = <DraftKey, ({StopTarget target, StopStatus status})>{};
+  final _stopRecovered = <DraftKey>{};
+
+  @override
+  bool canStop(DraftKey key) {
+    final timeline = _timelineKeys[key];
+    final target = timeline == null ? null : conversation?.stopTarget(timeline);
+    return target != null &&
+        !_stopping.containsKey(key) &&
+        !_stopLocks.contains(target.key) &&
+        !_stopAttempted.contains(_stopScope(target));
+  }
+
+  @override
+  StopStatus? stopStatus(DraftKey key) {
+    final op = _stops[key];
+    if (op == null) return null;
+    final current = conversation?.projection(op.target.key);
+    // Un ancien arrêt ne porte jamais sur le tour suivant.
+    if (current != null && current.turns > op.target.turn) return null;
+    if ((op.status.state == StopState.requested ||
+            op.status.state == StopState.preparing) &&
+        conversation?.stopTarget(op.target.key) != op.target &&
+        current?.workState != WorkState.stopped) {
+      return const StopStatus(StopState.unknown, errorCode: 'stop.unknown');
+    }
+    return op.status;
+  }
+
+  @override
+  Future<void> stop(DraftKey key) =>
+      _stopping[key] ??= _stop(key).whenComplete(() {
+        _stopping.remove(key);
+        if (!_changes.isClosed) _changes.add(key);
+      });
+
+  void _setStop(DraftKey key, StopTarget target, StopStatus status) {
+    _stops[key] = (target: target, status: status);
+    if (!_changes.isClosed) _changes.add(key);
+  }
+
+  Future<void> _stop(DraftKey key) async {
+    // Capturer AVANT la première attente : aucune reprise pour envoyer l'arrêt.
+    final prior = _stops[key];
+    final timeline = _timelineKeys[key];
+    final target = timeline == null ? null : conversation?.stopTarget(timeline);
+    if (target == null || !_stopLocks.add(target.key)) return;
+    if (_stopAttempted.contains(_stopScope(target))) {
+      _stopLocks.remove(target.key);
+      return;
+    }
+    if (prior?.target == target && prior?.status.state != StopState.failed) {
+      _stopLocks.remove(target.key);
+      return;
+    }
+    final operation = OperationKey.create();
+    var persisted = false;
+    bool valid() => conversation?.stopTarget(target.key) == target;
+    Future<void> finish(StopStatus status) async {
+      if (persisted) {
+        try {
+          await database.update(
+            'outbox_stops',
+            {'state': status.state.name, 'error_code': status.errorCode},
+            where: 'operation_key = ?',
+            whereArgs: [operation.value],
+          );
+        } catch (_) {
+          /* restaurée incertaine ; jamais de renvoi */
+        }
+      }
+      _setStop(key, target, status);
+    }
+
+    _setStop(key, target, const StopStatus(StopState.preparing));
+    try {
+      final draft = await this.draft(key);
+      if (!valid() ||
+          draft == null ||
+          draft.connection != target.key.connection ||
+          draft.profile != target.key.profile ||
+          draft.storedSessionId != target.key.session) {
+        await finish(
+          const StopStatus(StopState.stale, errorCode: 'stop.stale'),
+        );
+        return;
+      }
+      await database.insert('outbox_stops', {
+        'operation_key': operation.value,
+        'draft_key': key.value,
+        'connection_key': target.key.connection.value,
+        'profile_key': target.key.profile.value,
+        'stored_session_id': target.key.session,
+        'runtime': target.runtime,
+        'generation': target.generation,
+        'observed_turn': target.turn,
+        'state': StopState.preparing.name,
+        'created_at': _now().toIso8601String(),
+      });
+      persisted = true;
+      if (!valid()) {
+        await finish(
+          const StopStatus(StopState.stale, errorCode: 'stop.stale'),
+        );
+        return;
+      }
+      // Aucune attente entre cette dernière garde et l'unique écriture réseau.
+      _setStop(key, target, const StopStatus(StopState.requested));
+      _stopAttempted.add(_stopScope(target));
+      final result = await gateway.call(
+        'session.interrupt',
+        HermesRpc.interruptParams(target.runtime, target.key.profile),
+        timeout: timeout,
+      );
+      final interrupted = HermesRpc.interrupted(result);
+      await finish(
+        StopStatus(
+          interrupted ? StopState.requested : StopState.failed,
+          errorCode: interrupted ? null : 'stop.not_interrupted',
+        ),
+      );
+    } on RpcError catch (e) {
+      await finish(StopStatus(StopState.failed, errorCode: 'rpc.${e.code}'));
+    } catch (e) {
+      await finish(
+        StopStatus(
+          persisted ? StopState.unknown : StopState.failed,
+          errorCode: !persisted
+              ? 'storage.unavailable'
+              : e is AppError && e.code == 'contract.invalid_response'
+              ? e.code
+              : 'stop.unknown',
+        ),
+      );
+    } finally {
+      _stopLocks.remove(target.key);
+    }
+  }
+
+  Future<void> _recoverStop(DraftKey key) async {
+    if (_stopRecovered.contains(key)) return;
+    final rows = await database.query(
+      'outbox_stops',
+      where: 'draft_key = ?',
+      whereArgs: [key.value],
+      orderBy: 'created_at DESC, rowid DESC',
+      limit: 1,
+    );
+    _stopRecovered.add(key);
+    if (rows.isEmpty || _stops.containsKey(key)) return;
+    final row = rows.single;
+    final target = StopTarget(
+      TimelineKey(
+        ConnectionKey(row['connection_key'] as String),
+        ProfileKey(row['profile_key'] as String),
+        row['stored_session_id'] as String,
+      ),
+      row['runtime'] as String,
+      row['generation'] as int,
+      row['observed_turn'] as int,
+      -1,
+    );
+    final state = StopState.values.byName(row['state'] as String);
+    final uncertain =
+        state == StopState.preparing || state == StopState.requested;
+    if (uncertain || state == StopState.unknown || state == StopState.failed) {
+      _stopAttempted.add(_stopScope(target));
+    }
+    _setStop(
+      key,
+      target,
+      StopStatus(
+        uncertain ? StopState.unknown : state,
+        errorCode: uncertain ? 'stop.unknown' : row['error_code'] as String?,
+      ),
+    );
+  }
+
   final _changes = StreamController<DraftKey>.broadcast(sync: true);
   StreamSubscription<GatewayEvent>? _events;
 
@@ -85,8 +269,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
   ) async {
     Future<List<Map<String, Object?>>> existing() => database.query(
       'outbox_drafts',
-      where:
-          'connection_key = ? AND profile_key = ? AND stored_session_id = ?',
+      where: 'connection_key = ? AND profile_key = ? AND stored_session_id = ?',
       whereArgs: [connection.value, profile.value, storedSessionId],
     );
     var rows = await existing();
@@ -174,6 +357,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
   @override
   Future<Draft?> draft(DraftKey key) async {
     await _recover(key);
+    await _recoverStop(key);
     final rows = await database.query(
       'outbox_drafts',
       where: 'draft_key = ?',
@@ -244,8 +428,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
   @override
   SendStatus status(DraftKey key) {
     final current = _status[key] ?? const SendStatus();
-    final turn =
-        _turns[key] != null && _turns[key] == gateway.socketGeneration;
+    final turn = _turns[key] != null && _turns[key] == gateway.socketGeneration;
     if (turn == current.turnActive) return current;
     return SendStatus(
       state: current.state,
@@ -280,9 +463,9 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
 
   /// Création ou reprise de la session, sérialisée par brouillon : deux appels
   /// concurrents partagent le même vol et une seule `session.create` part.
-  Future<String> ensureSession(DraftKey key) => _ensuring[key] ??= _ensure(
-    key,
-  ).whenComplete(() {
+  Future<String> ensureSession(
+    DraftKey key,
+  ) => _ensuring[key] ??= _ensure(key).whenComplete(() {
     // Bloc, pas flèche : `remove` rend le Future lui-même (attente circulaire).
     _ensuring.remove(key);
   });
@@ -332,6 +515,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
     }
     _runtime[key] = (id: runtime, generation: generation);
     _storedIds[key] = stored;
+    _timelineKeys[key] = TimelineKey(draft.connection, draft.profile, stored);
     conversation?.bind(
       TimelineKey(draft.connection, draft.profile, stored),
       runtime,
@@ -623,6 +807,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
     for (final draft in await _draftsOf(key)) {
       _runtime[draft] = (id: resumed.runtime, generation: generation);
       _storedIds[draft] = key.session;
+      _timelineKeys[draft] = key;
       if (resumed.running) {
         _turns[draft] = generation;
       } else {
@@ -648,20 +833,20 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
     TimelineKey key, {
     bool marked = false,
   }) => database.rawQuery(
-        'SELECT o.operation_key, o.draft_key, o.revision, o.row_watermark '
-        'FROM outbox_operations o JOIN outbox_drafts d '
-        'ON d.draft_key = o.draft_key '
-        'WHERE o.state = ? AND d.connection_key = ? AND d.profile_key = ? '
-        'AND d.stored_session_id = ? '
-        '${marked ? 'AND o.row_watermark IS NOT NULL ' : ''}'
-        'ORDER BY o.created_at, o.rowid',
-        [
-          OperationState.unknown.name,
-          key.connection.value,
-          key.profile.value,
-          key.session,
-        ],
-      );
+    'SELECT o.operation_key, o.draft_key, o.revision, o.row_watermark '
+    'FROM outbox_operations o JOIN outbox_drafts d '
+    'ON d.draft_key = o.draft_key '
+    'WHERE o.state = ? AND d.connection_key = ? AND d.profile_key = ? '
+    'AND d.stored_session_id = ? '
+    '${marked ? 'AND o.row_watermark IS NOT NULL ' : ''}'
+    'ORDER BY o.created_at, o.rowid',
+    [
+      OperationState.unknown.name,
+      key.connection.value,
+      key.profile.value,
+      key.session,
+    ],
+  );
 
   /// Sans repère, une opération reste affichée « incertaine » sans forcer de snapshot.
   @override
@@ -729,6 +914,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer {
   @override
   Future<void> dispose() async {
     await _events?.cancel();
+    await Future.wait(_stopping.values);
     await Future.wait(_writes.values.map((w) => w.catchError((_) {})));
     await _changes.close();
   }

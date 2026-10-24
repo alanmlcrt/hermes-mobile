@@ -34,6 +34,8 @@ Rendre le travail de Hermes compréhensible dans la conversation par des activit
 
 ## UX & Interaction Patterns
 
+- **Actualisation du 24 octobre depuis les documents du 23 octobre :** refonte locale avec Inter embarquée, neutres gris-bleu, couleur du profil, capsules et cartes en relief, composants `Raised`/`HeaderButton`/`RaisedCard`, saisie en pilule. Les tokens et le thème centralisent les styles. Les cartes d’outils présentent les détails disponibles ; le statut de travail utilise les trois points et un libellé, les issues terminales une icône et un texte. Ces changements préexistent à 3.5 et leur conservation a été autorisée. Le placement et l’apparence de la commande d’arrêt restent ouverts ; distinguer intention locale et confirmation serveur, avec commande atteignable et nom accessible. Les règles d’accessibilité de la story priment sur les tailles visuelles de la maquette.
+
 - Activités courtes près de petites illustrations ; détails dépliables et synthèse du groupe lorsque le travail passe à la réponse. Les dessins accompagnent un libellé et ne mesurent aucun avancement.
 - Le catalogue couvre 17 familles avec repli générique et variantes immobiles. L'ordinateur de code garde son châssis fixe ; seuls lignes et curseur bougent. Pause, mouvement réduit, hors écran et arrière-plan suspendent le mouvement sans changer le travail.
 - Les contrats approuvés du compagnon prévalent sur les propositions historiques : anatomie v5, Otc constant, chatouilles locales, pause et suspension conservées ; fond du profil mémorisé localement par identité, fond de conversation neutre.

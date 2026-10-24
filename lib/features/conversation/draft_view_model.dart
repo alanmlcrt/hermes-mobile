@@ -101,6 +101,38 @@ class DraftViewModel extends ChangeNotifier {
   }
 
   SendStatus get sendStatus => outbox.status(key);
+  StopStatus? get stopStatus =>
+      outbox is StopGateway ? (outbox as StopGateway).stopStatus(key) : null;
+  bool get showStop =>
+      outbox is StopGateway && timeline.workState == WorkState.running;
+  bool get canStop =>
+      showStop &&
+      !resyncing &&
+      !resumeFailed &&
+      gateway.snapshot.link == LinkState.connected &&
+      outbox is StopGateway &&
+      (outbox as StopGateway).canStop(key);
+  Future<void> stop() async {
+    if (canStop) await (outbox as StopGateway).stop(key);
+  }
+
+  String? get stopText {
+    // Le terminal courant prévaut toujours sur une intention locale.
+    if (timeline.workState == WorkState.stopped) return Content.workStopped;
+    if (timeline.workState == WorkState.failed ||
+        timeline.workState == WorkState.succeeded) {
+      return null;
+    }
+    final status = stopStatus;
+    if (status == null) return null;
+    return switch (status.state) {
+      StopState.preparing => Content.stopPreparing,
+      StopState.requested => Content.stopRequested,
+      StopState.unknown => Content.stopUnknown,
+      StopState.failed ||
+      StopState.stale => Content.error(status.errorCode ?? 'stop.unknown'),
+    };
+  }
 
   /// Raison pour laquelle « Envoyer » est désactivé, ou null s'il est actif.
   String? get blockedReason {

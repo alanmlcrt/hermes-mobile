@@ -32,3 +32,14 @@ flutter:
   uses-material-design: true
   assets:
     - contracts/event-mapping.json
+  # Inter (OFL, assets/fonts/OFL.txt), sous-ensemble latin.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter-400.ttf
+        - asset: assets/fonts/inter-500.ttf
+          weight: 500
+        - asset: assets/fonts/inter-600.ttf
+          weight: 600
+        - asset: assets/fonts/inter-700.ttf
+          weight: 700

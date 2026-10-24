@@ -65,6 +65,21 @@ class SendStatus {
       state == OperationState.preparing || state == OperationState.sending;
 }
 
+enum StopState { preparing, requested, unknown, failed, stale }
+
+/// Intention locale uniquement ; aucun de ces états n'est un terminal Hermes.
+class StopStatus {
+  const StopStatus(this.state, {this.errorCode});
+  final StopState state;
+  final String? errorCode;
+}
+
+abstract interface class StopGateway {
+  bool canStop(DraftKey key);
+  StopStatus? stopStatus(DraftKey key);
+  Future<void> stop(DraftKey key);
+}
+
 /// Brouillons locaux ; aucun appel Hermes.
 abstract interface class OutboxGateway {
   /// Brouillon « nouvelle conversation » du couple, créé s'il n'existe pas.

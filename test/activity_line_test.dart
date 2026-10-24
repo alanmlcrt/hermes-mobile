@@ -35,7 +35,8 @@ void main() {
     expect(find.text(Content.activityEnd), findsOneWidget);
     expect(
       tester.getTopLeft(find.text(Content.activityTool)).dx,
-      tester.getTopLeft(find.byType(ActivityLine)).dx,
+      // Seul le retrait intérieur de la pilule précède le libellé.
+      tester.getTopLeft(find.byType(ActivityLine)).dx + Spacing.sm + Spacing.xs,
     );
     expect(tester.binding.transientCallbackCount, 0);
   });

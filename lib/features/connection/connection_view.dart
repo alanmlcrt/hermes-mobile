@@ -104,7 +104,23 @@ class _ConnectionViewState extends State<ConnectionView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(Content.originHelp),
+                  const SizedBox(height: Spacing.lg),
+                  ExcludeSemantics(
+                    child: Text(
+                      Content.wordmark,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.displaySmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.lg),
+                  Text(
+                    Content.originHelp,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: Spacing.lg),
                   TextField(
                     controller: _origin,

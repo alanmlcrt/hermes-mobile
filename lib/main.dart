@@ -1,4 +1,3 @@
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:async';
@@ -9,22 +8,24 @@ import 'models/connection.dart';
 import 'models/companion_background.dart';
 import 'models/connection_gateway.dart';
 import 'models/draft.dart';
+import 'models/profile_accent.dart';
 import 'models/timeline.dart';
 
 import 'ui/content.dart';
-import 'ui/dynamic_color_bridge.dart';
 import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    final (:gateway, :outbox, :conversation, :backgrounds) = await bootstrap();
+    final (:gateway, :outbox, :conversation, :backgrounds, :accents) =
+        await bootstrap();
     runApp(
       MainApp(
         gateway: gateway,
         outbox: outbox,
         conversation: conversation,
         backgrounds: backgrounds,
+        accents: accents,
       ),
     );
   } catch (_) {
@@ -47,9 +48,13 @@ class MainApp extends StatefulWidget {
     required this.outbox,
     required this.conversation,
     this.backgrounds,
+    this.accents,
   });
   final ConnectionGateway gateway;
   final CompanionBackgroundStore? backgrounds;
+
+  /// Couleurs des profils ; en mémoire si nul.
+  final ProfileAccentStore? accents;
   final OutboxGateway outbox;
   final ConversationGateway conversation;
   @override
@@ -67,6 +72,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       widget.outbox,
       widget.conversation,
       backgrounds: widget.backgrounds,
+      accents: widget.accents,
     );
     unawaited(widget.gateway.restore());
   }
@@ -121,14 +127,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) => MaterialApp.router(
-        title: Content.appTitle,
-        theme: buildTheme(fromDynamicScheme(lightDynamic), Brightness.light),
-        darkTheme: buildTheme(fromDynamicScheme(darkDynamic), Brightness.dark),
-        themeMode: ThemeMode.system,
-        routerConfig: _routes.router,
-      ),
+    // Palette fixe de l'app (DESIGN.md) : pas de Dynamic Color.
+    return MaterialApp.router(
+      title: Content.appTitle,
+      debugShowCheckedModeBanner: false,
+      theme: buildTheme(null, Brightness.light),
+      darkTheme: buildTheme(null, Brightness.dark),
+      themeMode: ThemeMode.system,
+      routerConfig: _routes.router,
     );
   }
 }

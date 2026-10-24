@@ -3,6 +3,59 @@
 // (contrôlé par test/visual_literals_test.dart).
 import 'package:flutter/material.dart';
 
+import '../models/profile_accent.dart';
+
+/// Neutres de l'app (refonte 2026-10-23, DESIGN.md) : fond gris-bleu très
+/// clair, cartes blanches, encre quasi noire ; inversés en sombre. La seule
+/// couleur vive est l'accent du profil ([AccentTokens]).
+abstract final class Palette {
+  static const Color bgLight = Color(0xFFF7F8FA);
+  static const Color bgDark = Color(0xFF0E1013);
+  static const Color cardLight = Color(0xFFFFFFFF);
+  static const Color cardDark = Color(0xFF171A1F);
+  static const Color bubbleLight = Color(0xFFEDEFF2);
+  static const Color bubbleDark = Color(0xFF1C2026);
+  static const Color chipLight = Color(0xFFEDEFF2);
+  static const Color chipDark = Color(0xFF22262C);
+  static const Color codeLight = Color(0xFFE3E6EA);
+  static const Color codeDark = Color(0xFF2A2F36);
+  static const Color lineLight = Color(0xFFE3E6EA);
+  static const Color lineDark = Color(0xFF2A2F36);
+  static const Color outlineLight = Color(0xFFC9CED6);
+  static const Color outlineDark = Color(0xFF3A4049);
+  static const Color inkLight = Color(0xFF111418);
+  static const Color inkDark = Color(0xFFEEF0F3);
+  static const Color mutedLight = Color(0xFF5B6470);
+  static const Color mutedDark = Color(0xFF9AA3AE);
+  static const Color errorLight = Color(0xFFC62828);
+  static const Color errorDark = Color(0xFFFF8A80);
+
+  /// Voile derrière une feuille du bas.
+  static const Color scrim = Color(0x73080A0E);
+
+  /// Opacité de la teinte d'accent (ligne surlignée).
+  static const double accentTint = .14;
+}
+
+/// Couleur d'un profil : avatar, bouton d'envoi, repères. Texte blanc
+/// lisible dessus (contraste ≥ 4,5:1) dans les deux thèmes.
+abstract final class AccentTokens {
+  static const Color onAccent = Color(0xFFFFFFFF);
+  static Color of(ProfileAccent accent) => switch (accent) {
+    ProfileAccent.indigo => const Color(0xFF4F57E8),
+    ProfileAccent.blue => const Color(0xFF1D6FD1),
+    ProfileAccent.violet => const Color(0xFF7152E8),
+    ProfileAccent.teal => const Color(0xFF00796B),
+    ProfileAccent.orange => const Color(0xFFC2410C),
+    ProfileAccent.raspberry => const Color(0xFFC2306A),
+  };
+}
+
+/// Police de l'app (assets/fonts, OFL).
+abstract final class Fonts {
+  static const String family = 'Inter';
+}
+
 /// Espacements (marges, écarts entre éléments).
 abstract final class Spacing {
   static const double xs = 4;
@@ -17,6 +70,11 @@ abstract final class Radii {
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
+  static const double xl = 24;
+  static const double pill = 28;
+
+  /// Bulles de message.
+  static const double bubble = 22;
 }
 
 /// Élévations.
@@ -33,6 +91,8 @@ abstract final class IconSizes {
 }
 
 abstract final class ActivityTokens {
+  static const Color successDark = Color(0xFF34D399);
+  static const Color successLight = Color(0xFF059669);
   // Motifs vectoriels sur 32 unités, affichés dans le slot commun de 24 px.
   // Les contours fixes restent séparés des pièces mobiles.
   static Path _lines(List<List<double>> lines) {
@@ -398,11 +458,14 @@ class ActivityFamilyDrawing {
 abstract final class Motion {
   static const Duration short = Duration(milliseconds: 150);
   static const Duration medium = Duration(milliseconds: 300);
+
+  /// Cycle des points « Hermes travaille ».
+  static const Duration typing = Duration(milliseconds: 1200);
 }
 
 /// Hauteur visible du champ de saisie, en lignes ; au-delà il défile.
 abstract final class ComposerLines {
-  static const int min = 3;
+  static const int min = 1;
   static const int max = 8;
 }
 
@@ -412,6 +475,57 @@ abstract final class CodeStyle {
 }
 
 /// Échelles de texte de référence (galerie : texte agrandi 200 %).
+/// Proportions de mise en page.
+abstract final class Layout {
+  /// Largeur max d'une bulle, en fraction de l'écran.
+  static const double bubbleMaxWidth = .85;
+
+  /// Diamètre du bouton d'envoi rond.
+  static const double sendButton = 40;
+  static const double stopButton = 48;
+  static const double threadMinHeight = 96;
+
+  /// Marge haute de l'accueil d'un brouillon vide, en fraction du fil.
+  static const double welcomeTop = .18;
+
+  /// Avatars de profil : liste d'accueil, pastille d'en-tête, feuille
+  /// d'historique, accueil d'un brouillon, réglages du profil.
+  static const double avatar = 52;
+  static const double avatarSmall = 34;
+  static const double avatarSheet = 44;
+  static const double avatarWelcome = 64;
+  static const double avatarLarge = 88;
+
+  /// Initiale dans l'avatar, en fraction du diamètre.
+  static const double avatarLetter = .4;
+
+  /// Bouton rond d'en-tête (cible tactile).
+  static const double headerButton = 44;
+
+  /// Pastille de palette (cible tactile) et son disque visible.
+  static const double swatch = 56;
+  static const double swatchDot = 30;
+  static const double swatchBorder = 1;
+  static const double swatchSelected = 3;
+
+  /// Points animés « Hermes travaille ».
+  static const double typingDot = 7;
+  static const double typingLift = 3;
+
+  /// Poignée de la feuille du bas.
+  static const double sheetHandleWidth = 36;
+  static const double sheetHandleHeight = 4;
+
+  /// Hauteur max de la feuille d'historique, en fraction de l'écran.
+  static const double sheetMax = .85;
+
+  /// Glissement d'arrivée d'un élément du fil, en fraction de sa hauteur.
+  static const double appearShift = .15;
+
+  /// Saisie : hauteur minimale de la pilule.
+  static const double composerMinHeight = 52;
+}
+
 abstract final class TextScales {
   static const double large = 2.0;
 }
@@ -425,6 +539,31 @@ abstract final class RabbitTokens {
     end: Alignment.bottomRight,
     colors: [Color(0xFFD9F0E6), Color(0xFFDCEAF8)],
   );
+  static const LinearGradient peachSun = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF8D9C4), Color(0xFFFCEFC2)],
+  );
+  static const LinearGradient oceanMist = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFCFE3F7), Color(0xFFD9F2F2)],
+  );
+  static const LinearGradient sageSand = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFDDE8D3), Color(0xFFF1E7D2)],
+  );
+  static const LinearGradient coralRose = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF9D3CC), Color(0xFFF6D9E8)],
+  );
+  static const LinearGradient pearl = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFE9E9EE), Color(0xFFF6F4F0)],
+  );
   static const LinearGradient roseLilac = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -432,6 +571,9 @@ abstract final class RabbitTokens {
   );
   static const double large = 180;
   static const double compact = 64;
+
+  /// Lapin des écrans profil et arrière-plan, plus discret que [large].
+  static const double preview = 112;
   static const double conversationSideWidth = 360;
   static const double conversationTextLimit = 1.5;
   static const double concentrationEyeScale = .65;
@@ -440,17 +582,59 @@ abstract final class RabbitTokens {
   static const double faceStroke = 2.8;
   static const double minimumOutline = .65;
   static const double minimumFaceStroke = 1;
-  static const double headForeshortening = .065;
-  static const double faceForeshortening = .14;
+  // Volume : la tête est un ellipsoïde éclairé en haut à gauche ; le visage
+  // et les oreilles tournent à sa surface (lacet), la lumière reste fixe.
+  static const double maxYaw = .55;
+  static const double maxPitch = .15;
+  static const double earLongitude = .42;
+  // Faible glissement latéral : l'oreille pivote sur place plutôt que de
+  // filer le long du contour (qui, lui, ne bouge pas).
+  static const double earRadius = .4;
+  static const Offset light = Offset(-.38, -.45);
+  static const double lightReach = 1.15;
+  static const Color coatShade = Color(0xFFE4DFEC);
+  static const Color coatDeep = Color(0xFFBDB4CC);
+  static const Color innerEarDeep = Color(0xFFC2B6C9);
+  static const Color shadow = Color(0x553A2F4A);
+  static const Color shadowClear = Color(0x003A2F4A);
+  static const Rect groundShadow = Rect.fromLTWH(58, 227, 86, 11);
+  static const double shadowShrink = .045;
+  // Aspect peluche : œuf bosselé, grain de feutre, coutures.
+  static const double eggTaper = .07;
+  static const double headLumps = .012;
+  static const double headRoll = .05;
+  static const double earDelay = .07;
+  static const int grainSeed = 7;
+  static const int grainCount = 340;
+  static const double grainSize = 1.4;
+  static const Color grainDark = Color(0x33685E78);
+  static const Color grainLight = Color(0x99FFFFFF);
+  static const Color seam = Color(0x33968CA6);
+  static const double seamStroke = 1.2;
+  static Path get seams => Path()
+    ..moveTo(101, 124)
+    ..cubicTo(97, 142, 104, 162, 101, 183)
+    ..moveTo(60, 162)
+    ..cubicTo(74, 146, 128, 146, 142, 162);
   static const double focusStroke = 3;
   static const double focusHalo = 1.5;
   static const double wiggleCycles = 4;
   static const double viewWidth = 200;
   static const double viewHeight = 240;
-  static const double gazeDistance = 8;
-  static const double turnDistance = 5;
   static const double earWiggle = .095;
   static const double headTilt = .06;
+  // Vie des gestes (inspirée du Grok orb) : clignement piqué, étirement
+  // pendant la rotation, oreilles qui traînent puis rebondissent, saut.
+  static const double blinkClosure = .9;
+  static const double turnStretch = .03;
+  static const double earFollow = .05;
+  static const double earDrag = .16;
+  static const double earFlop = .14;
+  static const double hopHeight = 10;
+  static const double hopSquash = .07;
+  static const double hopStretch = .05;
+  static const double wobbleDamping = 6;
+  static const double wobbleFrequency = 2.4;
   static const Duration rest = Duration(seconds: 6);
   static const Duration travel = Duration(milliseconds: 300);
   static const Duration hold = Duration(milliseconds: 700);
@@ -467,31 +651,34 @@ abstract final class RabbitTokens {
   );
 
   // Anatomie v5 dans un repère fixe ; jamais de miroir global.
-  static const Offset leftPivot = Offset(82, 133);
-  static const Offset rightPivot = Offset(119, 133);
+  // Racines enfoncées dans la tête : jamais de jour entre oreille et crâne.
+  static const Offset leftPivot = Offset(85, 152);
+  static const Offset rightPivot = Offset(116, 152);
+  // Comme la peluche : la gauche presque droite, la droite penchée dehors
+  // et un peu plus évasée.
+  static const double leftEarAngle = -.12;
+  static const double rightEarAngle = .7;
+  static const double rightEarFlare = 1.12;
   static const Offset headPivot = Offset(100, 177);
+  static const Offset groundPivot = Offset(100, 232);
   static const Rect head = Rect.fromLTWH(54, 119, 94, 113);
   static const Rect leftEye = Rect.fromLTWH(67, 165, 8, 13);
   static const Rect rightEye = Rect.fromLTWH(127, 165, 8, 13);
-  static Path get leftEar => Path()
-    ..moveTo(80, 136)
-    ..cubicTo(49, 104, 43, 48, 53, 22)
-    ..cubicTo(66, -8, 103, 54, 96, 126)
+
+  /// Oreille locale, base à l'origine et pointe vers le haut, aux
+  /// proportions de la peluche : presque la hauteur de la tête, en feuille,
+  /// pincée à la racine et la plus large aux deux tiers.
+  static const double earLength = 120;
+  static const double wrapStep = 1.5;
+  static Path get ear => Path()
+    ..moveTo(-9, 18)
+    ..cubicTo(-26, -40, -22, -earLength + 6, 0, -earLength)
+    ..cubicTo(22, -earLength + 6, 26, -40, 9, 18)
     ..close();
-  static Path get leftInner => Path()
-    ..moveTo(83, 126)
-    ..cubicTo(65, 90, 57, 45, 62, 30)
-    ..cubicTo(72, 26, 94, 77, 89, 125)
-    ..close();
-  static Path get rightEar => Path()
-    ..moveTo(109, 126)
-    ..cubicTo(123, 85, 158, 39, 176, 35)
-    ..cubicTo(208, 29, 181, 83, 125, 139)
-    ..close();
-  static Path get rightInner => Path()
-    ..moveTo(120, 127)
-    ..cubicTo(139, 87, 166, 51, 178, 47)
-    ..cubicTo(190, 46, 166, 88, 128, 131)
+  static Path get earInside => Path()
+    ..moveTo(-4, -4)
+    ..cubicTo(-19, -44, -16, -earLength + 16, 0, -earLength + 9)
+    ..cubicTo(16, -earLength + 16, 19, -44, 4, -4)
     ..close();
   static Path get nose => Path()
     ..moveTo(93, 187)
@@ -521,6 +708,23 @@ extension ColorRoles on ColorScheme {
   Color get emphasis => primary;
   Color get emphasisContent => onPrimary;
   Color get codeSurface => surfaceContainerHighest;
-  Color get bubbleSurface => secondaryContainer;
-  Color get bubbleContent => onSecondaryContainer;
+  Color get bubbleSurface => surfaceContainer;
+  Color get bubbleContent => onSurface;
+
+  /// Carte posée sur le fond (réglages, feuille, saisie).
+  Color get card => surfaceContainerLow;
+
+  /// Fond des boutons ronds et des pastilles.
+  Color get chip => surfaceContainerHigh;
+  Color get line => outlineVariant;
+  Color get muted => onSurfaceVariant;
+
+  /// Accent du profil courant (AccentScope), sinon l'accent par défaut.
+  Color get accent => secondary;
+  Color get onAccent => onSecondary;
+
+  /// Fin d'activité confirmée (coche des pilules), lisible sur les deux thèmes.
+  Color get success => brightness == Brightness.dark
+      ? ActivityTokens.successDark
+      : ActivityTokens.successLight;
 }

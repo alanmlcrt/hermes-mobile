@@ -1,0 +1,223 @@
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart
+
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: persistance ciblée, double pression et RPC ne confirment pas le terminal
+
+00:00 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: détails reçus : fusion, null, rejeu et persistance
+
+00:00 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: détails reçus : fusion, null, rejeu et persistance
+
+00:00 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: détails reçus : fusion, null, rejeu et persistance
+
+00:00 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: détails reçus : fusion, null, rejeu et persistance
+
+00:00 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: RPC accepté reste demandé ; terminal réussi prévaut
+
+00:00 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:00 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:00 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+
+00:01 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: activité avant démarrage attachée à la demande acceptée
+
+00:01 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: nouveau tour : ancienne intention sans effet
+
+00:01 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: nouveau tour : ancienne intention sans effet
+
+00:01 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: rejeu outils : fin corrélée et doublon écarté sans renvoi
+
+00:01 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: rejeu outils : fin corrélée et doublon écarté sans renvoi
+
+00:01 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft échec au milieu de l’échange : retour arrière complet
+
+00:01 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: refus ou réponse invalide : explicite, sans double appel
+
+00:01 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: refus ou réponse invalide : explicite, sans double appel
+
+00:01 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: nouvel epoch et snapshot échoué : aucune fin héritée de l’ancien ID
+
+00:01 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft cible en envoi : draft.profile_busy, rien ne change
+
+00:01 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft cible en envoi : draft.profile_busy, rien ne change
+
+00:01 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: restauration SQLite : intention inconnue sans reprise ni RPC
+
+00:01 +28: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: restauration SQLite : intention inconnue sans reprise ni RPC
+
+00:01 +29: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: événements avant la réponse de soumission : la bulle passe devant
+
+00:01 +30: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: événements avant la réponse de soumission : la bulle passe devant
+
+00:01 +31: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: rejeu sending sans start, reprise running : snapshot de la pose courante
+
+00:01 +32: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: rejeu sending sans start, reprise running : snapshot de la pose courante
+
+00:01 +33: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: profil modifié pendant attente : intention périmée
+
+00:02 +34: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: profil modifié pendant attente : intention périmée
+
+00:02 +35: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: doublon, autre session et ancienne génération sont ignorés
+
+00:02 +36: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: doublon, autre session et ancienne génération sont ignorés
+
+00:02 +37: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: saisies rapides : la dernière écriture gagne
+
+00:02 +38: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: saisies rapides : la dernière écriture gagne
+
+00:02 +39: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: saisies rapides : la dernière écriture gagne
+
+00:02 +40: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: saisies rapides : la dernière écriture gagne
+
+00:02 +41: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: conversation affichée hors profil global : arrêt disponible
+
+00:02 +42: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: conversation affichée hors profil global : arrêt disponible
+
+00:02 +43: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: conversation affichée hors profil global : arrêt disponible
+
+00:02 +44: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete complete → succeeded
+
+00:02 +45: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete complete → succeeded
+
+00:02 +46: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete complete → succeeded
+
+00:02 +47: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: redémarrage Hermes (autre replay_epoch) : snapshot, curseur vide, pas de events.since
+
+00:02 +48: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: redémarrage Hermes (autre replay_epoch) : snapshot, curseur vide, pas de events.since
+
+00:03 +49: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: redémarrage Hermes (autre replay_epoch) : snapshot, curseur vide, pas de events.since
+
+00:03 +50: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: lecture arrêt échouée : restauration réessayée sans second RPC
+
+00:03 +51: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: lecture arrêt échouée : restauration réessayée sans second RPC
+
+00:03 +52: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+
+00:04 +53: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+
+00:04 +54: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+
+00:04 +55: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+
+00:04 +56: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+
+00:05 +57: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+
+00:05 +58: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: actions distinctes, fin corrélée, fin seule et événements anonymes
+
+00:05 +59: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: actions distinctes, fin corrélée, fin seule et événements anonymes
+
+00:05 +60: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: snapshot courant sans partial : regard reconstruit depuis le dernier tour
+
+00:05 +61: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: décodeur interruption refuse une réponse invalide
+
+00:05 +62: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: identités cloisonnées par connexion, profil et session
+
+00:06 +63: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: events.since en erreur : snapshot
+
+00:06 +64: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:06 +65: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:06 +66: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:06 +67: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:07 +68: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:07 +69: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:07 +70: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:07 +71: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:08 +72: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:08 +73: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:08 +74: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:08 +75: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:09 +76: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:09 +77: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:09 +78: C:/Users/alanc/orca/projects/Hermes Mobile/test/stop_flow_test.dart: commande 48 dp, clavier et texte 200 %, brouillon intact
+
+00:10 +79: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: reprise en échec : resumeFailed signalé par un changement, effacé au succès
+
+00:10 +80: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:10 +81: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:11 +82: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:13 +83: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:13 +84: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:14 +85: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:14 +86: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+
+00:15 +87: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+
+00:15 +87 ~1: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+
+00:15 +87 ~2: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+
+00:15 +87 ~3: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+
+00:15 +87 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+
+00:16 +88 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: statut live monté pendant la lecture loin de la fin
+
+00:16 +89 ~4: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:16 +89 ~5: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:16 +89 ~6: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:16 +89 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:16 +90 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:16 +91 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:16 +92 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:17 +93 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:17 +94 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:17 +95 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:17 +96 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:18 +97 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:18 +98 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:18 +99 ~7: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:18 +99 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+
+00:22 +100 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine file d'attente non vide sans ligne : reste unknown
+
+00:23 +101 ~8: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine ligne étrangère en plus : deux candidates → reste unknown, texte conservé
+
+00:24 +102 ~8: All tests passed!

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:hermes_mobile/data/storage/migrations.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:hermes_mobile/data/storage/database.dart';
@@ -60,7 +62,7 @@ void main() {
         'origin',
         'selected_profile',
       ]);
-      expect(await database.getVersion(), 8);
+      expect(await database.getVersion(), connectionMigrations.length);
       await database.close();
     },
   );

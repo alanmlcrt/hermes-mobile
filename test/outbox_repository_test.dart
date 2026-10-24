@@ -28,6 +28,37 @@ void main() {
   Future<Database> open() =>
       openConnectionDatabase(factory: databaseFactoryFfi, path: path);
 
+  test(
+    'migration v9 : accents préexistants conservés, arrêts ajoutés',
+    () async {
+      var database = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 9,
+          onCreate: (db, version) async {
+            for (final migration in connectionMigrations.take(version)) {
+              await migration(db);
+            }
+          },
+        ),
+      );
+      await database.insert('profile_accents', {
+        'origin': 'http://synthetic.test',
+        'connection_key': 'c',
+        'profile_key': 'p',
+        'accent_id': 'teal',
+      });
+      await database.close();
+      database = await open();
+      expect(
+        (await database.query('profile_accents')).single['accent_id'],
+        'teal',
+      );
+      expect(await database.query('outbox_stops'), isEmpty);
+      await database.close();
+    },
+  );
+
   test('relance : même DraftKey et texte relu après réouverture', () async {
     var database = await open();
     var outbox = OutboxRepository(database, gateway: Harness().repository);
@@ -111,7 +142,9 @@ void main() {
     test('brouillon inconnu : draft.not_found', () async {
       await expectLater(
         outbox.reassignNewDraft(const DraftKey('inconnu'), b),
-        throwsA(isA<AppError>().having((e) => e.code, 'code', 'draft.not_found')),
+        throwsA(
+          isA<AppError>().having((e) => e.code, 'code', 'draft.not_found'),
+        ),
       );
     });
 
@@ -263,8 +296,7 @@ void main() {
     await database.close();
   });
 
-  test('migration v6 vers v7 : doublons de conversation dédupliqués, opérations rattachées',
-      () async {
+  test('migration v6 vers v7 : doublons de conversation dédupliqués, opérations rattachées', () async {
     final old = await databaseFactoryFfi.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -273,15 +305,19 @@ void main() {
           for (var i = 0; i < 6; i++) {
             await connectionMigrations[i](db);
           }
-          Future<void> draft(String key, String session, String body, String at) =>
-              db.insert('outbox_drafts', {
-                'draft_key': key,
-                'connection_key': 'c-1',
-                'profile_key': 'p',
-                'stored_session_id': session,
-                'body': body,
-                'updated_at': at,
-              });
+          Future<void> draft(
+            String key,
+            String session,
+            String body,
+            String at,
+          ) => db.insert('outbox_drafts', {
+            'draft_key': key,
+            'connection_key': 'c-1',
+            'profile_key': 'p',
+            'stored_session_id': session,
+            'body': body,
+            'updated_at': at,
+          });
           await draft('d1', 's', '', '3');
           await draft('d2', 's', 'texte', '1');
           await draft('d3', 's', '', '2');
@@ -304,9 +340,12 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 8);
+    expect(await database.getVersion(), connectionMigrations.length);
     expect(
-      (await database.query('outbox_drafts', orderBy: 'draft_key')).map((r) => r['draft_key']),
+      (await database.query(
+        'outbox_drafts',
+        orderBy: 'draft_key',
+      )).map((r) => r['draft_key']),
       ['d2', 'd4'],
     );
     expect(
@@ -337,7 +376,7 @@ void main() {
     );
     await old.close();
     final database = await open();
-    expect(await database.getVersion(), 8);
+    expect(await database.getVersion(), connectionMigrations.length);
     expect(
       (await database.query('connection_entries')).single['connection_key'],
       'stable-v2',

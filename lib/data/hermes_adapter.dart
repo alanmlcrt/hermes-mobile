@@ -348,6 +348,22 @@ class HermesAdapter {
 
 /// Dialecte legacy du contrat 9e01b44 : seul endroit qui connaît ces formats.
 abstract final class HermesRpc {
+  static Map<String, dynamic> interruptParams(
+    String runtime,
+    ProfileKey profile,
+  ) => {'session_id': runtime, 'profile': profile.value};
+
+  /// Le résultat RPC ne constitue jamais une preuve terminale.
+  static bool interrupted(Map<String, dynamic> result) {
+    if (!{'interrupted', 'not_interrupted'}.contains(result['status']) ||
+        (result['interrupted'] != null && result['interrupted'] is! bool) ||
+        (result['turn_isolation'] != null &&
+            result['turn_isolation'] is! bool)) {
+      throw const AppError('contract.invalid_response');
+    }
+    return result['status'] == 'interrupted';
+  }
+
   static const runtimeLost = 4001;
   static const turnStart = 'message.start';
   static const turnEnd = 'message.complete';
@@ -476,7 +492,12 @@ abstract final class HermesRpc {
   };
 
   /// Événements rejoués (`seq` inclus) rendus comme s'ils étaient arrivés en direct.
-  static ({List<GatewayEvent> events, int? latest, bool truncated, String? epoch})
+  static ({
+    List<GatewayEvent> events,
+    int? latest,
+    bool truncated,
+    String? epoch,
+  })
   since(
     Map<String, dynamic> r, {
     required String runtime,
@@ -493,7 +514,9 @@ abstract final class HermesRpc {
         GatewayEvent(
           sessionId: runtime,
           type: e['type'] as String,
-          payload: payload is Map ? Map<String, dynamic>.from(payload) : const {},
+          payload: payload is Map
+              ? Map<String, dynamic>.from(payload)
+              : const {},
           seq: e['seq'] as int,
           generation: generation,
           replayEpoch: replayEpoch,
@@ -537,7 +560,12 @@ abstract final class HermesRpc {
     final turn = payload['persisted_turn'];
     if (turn is! Map) return const [];
     final many = turn['user_row_ids'];
-    if (many is List) return [for (final r in many) if (r is int) r];
+    if (many is List) {
+      return [
+        for (final r in many)
+          if (r is int) r,
+      ];
+    }
     final one = turn['user_row_id'];
     return one is int ? [one] : const [];
   }
