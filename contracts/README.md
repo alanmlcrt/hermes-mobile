@@ -216,3 +216,87 @@ ses chemins.
 ne porte de valeur et qu'aucune donnée personnelle n'apparaît.
 `dart run tool/mesure_pieces_jointes.dart --aide` doit afficher l'usage sans
 accès réseau.
+
+## Suivi et déploiement de l'observateur (story 5.1)
+
+`notification-tracking.json` est le contrat machine du suivi : registre,
+cycle de vie, token FCM, corrélation session/exécution, payload, endpoints,
+erreurs et journaux, rattrapage, rétention et santé.
+`notification-deployment.json` consigne les décisions G3 du 2026-10-26, le
+runtime, l'exposition tailnet, FCM et la validation. Les valeurs exactes
+(ports, versions, TTL, libellés, seuils) vivent dans ces deux fichiers ; ce
+README n'en est pas une copie. Les deux contrats sont des documents de
+référence, les fixtures restent synthétiques et aucune notification réelle n'a
+été envoyée.
+
+**Terminaux.** `event-mapping.json` reste la seule source. Trois issues sont
+notifiables : `succeeded` (`message.complete` / `complete`), `failed`
+(`message.complete` / `error` ou l'événement `error`) et `stopped`
+(`message.complete` / `interrupted`). Un statut absent ou inconnu reste
+`unknown` et ne notifie jamais. La fixture
+`message-complete-interrupted.json` couvre `stopped` ; les deux autres sont
+réutilisées sans modification.
+
+**Cycle du suivi.** Le mobile génère un `subscriptionId` opaque et enregistre
+le token FCM avant `prompt.submit`, sans bloquer l'envoi ; seul
+l'environnement personnel exige un token réel, le dry-run utilise un marqueur
+synthétique. Après acceptation, il attache la session, le profil et
+l'exécution. L'observateur rapproche le
+terminal par `session_id` et `persisted_turn.user_row_id` ; `submission_id`
+renforce la corrélation quand il est présent. Sans session ou sans identité
+d'exécution, aucun rattachement et aucune notification. Un `error` de session
+ne notifie que l'unique exécution attachée et non notifiée de cette session.
+Le premier terminal notifié gagne ; les terminaux tardifs sont ignorés. Un
+échec d'enregistrement ou de rattachement laisse le tour « notification non
+suivie » ; il ne l'empêche jamais.
+
+**Payload.** Le push est un message FCM `notification + data`. Le bloc
+`notification` porte un libellé générique dérivé de la seule issue, donc
+Android peut l'afficher sans réveiller l'app. Le bloc `data` reste strictement
+`{subscriptionId, outcome}` en chaînes ; aucun texte, identité Hermes, chemin,
+token ni secret n'y figure. Le `subscriptionId` sert de clé de routage locale
+et le push n'est qu'un indice. Un tag stable déduplique les doublons
+fournisseur visibles ; aucune promesse « exactement une fois ».
+
+**Rattrapage et rétention.** L'observateur stocke un curseur `last_seen` dans
+`/data`, reprend par `session.events.since` après un redémarrage et recharge
+`session.history` si la réponse est `truncated` ou si l'`epoch` change. Au-delà
+de la borne de rejeu, il reprend depuis le dernier événement traité. Les
+entrées notifiées, expirées ou révoquées, la déduplication et l'outbox sont
+purgées ; les révoquées sont supprimées à la révocation et un abandon après la
+fenêtre de relance est compté et journalisé.
+
+**Auth et santé.** Le mobile s'authentifie avec un bearer opaque propre à
+l'environnement, stocké dans `flutter_secure_storage` ; l'observateur ne garde
+qu'un hachage salé et compare en temps constant. La santé exige ce bearer,
+renvoie un état borné, des raisons avec sonde et seuil, et des compteurs ;
+jamais un contenu ni un identifiant de suivi. Les erreurs HTTP sont bornées et
+les journaux rédigent l'autorisation, le token et les identifiants.
+
+**Déploiement.** L'observateur est un add-on Home Assistant dédié, supervisé,
+avec le volume persistant `/data`. Son origine est réservée au tailnet, en
+HTTPS, sans port hôte publié : l'accès passe par Tailscale Serve et l'ACL du
+tailnet. L'hôte est fourni à l'installation et n'est pas versionné.
+L'observateur lit Hermes en lecture seule par le contrat épinglé et le mapping
+partagé : aucune soumission, aucun arrêt, aucune base privée.
+`session.resume` attache le flux et peut reconstruire une session locale, sans
+soumettre ni interrompre de travail. FCM HTTP v1 est visé ; la version mobile
+et le repli sont proposés et à prouver au build de 5.3. FCM est gratuit, sans
+quota de messages, et le plan Spark suffit : aucune facturation n'est activée.
+Un seul projet Firebase personnel et un seul compte de service hors dépôt sont
+prévus ; l'intégration reste en dry-run sans FCM.
+
+**Provenance.** Les décisions sont datées du 2026-10-26 ; les points acceptés
+sont validés par Alanc, tandis que les valeurs techniques non confirmées
+restent explicitement proposées avec leur échéance. Les constats Android et
+les écarts sont dans
+`_bmad-output/implementation-artifacts/story-5-1-verification/`. Le projet et
+le compte Firebase ne sont pas créés : G3 reste ouverte et 5.5 seule peut la
+franchir. Aucune capture réelle, aucun profil personnel et aucun secret ne
+sont versionnés.
+
+`flutter test test/notification_contract_test.dart test/event_mapping_test.dart`
+vérifie les trois terminaux, la couverture inverse du mapping, le payload
+strict, le token, la corrélation, les conflits, le rattrapage, la rétention,
+les endpoints, les seuils de santé, les copies machine et l'absence de secret
+ou de chemin personnel.

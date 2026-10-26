@@ -34,7 +34,7 @@ void main() {
       expect(mapped.effect, expected[params['type']], reason: file.path);
       seen++;
     }
-    expect(seen, 10); // dont deux gateway.ready
+    expect(seen, 11); // dont deux gateway.ready et deux message.complete
   });
 
   test('statut de message.complete et repli inconnu', () {
