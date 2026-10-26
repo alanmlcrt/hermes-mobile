@@ -207,10 +207,18 @@ void main() {
           key: draft.key,
         );
         // Initialize all real database reads outside the simulated widget clock.
-        for (var i = 0; i < 100 && vm.draft == null; i++) {
+        for (var i = 0; i < 200; i++) {
+          final loaded =
+              vm.draft != null &&
+              vm.attachments.any((a) => a.name == 'photo-existante.jpg');
+          if (loaded) break;
           await Future<void>.delayed(const Duration(milliseconds: 5));
         }
         expect(vm.draft, isNotNull);
+        expect(
+          vm.attachments.map((a) => a.name),
+          contains('photo-existante.jpg'),
+        );
       });
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1;
