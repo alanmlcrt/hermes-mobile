@@ -54,6 +54,33 @@ class LimitedMemoryOutbox extends MemoryOutbox {
 
 void main() {
   testWidgets(
+    'sheet labels count limits by category without showing size thresholds',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildTheme(null, Brightness.light),
+          home: const Scaffold(
+            body: AttachmentSelectionSheet(
+              limits: [
+                AttachmentLimit(AttachmentCategory.image, 1024, [
+                  'image/png',
+                ], maxCount: 1),
+                AttachmentLimit(AttachmentCategory.pdf, 2048, [
+                  'application/pdf',
+                ], maxCount: 3),
+              ],
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Photos : 1 pièce maximum'), findsOneWidget);
+      expect(find.text('PDF : 3 pièces maximum'), findsOneWidget);
+      expect(find.textContaining(' Mo'), findsNothing);
+      expect(find.textContaining('octets'), findsNothing);
+      expect(find.textContaining('maximum par fichier'), findsNothing);
+    },
+  );
+  testWidgets(
     'real SQLite reopen keeps each sent attachment in its owning message',
     (tester) async {
       sqfliteFfiInit();
@@ -313,7 +340,7 @@ void main() {
     },
   );
   testWidgets(
-    'sheet limits, select, named removal, VM send and denied permission preserve draft',
+    'sheet hides size limits, select, named removal, VM send and denied permission preserve draft',
     (tester) async {
       final h = Harness();
       final outbox = LimitedMemoryOutbox();
@@ -354,7 +381,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(AttachmentSelectionSheet), findsOneWidget);
       expect(find.text(Content.attachmentFormats), findsOneWidget);
-      expect(find.textContaining('maximum par fichier'), findsNWidgets(4));
+      expect(find.textContaining('maximum par fichier'), findsNothing);
+      expect(find.textContaining(' Mo'), findsNothing);
       expect(find.textContaining('pièces maximum'), findsNothing);
       await tester.tap(find.text(Content.files));
       await tester.pumpAndSettle();
@@ -381,13 +409,23 @@ void main() {
       outbox.addError = const AppError('attachment.size');
       await vm.pickAttachments(AttachmentSource.files);
       await tester.pumpAndSettle();
-      final pdfLimit = (await outbox.attachmentLimits()).singleWhere(
-        (l) => l.category == AttachmentCategory.pdf,
-      );
+      expect(find.text(Content.attachmentSizeRefused), findsOneWidget);
       expect(
-        find.text(Content.attachmentSizeRefused(pdfLimit.maxBytes)),
-        findsOneWidget,
+        vm.attachmentError,
+        isNot(matches(RegExp(r'[0-9]|\bMo\b|\boctets\b'))),
       );
+      vm.attachmentLimits = const [];
+      await vm.pickAttachments(AttachmentSource.files);
+      expect(vm.attachmentError, Content.attachmentSizeRefused);
+      expect(
+        vm.attachmentError,
+        isNot(matches(RegExp(r'[0-9]|\bMo\b|\boctets\b'))),
+      );
+      picker.error = const AppError('attachment.size');
+      await vm.pickAttachments(AttachmentSource.files);
+      expect(vm.attachmentError, Content.attachmentSizeRefused);
+      expect(vm.attachmentError, isNot(contains('limite affichée')));
+      picker.error = null;
       outbox.addError = const AppError('attachment.type');
       picker.files = [
         const PickedFile(name: 'photo.heic', mediaType: 'image/heic'),

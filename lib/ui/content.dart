@@ -45,13 +45,12 @@ abstract final class Content {
   static String removeAttachment(String name) => 'Retirer $name';
   static String fileSize(int bytes) =>
       '${(bytes / (1024 * 1024)).toStringAsFixed(2)} Mo ($bytes octets)';
-  static String attachmentLimit(String category, int bytes) =>
-      '$category : ${fileSize(bytes)} maximum par fichier';
   static String attachmentTypeRefused(String type) =>
       'Type non pris en charge : $type.';
-  static String attachmentSizeRefused(int bytes) =>
-      'Fichier trop volumineux. Limite : ${fileSize(bytes)}.';
-  static String attachmentCountLimit(int count) => '$count pièces maximum';
+  static const attachmentSizeRefused =
+      'Fichier trop volumineux. Choisissez un fichier plus léger.';
+  static String attachmentCountLimit(int count) =>
+      '$count ${count == 1 ? 'pièce' : 'pièces'} maximum';
   static const detailName = 'Nom';
   static const detailContext = 'Contexte';
   static const detailArguments = 'Arguments';
@@ -291,7 +290,7 @@ abstract final class Content {
     'attachment.selection' =>
       'La sélection a échoué. Réessayez de choisir votre fichier.',
     'attachment.type' => 'Ce type de fichier n’est pas pris en charge.',
-    'attachment.size' => 'Le fichier dépasse la limite affichée pour son type.',
+    'attachment.size' => attachmentSizeRefused,
     'attachment.busy' =>
       'Attendez la fin de l’opération en cours pour modifier les pièces.',
     'attachment.jpeg_unverified' => attachmentJpegUnverified,

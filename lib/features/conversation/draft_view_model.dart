@@ -56,18 +56,10 @@ class DraftViewModel extends ChangeNotifier {
         try {
           await outbox.addAttachment(key, file);
         } on AppError catch (e) {
-          final limit = attachmentLimits
-              .where(
-                (l) =>
-                    l.mediaTypes.contains(file.mediaType) ||
-                    file.mediaType == 'image/jpeg' &&
-                        l.category == AttachmentCategory.image,
-              )
-              .firstOrNull;
           attachmentError = e.code == 'attachment.type'
               ? Content.attachmentTypeRefused(file.mediaType)
-              : e.code == 'attachment.size' && limit != null
-              ? Content.attachmentSizeRefused(limit.maxBytes)
+              : e.code == 'attachment.size'
+              ? Content.attachmentSizeRefused
               : Content.error(e.code);
         }
       }

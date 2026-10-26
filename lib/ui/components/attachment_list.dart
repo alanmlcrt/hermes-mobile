@@ -138,16 +138,15 @@ class AttachmentSelectionSheet extends StatelessWidget {
           const SizedBox(height: Spacing.md),
           const Text(Content.attachmentFormats),
           for (final limit in limits) ...[
-            Text(
-              Content.attachmentLimit(switch (limit.category) {
-                AttachmentCategory.text => Content.attachmentText,
-                AttachmentCategory.image => Content.photos,
-                AttachmentCategory.pdf => Content.attachmentPdf,
-                AttachmentCategory.office => Content.attachmentOffice,
-              }, limit.maxBytes),
-            ),
             if (limit.maxCount != null)
-              Text(Content.attachmentCountLimit(limit.maxCount!)),
+              Text(
+                '${switch (limit.category) {
+                  AttachmentCategory.text => Content.attachmentText,
+                  AttachmentCategory.image => Content.photos,
+                  AttachmentCategory.pdf => Content.attachmentPdf,
+                  AttachmentCategory.office => Content.attachmentOffice,
+                }} : ${Content.attachmentCountLimit(limit.maxCount!)}',
+              ),
           ],
           const SizedBox(height: Spacing.md),
           TextButton.icon(
