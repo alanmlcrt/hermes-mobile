@@ -118,10 +118,7 @@ Future<void> main(List<String> args) async {
       }
     }
     if (!hasUsableTransport(contract)) {
-      stderr.writeln(
-        'Mesure terminée sans transport exploitable ; 4.2 à 4.4 restent '
-        'bloquées.',
-      );
+      stderr.writeln(incompleteMeasurementMessage());
       exitCode = 2;
     }
   } on _Blocked catch (error) {
@@ -488,7 +485,11 @@ Future<_Observation> _probePiece(
     final result = await _attach(session, surface, runtime, piece);
     stderr.writeln(
       'Copie $index/$repetitions : '
-      '${result.accepted ? 'upload accepté' : result.uncertain ? 'incertaine' : 'refusée'}'
+      '${result.accepted
+          ? 'upload accepté'
+          : result.uncertain
+          ? 'incertaine'
+          : 'refusée'}'
       '${result.error == null ? '' : ' (${result.error})'}.',
     );
     if (result.present) present = true;
@@ -1055,10 +1056,12 @@ String? _messageText(Map message) {
     for (final references in attachments) {
       final index = images.indexWhere(
         (image) => references.any(
-          (reference) => reference.isNotEmpty &&
-              image == (reference.startsWith('@image:')
-                  ? reference
-                  : '@image:$reference'),
+          (reference) =>
+              reference.isNotEmpty &&
+              image ==
+                  (reference.startsWith('@image:')
+                      ? reference
+                      : '@image:$reference'),
         ),
       );
       if (index >= 0) {
@@ -1069,7 +1072,11 @@ String? _messageText(Map message) {
     }
     return received == 0
         ? none
-        : (confirmed: true, receipt: 'history-image-reference', received: received);
+        : (
+            confirmed: true,
+            receipt: 'history-image-reference',
+            received: received,
+          );
   } else {
     const marker = '--- Attached Context ---';
     final index = serverContent.indexOf(marker);
@@ -1554,6 +1561,11 @@ bool hasUsableTransport(Map<String, dynamic> contract) {
       proof['accepted'] is int &&
       (proof['accepted'] as int) > 0;
 }
+
+String incompleteMeasurementMessage() =>
+    'Mesure partielle : file.attach reste non confirmé ; le code 2 indique '
+    'que le contrat global est incomplet. Les preuves des autres surfaces '
+    'figurent dans le résultat.';
 
 List<int> _sortedInts(Iterable<int> values) => values.toSet().toList()..sort();
 

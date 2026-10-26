@@ -9,6 +9,12 @@ conserve les dimensions, tailles, orientations EXIF et empreintes SHA-256.
 | synthetique-petit.jpg | 3 383 | 320 × 240 | 1 (normale) |
 | synthetique-borne.jpeg | 20 965 448 | 4096 × 4096 | 1 (normale) |
 
+Le grand fichier est une image de transport synthétique, rembourrée par des
+segments JPEG valides ; sa taille ne représente pas une photo courante. Son
+empreinte SHA-256, comme celle du petit fichier, est recopiée dans la preuve
+supplémentaire de `contracts/file-limits.json` pour identifier les octets
+mesurés.
+
 La grande image contient du bruit déterministe et des segments COM JPEG
 valides avant EOI pour atteindre exactement la borne appliquée aux images.
 Elle reste un JPEG ; aucune conversion PNG ni substitution d'octets.
@@ -38,5 +44,24 @@ initial PNG, texte, PDF et documents du 24 octobre.
 
 ## État
 
-Campagne lancée ; activation conditionnée à la réception des six copies et
-à la preuve de la borne. Aucun déblocage JPEG avant cette vérification.
+Campagne terminée le 26 octobre 2026, de 20:03:52 à 20:04:46 UTC, sur le
+build Hermes `0.22.2+1690` du profil de test dédié. Les six téléversements ont
+été acceptés et les six reçus exacts ont été retrouvés dans les sessions
+correspondantes, avec des références distinctes et aucun refus ni résultat
+incertain. Chaque taille a été répétée trois fois. La preuve anonymisée est
+dans `mesure-jpeg.json` ; les octets des images restent locaux et ignorés par
+Git.
+
+La réception JPEG est vérifiée jusqu’à 20 965 448 octets. C’est le plafond
+local appliqué par l’application, fondé sur la plus grande taille testée avec
+succès ; la taille maximale acceptée par Hermes reste inconnue. Une pièce qui
+dépasse ce plafond local est refusée avant l’ouverture d’une session distante.
+Cette campagne ne mesure ni le nombre maximal de pièces ni l’analyse par le
+modèle. Les fichiers testés ont l’orientation EXIF normale (1) ; les autres
+orientations ne sont pas couvertes. Son résultat partiel ne remplace pas le
+contrat initial PNG, texte, PDF et documents du 24 octobre.
+
+Le code de sortie 2 du journal indique que `file.attach`, nécessaire à la
+complétude du contrat de mesure toutes catégories, n’a pas été vérifié par
+cette campagne limitée aux images. Il ne contredit pas les six reçus JPEG
+ci-dessus ; le JSON anonymisé conserve le statut distinct de chaque transport.

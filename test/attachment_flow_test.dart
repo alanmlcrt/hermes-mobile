@@ -17,6 +17,7 @@ import 'package:hermes_mobile/features/profiles/profile_accents.dart';
 import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/attachment.dart';
 import 'package:hermes_mobile/models/connection.dart';
+import 'package:hermes_mobile/models/connection_gateway.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
@@ -35,6 +36,27 @@ class FakePicker implements AttachmentPicker {
     if (error != null) throw error!;
     return files;
   }
+}
+
+class ReadyGateway implements ConnectionGateway {
+  ReadyGateway(this.base);
+  final ConnectionGateway base;
+  @override
+  ConnectionSnapshot get snapshot => base.snapshot.copyWith(
+    connection:
+        base.snapshot.connection ??
+        Connection(
+          key: const ConnectionKey('c'),
+          origin: Uri.parse('https://example.test'),
+        ),
+    link: LinkState.connected,
+    capabilities: const [Capability('conversation', CapabilityState.present)],
+  );
+  @override
+  Stream<ConnectionSnapshot> get snapshots =>
+      base.snapshots.map((_) => snapshot);
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class LimitedMemoryOutbox extends MemoryOutbox {
@@ -151,6 +173,15 @@ void main() {
           await outbox.send(draft.key);
           expect(outbox.status(draft.key).state, OperationState.accepted);
         }
+        await outbox.saveText(draft.key, 'Photo déjà jointe');
+        await outbox.addAttachment(
+          draft.key,
+          PickedFile(
+            name: 'photo-existante.jpg',
+            mediaType: 'image/jpeg',
+            data: Uint8List.fromList([1, 2, 3]),
+          ),
+        );
         draft = (await outbox.draft(draft.key))!;
         await outbox.dispose();
         await conversation.dispose();
@@ -195,6 +226,24 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        expect(
+          vm.attachments
+              .singleWhere((a) => a.name == 'photo-existante.jpg')
+              .state,
+          AttachmentState.selected,
+        );
+        expect(vm.blockedReason, isNull);
+        expect(
+          tester
+              .widget<IconButton>(
+                find.byWidgetPredicate(
+                  (widget) =>
+                      widget is IconButton && widget.tooltip == Content.send,
+                ),
+              )
+              .onPressed,
+          isNotNull,
+        );
         for (final name in ['premier.pdf', 'second.pdf']) {
           final message = find.byWidgetPredicate(
             (w) => w is MessageBubble && w.text == 'Message $name',
@@ -343,6 +392,7 @@ void main() {
     'sheet hides size limits, select, named removal, VM send and denied permission preserve draft',
     (tester) async {
       final h = Harness();
+      final gateway = ReadyGateway(h.repository);
       final outbox = LimitedMemoryOutbox();
       final draft = await outbox.openNewDraft(
         const ConnectionKey('c'),
@@ -363,10 +413,10 @@ void main() {
         MaterialApp(
           theme: buildTheme(null, Brightness.light),
           home: DraftView(
-            accents: ProfileAccents(h.repository),
+            accents: ProfileAccents(gateway),
             create: () => vm = DraftViewModel(
               outbox: outbox,
-              gateway: h.repository,
+              gateway: gateway,
               conversation: MemoryConversation(),
               key: draft.key,
               picker: picker,
@@ -400,6 +450,21 @@ void main() {
       await tester.tap(find.text(Content.remove));
       await tester.pumpAndSettle();
       expect(find.text('document.pdf'), findsNothing);
+      picker.files = [
+        const PickedFile(name: 'photo.jpg', mediaType: 'image/jpeg'),
+      ];
+      await vm.pickAttachments(AttachmentSource.photos);
+      await tester.pumpAndSettle();
+      expect(vm.attachments.single.mediaType, 'image/jpeg');
+      expect(vm.blockedReason, isNull);
+      final sendButton = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (widget) => widget is IconButton && widget.tooltip == Content.send,
+        ),
+      );
+      expect(sendButton.onPressed, isNotNull);
+      await vm.removeAttachment(vm.attachments.single);
+      await tester.pumpAndSettle();
       picker.error = const AppError('attachment.permission');
       await vm.pickAttachments(AttachmentSource.files);
       await tester.pumpAndSettle();

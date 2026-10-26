@@ -121,7 +121,41 @@
           "history-image-reference"
         ],
         "error": null
-      }
+      },
+      "supplementalProofs": [
+        {
+          "mediaType": "image/jpeg",
+          "at": "2026-10-26T20:03:52.515429Z",
+          "finishedAt": "2026-10-26T20:04:46.713815Z",
+          "pieces": 2,
+          "repetitions": 3,
+          "attempts": 6,
+          "accepted": 2,
+          "refused": 0,
+          "unverified": 0,
+          "absent": 0,
+          "partial": 0,
+          "received": 6,
+          "distinctExactReceipts": 6,
+          "bytes": [3383, 20965448],
+          "ceilingMeaning": "largest-accepted-tested; local-app-policy",
+          "serverMaximumMeasured": false,
+          "fixtures": [
+            {
+              "file": "synthetique-petit.jpg",
+              "bytes": 3383,
+              "sha256": "504bec7294ab38db4d9d4b99d419cfa63bdbaea41dfc18dc94789576f47531c6"
+            },
+            {
+              "file": "synthetique-borne.jpeg",
+              "bytes": 20965448,
+              "sha256": "dfd4854a4ee7036e71a38db78fdae2ecb057b9d0af0daa07479f1ed038b963e8"
+            }
+          ],
+          "profile": "dedicated-test-profile",
+          "build": "0.22.2+1690"
+        }
+      ]
     }
   },
   "limits": {
@@ -187,6 +221,7 @@
       },
       "observed": {
         "acceptedBytes": [
+          3383,
           9911,
           1048817,
           5238107,
@@ -201,7 +236,8 @@
         "unverifiedBytes": [],
         "unverifiedCounts": [],
         "mediaTypes": [
-          "image/png"
+          "image/png",
+          "image/jpeg"
         ],
         "receipts": [
           "image.attach_bytes:history-image-reference",
@@ -278,6 +314,24 @@
           "bytes": 9911,
           "count": 3,
           "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 3383,
+          "count": 3,
+          "at": "2026-10-26T20:03:52.515429Z",
+          "mediaType": "image/jpeg",
+          "synthetic": true
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 20965448,
+          "count": 3,
+          "at": "2026-10-26T20:03:52.515429Z",
+          "mediaType": "image/jpeg",
+          "synthetic": true
         }
       ]
     },

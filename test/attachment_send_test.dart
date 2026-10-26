@@ -534,26 +534,84 @@ void main() {
     },
   );
 
-  test(
-    'JPEG is blocked before any upload; labels distinguish uncertainty',
-    () async {
-      await add('a.jpg', 'image/jpeg');
-      await outbox.send(draft.key);
-      expect(calls('session.create'), 0);
-      expect(calls('image.attach_bytes'), 0);
-      expect(calls('prompt.submit'), 0);
-      expect(outbox.status(draft.key).errorCode, 'attachment.jpeg_unverified');
-      expect(
-        Content.attachmentStatus(AttachmentState.uploaded, false, null),
-        contains('réception à vérifier'),
-      );
-      expect(
-        Content.attachmentStatus(AttachmentState.received, true, null),
-        contains('Reçu'),
-      );
-      expect(Content.attachmentVisionUnknown, isNot(contains('sera analysée')));
-    },
-  );
+  test('JPEG sends original bytes with the verified image extension', () async {
+    await add('a.jpeg', 'image/jpeg');
+    h.transport.rpc = (method, params) {
+      if (method == 'image.attach_bytes') {
+        expect(params['session_id'], created()['session_id']);
+        expect(params['profile'], 'default');
+        expect(params['filename'], 'a.jpeg');
+        expect(params['ext'], 'jpg');
+        expect(params.containsKey('path'), isFalse);
+        expect(base64Decode(params['content_base64'] as String), [1, 2, 3]);
+      }
+      return switch (method) {
+        'session.create' => created(),
+        'image.attach_bytes' => {
+          'attached': true,
+          'text': '@image:/server/a.jpeg',
+        },
+        'prompt.submit' => submitted(),
+        'session.history' => {
+          'messages': [
+            {
+              'role': 'user',
+              'row_id': 42,
+              'content':
+                  '@image:/server/a.jpeg\n'
+                  '@image:/server/a.jpeg\nBonjour',
+            },
+          ],
+        },
+        _ => null,
+      };
+    };
+    await outbox.send(draft.key);
+    expect(outbox.status(draft.key).state, OperationState.accepted);
+    expect(calls('image.attach_bytes'), 1);
+    expect(calls('file.attach'), 0);
+    expect(calls('prompt.submit'), 1);
+    expect(
+      (await outbox.attachments(draft.key)).single.state,
+      AttachmentState.received,
+    );
+  });
+
+  test('JPEG is supported only through its measured byte ceiling', () {
+    expect(limits.categoryOf('image/jpeg'), AttachmentCategory.image);
+    expect(limits.refusal('image/jpeg', 20965448), isNull);
+    expect(limits.refusal('image/jpeg', 20965449), 'attachment.size');
+    expect(limits.refusal('image/heic', 1), 'attachment.type');
+  });
+
+  test('oversized JPEG is refused before creating a remote session', () async {
+    await add('a.jpg', 'image/jpeg');
+    await db.update(
+      'outbox_attachments',
+      {'bytes': 20965449},
+      where: 'draft_key = ?',
+      whereArgs: [draft.key.value],
+    );
+
+    await outbox.send(draft.key);
+
+    expect(outbox.status(draft.key).errorCode, 'attachment.size');
+    expect(calls('session.create'), 0);
+    expect(calls('image.attach_bytes'), 0);
+    expect(calls('prompt.submit'), 0);
+  });
+
+  test('received image and uncertain receipt labels remain distinct', () {
+    expect(
+      Content.attachmentStatus(AttachmentState.uploaded, false, null),
+      contains('réception à vérifier'),
+    );
+    expect(
+      Content.attachmentStatus(AttachmentState.received, true, null),
+      contains('Reçu'),
+    );
+    expect(Content.attachmentVisionUnknown, isNot(contains('sera analysée')));
+  });
 
   for (final image in [false, true]) {
     test('preuve exacte, sans collision de préfixe (${image ? 'PNG' : 'PDF'})', () async {

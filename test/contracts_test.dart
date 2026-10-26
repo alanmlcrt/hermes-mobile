@@ -261,7 +261,10 @@ void main() {
       expect(limits.keys, containsAll(categories));
       final unverified = (fileLimits['unverified'] as List).cast<String>();
       expect(unverified.toSet().length, unverified.length);
-      expect(unverified.contains('corpus.complete'), corpus['complete'] != true);
+      expect(
+        unverified.contains('corpus.complete'),
+        corpus['complete'] != true,
+      );
 
       for (final category in categories) {
         final limit = limits[category] as Map;
@@ -333,13 +336,10 @@ void main() {
           expect(limit['evidence'], isEmpty);
         }
         for (final receipt in (observed['receipts'] as List).cast<String>()) {
-          expect(
-            const {
-              'history-attached-context',
-              'history-image-reference',
-            },
-            contains(receipt.split(':').last),
-          );
+          expect(const {
+            'history-attached-context',
+            'history-image-reference',
+          }, contains(receipt.split(':').last));
         }
         if (!measured) {
           for (final entry in observed.entries) {
@@ -404,7 +404,10 @@ void main() {
             proof['pieces'],
             reason: '${entry.key}: catégories mutuellement exclusives',
           );
-          expect(proof['received'], greaterThanOrEqualTo(proof['accepted'] as int));
+          expect(
+            proof['received'],
+            greaterThanOrEqualTo(proof['accepted'] as int),
+          );
           expect(proof['receipts'], isA<List>());
           expect(
             proof['accepted'],
@@ -417,6 +420,48 @@ void main() {
           if (proof is Map) expect(proof['accepted'], 0);
         }
       }
+
+      final jpegProofs =
+          (transports['image.attach_bytes'] as Map)['supplementalProofs']
+              as List;
+      expect(jpegProofs, hasLength(1));
+      final jpegProof = jpegProofs.single as Map;
+      expect(jpegProof['mediaType'], 'image/jpeg');
+      expect(jpegProof['profile'], 'dedicated-test-profile');
+      expect(jpegProof['build'], install['build']);
+      expect(jpegProof['pieces'], 2);
+      expect(jpegProof['repetitions'], 3);
+      expect(jpegProof['attempts'], 6);
+      expect(jpegProof['accepted'], 2);
+      expect(jpegProof['received'], 6);
+      expect(jpegProof['distinctExactReceipts'], 6);
+      expect(jpegProof['bytes'], [3383, 20965448]);
+      expect(
+        jpegProof['ceilingMeaning'],
+        'largest-accepted-tested; local-app-policy',
+      );
+      expect(jpegProof['serverMaximumMeasured'], isFalse);
+      final corpusManifest = jsonDecode(
+        File(
+          '_bmad-output/implementation-artifacts/verification-jpeg/corpus.json',
+        ).readAsStringSync(),
+      ) as List;
+      expect(
+        (jpegProof['fixtures'] as List)
+            .map((fixture) => (fixture as Map)['sha256'])
+            .toList(),
+        corpusManifest.map((fixture) => (fixture as Map)['sha256']).toList(),
+      );
+      expect(
+        (limits['image'] as Map)['observed']['mediaTypes'],
+        contains('image/jpeg'),
+      );
+      expect(
+        ((limits['image'] as Map)['evidence'] as List)
+            .where((e) => (e as Map)['mediaType'] == 'image/jpeg')
+            .length,
+        2,
+      );
 
       final vision = fileLimits['vision'] as Map;
       expect(vision['profile'], anyOf(isNull, 'dedicated-test-profile'));

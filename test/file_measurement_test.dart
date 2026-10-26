@@ -241,19 +241,22 @@ void main() {
       expect(verdict.received, 1);
     });
 
-    test('IMAGE : comparaison exacte et retrait de tous les échos du prompt', () {
-      const prompt = '@image:/config/a.jpg texte';
-      final verdict = receiptVerdict(
-        surface: 'image.attach_bytes',
-        content: '$prompt\n$prompt\n@image:/config/a.jpg.backup',
-        submittedPrompt: prompt,
-        attachments: [
-          ['/config/a.jpg'],
-        ],
-      );
-      expect(verdict.confirmed, isFalse);
-      expect(verdict.received, 0);
-    });
+    test(
+      'IMAGE : comparaison exacte et retrait de tous les échos du prompt',
+      () {
+        const prompt = '@image:/config/a.jpg texte';
+        final verdict = receiptVerdict(
+          surface: 'image.attach_bytes',
+          content: '$prompt\n$prompt\n@image:/config/a.jpg.backup',
+          submittedPrompt: prompt,
+          attachments: [
+            ['/config/a.jpg'],
+          ],
+        );
+        expect(verdict.confirmed, isFalse);
+        expect(verdict.received, 0);
+      },
+    );
 
     test('FILE.ATTACH : l\'écho du prompt seul ne confirme pas', () {
       final verdict = receiptVerdict(
@@ -333,6 +336,15 @@ void main() {
   });
 
   group('hasUsableTransport', () {
+    test('un résultat image partiel explique le code global incomplet', () {
+      expect(incompleteMeasurementMessage(), contains('file.attach'));
+      expect(incompleteMeasurementMessage(), contains('surfaces'));
+      expect(
+        incompleteMeasurementMessage(),
+        isNot(contains('sans transport exploitable')),
+      );
+    });
+
     Map<String, dynamic> contract({
       required String status,
       required int accepted,
@@ -342,9 +354,7 @@ void main() {
         'transports': {
           'file.attach': {
             'status': surface == 'file.attach' ? status : 'absent',
-            'proof': surface == 'file.attach'
-                ? {'accepted': accepted}
-                : null,
+            'proof': surface == 'file.attach' ? {'accepted': accepted} : null,
           },
           'rest.image-upload': {
             'status': surface == 'rest.image-upload' ? status : 'present',

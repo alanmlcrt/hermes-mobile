@@ -18,8 +18,6 @@ abstract final class Content {
   static const attachmentSendBlocked = attachmentRetryRequired;
   static const attachmentRetryRequired =
       'Une pièce doit être retirée ou faire l’objet d’un nouvel essai explicite.';
-  static const attachmentJpegUnverified =
-      'JPEG : envoi bloqué jusqu’à la vérification de ce format. Retirez cette pièce.';
   static const attachmentVisionUnknown =
       'La réception de l’image peut être confirmée ; son analyse dépend du profil Hermes.';
   static const attachmentRetry = 'Réessayer';
@@ -39,7 +37,7 @@ abstract final class Content {
       'Réception incertaine : ${error(errorCode ?? 'attachment.unknown')}',
   };
   static const attachmentFormats =
-      'PNG, texte (.txt), PDF et Word (.docx). JPEG peut être sélectionné, mais son envoi reste bloqué jusqu’à vérification.';
+      'Photos (PNG, JPEG), texte (.txt), PDF et Word (.docx).';
   static const attachmentLoading = 'Copie de la pièce jointe…';
   static const remove = 'Retirer';
   static String removeAttachment(String name) => 'Retirer $name';
@@ -293,7 +291,6 @@ abstract final class Content {
     'attachment.size' => attachmentSizeRefused,
     'attachment.busy' =>
       'Attendez la fin de l’opération en cours pour modifier les pièces.',
-    'attachment.jpeg_unverified' => attachmentJpegUnverified,
     'attachment.retry_required' => attachmentRetryRequired,
     'attachment.refused' => 'Hermes a refusé cette pièce.',
     'attachment.unknown' => 'Le résultat du téléversement est incertain. Vérifiez la conversation avant un nouvel essai.',

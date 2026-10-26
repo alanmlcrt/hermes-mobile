@@ -21,14 +21,14 @@ void main() {
       }
     }
   });
-  test('JPEG local exception does not mutate observed formats', () {
+  test('JPEG measured format shares the image category and local ceiling', () {
     expect(limits.categoryOf('image/jpeg'), AttachmentCategory.image);
     expect(limits.maxBytesFor('image/jpeg'), limits.maxBytesFor('image/png'));
     expect(
       limits.limits
           .singleWhere((l) => l.category == AttachmentCategory.image)
           .mediaTypes,
-      ['image/png'],
+      ['image/png', 'image/jpeg'],
     );
     for (final extension in ['jpg', 'jpeg', 'JPG']) {
       expect(DeviceAttachmentPicker.mediaType(extension), 'image/jpeg');
