@@ -207,7 +207,8 @@ void main() {
       AttachmentState.received,
     ]);
     expect(pieces.every((a) => a.sent), isTrue);
-    expect(pieces.every((a) => File(a.localPath).existsSync()), isTrue);
+    expect(pieces.every((a) => File(a.localPath).existsSync()), isFalse);
+    expect(pieces.every((a) => a.cleaned), isTrue);
     await expectLater(
       outbox.removeAttachment(draft.key, pieces.first.key),
       throwsA(
@@ -243,6 +244,101 @@ void main() {
       AttachmentState.uploaded,
     );
   });
+
+  test(
+    'duplicate exact PNG prompt echoes never prove receipt or delete bytes',
+    () async {
+      await add('a.png', 'image/png');
+      String prompt = '';
+      h.transport.rpc = (method, params) {
+        if (method == 'prompt.submit') {
+          prompt = params['text'] as String;
+          return submitted();
+        }
+        return switch (method) {
+          'session.create' => created(),
+          'image.attach_bytes' => {
+            'attached': true,
+            'text': '@image:/server/a.png',
+          },
+          'session.history' => {
+            'messages': [
+              {'role': 'user', 'row_id': 42, 'content': '$prompt\n$prompt'},
+            ],
+          },
+          _ => null,
+        };
+      };
+      await outbox.send(draft.key);
+      final piece = (await outbox.attachments(draft.key)).single;
+      expect(piece.state, AttachmentState.uploaded);
+      expect(piece.cleaned, isFalse);
+      expect(File(piece.localPath).existsSync(), isTrue);
+    },
+  );
+
+  test(
+    'shared server reference is ambiguous for both receipt and cleanup',
+    () async {
+      await add('a.pdf', 'application/pdf');
+      await add('b.pdf', 'application/pdf');
+      String prompt = '';
+      h.transport.rpc = (method, params) {
+        if (method == 'prompt.submit') {
+          prompt = params['text'] as String;
+          return submitted();
+        }
+        return switch (method) {
+          'session.create' => created(),
+          'session.resume' => Map<String, dynamic>.from(
+            fixture('session-resume')['result'] as Map,
+          ),
+          'file.attach' => {'attached': true, 'ref_text': '@file:shared.pdf'},
+          'session.history' => {
+            'messages': [
+              {
+                'role': 'user',
+                'row_id': 42,
+                'content':
+                    '$prompt\n--- Attached Context ---\n@file:shared.pdf',
+              },
+            ],
+          },
+          _ => null,
+        };
+      };
+      await outbox.send(draft.key);
+      var pieces = await outbox.attachments(draft.key);
+      expect(
+        pieces.every(
+          (a) =>
+              a.state == AttachmentState.uploaded &&
+              !a.cleaned &&
+              File(a.localPath).existsSync(),
+        ),
+        isTrue,
+      );
+      // Even a pre-existing receipt marker cannot authorize ambiguous cleanup.
+      await db.update('outbox_attachments', {'state': 'received'});
+      await db.update('outbox_operation_attachments', {
+        'state': 'received',
+        'receipt_row_id': 42,
+      });
+      final stored = (await outbox.draft(draft.key))!;
+      final timeline = TimelineKey(
+        stored.connection,
+        stored.profile,
+        stored.storedSessionId!,
+      );
+      final resumed = await outbox.resume(timeline);
+      await outbox.reconcile(timeline, resumed, [42]);
+      pieces = await outbox.attachments(draft.key);
+      expect(
+        pieces.every((a) => !a.cleaned && File(a.localPath).existsSync()),
+        isTrue,
+      );
+    },
+  );
 
   test(
     'partial refusal keeps success and draft; explicit retry reuses success',
@@ -741,9 +837,12 @@ void main() {
         ),
       );
       Future<void> flush() async {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 30)),
-        );
+        await tester.pump();
+        // Drain native SQLite work before leaving the fake widget-test clock.
+        await tester.runAsync(() async {
+          await outbox.attachments(draft.key);
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+        });
         await tester.pump();
       }
 
@@ -780,6 +879,8 @@ void main() {
       expect(outbox.status(draft.key).state, OperationState.accepted);
       expect(calls('file.attach'), 2);
       expect(calls('prompt.submit'), 1);
+      await flush();
+      await flush();
       await tester.pumpWidget(const SizedBox());
       await flush();
     },
@@ -819,7 +920,14 @@ void main() {
           current.storedSessionId!,
         );
         expect(
-          conversation.projection(key).items.whereType<UserItem>().single.text,
+          conversation
+              .projection(key)
+              .items
+              .whereType<UserItem>()
+              .single
+              .attachments
+              .single
+              .name,
           'rapport.pdf',
         );
       } finally {

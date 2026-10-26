@@ -1,4 +1,5 @@
 import 'connection.dart';
+import 'attachment.dart';
 import 'draft.dart';
 import 'history.dart';
 import 'profile.dart';
@@ -139,6 +140,10 @@ sealed class TimelineItem {
         json['text'] as String,
         operation: OperationKey(json['op'] as String),
         userRowId: json['row'] as int?,
+        attachments: [
+          for (final a in (json['attachments'] as List? ?? const []))
+            Attachment.fromJson(Map<String, Object?>.from(a as Map)),
+        ],
       ),
       'resp' => ResponseItem(turn, json['text'] as String),
       _ => ActivityItem.fromJson(json),
@@ -153,12 +158,19 @@ class UserItem extends TimelineItem {
     this.text, {
     required this.operation,
     this.userRowId,
+    this.attachments = const [],
   });
   final String text;
   final OperationKey operation;
   final int? userRowId;
-  UserItem withRow(int row) =>
-      UserItem(turn, text, operation: operation, userRowId: row);
+  final List<Attachment> attachments;
+  UserItem withRow(int row) => UserItem(
+    turn,
+    text,
+    operation: operation,
+    userRowId: row,
+    attachments: attachments,
+  );
   @override
   Map<String, Object?> toJson() => {
     'k': 'user',
@@ -166,6 +178,7 @@ class UserItem extends TimelineItem {
     'text': text,
     'op': operation.value,
     'row': userRowId,
+    'attachments': [for (final a in attachments) a.toJson()],
   };
 }
 

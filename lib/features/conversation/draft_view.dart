@@ -512,7 +512,11 @@ class _DraftViewState extends State<DraftView> {
               _detailExpansion[(vm.draft?.key, item.eventKey ?? item)] = value,
         ),
       ),
-      UserItem() => MessageBubble(text: item.text, fromUser: true),
+      UserItem() => MessageBubble(
+        text: item.text,
+        fromUser: true,
+        attachments: item.attachments,
+      ),
     };
     // Les activités provisoires du prochain envoi restent après l'historique,
     // sans créer de réservation Otc avant l'accusé ou le démarrage serveur.

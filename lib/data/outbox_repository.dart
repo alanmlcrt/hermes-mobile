@@ -29,6 +29,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     Future<FileLimits> Function()? loadFileLimits,
   }) : _now = now ?? (() => DateTime.now().toUtc()) {
     _attachmentFiles = attachmentFiles ?? AttachmentFiles();
+    conversation?.attachmentFiles = _attachmentFiles;
     _loadFileLimits = loadFileLimits ?? FileLimits.load;
     _events = gateway.events.listen(_onEvent);
     conversation?.resumer = this;
@@ -74,6 +75,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       reference: row['reference'] as String?,
       errorCode: row['error_code'] as String?,
       sent: row['sent'] == 1,
+      cleaned: row['cleaned'] == 1,
     );
   }
 
@@ -1234,10 +1236,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     await conversation?.accepted(
       TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
       operation,
-      [
-        if (draft.body.isNotEmpty) draft.body,
-        for (final piece in attachments) piece.name,
-      ].join('\n'),
+      draft.body,
       userRowId: userRowId,
     );
     if (attachments.isNotEmpty && runtime != null && submittedPrompt != null) {
@@ -1276,15 +1275,23 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       if (messages is! List) return;
       final operationRows = await database.query(
         'outbox_operations',
-        columns: ['row_watermark'],
-        where: 'operation_key = ?',
-        whereArgs: [operation.value],
+        where: 'operation_key = ? AND draft_key = ? AND state = ? AND connection_key = ? AND profile_key = ? AND stored_session_id = ?',
+        whereArgs: [
+          operation.value,
+          key.value,
+          OperationState.accepted.name,
+          scope.connection.value,
+          scope.profile.value,
+          scope.storedSessionId,
+        ],
       );
+      if (operationRows.length != 1) return;
       final watermark = operationRows.singleOrNull?['row_watermark'] as int?;
       final candidates = <Map>[];
       for (final message in messages) {
         if (message is! Map ||
             message['role'] != 'user' ||
+            message['row_id'] is! int ||
             (userRowId != null
                 ? message['row_id'] != userRowId
                 : watermark == null ||
@@ -1292,25 +1299,42 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
                       (message['row_id'] as int) <= watermark)) {
           continue;
         }
-        final raw = message['content'] ?? message['text'];
-        if (raw is String && raw.contains(submittedPrompt)) {
-          candidates.add(message);
-        }
+        candidates.add(message);
       }
       if (candidates.length != 1) return;
+      final rowId = candidates.single['row_id'] as int;
+      final collisions = await database.query(
+        'outbox_operations',
+        columns: ['operation_key'],
+        where: 'operation_key <> ? AND connection_key = ? AND profile_key = ? AND stored_session_id = ? AND user_row_id = ?',
+        whereArgs: [
+          operation.value,
+          scope.connection.value,
+          scope.profile.value,
+          scope.storedSessionId,
+          rowId,
+        ],
+      );
+      if (collisions.isNotEmpty) return;
+      final snapshots = await database.query(
+        'outbox_operation_attachments',
+        columns: ['reference'],
+        where: 'operation_key = ?',
+        whereArgs: [operation.value],
+      );
       for (final message in candidates) {
-        final raw = (message['content'] ?? message['text']) as String;
+        final raw = message['content'] ?? message['text'];
+        if (raw is! String) continue;
         final promptAt = raw.indexOf(submittedPrompt);
         if (promptAt < 0) continue;
         // References in the submitted prompt are echoes, never receipt proof.
-        final serverOnly = raw.replaceRange(
-          promptAt,
-          promptAt + submittedPrompt.length,
-          '',
-        );
+        final serverOnly = raw.replaceAll(submittedPrompt, '');
         for (final piece in pieces) {
           final reference = piece.reference;
-          if (reference == null) continue;
+          if (reference == null ||
+              snapshots.where((s) => s['reference'] == reference).length != 1) {
+            continue;
+          }
           final evidence = piece.isImage
               ? RegExp(r'@image:[^\s]+')
                     .allMatches(serverOnly)
@@ -1325,24 +1349,87 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
                       ),
                     );
           if (evidence) {
-            await database.update(
-              'outbox_attachments',
-              {'state': AttachmentState.received.name},
-              where: 'attachment_key = ? AND draft_key = ? AND sent = 1',
-              whereArgs: [piece.key, key.value],
-            );
-            await database.update(
-              'outbox_operation_attachments',
-              {'state': AttachmentState.received.name},
-              where: 'attachment_key = ? AND operation_key = ?',
-              whereArgs: [piece.key, operation.value],
-            );
+            _assertAttachmentScope(scope, cached.generation);
+            await database.transaction((t) async {
+              await t.update(
+                'outbox_operations',
+                {'user_row_id': rowId},
+                where: 'operation_key = ? AND state = ?',
+                whereArgs: [operation.value, OperationState.accepted.name],
+              );
+              await t.update(
+                'outbox_attachments',
+                {'state': AttachmentState.received.name},
+                where: 'attachment_key = ? AND draft_key = ? AND operation_key = ? AND sent = 1',
+                whereArgs: [piece.key, key.value, operation.value],
+              );
+              await t.update(
+                'outbox_operation_attachments',
+                {
+                  'state': AttachmentState.received.name,
+                  'receipt_row_id': rowId,
+                },
+                where: 'attachment_key = ? AND operation_key = ?',
+                whereArgs: [piece.key, operation.value],
+              );
+            });
+            // Receipt and exact row are durable before the private bytes go.
+            await _cleanupReceived(key, operation);
           }
         }
       }
       if (!_changes.isClosed) _changes.add(key);
+      _refreshAttachmentTimeline(scope);
     } catch (_) {
       // No history proof: retain the truthful uploaded/unverified state.
+    }
+  }
+
+  void _refreshAttachmentTimeline(Draft scope) {
+    if (scope.storedSessionId != null) {
+      conversation?.refreshAttachments(
+        TimelineKey(scope.connection, scope.profile, scope.storedSessionId!),
+      );
+    }
+  }
+
+  Future<void> _cleanupReceived(DraftKey key, OperationKey operation) async {
+    final rows = await database.rawQuery(
+      'SELECT a.attachment_key FROM outbox_attachments a '
+      'JOIN outbox_operation_attachments s ON s.attachment_key = a.attachment_key AND s.operation_key = a.operation_key '
+      'JOIN outbox_operations o ON o.operation_key = s.operation_key '
+      'WHERE a.draft_key = ? AND o.draft_key = a.draft_key AND o.operation_key = ? '
+      'AND o.state = ? AND o.user_row_id IS NOT NULL AND a.sent = 1 AND a.cleaned = 0 '
+      'AND s.receipt_row_id = o.user_row_id '
+      'AND s.reference IS NOT NULL AND NOT EXISTS (SELECT 1 FROM outbox_operation_attachments shared '
+      'WHERE shared.operation_key = s.operation_key AND shared.attachment_key <> s.attachment_key AND shared.reference = s.reference) '
+      'AND NOT EXISTS (SELECT 1 FROM outbox_operations other WHERE other.operation_key <> o.operation_key '
+      'AND other.connection_key = o.connection_key AND other.profile_key = o.profile_key '
+      'AND other.stored_session_id = o.stored_session_id AND other.user_row_id = o.user_row_id) '
+      'AND a.state = ? AND s.state = ? '
+      'AND a.connection_key = o.connection_key AND a.profile_key = o.profile_key '
+      'AND a.stored_session_id = o.stored_session_id '
+      'AND s.connection_key = o.connection_key AND s.profile_key = o.profile_key AND s.stored_session_id = o.stored_session_id',
+      [
+        key.value,
+        operation.value,
+        OperationState.accepted.name,
+        AttachmentState.received.name,
+        AttachmentState.received.name,
+      ],
+    );
+    for (final row in rows) {
+      try {
+        await _attachmentFiles.remove(key, row['attachment_key'] as String);
+        await database.update(
+          'outbox_attachments',
+          {'cleaned': 1},
+          where: 'draft_key = ? AND attachment_key = ? AND operation_key = ? AND sent = 1',
+          whereArgs: [key.value, row['attachment_key'], operation.value],
+        );
+      } catch (_) {
+        /* durable received state allows an idempotent retry */
+      }
     }
   }
 
@@ -1360,9 +1447,10 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         where: 'draft_key = ? AND state = ?',
         whereArgs: [key.value, OperationState.accepted.name],
       );
-      final local = await attachments(key);
       for (final op in pending) {
         final operation = OperationKey(op['operation_key'] as String);
+        await _cleanupReceived(key, operation);
+        final local = await attachments(key);
         final snapshots = await database.query(
           'outbox_operation_attachments',
           where: 'operation_key = ?',
@@ -1373,7 +1461,14 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         final pieces = local
             .where((a) => a.sent && keys.contains(a.key))
             .toList();
-        if (!pieces.any((a) => a.state == AttachmentState.uploaded)) continue;
+        if (!pieces.any(
+          (a) =>
+              !a.cleaned &&
+              (a.state == AttachmentState.uploaded ||
+                  a.state == AttachmentState.received),
+        )) {
+          continue;
+        }
         final body = op['body'] as String;
         final prompt = [
           for (final row in snapshots) row['reference'] as String,
@@ -1387,6 +1482,10 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           op['user_row_id'] as int?,
           prompt,
         );
+      }
+      if (conversation != null) {
+        final scope = await draft(key);
+        if (scope != null) _refreshAttachmentTimeline(scope);
       }
     } catch (_) {
       // Les preuves manquantes restent en attente, sans répétition d'envoi.

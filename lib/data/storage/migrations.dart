@@ -184,4 +184,12 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'PRIMARY KEY (operation_key, attachment_key))',
     );
   },
+  (db) async {
+    await db.execute(
+      'ALTER TABLE outbox_attachments ADD COLUMN cleaned INTEGER NOT NULL DEFAULT 0',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_operation_attachments ADD COLUMN receipt_row_id INTEGER',
+    );
+  },
 ];

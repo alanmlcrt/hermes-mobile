@@ -37,16 +37,17 @@ class AttachmentList extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (a.isImage && !a.missing) ...[
-                      ExcludeSemantics(
+                    if (a.isImage && !a.missing && !a.cleaned) ...[
+                      Semantics(
+                        label: Content.attachmentPreview(a.name),
+                        image: true,
                         child: Image.file(
                           File(a.localPath),
                           width: AttachmentTokens.preview,
                           height: AttachmentTokens.preview,
                           cacheWidth: AttachmentTokens.cacheWidth,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) =>
-                              const Icon(Icons.broken_image_outlined),
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
                         ),
                       ),
                       const SizedBox(width: Spacing.sm),

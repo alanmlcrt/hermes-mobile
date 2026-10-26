@@ -5,6 +5,7 @@ import '../models/attachment.dart';
 
 abstract final class Content {
   static const attachments = 'Pièces jointes';
+  static String attachmentPreview(String name) => 'Aperçu de $name';
   static const attachmentText = 'Texte';
   static const attachmentPdf = 'PDF';
   static const attachmentOffice = 'Word';

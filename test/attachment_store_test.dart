@@ -9,6 +9,7 @@ import 'package:hermes_mobile/data/outbox_repository.dart';
 import 'package:hermes_mobile/data/file_limits.dart';
 import 'package:hermes_mobile/data/storage/attachment_files.dart';
 import 'package:hermes_mobile/data/storage/database.dart';
+import 'package:hermes_mobile/data/storage/migrations.dart';
 import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/attachment.dart';
 import 'package:hermes_mobile/models/draft.dart';
@@ -85,6 +86,58 @@ void main() {
     await db.close();
     await h.repository.dispose();
     await directory.delete(recursive: true);
+  });
+  test('version 12 migration retains historical metadata and requires fresh cleanup proof', () async {
+    final path = '${directory.path}/version12.sqlite';
+    final legacy = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 12,
+        onCreate: (db, _) async {
+          for (final migrate in connectionMigrations.take(12)) {
+            await migrate(db);
+          }
+        },
+      ),
+    );
+    await legacy.insert('outbox_attachments', {
+      'attachment_key': 'legacy',
+      'draft_key': 'draft',
+      'name': 'ancien.pdf',
+      'media_type': 'application/pdf',
+      'bytes': 3,
+      'state': 'received',
+      'position': 0,
+      'created_at': '2026-10-26',
+      'sent': 1,
+    });
+    await legacy.insert('outbox_operation_attachments', {
+      'operation_key': 'op',
+      'attachment_key': 'legacy',
+      'position': 0,
+      'connection_key': 'c',
+      'profile_key': 'p',
+      'state': 'received',
+    });
+    await legacy.close();
+    final upgraded = await openConnectionDatabase(
+      factory: databaseFactoryFfi,
+      path: path,
+    );
+    try {
+      final record = (await upgraded.query('outbox_attachments')).single;
+      expect(record['name'], 'ancien.pdf');
+      expect(record['media_type'], 'application/pdf');
+      expect(record['state'], 'received');
+      expect(record['cleaned'], 0);
+      expect(
+        (await upgraded.query('outbox_operation_attachments'))
+            .single['receipt_row_id'],
+        isNull,
+      );
+    } finally {
+      await upgraded.close();
+    }
   });
   test('private bytes, four files ordered across restart, removal and missing copy', () async {
     final names = ['../photo.png', 'photo.jpg', 'photo.jpeg', 'document.pdf'];

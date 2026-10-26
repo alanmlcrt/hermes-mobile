@@ -25,6 +25,7 @@ class Attachment {
     this.reference,
     this.errorCode,
     this.sent = false,
+    this.cleaned = false,
   });
   final String key;
   final String name;
@@ -36,7 +37,33 @@ class Attachment {
   final String? reference;
   final String? errorCode;
   final bool sent;
+
+  /// Receipt metadata survives removal of the private copy.
+  final bool cleaned;
   bool get isImage => mediaType == 'image/png' || mediaType == 'image/jpeg';
+
+  Map<String, Object?> toJson() => {
+    'key': key,
+    'name': name,
+    'mediaType': mediaType,
+    'bytes': bytes,
+    'state': state.name,
+    'sent': sent,
+    'cleaned': cleaned,
+  };
+
+  // Paths and server references are deliberately never restored from JSON.
+  factory Attachment.fromJson(Map<String, Object?> json) => Attachment(
+    key: json['key'] as String,
+    name: json['name'] as String,
+    mediaType: json['mediaType'] as String,
+    bytes: json['bytes'] as int,
+    localPath: '',
+    missing: true,
+    state: AttachmentState.values.byName(json['state'] as String),
+    sent: json['sent'] == true,
+    cleaned: json['cleaned'] == true,
+  );
 }
 
 class PickedFile {

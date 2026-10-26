@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/app_error.dart';
+import '../models/attachment.dart';
 import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
@@ -14,6 +15,7 @@ import '../models/profile.dart';
 import '../models/timeline.dart';
 import 'event_mapping.dart';
 import 'hermes_adapter.dart';
+import 'storage/attachment_files.dart';
 
 /// Seul auteur de la projection distante (`conversation_*`). Ne crée ni session
 /// ni opération : l'outbox lui signale la liaison runtime et les demandes
@@ -38,6 +40,134 @@ class ConversationRepository implements ConversationGateway {
 
   /// Posé par l'outbox : seul appelant de `session.resume`.
   SessionResumer? resumer;
+  AttachmentFiles attachmentFiles = AttachmentFiles();
+
+  /// Queued outside receipt reconciliation: that may already own this queue.
+  void refreshAttachments(TimelineKey key) {
+    final generation = gateway.socketGeneration;
+    final profile = gateway.snapshot.selectedProfile;
+    final connection = gateway.snapshot.connection?.key;
+    unawaited(
+      _enqueue(
+        key,
+        (p) => p,
+        hydrateAttachments: true,
+        canPublish: () =>
+            !_disposed &&
+            generation == gateway.socketGeneration &&
+            gateway.snapshot.connection?.key == connection &&
+            gateway.snapshot.selectedProfile == profile,
+      ),
+    );
+  }
+
+  Future<TimelineProjection> _withAttachments(
+    TimelineKey key,
+    TimelineProjection p,
+  ) async {
+    final operations = await database.rawQuery(
+      'SELECT o.* FROM outbox_operations o JOIN outbox_drafts d ON d.draft_key = o.draft_key '
+      'WHERE o.state = ? AND o.connection_key = ? AND o.profile_key = ? '
+      'AND d.connection_key = o.connection_key AND d.profile_key = o.profile_key '
+      'AND COALESCE(o.stored_session_id, d.stored_session_id) = ? '
+      'AND d.stored_session_id = ?',
+      [
+        OperationState.accepted.name,
+        key.connection.value,
+        key.profile.value,
+        key.session,
+        key.session,
+      ],
+    );
+    final items = <TimelineItem>[];
+    for (final item in p.items) {
+      if (item is! UserItem) {
+        items.add(item);
+        continue;
+      }
+      final matches = operations
+          .where(
+            (o) => item.userRowId == null
+                ? o['operation_key'] == item.operation.value &&
+                      (o['user_row_id'] == null ||
+                          operations
+                                  .where(
+                                    (other) =>
+                                        other['user_row_id'] ==
+                                        o['user_row_id'],
+                                  )
+                                  .length ==
+                              1)
+                : o['user_row_id'] == item.userRowId,
+          )
+          .toList();
+      final pieces = <Attachment>[];
+      var userRowId = item.userRowId;
+      if (matches.length == 1) {
+        final op = matches.single;
+        userRowId ??= op['user_row_id'] as int?;
+        final rows = await database.rawQuery(
+          'SELECT a.*, s.state AS snapshot_state, s.reference AS snapshot_reference '
+          'FROM outbox_operation_attachments s JOIN outbox_attachments a '
+          'ON a.attachment_key = s.attachment_key AND a.operation_key = s.operation_key '
+          'WHERE s.operation_key = ? AND a.draft_key = ? AND a.sent = 1 '
+          'AND s.connection_key = ? AND s.profile_key = ? AND s.stored_session_id = ? '
+          'AND a.connection_key = s.connection_key AND a.profile_key = s.profile_key '
+          'AND a.stored_session_id = s.stored_session_id ORDER BY s.position',
+          [
+            op['operation_key'],
+            op['draft_key'],
+            key.connection.value,
+            key.profile.value,
+            key.session,
+          ],
+        );
+        for (final row in rows) {
+          final cleaned = row['cleaned'] == 1;
+          var localPath = '';
+          var missing = true;
+          if (!cleaned) {
+            try {
+              final file = await attachmentFiles.file(
+                DraftKey(op['draft_key'] as String),
+                row['attachment_key'] as String,
+              );
+              missing = !await file.exists();
+              localPath = file.path;
+            } catch (_) {
+              // Preview availability must never erase durable message metadata.
+            }
+          }
+          pieces.add(
+            Attachment(
+              key: row['attachment_key'] as String,
+              name: row['name'] as String,
+              mediaType: row['media_type'] as String,
+              bytes: row['bytes'] as int,
+              localPath: localPath,
+              missing: missing,
+              state: AttachmentState.values.byName(
+                row['snapshot_state'] as String,
+              ),
+              sent: true,
+              cleaned: cleaned,
+            ),
+          );
+        }
+      }
+      items.add(
+        UserItem(
+          item.turn,
+          item.text,
+          operation: item.operation,
+          userRowId: userRowId,
+          attachments: pieces,
+        ),
+      );
+    }
+    return p.copyWith(items: items);
+  }
+
   final _bindings = <TimelineKey, ({String runtime, int generation})>{};
   final _stopRevisions = <TimelineKey, int>{};
   final _pendingBoundaries = <TimelineKey, int>{};
@@ -96,7 +226,7 @@ class ConversationRepository implements ConversationGateway {
   @override
   Future<TimelineProjection> load(TimelineKey key) async {
     _loaded.add(key);
-    await _enqueue(key, (p) => null);
+    await _enqueue(key, (p) => p, hydrateAttachments: true);
     // Fil ouvert après la connexion (relance) : sa resynchronisation n'a pas eu lieu.
     if (_canResync && _synced[key] != gateway.socketGeneration) {
       unawaited(resync(key));
@@ -169,7 +299,7 @@ class ConversationRepository implements ConversationGateway {
           : CompanionPhase.neutral,
       clearError: true,
     );
-  });
+  }, hydrateAttachments: true);
 
   void _onEvent(GatewayEvent event) {
     for (final entry in _bindings.entries) {
@@ -318,8 +448,16 @@ class ConversationRepository implements ConversationGateway {
       final before = _bindings[key];
       final current = _cache[key] ?? await _read(key);
       _cache[key] = current;
+      final selectedProfile = gateway.snapshot.selectedProfile;
+      final connection = gateway.snapshot.connection?.key;
       final info = await resumer.resume(key);
       final generation = info.generation;
+      bool currentScope() =>
+          !_disposed &&
+          generation == gateway.socketGeneration &&
+          gateway.snapshot.link == LinkState.connected &&
+          gateway.snapshot.connection?.key == connection &&
+          gateway.snapshot.selectedProfile == selectedProfile;
       // Socket changée pendant la reprise : la suivante resynchronise.
       if (generation != gateway.socketGeneration) return;
       final epoch = gateway.replayEpoch;
@@ -392,6 +530,7 @@ class ConversationRepository implements ConversationGateway {
           info,
         ).copyWith(replayEpoch: epoch, seq: latest, resetSeq: latest == null);
       }
+      if (!currentScope()) return;
       await _write(key, next);
       _dirty.remove(key);
       _timers.remove(key)?.cancel();
@@ -400,6 +539,13 @@ class ConversationRepository implements ConversationGateway {
       _synced[key] = generation;
       _setFailed(key, false);
       if (userRows != null) await resumer.reconcile(key, info, userRows);
+      if (!currentScope()) return;
+      next = await _withAttachments(key, next);
+      if (!currentScope()) return;
+      await _write(key, next);
+      if (!currentScope()) return;
+      _cache[key] = next;
+      if (!_changes.isClosed) _changes.add(key);
     } catch (_) {
       // Rien n'est renvoyé : la projection précédente et les opérations restent.
       _setFailed(key, true);
@@ -782,12 +928,17 @@ class ConversationRepository implements ConversationGateway {
     TimelineKey key,
     TimelineProjection? Function(TimelineProjection) change, {
     bool immediate = true,
+    bool hydrateAttachments = false,
+    bool Function()? canPublish,
   }) => _queues[key] = (_queues[key] ?? Future.value()).then((_) async {
     try {
       final current = _cache[key] ?? await _read(key);
+      if (canPublish?.call() == false) return;
       _cache[key] = current;
-      final changed = change(current);
+      var changed = change(current);
       if (changed == null) return;
+      if (hydrateAttachments) changed = await _withAttachments(key, changed);
+      if (canPublish?.call() == false) return;
       if (immediate) {
         await _write(key, changed);
         _dirty.remove(key);
@@ -796,6 +947,7 @@ class ConversationRepository implements ConversationGateway {
         _dirty.add(key);
         _timers[key] ??= Timer(flushInterval, () => _flush(key));
       }
+      if (canPublish?.call() == false) return;
       _cache[key] = changed;
       if (!_changes.isClosed) _changes.add(key);
     } catch (_) {
