@@ -157,9 +157,14 @@ Future<Map<String, dynamic>> _measure(
     throw const _Blocked('aucune surface ne s’applique aux pièces fournies');
   }
   final session = await _Session.open(transport, origin, options.profile);
+  stderr.writeln('Profil de test dédié connecté ; gateway.ready reçu.');
   try {
     final observations = <_Observation>[];
     for (final (surface, piece) in applicable) {
+      stderr.writeln(
+        'Observation ${observations.length + 1}/${applicable.length} : '
+        '$surface, ${piece.mediaType}, ${piece.bytes.length} octets.',
+      );
       observations.add(
         await _probePiece(
           session,
@@ -168,6 +173,11 @@ Future<Map<String, dynamic>> _measure(
           options.repetitions,
           options.visionMarker,
         ),
+      );
+      final observation = observations.last;
+      stderr.writeln(
+        'Observation terminée : ${observation.outcome.name}, '
+        '${observation.receivedCount} reçus confirmés.',
       );
     }
     final finishedAt = DateTime.now().toUtc().toIso8601String();
@@ -476,6 +486,11 @@ Future<_Observation> _probePiece(
   for (var index = 1; index <= repetitions; index++) {
     attempts = index;
     final result = await _attach(session, surface, runtime, piece);
+    stderr.writeln(
+      'Copie $index/$repetitions : '
+      '${result.accepted ? 'upload accepté' : result.uncertain ? 'incertaine' : 'refusée'}'
+      '${result.error == null ? '' : ' (${result.error})'}.',
+    );
     if (result.present) present = true;
     if (result.accepted) {
       acceptedCount = index;
@@ -519,6 +534,11 @@ Future<_Observation> _probePiece(
 
   final token = _token();
   final prompt = _prompt(surface, attachments, token);
+  stderr.writeln(
+    'Références upload distinctes : '
+    '${attachments.map((attachment) => attachment.promptRef).toSet().length}'
+    '/${attachments.length}.',
+  );
   Map<String, dynamic> submitted;
   try {
     submitted = await session.rpc.call(
@@ -557,6 +577,40 @@ Future<_Observation> _probePiece(
       acceptedCount: acceptedCount,
       error: 'prompt.refused',
       attempts: attempts,
+      countAmbiguous: countAmbiguous,
+    );
+  }
+
+  stderr.writeln('Prompt de test accepté ; attente du tour puis relecture.');
+
+  // Sans marqueur de vision, seule la réception est mesurée. La preuve
+  // d'historique ne dépend pas de la fin d'une analyse par le modèle.
+  if (visionMarker == null) {
+    final receipt = await _readReceipt(
+      session,
+      surface,
+      runtime,
+      token,
+      attachments,
+    );
+    await _interrupt(session, runtime);
+    return _Observation(
+      surface: surface,
+      piece: piece,
+      outcome: classifyOutcome(
+        present: present,
+        error: error,
+        uncertain: uncertain,
+        acceptedCount: acceptedCount,
+        receiptConfirmed:
+            receipt.confirmed && receipt.received == attachments.length,
+      ),
+      present: present,
+      acceptedCount: acceptedCount,
+      error: error,
+      receipt: receipt.receipt,
+      attempts: attempts,
+      receivedCount: receipt.confirmed ? receipt.received : 0,
       countAmbiguous: countAmbiguous,
     );
   }
@@ -942,6 +996,7 @@ Future<_Receipt> _readReceipt(
           final verdict = receiptVerdict(
             surface: surface,
             content: content,
+            submittedPrompt: _prompt(surface, attachments, token),
             attachments: [
               for (final attachment in attachments) attachment.references,
             ],
@@ -980,24 +1035,46 @@ String? _messageText(Map message) {
   required String surface,
   required String content,
   required List<List<String>> attachments,
+  String? submittedPrompt,
 }) {
   final none = (confirmed: false, receipt: null, received: 0);
   if (attachments.isEmpty) return none;
   final imageSurface =
       surface == 'rest.image-upload' || surface == 'image.attach_bytes';
+  final serverContent = submittedPrompt == null || submittedPrompt.isEmpty
+      ? content
+      : content.replaceAll(submittedPrompt, '');
   final String haystack;
   if (imageSurface) {
     final images = RegExp(r'@image:[^\s]+')
-        .allMatches(content)
+        .allMatches(serverContent)
         .map((match) => match.group(0)!)
         .toList();
     if (images.isEmpty) return none;
-    haystack = images.join('\n');
+    var received = 0;
+    for (final references in attachments) {
+      final index = images.indexWhere(
+        (image) => references.any(
+          (reference) => reference.isNotEmpty &&
+              image == (reference.startsWith('@image:')
+                  ? reference
+                  : '@image:$reference'),
+        ),
+      );
+      if (index >= 0) {
+        // Une occurrence exacte ne peut prouver qu'une seule copie.
+        images.removeAt(index);
+        received++;
+      }
+    }
+    return received == 0
+        ? none
+        : (confirmed: true, receipt: 'history-image-reference', received: received);
   } else {
     const marker = '--- Attached Context ---';
-    final index = content.indexOf(marker);
+    final index = serverContent.indexOf(marker);
     if (index < 0) return none;
-    haystack = content.substring(index);
+    haystack = serverContent.substring(index);
   }
   var received = 0;
   for (final references in attachments) {

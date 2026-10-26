@@ -5,6 +5,7 @@ import '../models/app_error.dart';
 import '../models/attachment.dart';
 import '../models/connection_gateway.dart';
 import '../models/profile.dart';
+import 'file_limits.dart';
 
 enum AttachOutcome { uploaded, refused, uncertain }
 
@@ -17,9 +18,10 @@ class AttachResult {
 
 /// Sends only bytes from the application's private copy to the frozen session.
 class AttachmentTransport {
-  const AttachmentTransport(this.gateway, this.timeout);
+  const AttachmentTransport(this.gateway, this.timeout, this.limits);
   final ConnectionGateway gateway;
   final Duration timeout;
+  final FileLimits limits;
 
   Future<AttachResult> upload(
     Attachment attachment,
@@ -28,10 +30,11 @@ class AttachmentTransport {
   ) async {
     final generation = gateway.socketGeneration;
     final connection = gateway.snapshot.connection?.key;
-    if (attachment.mediaType == 'image/jpeg') {
-      return const AttachResult(
+    final refusal = limits.refusal(attachment.mediaType, attachment.bytes);
+    if (refusal != null) {
+      return AttachResult(
         AttachOutcome.refused,
-        errorCode: 'attachment.jpeg_unverified',
+        errorCode: refusal,
       );
     }
     try {
@@ -42,7 +45,7 @@ class AttachmentTransport {
           errorCode: 'attachment.missing',
         );
       }
-      final image = attachment.mediaType == 'image/png';
+      final image = attachment.isImage;
       if (gateway.socketGeneration != generation ||
           gateway.snapshot.connection?.key != connection) {
         return const AttachResult(
@@ -58,7 +61,7 @@ class AttachmentTransport {
                 'profile': profile.value,
                 'content_base64': base64Encode(bytes),
                 'filename': attachment.name,
-                'ext': 'png',
+                'ext': attachment.mediaType == 'image/jpeg' ? 'jpg' : 'png',
               }
             : {
                 'session_id': runtime,

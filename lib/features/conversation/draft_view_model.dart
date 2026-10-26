@@ -220,9 +220,6 @@ class DraftViewModel extends ChangeNotifier {
   /// Raison pour laquelle « Envoyer » est désactivé, ou null s'il est actif.
   String? get blockedReason {
     if (attachmentBusy) return Content.attachmentLoading;
-    if (attachments.any((a) => !a.sent && a.mediaType == 'image/jpeg')) {
-      return Content.attachmentJpegUnverified;
-    }
     if (attachments.any(
       (a) =>
           !a.sent &&

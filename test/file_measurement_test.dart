@@ -232,6 +232,29 @@ void main() {
   });
 
   group('receiptVerdict', () {
+    test('IMAGE : une occurrence commune ne prouve pas trois copies', () {
+      final verdict = receiptVerdict(
+        surface: 'image.attach_bytes',
+        content: '@image:/config/shared.jpg',
+        attachments: List.generate(3, (_) => ['/config/shared.jpg']),
+      );
+      expect(verdict.received, 1);
+    });
+
+    test('IMAGE : comparaison exacte et retrait de tous les échos du prompt', () {
+      const prompt = '@image:/config/a.jpg texte';
+      final verdict = receiptVerdict(
+        surface: 'image.attach_bytes',
+        content: '$prompt\n$prompt\n@image:/config/a.jpg.backup',
+        submittedPrompt: prompt,
+        attachments: [
+          ['/config/a.jpg'],
+        ],
+      );
+      expect(verdict.confirmed, isFalse);
+      expect(verdict.received, 0);
+    });
+
     test('FILE.ATTACH : l\'écho du prompt seul ne confirme pas', () {
       final verdict = receiptVerdict(
         surface: 'file.attach',

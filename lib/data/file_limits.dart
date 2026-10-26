@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../models/attachment.dart';
 
-/// Seuls les types observés sont vérifiés ; JPEG est une exception locale.
+/// Seuls les types observés sont pris en charge, dans leurs bornes mesurées.
 class FileLimits {
   FileLimits.fromJson(Map<String, dynamic> json)
     : limits = [
@@ -23,9 +23,8 @@ class FileLimits {
     jsonDecode(await rootBundle.loadString('contracts/file-limits.json'))
         as Map<String, dynamic>,
   );
-  AttachmentCategory? categoryOf(String type) => type == 'image/jpeg'
-      ? AttachmentCategory.image
-      : limits.where((l) => l.mediaTypes.contains(type)).firstOrNull?.category;
+  AttachmentCategory? categoryOf(String type) =>
+      limits.where((l) => l.mediaTypes.contains(type)).firstOrNull?.category;
   int? maxBytesFor(String type) =>
       limits.where((l) => l.category == categoryOf(type)).firstOrNull?.maxBytes;
   String? refusal(String type, int bytes) {

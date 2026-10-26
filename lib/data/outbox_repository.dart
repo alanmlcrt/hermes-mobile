@@ -782,6 +782,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     final operation = OperationKey.create();
     final Draft draft;
     final List<Attachment> pieces;
+    late final FileLimits fileLimits;
     try {
       // Un prompt peut avoir été accepté malgré l'échec de son commit local.
       final unresolved = await database.rawQuery(
@@ -811,15 +812,15 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       final found = await this.draft(key);
       await (_attachmentWrites[key] ?? Future<void>.value()).catchError((_) {});
       pieces = (await attachments(key)).where((a) => !a.sent).toList();
-      if (pieces.any((a) => a.mediaType == 'image/jpeg')) {
-        _set(
-          key,
-          const SendStatus(
-            state: OperationState.failed,
-            errorCode: 'attachment.jpeg_unverified',
-          ),
-        );
-        return;
+      if (pieces.isNotEmpty) {
+        fileLimits = await _loadFileLimits();
+        for (final piece in pieces) {
+          final refusal = fileLimits.refusal(piece.mediaType, piece.bytes);
+          if (refusal != null) {
+            _set(key, SendStatus(state: OperationState.failed, errorCode: refusal));
+            return;
+          }
+        }
       }
       if (pieces.any(
         (a) =>
@@ -956,7 +957,6 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           }
         }
       }
-      final transport = AttachmentTransport(g, timeout);
       for (final piece in pieces) {
         if (piece.state == AttachmentState.uploaded) continue;
         await database.rawUpdate(
@@ -978,7 +978,8 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         );
         if (!_changes.isClosed) _changes.add(key);
         _assertAttachmentScope(draft, generation);
-        final result = await transport.upload(piece, draft.profile, runtime);
+        final result = await AttachmentTransport(g, timeout, fileLimits)
+            .upload(piece, draft.profile, runtime);
         final state = switch (result.outcome) {
           AttachOutcome.uploaded => AttachmentState.uploaded,
           AttachOutcome.refused => AttachmentState.failed,

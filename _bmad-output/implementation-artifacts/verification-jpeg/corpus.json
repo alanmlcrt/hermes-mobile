@@ -1,0 +1,18 @@
+[
+  {
+    "file": "synthetique-petit.jpg",
+    "bytes": 3383,
+    "width": 320,
+    "height": 240,
+    "exifOrientation": 1,
+    "sha256": "504bec7294ab38db4d9d4b99d419cfa63bdbaea41dfc18dc94789576f47531c6"
+  },
+  {
+    "file": "synthetique-borne.jpeg",
+    "bytes": 20965448,
+    "width": 4096,
+    "height": 4096,
+    "exifOrientation": 1,
+    "sha256": "dfd4854a4ee7036e71a38db78fdae2ecb057b9d0af0daa07479f1ed038b963e8"
+  }
+]
