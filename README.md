@@ -1,5 +1,17 @@
 # Hermes Mobile
 
+Les notifications de fin se configurent dans les réglages du profil, pour la
+connexion entière : origine HTTPS de l’observateur et credential distinct de
+Hermes, puis activation explicite de la permission Android. La santé de
+l’observateur est distincte de la disponibilité du téléphone. Un échec du suivi
+laisse partir la demande et marque son tour « Notification non suivie ».
+
+Firebase est facultatif au démarrage. `firebase_messaging 17.0.1` et
+`firebase_core 5.1.0` sont résolus et le build debug sans configuration est
+vérifié. Aucun projet, compte ni push réel n’est créé par ce dépôt. Leur
+préparation et les essais téléphone appartiennent à 5.5 ; le toucher ciblé
+appartient à 5.4. Voir [la préparation FCM](server/notifier/DOCS.md#15-préparation-fcm-pour-55).
+
 Application Android personnelle (iPhone anticipé) servant d'interface distante à l'installation Hermes d'Alanc. Identifiant d'application : `fr.hermes_mobile`.
 
 ## Prérequis

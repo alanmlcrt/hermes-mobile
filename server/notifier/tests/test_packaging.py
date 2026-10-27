@@ -27,7 +27,7 @@ class PackagingTest(unittest.TestCase):
         self.assertEqual(data["arch"], ["amd64", "aarch64"])
         # `/data` est toujours monté par le Supervisor : aucune entrée `map`
         # n'est nécessaire, et aucun autre chemin persistant n'est exposé.
-        self.assertNotIn("map", data)
+        self.assertEqual(data["map"], [{"type": "share", "read_only": True}])
         self.assertEqual(data["startup"], "application")
         self.assertTrue(data["boot"] == "auto")
         self.assertFalse(data["init"])
@@ -61,7 +61,7 @@ class PackagingTest(unittest.TestCase):
             for line in text.splitlines()
             if line.strip() and not line.startswith("#")
         }
-        self.assertEqual(set(pins), {"cryptography", "websockets"})
+        self.assertEqual(set(pins), {"cryptography", "websockets", "google-auth", "requests"})
         for value in pins.values():
             self.assertRegex(value, r"^\d+\.\d+(\.\d+)?$")
         self.assertIn("PyYAML==", (ADDON / "requirements-dev.txt").read_text())

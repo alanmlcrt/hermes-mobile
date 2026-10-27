@@ -2,9 +2,8 @@
 
 Add-on Home Assistant qui observe les fins de travail Hermes et tient une
 outbox durable. Il est **strictement en lecture seule** côté Hermes : il ne
-soumet, n'arrête, ne crée et ne renomme jamais de travail. En 5.2, aucun push
-FCM réel n'est envoyé : le dispatcher fonctionne en dry-run et marque les
-entrées `delivered`.
+soumet, n'arrête, ne crée et ne renomme jamais de travail. L'intégration reste
+en dry-run ; le transport personnel FCM HTTP v1 attend la préparation de 5.5.
 
 - Source : `server/notifier/`
 - Contrats : `contracts/event-mapping.json`,
@@ -53,12 +52,12 @@ Options minimales pour l'essai en dry-run :
 | `hermes_profile` | profil par défaut, ou vide |
 | `bearer_hash` | hash hexadécimal de 64 caractères |
 | `bearer_salt` | sel hexadécimal de 64 à 128 caractères |
-| `fcm_enabled` | `false` en 5.2 |
+| `fcm_enabled` | `false` en intégration |
 | `log_level` | `info` |
 | `rate_limit_per_minute` | `120` |
 
-`environment: personal` est refusé en 5.2, même avec Firebase : aucun
-transport FCM réel n'est encore livré (story 5.3). Voir [DOCS.md](DOCS.md)
+`environment: personal` exige un compte de service privé monté en lecture
+seule depuis `/share`, à préparer en 5.5. Voir [DOCS.md](DOCS.md#15-préparation-fcm-pour-55)
 pour le détail des options, de l'API et des limites.
 
 ### 3. Installer dans Home Assistant
@@ -90,13 +89,13 @@ notifier. Les artefacts Python courants sont ignorés par `.gitignore`.
 
 ## Limites assumées
 
-- Aucun push FCM avant 5.3 ; le dry-run prouve l'outbox, pas la livraison.
+- Aucun push réel exécuté pendant 5.3 ; le dry-run ne prouve pas la livraison.
 - Le service est en lecture seule, sauf `session.resume` qui peut reconstruire
   une session locale côté Hermes (réserve du contrat, voir DOCS.md §1).
 - Une exécution n'est suivie que par un seul abonnement ; un second appareil
   sur la même ligne reçoit `400` (multi-appareils hors périmètre 5.2).
-- `fcm_service_account` n'a pas encore de chemin monté ; `personal` reste
-  refusé avant utilisation.
+- `fcm_service_account` référence `/share/hermes-notifier/service-account.json`,
+  hors dépôt et en lecture seule, à préparer en 5.5.
 - Pas de garantie « exactement une fois » : au moins une tentative, dédup par
   `(subscriptionId, executionId, terminal)`, premier terminal gagnant.
 - Aucun port hôte ; l'accès passe par le réseau interne de Home Assistant et,

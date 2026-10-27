@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'app/bootstrap.dart';
 import 'app/routes.dart';
+import 'data/notification_repository.dart';
 import 'models/connection.dart';
 import 'models/companion_background.dart';
 import 'models/connection_gateway.dart';
@@ -17,8 +18,14 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    final (:gateway, :outbox, :conversation, :backgrounds, :accents) =
-        await bootstrap();
+    final (
+      :gateway,
+      :outbox,
+      :conversation,
+      :backgrounds,
+      :accents,
+      :notifications,
+    ) = await bootstrap();
     runApp(
       MainApp(
         gateway: gateway,
@@ -26,6 +33,7 @@ Future<void> main() async {
         conversation: conversation,
         backgrounds: backgrounds,
         accents: accents,
+        notifications: notifications,
       ),
     );
   } catch (_) {
@@ -49,6 +57,7 @@ class MainApp extends StatefulWidget {
     required this.conversation,
     this.backgrounds,
     this.accents,
+    this.notifications,
   });
   final ConnectionGateway gateway;
   final CompanionBackgroundStore? backgrounds;
@@ -56,6 +65,7 @@ class MainApp extends StatefulWidget {
   /// Couleurs des profils ; en mémoire si nul.
   final ProfileAccentStore? accents;
   final OutboxGateway outbox;
+  final NotificationRepository? notifications;
   final ConversationGateway conversation;
   @override
   State<MainApp> createState() => _MainAppState();
@@ -73,8 +83,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       widget.conversation,
       backgrounds: widget.backgrounds,
       accents: widget.accents,
+      notifications: widget.notifications,
     );
     unawaited(widget.gateway.restore());
+    unawaited(widget.notifications?.resume() ?? Future<void>.value());
   }
 
   @override
@@ -86,9 +98,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     unawaited(
       widget.outbox.dispose().whenComplete(
         () => backgroundWrites.whenComplete(
-          () => widget.conversation.dispose().whenComplete(
-            widget.gateway.dispose,
-          ),
+          () => widget.conversation.dispose().whenComplete(() async {
+            await widget.notifications?.dispose();
+            await widget.gateway.dispose();
+          }),
         ),
       ),
     );
@@ -101,6 +114,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   /// serveur n'est jamais annulé par l'app.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(widget.notifications?.resume() ?? Future<void>.value());
+    }
     final gateway = widget.gateway;
     final snapshot = gateway.snapshot;
     if (state != AppLifecycleState.resumed ||

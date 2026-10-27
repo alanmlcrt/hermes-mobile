@@ -231,6 +231,8 @@ class OutboxDispatcher:
             )
             return "invalid"
         except PermanentDeliveryError as error:
+            if self.health is not None:
+                self.health.record_fcm_error()
             self.logger.error(
                 "outbox.delivery_permanent",
                 reason=error.code,

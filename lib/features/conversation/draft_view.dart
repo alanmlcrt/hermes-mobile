@@ -513,6 +513,7 @@ class _DraftViewState extends State<DraftView> {
         ),
       ),
       UserItem() => MessageBubble(
+        notificationUnfollowed: item.notificationUnfollowed,
         text: item.text,
         fromUser: true,
         attachments: item.attachments,

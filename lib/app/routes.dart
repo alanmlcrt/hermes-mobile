@@ -13,6 +13,7 @@ import '../features/history/history_view_model.dart';
 import '../features/home/home_view.dart';
 import '../features/profiles/profile_accents.dart';
 import '../features/profiles/profile_settings_view.dart';
+import '../data/notification_repository.dart';
 import '../features/profiles/profiles_view.dart';
 import '../features/profiles/profiles_view_model.dart';
 import '../models/connection.dart';
@@ -96,6 +97,7 @@ class AppRoutes {
     ConversationGateway conversation, {
     CompanionBackgroundStore? backgrounds,
     ProfileAccentStore? accents,
+    NotificationRepository? notifications,
   }) {
     connection = ConnectionViewModel(gateway);
     this.accents = ProfileAccents(gateway, accents);
@@ -178,6 +180,7 @@ class AppRoutes {
         GoRoute(
           path: '/profile/:profile',
           builder: (context, state) => ProfileSettingsView(
+            notifications: notifications,
             key: ValueKey(state.pathParameters['profile']),
             gateway: gateway,
             accents: this.accents,

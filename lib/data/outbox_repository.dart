@@ -14,6 +14,7 @@ import 'hermes_adapter.dart';
 import 'file_limits.dart';
 import 'attachment_transport.dart';
 import 'storage/attachment_files.dart';
+import 'notification_repository.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
 /// base partagée.
@@ -25,6 +26,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     this.timeout = rpcTimeout,
     this.onStep,
     this.conversation,
+    this.notifications,
     AttachmentFiles? attachmentFiles,
     Future<FileLimits> Function()? loadFileLimits,
   }) : _now = now ?? (() => DateTime.now().toUtc()) {
@@ -218,6 +220,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
 
   /// Reçoit la liaison runtime et les demandes acceptées ; jamais d'ordre inverse.
   final ConversationRepository? conversation;
+  final NotificationRepository? notifications;
   final _writes = <DraftKey, Future<void>>{};
   final _recovered = <DraftKey>{};
   final _status = <DraftKey, SendStatus>{};
@@ -817,7 +820,10 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         for (final piece in pieces) {
           final refusal = fileLimits.refusal(piece.mediaType, piece.bytes);
           if (refusal != null) {
-            _set(key, SendStatus(state: OperationState.failed, errorCode: refusal));
+            _set(
+              key,
+              SendStatus(state: OperationState.failed, errorCode: refusal),
+            );
             return;
           }
         }
@@ -978,8 +984,11 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         );
         if (!_changes.isClosed) _changes.add(key);
         _assertAttachmentScope(draft, generation);
-        final result = await AttachmentTransport(g, timeout, fileLimits)
-            .upload(piece, draft.profile, runtime);
+        final result = await AttachmentTransport(
+          g,
+          timeout,
+          fileLimits,
+        ).upload(piece, draft.profile, runtime);
         final state = switch (result.outcome) {
           AttachOutcome.uploaded => AttachmentState.uploaded,
           AttachOutcome.refused => AttachmentState.failed,
@@ -1020,6 +1029,21 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         }
       }
       onStep?.call('notificationTracking'); // Epic 5, non bloquant
+      try {
+        await notifications?.prepare(operation, scoped, session: runtime);
+      } catch (_) {
+        /* Le suivi ne change jamais l'éligibilité à la soumission. */
+        try {
+          await database.update(
+            'outbox_operations',
+            {'notification_unfollowed': 1},
+            where: 'operation_key = ?',
+            whereArgs: [operation.value],
+          );
+        } catch (_) {
+          /* Une panne de stockage reste indépendante de l'envoi. */
+        }
+      }
       if (status(key).turnActive) {
         // Session reprise en plein tour : rien n'est soumis.
         await _finish(
@@ -1088,6 +1112,11 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     while (true) {
       try {
         if (pieces.isNotEmpty) _assertAttachmentScope(draft, generation);
+        try {
+          await notifications?.submitting(operation, runtime);
+        } catch (_) {
+          /* Suivi indépendant. */
+        }
         final result = await g.call(
           'prompt.submit',
           HermesRpc.submitParams(runtime, prompt),
@@ -1234,11 +1263,20 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       return;
     }
     // Après la base : la bulle n'apparaît que pour une demande réellement acceptée.
+    _set(key, const SendStatus(state: OperationState.accepted));
     await conversation?.accepted(
       TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
       operation,
       draft.body,
       userRowId: userRowId,
+    );
+    await _attachNotification(
+      operation,
+      runtime ?? _runtime[key]?.id ?? '',
+      userRowId,
+    );
+    conversation?.refreshAttachments(
+      TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
     );
     if (attachments.isNotEmpty && runtime != null && submittedPrompt != null) {
       await _confirmReceipts(
@@ -1527,6 +1565,19 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   });
 
   /// Reprise d'une session déjà connue (jamais de création) : lie le runtime à
+  Future<void> _attachNotification(
+    OperationKey operation,
+    String session,
+    int? row,
+  ) async {
+    try {
+      await notifications?.attach(operation, session, row);
+    } catch (_) {
+      /* Le travail reste accepté lorsque le suivi échoue. */
+    }
+  }
+
+  /// Reprise d'une session déjà connue (jamais de création) : lie le runtime à
   /// la projection et rend le travail en cours.
   @override
   Future<Resumed> resume(TimelineKey key) async {
@@ -1631,6 +1682,12 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           .toList();
       if (fresh.length == 1) {
         await _commitAccepted(draft, operation, fresh.single);
+        final submittedSession = await notifications?.submittedSession(
+          operation,
+        );
+        if (submittedSession != null) {
+          await _attachNotification(operation, submittedSession, fresh.single);
+        }
         await _checkPendingReceipts(draft, state.runtime);
         _set(draft, const SendStatus(state: OperationState.accepted));
       } else if (fresh.isEmpty &&

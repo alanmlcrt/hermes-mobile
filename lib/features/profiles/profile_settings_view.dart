@@ -7,6 +7,8 @@ import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
 import 'profile_accents.dart';
+import '../../models/notifications.dart';
+import '../../ui/components/notification_settings.dart';
 
 /// Réglages d'un profil, ouverts depuis ses conversations : nom repris de
 /// Hermes (jamais modifiable ici), couleur, identifiant et connexion.
@@ -18,12 +20,14 @@ class ProfileSettingsView extends StatelessWidget {
     required this.profile,
     required this.onChangeServer,
     required this.onAllProfiles,
+    this.notifications,
   });
   final ConnectionGateway gateway;
   final ProfileAccents accents;
   final ProfileKey profile;
   final VoidCallback onChangeServer;
   final VoidCallback onAllProfiles;
+  final NotificationGateway? notifications;
 
   Future<void> _choose(BuildContext context, ProfileAccent accent) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -87,6 +91,11 @@ class ProfileSettingsView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Spacing.md),
+                if (notifications != null && snapshot.connection != null)
+                  NotificationSettings(
+                    repository: notifications!,
+                    connection: snapshot.connection!.key,
+                  ),
                 _Section(
                   icon: Icons.palette_outlined,
                   title: Content.appearance,

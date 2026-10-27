@@ -11,7 +11,10 @@ boot: auto
 init: false
 watchdog: "tcp://[HOST]:[PORT:8787]"
 # `/data` est toujours monté par le Supervisor, en lecture-écriture et sans
-# entrée `map` : aucune autre donnée persistante n'est exposée.
+# Le dossier share est monté en lecture seule pour le compte de service privé.
+map:
+  - type: share
+    read_only: true
 options:
   environment: integration
   hermes_origin: ""

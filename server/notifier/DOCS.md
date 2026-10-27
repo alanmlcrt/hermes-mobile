@@ -24,22 +24,21 @@ ne crée ni ne modifie volontairement de travail, mais cette méthode n'est pas
 un simple `GET` : elle doit rester la seule écriture indirecte admise, et son
 usage est journalisé (`observer.resumed`).
 
-En 5.2, le seul transport est le dry-run. L'outbox, les retries, les compteurs
-et la santé sont réels ; l'envoi FCM est simulé et marque l'entrée
-`delivered`. Aucun push ne part vers un téléphone.
+En intégration, l'envoi FCM reste simulé et marque l'entrée `delivered`.
+Le transport personnel HTTP v1 existe, mais sa configuration réelle et ses
+essais sont différés en 5.5. Aucun push réel n'a été envoyé pendant 5.3.
 
 ## 2. Environnements
 
-| Environnement | Transport FCM | Registre | Disponibilité 5.2 |
+| Environnement | Transport FCM | Registre | Disponibilité |
 |---|---|---|---|
 | `fixtures` | `dry-run` | `notifier-registry-fixtures` | tests locaux |
 | `integration` | `dry-run` verrouillé | `notifier-registry-integration` | oui, dry-run |
-| `personal` | `fcm-http-v1` | `notifier-registry-personal` | refusé (5.3) |
+| `personal` | `fcm-http-v1` | `notifier-registry-personal` | clé privée et essais 5.5 requis |
 
 Chaque environnement a son répertoire sous `/data` et son credential séparé.
-`personal` refuse de démarrer sans Firebase ; en 5.2, il refuse aussi avec
-Firebase car aucun émetteur FCM réel n'est livré. C'est volontaire : le service
-ne prétend pas envoyer.
+`personal` refuse de démarrer sans configuration Firebase valide.
+Voir §15 pour le montage privé et les prérequis de 5.5.
 
 ## 3. Installation dans Home Assistant
 
@@ -146,8 +145,8 @@ Toute option de credential en clair (`bearer`, `token`, etc.) est refusée au
 chargement.
 
 `fcm_service_account` attend un **chemin de fichier** lisible dans le
-conteneur. En 5.2, aucun montage supplémentaire n'est déclaré : `/data` reste
-le seul volume persistant et `personal` est refusé avant toute utilisation de
+conteneur. Le montage `/share` en lecture seule décrit au §15 fournit le fichier.
+`personal` exige la validation de
 ce chemin. Le montage ou la remise du JSON Firebase sera tranché avec la
 story 5.3 (piste : secret Home Assistant ou volume `/share` en lecture seule).
 Ne pas placer de clé de service dans `/data` sans décision explicite.
@@ -482,7 +481,7 @@ ensemble, à l'arrêt de l'add-on.
 | `degraded` + `outbox-backlog` | dispatcher arrêté ou transport bloqué |
 | `degraded` + `storage-error` | permissions de `/data`, intégrité SQLite, clé |
 | Aucun terminal | mapping, statut absent/inconnu, `persisted_turn.user_row_id` |
-| `personal` refuse de démarrer | attendu en 5.2 : aucun transport FCM réel |
+| `personal` refuse de démarrer | compte de service absent/invalide, `fcm_enabled`, montage privé |
 
 Logs utiles : voir le catalogue du §9 ; les plus fréquents en diagnostic sont
 `observer.resumed`, `observer.catch_up`, `observer.terminal`,
@@ -511,11 +510,9 @@ La CI ajoute `sync_contracts.py --check`, installe
 suite. Le build context de l'image est `server/notifier/` ; les contrats
 vendorisés doivent rester byte-identiques aux contrats racine.
 
-## 14. Limites connues de 5.2
+## 14. Limites connues
 
-- Aucun envoi FCM réel (story 5.3).
-- `fcm_service_account` n'a pas encore de chemin monté dans le conteneur :
-  `personal` est refusé avant usage, le montage sera tranché en 5.3/5.5.
+- Aucun envoi FCM réel n'a été exécuté : seuls les transports simulés sont testés.
 - Une exécution n'est liée qu'à un abonnement : deux appareils ne peuvent pas
   suivre la même ligne simultanément (second attachement `400`).
 - `session.resume` peut reconstruire une session locale côté Hermes ; c'est la
@@ -528,3 +525,48 @@ vendorisés doivent rester byte-identiques aux contrats racine.
 - Le redacteur borne sa mémoire : au-delà de 4096 valeurs connues, les plus
   anciennes sont oubliées. Les motifs opaques longs restent masqués.
 - Les tests locaux utilisent un faux Hermes HTTP+WS, pas un déploiement réel.
+
+## 15. Préparation FCM pour 5.5
+
+Ne créer aucun projet ou compte pendant 5.3. En 5.5, préparer le projet personnel
+unique, FCM HTTP v1 et un compte de service avec `roles/firebasecloudmessaging.admin`.
+Conserver sa clé JSON hors dépôt ; ne la mettre ni dans les options HA ni dans
+une image. Le transport utilise `google-auth` pour des tokens OAuth courts,
+renouvelés à expiration, et borne chaque requête OAuth/FCM à huit secondes.
+L’intégration et les fixtures restent verrouillées en dry-run, sans accès Google.
+
+Chemin utilisable par l’add-on : déposer la clé privée dans
+`/share/hermes-notifier/service-account.json` sur Home Assistant, avec des droits
+limités au propriétaire. L’add-on monte `share` en lecture seule ; il ne lit que
+le fichier référencé. Configurer `environment: personal`, `fcm_enabled: true`
+et `fcm_service_account: /share/hermes-notifier/service-account.json`.
+Hors Supervisor, `GOOGLE_APPLICATION_CREDENTIALS` peut référencer un fichier
+monté en lecture seule (l’option explicite garde priorité). `--check` valide la
+clé et son projet sans appeler Google. Sauvegarder la clé séparément et limiter
+l’accès aux sauvegardes HA ; rotation annuelle ou au moindre doute.
+
+Pour Android en 5.5, enregistrer `fr.hermes_mobile`, obtenir la configuration
+client et déposer le fichier non versionné `android/app/google-services.json`.
+Le plugin Gradle Google Services n’est appliqué que si ce fichier existe.
+Sans lui, le même APK démarre avec l’état « Firebase non configuré » ; aucun faux
+token n’est utilisé. L’autorisation est demandée uniquement par le bouton
+d’activation. Services Google absents, permission refusée, batterie et arrêt
+forcé sont expliqués dans les réglages. Après arrêt forcé, rouvrir l’app.
+
+Tests reproductibles sans compte Google :
+
+```sh
+fvm flutter pub get --enforce-lockfile
+fvm flutter analyze --no-pub
+fvm flutter test --no-pub
+fvm flutter build apk --debug --no-pub
+python -m unittest discover -s server/notifier/tests -t server/notifier
+python server/notifier/sync_contracts.py --check
+```
+
+Les erreurs FCM permanentes sont abandonnées, `UNREGISTERED` révoque le token,
+les pannes/429/5xx suivent l’outbox bornée. Un 401 force le renouvellement OAuth.
+Les réponses et exceptions brutes ne sont jamais journalisées. Le payload est
+construit depuis le contrat : seulement `subscriptionId` et `outcome` en data,
+avec trois libellés génériques. Aucune promesse d’exactement une livraison et
+aucune validation G3 avant les essais réels de 5.5.

@@ -14,11 +14,13 @@ class MessageBubble extends StatelessWidget {
     super.key,
     required this.text,
     this.fromUser = false,
+    this.notificationUnfollowed = false,
     this.attachments = const [],
   });
 
   final String text;
   final bool fromUser;
+  final bool notificationUnfollowed;
   final List<Attachment> attachments;
 
   @override
@@ -68,13 +70,20 @@ class MessageBubble extends StatelessWidget {
                 horizontal: Spacing.md,
                 vertical: Spacing.sm + Spacing.xs,
               ),
-              child: attachments.isEmpty
+              child: attachments.isEmpty && !notificationUnfollowed
                   ? body
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (text.isNotEmpty) body,
+                        if (notificationUnfollowed)
+                          Text(
+                            Content.notificationUnfollowed,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.emphasisContent,
+                            ),
+                          ),
                         if (attachments.isNotEmpty) ...[
                           const SizedBox(height: Spacing.sm),
                           DefaultTextStyle(

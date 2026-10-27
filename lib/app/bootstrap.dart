@@ -5,6 +5,8 @@ import '../data/conversation_repository.dart';
 import '../data/event_mapping.dart';
 import '../data/hermes_adapter.dart';
 import '../data/outbox_repository.dart';
+import '../data/notification_repository.dart';
+import '../data/firebase_notification_client.dart';
 import '../data/storage/connection_store.dart';
 import '../data/storage/database.dart';
 import '../data/storage/companion_background_store.dart';
@@ -23,14 +25,19 @@ Future<
     ProfileAccentStore accents,
     OutboxGateway outbox,
     ConversationGateway conversation,
+    NotificationRepository notifications,
   })
 >
 bootstrap() async {
   final database = await openConnectionDatabase();
+  final secrets = SecureSecretStore(const FlutterSecureStorage());
+  final device = FirebaseNotificationClient();
+  await device.initialize().timeout(notificationSetupTimeout, onTimeout: () {});
+  final notifications = NotificationRepository(database, secrets, device);
   final repository = ConnectionRepository(
     adapter: HermesAdapter(IoHermesTransport()),
     store: SqliteConnectionStore(database),
-    secrets: SecureSecretStore(const FlutterSecureStorage()),
+    secrets: secrets,
     closeStorage: database.close,
   );
   // La restauration réseau ne bloque pas le premier écran.
@@ -41,12 +48,14 @@ bootstrap() async {
   );
   return (
     gateway: repository,
+    notifications: notifications,
     backgrounds: SqliteCompanionBackgroundStore(database),
     accents: SqliteProfileAccentStore(database),
     outbox: OutboxRepository(
       database,
       gateway: repository,
       conversation: conversation,
+      notifications: notifications,
     ),
     conversation: conversation,
   );

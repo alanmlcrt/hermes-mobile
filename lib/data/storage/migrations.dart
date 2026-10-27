@@ -192,4 +192,27 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'ALTER TABLE outbox_operation_attachments ADD COLUMN receipt_row_id INTEGER',
     );
   },
+  (db) async {
+    await db.execute(
+      'CREATE TABLE notification_settings ('
+      'connection_key TEXT PRIMARY KEY COLLATE BINARY, origin TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 0)',
+    );
+    await db.execute(
+      'CREATE TABLE notification_subscriptions ('
+      'subscription_id TEXT PRIMARY KEY COLLATE BINARY, operation_key TEXT NOT NULL UNIQUE, '
+      'connection_key TEXT NOT NULL, profile_key TEXT NOT NULL, session_id TEXT, stored_session_id TEXT, '
+      'execution_id TEXT, state TEXT NOT NULL, created_at TEXT NOT NULL)',
+    );
+    await db.execute(
+      'ALTER TABLE outbox_operations ADD COLUMN notification_unfollowed INTEGER NOT NULL DEFAULT 0',
+    );
+  },
+  (db) async {
+    await db.execute(
+      'ALTER TABLE notification_subscriptions ADD COLUMN attached_at TEXT',
+    );
+    await db.execute(
+      "UPDATE notification_subscriptions SET attached_at = created_at WHERE state IN ('attached', 'notified')",
+    );
+  },
 ];

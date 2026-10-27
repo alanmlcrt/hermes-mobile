@@ -1,7 +1,7 @@
 """Orchestration de l'add-on : API, observateur, outbox et purge.
 
-Le service refuse ``personal`` tant qu'aucun transport FCM réel n'existe
-(5.2). La reprise au démarrage recharge le registre, l'outbox et les curseurs
+Le transport personnel exige un compte FCM valide, l'intégration reste simulée.
+La reprise au démarrage recharge le registre, l'outbox et les curseurs
 depuis ``/data`` ; un SIGTERM arrête proprement les threads.
 """
 
@@ -25,7 +25,8 @@ from .health import HealthState
 from .hermes.observer import Observer
 from .hermes.rpc import HermesRest, HermesSession
 from .logs import EventLogger, Redactor, configure_logging
-from .outbox import DryRunTransport, OutboxDispatcher
+from .outbox import DeliveryTransport, DryRunTransport, OutboxDispatcher
+from .fcm import FcmTransport
 from .retention import RetentionPolicy
 from .store import Store
 
@@ -48,7 +49,7 @@ class Service:
         self.cipher: TokenCipher | None = None
         self.credential: BearerCredential | None = None
         self.retention: RetentionPolicy | None = None
-        self.transport: DryRunTransport | None = None
+        self.transport: DeliveryTransport | None = None
         self.dispatcher: OutboxDispatcher | None = None
         self.observer: Observer | None = None
         self.api: NotificationApi | None = None
@@ -60,11 +61,8 @@ class Service:
 
     def check(self) -> dict[str, Any]:
         self.config.validate(self.contracts)
-        environment = self.contracts.environment(self.config.environment)
-        if environment.fcm_transport != "dry-run":
-            # Aucun émetteur FCM réel n'est livré avant 5.3 ; refuser plutôt
-            # que de prétendre envoyer.
-            raise ConfigError("config.fcm_transport_unimplemented")
+        if self.config.environment == "personal":
+            FcmTransport.from_file(self.config.fcm_service_account)
         return self.config.summary(self.contracts)
 
     # --- préparation ----------------------------------------------------
@@ -104,13 +102,17 @@ class Service:
         self.health = HealthState(
             self.contracts,
             environment=self.config.environment,
-            dry_run=True,
+            dry_run=self.config.environment != "personal",
             now=None,
         )
         self.retention = RetentionPolicy(
             self.store, self.contracts, self.logger, health=self.health
         )
-        self.transport = DryRunTransport(self.contracts)
+        self.transport = (
+            FcmTransport.from_file(self.config.fcm_service_account)
+            if self.config.environment == "personal"
+            else DryRunTransport(self.contracts)
+        )
         self.dispatcher = OutboxDispatcher(
             self.store,
             self.contracts,

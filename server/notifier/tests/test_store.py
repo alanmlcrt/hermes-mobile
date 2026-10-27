@@ -86,6 +86,26 @@ class StoreTestCase(unittest.TestCase):
         )
         self.assertFalse(self.store.revoked(self.sub))
 
+    def test_rotation_notifie_conserve_terminal_date_ttl_et_dedup(self) -> None:
+        self.attach()
+        self.store.record_terminal(subscription_id=self.sub, execution_id=self.execution_id,
+                                   terminal='succeeded', submission_id=None)
+        entry = self.store.due_outbox(1)[0]
+        self.store.mark_delivered(entry.id, notified_ttl_seconds=604800)
+        before = self.store.get_subscription(self.sub)
+        execution = self.store.execution(self.execution_id)
+        self.clock.advance(100)
+        self.store.register(self.sub, b'rotated', ttl_seconds=86400)
+        after = self.store.get_subscription(self.sub)
+        self.assertEqual(after.state, 'notified')
+        self.assertEqual(after.notified_at, before.notified_at)
+        self.assertEqual(after.expires_at, before.expires_at)
+        self.assertEqual(after.token_ciphertext, b'rotated')
+        self.assertEqual(self.store.execution(self.execution_id), execution)
+        self.store.record_terminal(subscription_id=self.sub, execution_id=self.execution_id,
+                                   terminal='failed', submission_id=None)
+        self.assertEqual(self.store.due_outbox(1), [])
+
     def test_attach_inconnu_ou_revoque(self) -> None:
         with self.assertRaises(NotFound):
             self.attach(subscription=support.subscription_id("unknown"))

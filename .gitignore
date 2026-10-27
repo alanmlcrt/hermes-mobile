@@ -6,6 +6,12 @@ android/key.properties
 *.jks
 *.keystore
 
+# Firebase : configuration privée préparée en 5.5 et secrets hors dépôt.
+android/app/google-services.json
+lib/firebase_options.dart
+**/service-account*.json
+**/*firebase-adminsdk*.json
+
 # FVM
 .fvm/
 

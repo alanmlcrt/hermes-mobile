@@ -120,7 +120,7 @@ class Config:
         bearer_salt = str(merged.get("bearer_salt") or "").strip()
         fcm_enabled = _bool(merged.get("fcm_enabled"), default=False)
         fcm_service_account = (
-            str(merged.get("fcm_service_account") or "").strip() or None
+            str(merged.get("fcm_service_account") or environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip() or None
         )
         log_level = str(merged.get("log_level") or "info").strip().lower()
         rate_limit = _int(
@@ -155,9 +155,8 @@ class Config:
     def validate(self, contracts: Any) -> None:
         """Valide l'environnement, l'auth et les prérequis FCM.
 
-        ``personal`` refuse de démarrer sans Firebase/FCM. En 5.2 aucun
-        transport FCM réel n'est fourni : même complet, ``personal`` est refusé
-        par le service avec un code borné.
+        ``personal`` refuse de démarrer sans Firebase/FCM ; le service valide
+        ensuite le fichier privé, sans appel réseau.
         """
 
         try:

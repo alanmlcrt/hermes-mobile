@@ -1,0 +1,238 @@
+api.refused {"method":"POST","reason":"not-found","status":404}
+api.refused {"method":"GET","reason":"unauthorized","status":401}
+.api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+.api.refused {"method":"POST","reason":"gone","status":410}
+.api.refused {"method":"POST","reason":"not-found","status":404}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"gone","status":410}
+..api.refused {"method":"POST","reason":"invalid-request","status":400}
+.storage.error {"reason":"api"}
+api.refused {"method":"POST","reason":"storage.write_failed","status":503}
+.api.refused {"method":"POST","reason":"not-found","status":404}
+.api.refused {"method":"GET","reason":"unauthorized","status":401}
+.api.refused {"method":"GET","reason":"rate-limited","status":429}
+..api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+api.refused {"method":"POST","reason":"invalid-request","status":400}
+..api.refused {"method":"GET","reason":"not-found","status":404}
+api.refused {"method":"POST","reason":"not-found","status":404}
+..api.refused {"method":"GET","reason":"unauthorized","status":401}
+api.refused {"method":"POST","reason":"unauthorized","status":401}
+api.refused {"method":"POST","reason":"unauthorized","status":401}
+api.refused {"method":"DELETE","reason":"unauthorized","status":401}
+api.refused {"method":"GET","reason":"unauthorized","status":401}
+..............refusé
+..............................INFO service.started {"environment":"integration","port":53234,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53245,"version":"0.1.0"}
+INFO observer.resumed {"status":"attached"}
+WARNING observer.epoch_changed
+INFO observer.history_refetched {"count":0}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO observer.catch_up {"count":1}
+INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53259,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53263,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+WARNING observer.epoch_missing
+WARNING observer.cursor_ahead
+INFO observer.history_refetched {"count":0}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53279,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO observer.duplicate {"outcome":"succeeded","terminal":"succeeded"}
+INFO observer.duplicate {"outcome":"stopped","terminal":"stopped"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53296,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+WARNING observer.epoch_missing
+INFO observer.history_refetched {"count":0}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53312,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO api.request {"method":"POST","status":202}
+INFO observer.error_ambiguous {"count":2}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53331,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO observer.error_ambiguous {"count":0}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53347,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"failed","state":"pending","terminal":"failed"}
+INFO outbox.delivered {"attempt":1,"outcome":"failed","schema_valid":true,"status":"delivered","terminal":"failed"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53363,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53381,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.unmatched {"reason":"row"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53397,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53408,"version":"0.1.0"}
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO observer.catch_up {"count":1}
+INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53422,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53433,"version":"0.1.0"}
+INFO observer.resumed {"status":"attached"}
+INFO observer.catch_up {"count":1000}
+INFO observer.catch_up {"count":5}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53447,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resume_fallback
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53463,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO api.request {"method":"GET","status":200}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53480,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53484,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":202}
+WARNING observer.expired {"count":1}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53499,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+WARNING observer.catch_up_unavailable {"reason":"hermes.rpc_error"}
+INFO observer.history_refetched {"count":0}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53515,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+WARNING observer.expired {"count":1}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53532,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53550,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.unmatched {"reason":"execution"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53571,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53590,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53601,"version":"0.1.0"}
+INFO observer.resumed {"status":"attached"}
+WARNING observer.truncated
+INFO observer.history_refetched {"count":0}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO observer.catch_up {"count":1}
+INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53615,"version":"0.1.0"}
+INFO api.request {"method":"POST","status":201}
+INFO api.request {"method":"POST","status":202}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53632,"version":"0.1.0"}
+INFO observer.resumed {"status":"attached"}
+INFO service.stopped {"status":"stopped"}
+.WARNING outbox.dropped {"reason":"age","terminal":"succeeded"}
+.WARNING outbox.dropped {"reason":"age","terminal":"succeeded"}
+.WARNING outbox.dropped {"reason":"age","terminal":"succeeded"}
+.INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+.ERROR outbox.delivery_permanent {"reason":"fcm.permanent","terminal":"succeeded"}
+WARNING outbox.dropped {"reason":"delivery","terminal":"succeeded"}
+...WARNING outbox.retry {"attempt":1,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry {"attempt":2,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry {"attempt":3,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry {"attempt":4,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.dropped {"reason":"exhausted","terminal":"succeeded"}
+.WARNING outbox.retry {"attempt":1,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry {"attempt":2,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry {"attempt":3,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry {"attempt":4,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry_exhausted {"attempt":5,"terminal":"succeeded"}
+WARNING outbox.retry {"attempt":5,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry_exhausted {"attempt":6,"terminal":"succeeded"}
+WARNING outbox.retry {"attempt":6,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry_exhausted {"attempt":7,"terminal":"succeeded"}
+WARNING outbox.retry {"attempt":7,"reason":"fcm.error","terminal":"succeeded"}
+WARNING outbox.retry_exhausted {"attempt":8,"terminal":"succeeded"}
+WARNING outbox.retry {"attempt":8,"reason":"fcm.error","terminal":"succeeded"}
+.WARNING outbox.invalid_token {"terminal":"succeeded"}
+..................INFO storage.pruned {"count":1}
+INFO service.started {"environment":"integration","port":53647,"version":"0.1.0"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53650,"version":"0.1.0"}
+INFO service.stopped {"status":"stopped"}
+INFO service.stopped {"status":"stopped"}
+.INFO service.started {"environment":"integration","port":53653,"version":"0.1.0"}
+INFO service.stopped {"status":"stopped"}
+INFO service.started {"environment":"integration","port":53656,"version":"0.1.0"}
+INFO api.request {"method":"GET","status":200}
+INFO service.stopped {"status":"stopped"}
+...................
+----------------------------------------------------------------------
+Ran 128 tests in 25.080s
+
+OK
+ok
+contrats vendorises identiques
+contrats vendorises identiques

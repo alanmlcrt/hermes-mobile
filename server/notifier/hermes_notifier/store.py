@@ -381,7 +381,7 @@ class Store:
                 return True
             state = str(row["state"])
             expires_at = int(row["expires_at"])
-            if state in {"registered", "attached"}:
+            if state in {"registered", "attached", "notified"}:
                 # Rotation de token sans casser l'attache en cours.
                 conn.execute(
                     "UPDATE subscriptions SET token_ciphertext = ?, updated_at = ? "

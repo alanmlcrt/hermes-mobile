@@ -4,6 +4,35 @@ import '../models/timeline.dart';
 import '../models/attachment.dart';
 
 abstract final class Content {
+  static const notificationUnfollowed = 'Notification non suivie';
+  static const notifications = 'Notifications de fin de travail';
+  static const observerOrigin = 'Adresse HTTPS de l’observateur';
+  static const observerBearer = 'Credential de l’observateur';
+  static const notificationSave = 'Enregistrer l’observateur';
+  static const notificationEnable = 'Activer les notifications';
+  static const notificationDisable = 'Désactiver et révoquer';
+  static const notificationHealth = 'Vérifier la santé de l’observateur';
+  static const notificationEnabled = 'Suivi activé pour cette connexion';
+  static const notificationDisabled = 'Suivi désactivé pour cette connexion';
+  static const notificationRevocationHint =
+      'Si l’observateur est indisponible lors de la désactivation, la révocation distante reprend à la prochaine ouverture.';
+  static const notificationPrerequisites =
+      'Les services Google et la permission Android sont nécessaires. Vérifie aussi les réglages de batterie. Après un arrêt forcé, rouvre l’application pour reprendre la réception. Le silence ne prouve pas que le travail continue.';
+  static const notificationConfigError =
+      'Configuration invalide ou enregistrement impossible. Utilise une adresse HTTPS et un credential distinct de celui de Hermes.';
+  static String notificationDevice(String value) => switch (value) {
+    'ready' => 'Téléphone : notifications autorisées',
+    'denied' => 'Téléphone : permission refusée. Autorise les notifications dans les réglages Android.',
+    'unavailable' => 'Téléphone : token indisponible. Vérifie les services Google et la connexion.',
+    _ => 'Téléphone : Firebase non configuré. L’application reste utilisable ; la configuration Android reste à installer.',
+  };
+  static String observerHealth(String value) => switch (value) {
+    'unchecked' => 'Observateur : santé non vérifiée',
+    'ok' => 'Observateur : disponible',
+    'degraded' => 'Observateur : dégradé',
+    'unconfigured' => 'Observateur : non configuré',
+    _ => 'Observateur : indisponible ou credential refusé',
+  };
   static const attachments = 'Pièces jointes';
   static String attachmentPreview(String name) => 'Aperçu de $name';
   static const attachmentText = 'Texte';

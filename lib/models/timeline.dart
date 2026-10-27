@@ -140,6 +140,7 @@ sealed class TimelineItem {
         json['text'] as String,
         operation: OperationKey(json['op'] as String),
         userRowId: json['row'] as int?,
+        notificationUnfollowed: json['notificationUnfollowed'] == true,
         attachments: [
           for (final a in (json['attachments'] as List? ?? const []))
             Attachment.fromJson(Map<String, Object?>.from(a as Map)),
@@ -158,11 +159,13 @@ class UserItem extends TimelineItem {
     this.text, {
     required this.operation,
     this.userRowId,
+    this.notificationUnfollowed = false,
     this.attachments = const [],
   });
   final String text;
   final OperationKey operation;
   final int? userRowId;
+  final bool notificationUnfollowed;
   final List<Attachment> attachments;
   UserItem withRow(int row) => UserItem(
     turn,
@@ -170,6 +173,7 @@ class UserItem extends TimelineItem {
     operation: operation,
     userRowId: row,
     attachments: attachments,
+    notificationUnfollowed: notificationUnfollowed,
   );
   @override
   Map<String, Object?> toJson() => {
@@ -178,6 +182,7 @@ class UserItem extends TimelineItem {
     'text': text,
     'op': operation.value,
     'row': userRowId,
+    'notificationUnfollowed': notificationUnfollowed,
     'attachments': [for (final a in attachments) a.toJson()],
   };
 }
