@@ -1,0 +1,40 @@
+version: "0.1.0"
+slug: "hermes_notifier"
+name: "Hermes Notifier"
+description: "Observateur des fins de travail Hermes, outbox durable et santé, en lecture seule."
+url: "https://github.com/alanmlcrt/hermes-mobile/tree/main/server/notifier"
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+watchdog: "tcp://[HOST]:[PORT:8787]"
+# `/data` est toujours monté par le Supervisor, en lecture-écriture et sans
+# entrée `map` : aucune autre donnée persistante n'est exposée.
+options:
+  environment: integration
+  hermes_origin: ""
+  hermes_username: hermes
+  hermes_password: ""
+  hermes_profile: ""
+  bearer_hash: ""
+  bearer_salt: ""
+  fcm_enabled: false
+  fcm_service_account: ""
+  log_level: info
+  rate_limit_per_minute: 120
+schema:
+  environment: "list(fixtures|integration|personal)"
+  hermes_origin: "str"
+  hermes_username: "str"
+  hermes_password: "password"
+  hermes_profile: "str?"
+  # Valeur vide permise pour que l'add-on s'installe et refuse au démarrage
+  # avec un code borné, plutôt que d'être rejeté par le schéma Supervisor.
+  bearer_hash: "match(^$|^[0-9a-f]{64}$)"
+  bearer_salt: "match(^$|^[0-9a-f]{64,128}$)"
+  fcm_enabled: "bool"
+  fcm_service_account: "str?"
+  log_level: "list(debug|info|warning|error)"
+  rate_limit_per_minute: "int(1,10000)"

@@ -33,6 +33,14 @@ coverage/
 .vscode/
 .DS_Store
 
+# Python (notifier)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+server/notifier/**/*.sqlite3
+server/notifier/**/*.sqlite3-*
+
 # Android
 android/.gradle/
 android/local.properties

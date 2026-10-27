@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "evidence": "decision",
+  "contract": "contracts/notification-tracking.json",
+  "gate": {
+    "id": "G3",
+    "status": "open",
+    "statusReason": "Le projet Firebase et le compte de service ne sont pas créés ; leur création est reportée à 5.5, avec l'essai réel sur téléphone.",
+    "blockers": [
+      {
+        "id": "firebase-project",
+        "owner": "Alanc",
+        "date": "2026-10-26",
+        "status": "open",
+        "deferredTo": "5.5"
+      },
+      {
+        "id": "firebase-service-account",
+        "owner": "Alanc",
+        "date": "2026-10-26",
+        "status": "open",
+        "deferredTo": "5.5"
+      },
+      {
+        "id": "real-device-notification-trial",
+        "owner": "Alanc",
+        "date": "2026-10-26",
+        "status": "open",
+        "deferredTo": "5.5"
+      }
+    ],
+    "crossedBy": "5.5"
+  },
+  "validation": {
+    "owner": "Alanc",
+    "date": "2026-10-26",
+    "status": "partial",
+    "gate": "open",
+    "method": "approbation de la spec 5.1 le 2026-10-26, relecture des décisions et constats ADB",
+    "accepted": [
+      "runtime",
+      "persistence",
+      "origin",
+      "auth",
+      "hermes-access",
+      "fcm",
+      "firebase-project",
+      "firebase-service-account",
+      "integration-transport",
+      "environments"
+    ],
+    "proposed": [
+      "listen-port",
+      "public-port",
+      "tls-termination",
+      "fcm-version"
+    ],
+    "observed": [
+      "android-prerequisites"
+    ],
+    "pending": [
+      {
+        "id": "firebase-project",
+        "owner": "Alanc",
+        "date": "2026-10-26",
+        "status": "deferred",
+        "deferredTo": "5.5"
+      },
+      {
+        "id": "firebase-service-account",
+        "owner": "Alanc",
+        "date": "2026-10-26",
+        "status": "deferred",
+        "deferredTo": "5.5"
+      },
+      {
+        "id": "real-device-notification-trial",
+        "owner": "Alanc",
+        "date": "2026-10-26",
+        "status": "deferred",
+        "deferredTo": "5.5"
+      }
+    ],
+    "checks": [
+      "runtime supervisé avec volume /data",
+      "origine HTTPS tailnet acceptée, aucun port hôte publié",
+      "ports 8787/443 et terminaison TLS marqués proposés, à confirmer en 5.2",
+      "bearer par environnement haché côté observateur",
+      "lecture seule via le contrat et le mapping ; session.resume ne soumet ni n'interrompt",
+      "FCM 17.x proposé, repli 16.x documenté, build à prouver en 5.3",
+      "token FCM enregistré par register, rotation par ré-enregistrement",
+      "rattrapage par last_seen, refetch si truncated ou changement d'epoch",
+      "rétention des abonnements, de la déduplication et de l'outbox",
+      "intégration en dry-run sans FCM",
+      "projet et compte Firebase absents, aucun secret versionné"
+    ]
+  },
+  "decisions": [
+    {
+      "id": "runtime",
+      "kind": "decision",
+      "value": "add-on Home Assistant dédié, supervisé par le Supervisor",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "persistence",
+      "kind": "decision",
+      "value": "volume persistant /data pour registre, outbox, déduplication et curseur",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "origin",
+      "kind": "decision",
+      "value": "HTTPS accessible uniquement sur le tailnet",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "auth",
+      "kind": "decision",
+      "value": "jeton bearer opaque par environnement, haché côté observateur",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "hermes-access",
+      "kind": "decision",
+      "value": "lecture seule via le contrat épinglé et le mapping partagé",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "fcm",
+      "kind": "decision",
+      "value": "FCM HTTP v1, gratuit, sans quota de messages, plan Spark",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "firebase-project",
+      "kind": "decision",
+      "value": "un seul projet Firebase, usage personnel, non créé",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "firebase-service-account",
+      "kind": "decision",
+      "value": "un compte de service hors dépôt, non créé",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "integration-transport",
+      "kind": "decision",
+      "value": "dry-run sans FCM",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "environments",
+      "kind": "decision",
+      "value": "fixtures, intégration et personnel isolés",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "accepted",
+      "validatedBy": "Alanc"
+    },
+    {
+      "id": "android-prerequisites",
+      "kind": "evidence",
+      "value": "constats ADB sur Pixel 8 Pro, Android 17 ; POST_NOTIFICATIONS non déclaré, aucune exemption batterie",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "observed",
+      "observedAt": "2026-10-26",
+      "evidence": "_bmad-output/implementation-artifacts/story-5-1-verification/android-prerequisites.md"
+    }
+  ],
+  "proposed": [
+    {
+      "id": "listen-port",
+      "kind": "technical-default",
+      "value": 8787,
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "proposed",
+      "proposedBy": "assistant",
+      "confirmBy": "5.2"
+    },
+    {
+      "id": "public-port",
+      "kind": "technical-default",
+      "value": 443,
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "proposed",
+      "proposedBy": "assistant",
+      "confirmBy": "5.2"
+    },
+    {
+      "id": "tls-termination",
+      "kind": "technical-default",
+      "value": "tailscale",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "proposed",
+      "proposedBy": "assistant",
+      "confirmBy": "5.2"
+    },
+    {
+      "id": "fcm-version",
+      "kind": "technical-default",
+      "value": "firebase_messaging 17.0.1 + firebase_core ^5.1.0",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "proposed",
+      "proposedBy": "assistant",
+      "confirmBy": "5.3"
+    }
+  ],
+  "runtime": {
+    "kind": "home-assistant-add-on",
+    "packaging": "dedicated-add-on",
+    "supervision": "home-assistant-supervisor",
+    "watchdog": true,
+    "startOnBoot": true,
+    "sourcePath": "server/notifier/",
+    "sourcePathStatus": "planned-for-5.2",
+    "persistentVolume": {
+      "path": "/data",
+      "managedBy": "supervisor",
+      "survivesRestart": true,
+      "survivesUpdate": true,
+      "contents": [
+        "subscription-registry",
+        "outbox",
+        "deduplication",
+        "cursor"
+      ],
+      "hostPathCommitted": false
+    },
+    "listen": {
+      "bind": "0.0.0.0",
+      "bindScope": "container",
+      "port": 8787,
+      "protocol": "http",
+      "hostPortPublished": false,
+      "hostPortPublishPolicy": "never",
+      "status": "proposed",
+      "proposedRef": "listen-port"
+    },
+    "origin": {
+      "scheme": "https",
+      "exposure": "tailnet-only",
+      "exposureEnforcement": "tailscale-serve-and-tailnet-acl",
+      "lanExposed": false,
+      "hostPortPublished": false,
+      "port": 443,
+      "upstreamPort": 8787,
+      "tlsTermination": "tailscale",
+      "status": "accepted",
+      "technicalStatus": "proposed",
+      "proposedRefs": [
+        "public-port",
+        "tls-termination"
+      ],
+      "hostSource": "runtime-configuration",
+      "hostCommitted": false,
+      "pathPrefix": "/"
+    },
+    "health": {
+      "contract": "contracts/notification-tracking.json#/health",
+      "path": "/v1/health",
+      "auth": "bearer",
+      "states": [
+        "ok",
+        "degraded"
+      ]
+    }
+  },
+  "auth": {
+    "contract": "contracts/notification-tracking.json#/auth",
+    "scheme": "bearer",
+    "header": "Authorization",
+    "credentialKind": "opaque",
+    "perEnvironment": true,
+    "entropyBits": 256,
+    "serverStorage": "hash-only",
+    "hash": "sha-256",
+    "salt": "per-credential",
+    "comparison": "constant-time",
+    "mobileStorage": "flutter_secure_storage",
+    "transport": "https",
+    "requiredFor": [
+      "register",
+      "attach",
+      "revoke",
+      "health"
+    ],
+    "unauthenticatedResponse": 401,
+    "queryStringAllowed": false,
+    "logging": "redacted"
+  },
+  "hermesAccess": {
+    "mode": "read-only",
+    "contract": "contracts/openrpc.json",
+    "mapping": "contracts/event-mapping.json",
+    "transport": "json-rpc-websocket-and-rest",
+    "allowedRpc": [
+      "gateway.capabilities",
+      "session.list",
+      "session.status",
+      "session.resume",
+      "session.history",
+      "session.events.since"
+    ],
+    "allowedRest": [
+      "POST /auth/password-login",
+      "POST /auth/native/refresh",
+      "POST /api/auth/ws-ticket",
+      "GET /api/profiles"
+    ],
+    "forbiddenRpc": [
+      "session.create",
+      "prompt.submit",
+      "session.interrupt",
+      "session.title",
+      "file.attach",
+      "client.capabilities"
+    ],
+    "readOnlyCaveat": "session.resume attache le flux et peut reconstruire une session locale ; il ne soumet ni n'interrompt de travail.",
+    "privateDatabases": "never",
+    "submitWork": false,
+    "interruptWork": false,
+    "credentialSource": "add-on-options",
+    "credentialSharedWithMobile": false,
+    "network": "tailnet-only"
+  },
+  "fcm": {
+    "transport": "fcm-http-v1",
+    "selected": {
+      "package": "firebase_messaging",
+      "version": "17.0.1",
+      "firebaseCore": "^5.1.0",
+      "minSdk": 24,
+      "status": "proposed-pending-build",
+      "verified": false,
+      "verifiedBy": "5.3",
+      "checkedAt": "2026-10-26",
+      "source": "pub.dev"
+    },
+    "fallback": {
+      "package": "firebase_messaging",
+      "version": "16.x",
+      "condition": "17.x ne se résout pas avec le Flutter épinglé ou échoue au build Android en 5.3",
+      "owner": "Alanc",
+      "date": "2026-10-26",
+      "status": "documented-not-active"
+    },
+    "dryRun": {
+      "environment": "integration",
+      "active": true,
+      "sendsFcm": false,
+      "records": [
+        "outcome",
+        "attempt",
+        "schema-valid",
+        "terminal"
+      ],
+      "neverRecords": [
+        "rawSubscriptionId",
+        "executionId",
+        "content",
+        "credentials"
+      ]
+    },
+    "deviceToken": {
+      "contract": "contracts/notification-tracking.json#/registry/deviceToken",
+      "registeredWith": "register",
+      "rotation": "re-register-same-subscription",
+      "inPushPayload": false,
+      "inLogs": false
+    },
+    "payload": {
+      "contract": "contracts/notification-tracking.json#/payload",
+      "messageKind": "notification-and-data",
+      "dataFields": [
+        "subscriptionId",
+        "outcome"
+      ],
+      "notificationLabels": "server-fixed-map"
+    },
+    "android": {
+      "contract": "contracts/notification-tracking.json#/payload/android",
+      "postNotifications": "required-runtime-5.3",
+      "evidence": "_bmad-output/implementation-artifacts/story-5-1-verification/android-prerequisites.md"
+    }
+  },
+  "firebase": {
+    "cost": {
+      "plan": "spark",
+      "billingEnabled": false,
+      "fcm": "no-cost",
+      "messageQuota": "none",
+      "checkedAt": "2026-10-26",
+      "source": "https://firebase.google.com/pricing"
+    },
+    "projects": [
+      {
+        "scope": "personal",
+        "count": 1,
+        "status": "not-created",
+        "identifier": null,
+        "owner": "Alanc",
+        "recordedAt": "2026-10-26",
+        "creationDeferredTo": "5.5",
+        "nonSecretIdentifierPolicy": "project-id-only-after-creation"
+      }
+    ],
+    "serviceAccounts": [
+      {
+        "scope": "personal",
+        "count": 1,
+        "status": "not-created",
+        "identifier": null,
+        "owner": "Alanc",
+        "recordedAt": "2026-10-26",
+        "creationDeferredTo": "5.5",
+        "storage": "outside-repository",
+        "environmentReference": "GOOGLE_APPLICATION_CREDENTIALS",
+        "keyInRepository": false,
+        "roles": [
+          "roles/firebasecloudmessaging.admin"
+        ]
+      }
+    ],
+    "clientConfig": {
+      "status": "not-created",
+      "generatedBy": "5.5",
+      "creationDeferredTo": "5.5",
+      "policy": "project config non secret ; la clé du compte de service reste hors dépôt"
+    },
+    "rotation": {
+      "owner": "Alanc",
+      "automated": false,
+      "policy": "rotation annuelle ou au moindre doute ; révoquer l'ancienne clé après déploiement"
+    },
+    "integration": {
+      "usesFirebase": false,
+      "transport": "dry-run",
+      "sendsFcm": false
+    },
+    "secretsVersioned": false
+  },
+  "environments": [
+    {
+      "name": "fixtures",
+      "purpose": "tests synthétiques hors réseau",
+      "credentialRef": "HERMES_NOTIFIER_CREDENTIAL_FIXTURES",
+      "registryRef": "notifier-registry-fixtures",
+      "originRef": "loopback",
+      "fcmTransport": "dry-run",
+      "firebaseProject": false,
+      "isolated": true
+    },
+    {
+      "name": "integration",
+      "purpose": "installation réelle avec notifications simulées",
+      "credentialRef": "HERMES_NOTIFIER_CREDENTIAL_INTEGRATION",
+      "registryRef": "notifier-registry-integration",
+      "originRef": "HERMES_NOTIFIER_ORIGIN_INTEGRATION",
+      "fcmTransport": "dry-run",
+      "firebaseProject": false,
+      "isolated": true,
+      "dryRunLocked": true
+    },
+    {
+      "name": "personal",
+      "purpose": "usage quotidien d'Alanc",
+      "credentialRef": "HERMES_NOTIFIER_CREDENTIAL_PERSONAL",
+      "registryRef": "notifier-registry-personal",
+      "originRef": "HERMES_NOTIFIER_ORIGIN_PERSONAL",
+      "fcmTransport": "fcm-http-v1",
+      "firebaseProject": true,
+      "isolated": true,
+      "status": "blocked-until-firebase"
+    }
+  ]
+}

@@ -1,0 +1,647 @@
+{
+  "schemaVersion": 1,
+  "evidence": "documentary",
+  "provenance": {
+    "kind": "documentary",
+    "fixtures": "synthetic",
+    "decidedAt": "2026-10-26",
+    "realAcceptance": "open",
+    "sources": [
+      "contracts/event-mapping.json",
+      "contracts/openrpc.json",
+      "contracts/fixtures/message-complete.json",
+      "contracts/fixtures/message-complete-interrupted.json",
+      "contracts/fixtures/error.json",
+      "_bmad-output/implementation-artifacts/epic-5-context.md"
+    ],
+    "note": "Aucune capture de l'installation personnelle ; les terminaux sont résolus par la table partagée et ses fixtures synthétiques."
+  },
+  "mapping": {
+    "path": "contracts/event-mapping.json",
+    "authoritative": true,
+    "fallback": "unknown",
+    "terminalRule": "effect=terminal et terminal=true ; pour message.complete, statusMap fournit l'issue ; pour error, workState fournit failed ; un statut absent ou inconnu ne notifie jamais.",
+    "fixturesDir": "contracts/fixtures/"
+  },
+  "terminals": [
+    {
+      "outcome": "succeeded",
+      "sources": [
+        {
+          "event": "message.complete",
+          "status": "complete"
+        }
+      ],
+      "fixture": "contracts/fixtures/message-complete.json",
+      "description": "Le tour s'est terminé avec le statut serveur complete."
+    },
+    {
+      "outcome": "failed",
+      "sources": [
+        {
+          "event": "message.complete",
+          "status": "error"
+        },
+        {
+          "event": "error",
+          "status": null
+        }
+      ],
+      "correlation": {
+        "message.complete/error": "executionId recalculé depuis event.params.session_id et payload.persisted_turn.user_row_id",
+        "error": "erreur de session rattachée à l'unique exécution attachée et non notifiée de cette session",
+        "rule": "Un error n'est notifié que si une seule exécution est attachée et non notifiée pour la session ; sinon il est ignoré. Un message.complete/error sans persisted_turn.user_row_id est ignoré."
+      },
+      "fixture": "contracts/fixtures/error.json",
+      "description": "Échec de tour ou erreur de session ; les deux passent par failed dans la table partagée."
+    },
+    {
+      "outcome": "stopped",
+      "sources": [
+        {
+          "event": "message.complete",
+          "status": "interrupted"
+        }
+      ],
+      "fixture": "contracts/fixtures/message-complete-interrupted.json",
+      "description": "Arrêt confirmé par le terminal serveur interrupted."
+    }
+  ],
+  "nonTerminals": {
+    "rule": "Tout ce qui n'est pas un terminal de la table partagée reste non notifiable.",
+    "examples": [
+      "message.start",
+      "message.delta",
+      "message.interim",
+      "tool.start",
+      "tool.complete",
+      "gateway.ready",
+      "status.update",
+      "session.info",
+      "sessions.changed",
+      "session.title",
+      "unknown"
+    ],
+    "unknownStatus": "message.complete avec status absent ou inconnu reste WorkState.unknown et ne notifie jamais."
+  },
+  "registry": {
+    "key": "subscriptionId",
+    "generatedBy": "mobile",
+    "format": "opaque",
+    "encoding": "base64url",
+    "minLength": 22,
+    "maxLength": 128,
+    "minEntropyBits": 122,
+    "createdBefore": "prompt.submit",
+    "nonBlocking": true,
+    "states": [
+      "registered",
+      "attached",
+      "notified",
+      "revoked",
+      "expired"
+    ],
+    "lifecycle": [
+      {
+        "state": "registered",
+        "when": "before-prompt-submit",
+        "requires": [
+          "subscriptionId",
+          "fcmToken"
+        ],
+        "onFailure": "send-proceeds-unfollowed"
+      },
+      {
+        "state": "attached",
+        "when": "after-prompt-submit-accepted",
+        "requires": [
+          "sessionId",
+          "profile",
+          "executionId"
+        ],
+        "onFailure": "send-proceeds-unfollowed"
+      },
+      {
+        "state": "notified",
+        "when": "terminal-delivered",
+        "requires": [
+          "executionId",
+          "terminal"
+        ],
+        "onFailure": "outbox-keeps-entry"
+      },
+      {
+        "state": "revoked",
+        "when": "client-request",
+        "requires": [],
+        "onFailure": "retry-bounded"
+      },
+      {
+        "state": "expired",
+        "when": "ttl-elapsed-without-terminal",
+        "requires": [],
+        "onFailure": "no-notification"
+      }
+    ],
+    "attachment": {
+      "endpoint": "attach",
+      "sessionScope": [
+        "sessionId",
+        "profile"
+      ],
+      "sessionIdSource": "prompt.submit.params.session_id",
+      "profileSource": "connection.profile",
+      "profileNullable": true,
+      "observerWatch": [
+        "session.resume",
+        "session.events.since"
+      ],
+      "onSessionNotFound": "retry-bounded-then-expire",
+      "onExpired": "no-notification"
+    },
+    "executionId": {
+      "definition": "Identité opaque d'une exécution, composée par le mobile au moment de l'attache.",
+      "attachTime": {
+        "source": "prompt.submit.result.user_row_id",
+        "schema": "contracts/openrpc.json#/components/schemas/PromptSubmitResult/properties/user_row_id",
+        "scopedBy": "session_id",
+        "composition": "base64url(session_id + ':' + user_row_id)",
+        "whenMissing": "no-attach-no-notification"
+      },
+      "terminalMatch": {
+        "session": "event.params.session_id",
+        "row": "message.complete.payload.persisted_turn.user_row_id",
+        "optionalStronger": "message.complete.payload.persisted_turn.submission_id",
+        "rule": "L'observateur recalcule executionId depuis session_id et persisted_turn.user_row_id ; si user_row_id manque, aucun rattachement. submission_id peut enrichir la déduplication mais ne remplace jamais user_row_id."
+      },
+      "sentToObserverOnAttach": true,
+      "inPushPayload": false,
+      "oldTerminalPolicy": "Un terminal antérieur à l'exécution attachée n'est jamais notifié."
+    },
+    "deviceToken": {
+      "provider": "fcm",
+      "registeredWith": "register",
+      "rotation": "re-register-same-subscription",
+      "storage": "encrypted-at-rest",
+      "onePerSubscription": true,
+      "requiredForEnvironments": [
+        "personal"
+      ],
+      "dryRunValue": "synthetic-placeholder",
+      "inPushPayload": false,
+      "inLogs": false,
+      "invalidToken": "remove-subscription-no-retry"
+    },
+    "ttlSeconds": 86400,
+    "attachedTtlSeconds": 604800,
+    "expiryByState": {
+      "registered": "ttlSeconds",
+      "attached": "attachedTtlSeconds",
+      "notified": "retention.notifiedTtlSeconds",
+      "revoked": "delete-on-revoke"
+    },
+    "revokeOnTerminal": false
+  },
+  "deduplication": {
+    "key": [
+      "subscriptionId",
+      "executionId",
+      "terminal"
+    ],
+    "terminalValues": [
+      "succeeded",
+      "failed",
+      "stopped"
+    ],
+    "scope": "observer-outbox",
+    "persistent": true,
+    "duplicatePolicy": "keep-first",
+    "perExecutionPolicy": "first-terminal-wins",
+    "lateTerminalPolicy": "ignore-after-notified",
+    "providerDuplicatePolicy": "dedupe-visible-by-tag",
+    "repeatDelivery": "at-least-once-until-drop",
+    "exactlyOnce": false,
+    "evidence": "Une nouvelle livraison du même terminal ne crée pas de seconde entrée ; le premier terminal notifié gagne et les suivants sont ignorés. La relance est bornée par dropAfterSeconds, puis l'abandon est compté. Le fournisseur peut encore livrer deux fois, donc aucune promesse exactement une fois."
+  },
+  "payload": {
+    "transport": "fcm-http-v1",
+    "platforms": [
+      "android"
+    ],
+    "messageKind": "notification-and-data",
+    "dataFields": [
+      "subscriptionId",
+      "outcome"
+    ],
+    "dataValueType": "string",
+    "outcomeValues": [
+      "succeeded",
+      "failed",
+      "stopped"
+    ],
+    "notification": {
+      "title": "Hermes",
+      "bodyByOutcome": {
+        "succeeded": "Hermes a terminé",
+        "failed": "Hermes a échoué",
+        "stopped": "Hermes s'est arrêté"
+      },
+      "labelLocation": "server-fixed-map",
+      "clientFallback": true,
+      "clientFallbackSource": "contracts/notification-tracking.json#/payload/notification/bodyByOutcome",
+      "contentSource": "outcome-only",
+      "note": "Le bloc notification affiche un libellé générique même quand l'app est en arrière-plan ou fermée ; le bloc data reste la seule source de routage."
+    },
+    "android": {
+      "channelId": "hermes_turn_complete",
+      "channelCreatedBy": "5.3",
+      "priority": "high",
+      "notificationPriority": "high",
+      "defaultSound": true,
+      "ttlSeconds": 86400,
+      "notificationTagTemplate": "hermes:{subscriptionId}:{outcome}",
+      "collapseKeyTemplate": "hermes:{subscriptionId}",
+      "visibleDuplicates": "dedupe-by-tag"
+    },
+    "forbiddenDataFields": [
+      "text",
+      "title",
+      "body",
+      "sessionKey",
+      "sessionId",
+      "session_id",
+      "profileKey",
+      "profile",
+      "profile_id",
+      "connectionKey",
+      "connectionId",
+      "connection_id",
+      "executionId",
+      "execution_id",
+      "submission_id",
+      "user_row_id",
+      "path",
+      "filePath",
+      "error",
+      "message",
+      "tool",
+      "args",
+      "result",
+      "token",
+      "fcmToken",
+      "fcm_token",
+      "refresh_token",
+      "id_token",
+      "credential",
+      "secret",
+      "authorization"
+    ],
+    "maxBytes": 1024,
+    "note": "notification + data : Android affiche le libellé générique sans réveiller l'app ; le data ne porte que subscriptionId et outcome. Aucun texte, chemin, secret ni identité Hermes."
+  },
+  "endpoints": {
+    "basePath": "/v1",
+    "register": {
+      "method": "POST",
+      "path": "/v1/subscriptions",
+      "auth": "bearer",
+      "body": [
+        "subscriptionId",
+        "fcmToken"
+      ],
+      "bodyTypes": {
+        "subscriptionId": "string",
+        "fcmToken": "string"
+      },
+      "subscriptionIdFormat": "base64url-22-128",
+      "fcmTokenRequiredFor": [
+        "personal"
+      ],
+      "idempotent": true,
+      "duplicatePolicy": "update-token-return-200",
+      "successStatus": [
+        200,
+        201
+      ],
+      "errorStatus": [
+        400,
+        401,
+        410,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "retry": "mobile-bounded",
+      "blocking": false
+    },
+    "attach": {
+      "method": "POST",
+      "path": "/v1/subscriptions/{subscriptionId}/attach",
+      "auth": "bearer",
+      "body": [
+        "sessionId",
+        "profile",
+        "executionId"
+      ],
+      "bodyTypes": {
+        "sessionId": "string",
+        "profile": "string|null",
+        "executionId": "string"
+      },
+      "idempotent": true,
+      "duplicatePolicy": "return-200",
+      "acceptedStatus": 202,
+      "acceptedMeaning": "Attache acceptée ; l'observateur surveille la session dès qu'elle est vive, sans action mobile.",
+      "expiredStatus": 410,
+      "successStatus": [
+        200,
+        202
+      ],
+      "errorStatus": [
+        400,
+        401,
+        404,
+        410,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "retry": "mobile-bounded",
+      "blocking": false
+    },
+    "revoke": {
+      "method": "DELETE",
+      "path": "/v1/subscriptions/{subscriptionId}",
+      "auth": "bearer",
+      "body": [],
+      "idempotent": true,
+      "notFoundIsSuccess": true,
+      "successStatus": [
+        200,
+        204
+      ],
+      "errorStatus": [
+        401,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "retry": "mobile-bounded",
+      "blocking": false
+    },
+    "health": {
+      "method": "GET",
+      "path": "/v1/health",
+      "auth": "bearer",
+      "body": [],
+      "idempotent": true,
+      "successStatus": [
+        200
+      ],
+      "errorStatus": [
+        401,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "retry": "none",
+      "blocking": false,
+      "contract": "#/health"
+    }
+  },
+  "auth": {
+    "scheme": "bearer",
+    "header": "Authorization",
+    "credentialKind": "opaque",
+    "perEnvironment": true,
+    "entropyBits": 256,
+    "mobileStorage": "flutter_secure_storage",
+    "serverStorage": "hash-only",
+    "hash": "sha-256",
+    "salt": "per-credential",
+    "comparison": "constant-time",
+    "transport": "https",
+    "requiredFor": [
+      "register",
+      "attach",
+      "revoke",
+      "health"
+    ],
+    "unauthenticatedResponse": 401,
+    "queryStringAllowed": false,
+    "logging": "redacted"
+  },
+  "errors": {
+    "shape": [
+      "code",
+      "message"
+    ],
+    "codes": [
+      "invalid-request",
+      "unauthorized",
+      "not-found",
+      "gone",
+      "rate-limited",
+      "unavailable",
+      "internal"
+    ],
+    "forbiddenContent": true,
+    "neverContains": [
+      "subscriptionId",
+      "executionId",
+      "fcmToken",
+      "sessionId",
+      "profile",
+      "content",
+      "path"
+    ],
+    "retryAfterHeader": "Retry-After"
+  },
+  "logging": {
+    "format": "domain.code",
+    "redactHeaders": [
+      "Authorization"
+    ],
+    "redactFields": [
+      "fcmToken",
+      "subscriptionId",
+      "executionId",
+      "sessionId",
+      "profile"
+    ],
+    "redactPathSegments": [
+      "subscriptionId"
+    ],
+    "neverLog": [
+      "payload",
+      "content",
+      "message",
+      "credentials"
+    ],
+    "level": "info"
+  },
+  "retries": {
+    "mobile": {
+      "maxAttempts": 3,
+      "deadlineMs": 4000,
+      "backoffMs": [
+        250,
+        750
+      ],
+      "jitter": true,
+      "retryOn": [
+        "network",
+        "429",
+        "500",
+        "502",
+        "503",
+        "504"
+      ],
+      "neverRetryOn": [
+        "400",
+        "401",
+        "403",
+        "404",
+        "409",
+        "410"
+      ],
+      "nonBlocking": true
+    },
+    "observer": {
+      "maxAttempts": 5,
+      "backoffMs": [
+        1000,
+        5000,
+        30000,
+        300000
+      ],
+      "perTerminal": true,
+      "sweepIntervalSeconds": 300,
+      "afterMaxAttempts": "keep-in-outbox",
+      "dropAfterSeconds": 172800,
+      "onDrop": "increment-dropped-and-log",
+      "providerMayDuplicate": true,
+      "invalidToken": "remove-subscription-no-retry"
+    }
+  },
+  "catchUp": {
+    "source": "session.events.since",
+    "watermarkField": "last_seen",
+    "resultFields": [
+      "events",
+      "latest_seq",
+      "truncated",
+      "epoch"
+    ],
+    "store": "/data/cursor",
+    "scope": [
+      "connection",
+      "profile",
+      "sessionId"
+    ],
+    "onRestart": "replay-from-last_seen",
+    "onTruncated": "refetch-session-history",
+    "onEpochChange": "reset-and-refetch",
+    "maxReplayEvents": 1000,
+    "onMaxReplayEvents": "continue-from-last-processed",
+    "note": "Un redémarrage ne perd aucun terminal : le curseur reprend après last_seen et un historique tronqué est rechargé avant de notifier. Au-delà de maxReplayEvents, le rejeu reprend depuis le dernier événement traité."
+  },
+  "retention": {
+    "notifiedTtlSeconds": 604800,
+    "expiredTtlSeconds": 86400,
+    "deduplicationTtlSeconds": 2592000,
+    "outboxMaxAgeSeconds": 172800,
+    "cursor": "while-session-exists",
+    "pruneIntervalSeconds": 3600,
+    "onPrune": "delete-and-count",
+    "note": "Les abonnements notifiés, expirés ou révoqués, la déduplication et l'outbox sont purgés ; aucune entrée ne reste indéfiniment dans /data."
+  },
+  "health": {
+    "path": "/v1/health",
+    "auth": "bearer",
+    "states": [
+      "ok",
+      "degraded"
+    ],
+    "degradedWhen": [
+      {
+        "reason": "hermes-unreachable",
+        "probe": "last-success-age",
+        "thresholdSeconds": 60
+      },
+      {
+        "reason": "outbox-backlog",
+        "probe": "outboxPending",
+        "threshold": 50
+      },
+      {
+        "reason": "fcm-unavailable",
+        "probe": "last-fcm-error-age",
+        "thresholdSeconds": 300,
+        "exceptEnvironment": "integration"
+      },
+      {
+        "reason": "storage-error",
+        "probe": "last-storage-error-age",
+        "thresholdSeconds": 0
+      }
+    ],
+    "responseFields": [
+      "state",
+      "reasons",
+      "counters",
+      "version",
+      "checkedAt"
+    ],
+    "counters": [
+      "pending",
+      "attached",
+      "outboxPending",
+      "delivered",
+      "failed",
+      "dropped",
+      "expired",
+      "revoked",
+      "invalidToken"
+    ],
+    "forbiddenContent": true,
+    "forbiddenFields": [
+      "subscriptionId",
+      "executionId",
+      "sessionId",
+      "profile",
+      "text",
+      "message",
+      "path",
+      "token",
+      "fcmToken",
+      "credential"
+    ],
+    "versionFormat": "semver",
+    "checkedAtFormat": "RFC3339",
+    "note": "La santé ne renvoie jamais de contenu ni d'identifiant de suivi ; sans bearer, réponse 401."
+  },
+  "invariants": [
+    "Un terminal notifiable vient uniquement de contracts/event-mapping.json.",
+    "Le mobile enregistre subscriptionId et fcmToken avant prompt.submit ; l'échec n'empêche jamais l'envoi.",
+    "Le rattachement envoie sessionId, profile et executionId ; sans session ou sans user_row_id, aucune notification.",
+    "La déduplication est (subscriptionId, executionId, terminal) ; le premier terminal notifié gagne et les terminaux tardifs sont ignorés.",
+    "La livraison est au moins une fois tant que l'entrée reste dans l'outbox ; après dropAfterSeconds, l'abandon est compté et journalisé.",
+    "Le rattrapage reprend depuis last_seen ; truncated ou un changement d'epoch impose un refetch de l'historique.",
+    "La rétention borne /data ; aucune entrée attachée ou notifiée ne reste indéfiniment.",
+    "Le bloc data ne porte que subscriptionId et outcome ; la notification ne porte qu'un libellé générique dérivé de l'issue.",
+    "Le bloc data ne contient aucun texte, chemin, secret ni identité Hermes.",
+    "Les erreurs et journaux ne contiennent ni contenu, ni identifiant de suivi, ni token.",
+    "La santé exige le bearer et ne renvoie qu'un état borné, des raisons avec seuils et des compteurs.",
+    "L'observateur n'écoute pas sur un port hôte publié ; l'accès passe par le tailnet.",
+    "Aucun secret ni chemin personnel n'est versionné."
+  ]
+}

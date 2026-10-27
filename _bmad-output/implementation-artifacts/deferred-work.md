@@ -45,3 +45,11 @@
 - source_spec: `spec-3-5-arret-travail.md`
   summary: Vérifier la classification d’un outil reconnu depuis les événements du repository jusqu’à la projection persistée.
   evidence: Verification 2 : forTool est testé seul ; le branchement repository préexistait à 3.5 et aucun scénario reçu reconnu ne le couvre.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-2-faire-tourner-observateur-fins-travail.md`
+  summary: Monter un chemin lisible pour `fcm_service_account` (secret Home Assistant ou volume `/share`) avant d'activer `personal`.
+  evidence: `config.yaml` n'expose que `/data` et `Config.validate` exige un fichier existant ; en 5.2 `personal` est refus? avant usage. ? trancher avec la story 5.3 (FCM r?el).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-2-faire-tourner-observateur-fins-travail.md`
+  summary: Permettre ? plusieurs abonnements (appareils) de suivre la m?me ex?cution `(sessionId, user_row_id)`.
+  evidence: `executions.execution_id` est cl? primaire et `Store.attach` renvoie `Conflict` (400) au second abonnement ; d?cision 5.2 : une ex?cution par abonnement. N?cessite une table de liaison et une politique de d?doublonnage par appareil.
