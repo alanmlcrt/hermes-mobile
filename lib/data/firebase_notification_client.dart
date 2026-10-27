@@ -10,7 +10,21 @@ const notificationSetupTimeout = Duration(seconds: 4);
 
 /// Configuration native facultative, sans faux token ni options générées.
 class FirebaseNotificationClient implements NotificationClient {
+  /// Le canal écoute avant `Firebase.initializeApp` : l'ouverture par
+  /// notification fonctionne même sans Firebase configuré.
+  FirebaseNotificationClient() {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method != 'opened') throw MissingPluginException();
+      if (isSubscriptionId(call.arguments) && !_opened.isClosed) {
+        _opened.add(call.arguments as String);
+      }
+      return null;
+    });
+  }
   static const _channel = MethodChannel('hermes/notifications');
+
+  /// Sans écouteur, les touchers attendent : un seul abonné, celui de l'app.
+  final _opened = StreamController<String>();
   FirebaseMessaging? _messaging;
   StreamSubscription<RemoteMessage>? _messages;
   StreamSubscription<String>? _registration;
@@ -36,8 +50,7 @@ class FirebaseNotificationClient implements NotificationClient {
         final data = message.data;
         if (data.length == 2 &&
             data.keys.toSet().containsAll({'subscriptionId', 'outcome'}) &&
-            RegExp(r'^[A-Za-z0-9_-]{22,128}$')
-                .hasMatch(data['subscriptionId'] ?? '') &&
+            isSubscriptionId(data['subscriptionId']) &&
             {'succeeded', 'failed', 'stopped'}.contains(data['outcome'])) {
           unawaited(
             _channel.invokeMethod<void>('show', data).catchError((_) {}),
@@ -52,6 +65,17 @@ class FirebaseNotificationClient implements NotificationClient {
 
   @override
   Stream<String> get rotations => _rotations.stream;
+  @override
+  Stream<String> get opened => _opened.stream;
+  @override
+  Future<String?> takeOpened() async {
+    try {
+      final id = await _channel.invokeMethod<Object?>('takeOpened');
+      return isSubscriptionId(id) ? id as String : null;
+    } catch (_) {
+      return null;
+    }
+  }
   @override
   Future<String?> token({bool requestPermission = false}) async {
     try {
@@ -100,5 +124,7 @@ class FirebaseNotificationClient implements NotificationClient {
     await _messages?.cancel();
     await _registration?.cancel();
     await _rotations.close();
+    _channel.setMethodCallHandler(null);
+    unawaited(_opened.close());
   }
 }

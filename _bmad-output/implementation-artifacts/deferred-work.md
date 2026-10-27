@@ -53,3 +53,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-2-faire-tourner-observateur-fins-travail.md`
   summary: Permettre ? plusieurs abonnements (appareils) de suivre la m?me ex?cution `(sessionId, user_row_id)`.
   evidence: `executions.execution_id` est cl? primaire et `Store.attach` renvoie `Conflict` (400) au second abonnement ; d?cision 5.2 : une ex?cution par abonnement. N?cessite une table de liaison et une politique de d?doublonnage par appareil.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-4-ouvrir-conversation-depuis-notification.md`
+  summary: Vérifier sur téléphone le chemin natif du toucher (extra `subscriptionId` posé par FCM et par `show`, `takeOpened` consommé une fois, `onNewIntent` à chaud, filtre `LAUNCHED_FROM_HISTORY`).
+  evidence: aucun harnais de test Android (ni `src/test` ni `androidTest`) ; le test Dart scripte la réponse native. À couvrir par les essais G3 de la story 5.5 : toucher à froid, à chaud, relance depuis les récents.

@@ -73,6 +73,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   late final AppRoutes _routes;
+  StreamSubscription<String>? _opened;
   @override
   void initState() {
     super.initState();
@@ -85,6 +86,17 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       accents: widget.accents,
       notifications: widget.notifications,
     );
+    // Notification touchée : à chaud par le flux, à froid par l'intent de
+    // lancement. Écoutée avant la restauration, qu'elle attend si besoin.
+    final device = widget.notifications?.device;
+    if (device != null) {
+      _opened = device.opened.listen(_routes.openNotification);
+      unawaited(
+        device.takeOpened().then((id) {
+          if (id != null && mounted) _routes.openNotification(id);
+        }, onError: (Object _) {}),
+      );
+    }
     unawaited(widget.gateway.restore());
     unawaited(widget.notifications?.resume() ?? Future<void>.value());
   }
@@ -92,6 +104,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_opened?.cancel());
     final backgroundWrites = _routes.profiles.backgroundWritesDone;
     _routes.dispose();
     // L'outbox termine ses écritures avant que le gateway ferme la base.
@@ -151,6 +164,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       darkTheme: buildTheme(null, Brightness.dark),
       themeMode: ThemeMode.system,
       routerConfig: _routes.router,
+      scaffoldMessengerKey: _routes.scaffoldMessengerKey,
     );
   }
 }

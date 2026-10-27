@@ -5,6 +5,8 @@ import '../models/attachment.dart';
 
 abstract final class Content {
   static const notificationUnfollowed = 'Notification non suivie';
+  static const notificationTargetMissing =
+      'Conversation de cette notification introuvable sur ce téléphone. Retour à l’accueil.';
   static const notifications = 'Notifications de fin de travail';
   static const observerOrigin = 'Adresse HTTPS de l’observateur';
   static const observerBearer = 'Credential de l’observateur';

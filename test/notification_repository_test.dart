@@ -31,6 +31,16 @@ class Device implements NotificationClient {
       : NotificationAvailability.ready;
   @override
   Stream<String> get rotations => changes.stream;
+  final taps = StreamController<String>.broadcast();
+  String? launch;
+  @override
+  Stream<String> get opened => taps.stream;
+  @override
+  Future<String?> takeOpened() async {
+    final id = launch;
+    launch = null;
+    return id;
+  }
   @override
   Future<String?> token({bool requestPermission = false}) async {
     reads++;
@@ -40,6 +50,7 @@ class Device implements NotificationClient {
   @override
   Future<void> dispose() async {
     await changes.close();
+    await taps.close();
   }
 }
 

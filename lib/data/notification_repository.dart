@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/connection.dart';
 import '../models/draft.dart';
+import '../models/profile.dart';
 import '../models/notifications.dart';
 import 'storage/secret_store.dart';
 
@@ -127,6 +128,25 @@ class NotificationRepository implements NotificationGateway {
       whereArgs: [key.value, 'revoked'],
     );
     await resume();
+  }
+
+  /// Association locale d'un suivi touché ; `null` si l'id est invalide ou
+  /// inconnu. Les états `expired`/`revoked` restent des indices valides.
+  Future<NotificationTarget?> target(String subscriptionId) async {
+    if (!isSubscriptionId(subscriptionId)) return null;
+    final rows = await database.query(
+      'notification_subscriptions',
+      columns: ['connection_key', 'profile_key', 'stored_session_id'],
+      where: 'subscription_id = ?',
+      whereArgs: [subscriptionId],
+    );
+    final row = rows.singleOrNull;
+    if (row == null) return null;
+    return (
+      connection: ConnectionKey(row['connection_key'] as String),
+      profile: ProfileKey(row['profile_key'] as String),
+      session: row['stored_session_id'] as String?,
+    );
   }
 
   Future<String?> prepare(

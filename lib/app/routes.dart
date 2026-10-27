@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,21 +22,51 @@ import '../models/connection.dart';
 import '../models/companion_background.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
+import '../models/notifications.dart';
 import '../models/profile.dart';
 import '../models/profile_accent.dart';
 import '../models/timeline.dart';
+import '../ui/content.dart';
 
 /// Seul décideur de l'écran d'ouverture : notification (Epic 5), puis
-/// restauration (story 2.4), puis accueil. Seul l'accueil existe : nouvelle
-/// conversation sur le profil courant ; sans profil, `null` laisse le choix.
+/// restauration (story 2.4), puis accueil. Aucune route n'est restaurée
+/// aujourd'hui : nouvelle conversation sur le profil courant ; sans profil,
+/// `null` laisse le choix.
 ///
 /// [requestedProfile] : « Nouvelle conversation » depuis l'historique d'un
 /// profil ; ignoré s'il n'existe pas sur ce serveur.
+///
+/// [notification] : association locale d'une notification touchée (`null`
+/// résolu = id inconnu). Cible valide : sa conversation, rechargée depuis
+/// Hermes ; sinon [onMissingTarget] puis l'accueil, jamais le fil affiché.
+/// Sans authentification, `null` : la cible attend.
 Future<String?> resolveLaunchTarget(
   ConnectionGateway gateway,
   OutboxGateway outbox, {
   String? requestedProfile,
+  Future<NotificationTarget?>? notification,
+  VoidCallback? onMissingTarget,
 }) async {
+  if (notification != null) {
+    NotificationTarget? target;
+    try {
+      target = await notification;
+    } catch (_) {
+      target = null;
+    }
+    final snapshot = gateway.snapshot;
+    final connection = snapshot.connection;
+    if (!snapshot.authenticated || connection == null) return null;
+    final session = target?.session;
+    if (target != null &&
+        session != null &&
+        target.connection == connection.key &&
+        snapshot.profiles.any((p) => p.key == target!.profile)) {
+      return conversationPath(connection.key, target.profile, session);
+    }
+    onMissingTarget?.call();
+    return '/';
+  }
   final snapshot = gateway.snapshot;
   final connection = snapshot.connection;
   final requested = snapshot.profiles
@@ -98,7 +130,9 @@ class AppRoutes {
     CompanionBackgroundStore? backgrounds,
     ProfileAccentStore? accents,
     NotificationRepository? notifications,
-  }) {
+  }) : _gateway = gateway,
+       _outbox = outbox,
+       _notifications = notifications {
     connection = ConnectionViewModel(gateway);
     this.accents = ProfileAccents(gateway, accents);
     profiles = ProfilesViewModel(gateway, backgrounds: backgrounds);
@@ -281,6 +315,7 @@ class AppRoutes {
     // profils » après son retour au brouillon.
     var authenticated = gateway.snapshot.authenticated;
     _onProfiles = () {
+      _openPending();
       final now = gateway.snapshot.authenticated;
       final home = router.routeInformationProvider.value.uri.path == '/';
       if (now == authenticated && !home) return;
@@ -296,6 +331,69 @@ class AppRoutes {
     };
     profiles.addListener(_onProfiles);
   }
+  final ConnectionGateway _gateway;
+  final OutboxGateway _outbox;
+  final NotificationRepository? _notifications;
+
+  /// Messages globaux (cible de notification absente), hors de toute page.
+  final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  /// Notification touchée en attente de l'authentification et des profils.
+  String? _pendingNotification;
+
+  /// Ouvre la conversation d'une notification touchée (froid ou chaud). La
+  /// cible attend l'authentification, puis n'est consommée qu'une fois.
+  void openNotification(String subscriptionId) {
+    if (!isSubscriptionId(subscriptionId) || _notifications == null) return;
+    _pendingNotification = subscriptionId;
+    _openPending();
+  }
+
+  void _openPending() {
+    final id = _pendingNotification;
+    final snapshot = _gateway.snapshot;
+    // Profils en échec : la cible attend un chargement réussi, sans fausse
+    // « conversation introuvable ».
+    if (id == null ||
+        !snapshot.authenticated ||
+        !const {
+          ProfilesState.ready,
+          ProfilesState.empty,
+          ProfilesState.refreshing,
+        }.contains(snapshot.profilesState)) {
+      return;
+    }
+    _pendingNotification = null;
+    unawaited(_resolveNotification(id));
+  }
+
+  Future<void> _resolveNotification(String id) async {
+    final path = await resolveLaunchTarget(
+      _gateway,
+      _outbox,
+      notification: _notifications!.target(id),
+      onMissingTarget: _explainMissingTarget,
+    );
+    if (_disposed) return;
+    if (path == null) {
+      // Authentification perdue entre-temps : la cible attend à nouveau.
+      _pendingNotification ??= id;
+      return;
+    }
+    router.go(path);
+  }
+
+  void _explainMissingTarget() {
+    if (_disposed) return;
+    // SnackBar : région « live », annoncée par le lecteur d'écran.
+    scaffoldMessengerKey.currentState
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text(Content.notificationTargetMissing)),
+      );
+  }
+
+  bool _disposed = false;
   late final ConnectionViewModel connection;
   late final ProfilesViewModel profiles;
   late final ProfileAccents accents;
@@ -326,6 +424,7 @@ class AppRoutes {
     onAuthenticated: () => context.go('/'),
   );
   void dispose() {
+    _disposed = true;
     router.dispose();
     connection.dispose();
     profiles.removeListener(_onProfiles);

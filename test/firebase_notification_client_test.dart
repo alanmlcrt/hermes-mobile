@@ -110,4 +110,36 @@ void main() {
       await client.dispose();
     },
   );
+  test('toucher : handler posé avant Firebase, id validé, lancement consommé', () async {
+    Object? launch = 'subscription-launch-0000000';
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('hermes/notifications'),
+      (call) async {
+        if (call.method != 'takeOpened') return null;
+        final id = launch;
+        launch = null;
+        return id;
+      },
+    );
+    // Sans `initialize()` : le canal fonctionne même sans Firebase.
+    final client = FirebaseNotificationClient();
+    final opened = <String>[];
+    final subscription = client.opened.listen(opened.add);
+    Future<void> native(Object? id) => messenger.handlePlatformMessage(
+      'hermes/notifications',
+      const StandardMethodCodec().encodeMethodCall(MethodCall('opened', id)),
+      (_) {},
+    );
+    await native('subscription-hot-00000000000');
+    await native('invalide avec espaces');
+    await native(42);
+    await pumpEventQueue();
+    expect(opened, ['subscription-hot-00000000000']);
+    expect(await client.takeOpened(), 'subscription-launch-0000000');
+    expect(await client.takeOpened(), isNull);
+    launch = '../chemin';
+    expect(await client.takeOpened(), isNull);
+    await subscription.cancel();
+    await client.dispose();
+  });
 }
