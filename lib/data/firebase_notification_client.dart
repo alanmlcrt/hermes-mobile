@@ -39,7 +39,11 @@ class FirebaseNotificationClient implements NotificationClient {
       await Firebase.initializeApp();
       _messaging = FirebaseMessaging.instance;
       await _messaging!.setAutoInitEnabled(false);
-      _registration = _messaging!.onRegistered.listen((token) {
+      // Jeton d'enregistrement FCM (cible `token` de HTTP v1). L'API 17
+      // register/onRegistered rend un FID et n'a jamais abouti sur le
+      // téléphone réel (essai 5.5) : on garde getToken/onTokenRefresh.
+      // ignore: deprecated_member_use
+      _registration = _messaging!.onTokenRefresh.listen((token) {
         if (_token == token) return;
         _token = token;
         _rotations.add(token);
@@ -78,39 +82,37 @@ class FirebaseNotificationClient implements NotificationClient {
   }
   @override
   Future<String?> token({bool requestPermission = false}) async {
+    final messaging = _messaging;
+    if (messaging == null) return null;
     try {
-      return await _acquire(requestPermission)
-          .timeout(const Duration(seconds: 3));
+      if (requestPermission) {
+        // La boîte de dialogue attend Alanc : aucun délai ici, sinon une
+        // réponse après trois secondes passait pour un token indisponible.
+        final settings = await messaging.requestPermission();
+        if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+          _availability = NotificationAvailability.denied;
+          return null;
+        }
+        await messaging.setAutoInitEnabled(true);
+      }
+      // Premier enregistrement GMS parfois lent sur un vrai téléphone.
+      return await _acquire(messaging).timeout(const Duration(seconds: 10));
     } catch (_) {
       _availability = NotificationAvailability.unavailable;
       return null;
     }
   }
 
-  Future<String?> _acquire(bool requestPermission) async {
-    final messaging = _messaging;
-    if (messaging == null) return null;
+  Future<String?> _acquire(FirebaseMessaging messaging) async {
     try {
-      final settings = requestPermission
-          ? await messaging.requestPermission()
-          : await messaging.getNotificationSettings();
+      final settings = await messaging.getNotificationSettings();
       if (settings.authorizationStatus != AuthorizationStatus.authorized) {
         _availability = NotificationAvailability.denied;
         return null;
       }
-      if (requestPermission) await messaging.setAutoInitEnabled(true);
-      if (_token == null) {
-        final next = Completer<String>();
-        final subscription = _rotations.stream.listen((value) {
-          if (!next.isCompleted) next.complete(value);
-        });
-        try {
-          await messaging.register().timeout(const Duration(seconds: 3));
-          _token = await next.future.timeout(const Duration(seconds: 3));
-        } finally {
-          await subscription.cancel();
-        }
-      }
+      // ignore: deprecated_member_use
+      _token ??= await messaging.getToken();
+      if (_token == null) throw StateError('token');
       _availability = NotificationAvailability.ready;
       return _token;
     } catch (_) {

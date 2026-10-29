@@ -97,9 +97,8 @@ class NotificationRepository implements NotificationGateway {
   @override
   Future<bool> enable(ConnectionKey key) async {
     if (await settings(key) == null) return false;
-    final token = await device
-        .token(requestPermission: true)
-        .timeout(const Duration(seconds: 3), onTimeout: () => null);
+    // Pas de délai : la permission attend Alanc ; le client borne le token.
+    final token = await device.token(requestPermission: true);
     if (token == null) return false;
     await database.update(
       'notification_settings',

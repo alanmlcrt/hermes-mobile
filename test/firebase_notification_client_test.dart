@@ -15,6 +15,7 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   int authorization = 1;
   bool failRegistration = false;
+  Duration permissionDelay = Duration.zero;
   int registrations = 0;
   setUpAll(() async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
@@ -27,6 +28,7 @@ void main() {
   setUp(() {
     authorization = 1;
     failRegistration = false;
+    permissionDelay = Duration.zero;
     registrations = 0;
     messenger.setMockMethodCallHandler(
       const MethodChannel('hermes/notifications'),
@@ -35,6 +37,9 @@ void main() {
     messenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'Messaging#setAutoInitEnabled') {
         return {'isAutoInitEnabled': false};
+      }
+      if (call.method == 'Messaging#requestPermission') {
+        await Future<void>.delayed(permissionDelay);
       }
       if (call.method == 'Messaging#getNotificationSettings' ||
           call.method == 'Messaging#requestPermission') {
@@ -53,7 +58,7 @@ void main() {
           'providesAppNotificationSettings': 1,
         };
       }
-      if (call.method == 'Messaging#register') {
+      if (call.method == 'Messaging#getToken') {
         registrations++;
         if (failRegistration) {
           throw PlatformException(
@@ -61,13 +66,7 @@ void main() {
             message: 'private provider detail',
           );
         }
-        await messenger.handlePlatformMessage(
-          channel.name,
-          const StandardMethodCodec().encodeMethodCall(
-            const MethodCall('Messaging#onRegistered', 'synthetic-fcm-token'),
-          ),
-          (_) {},
-        );
+        return {'token': 'synthetic-fcm-token'};
       }
       return null;
     });
@@ -90,7 +89,36 @@ void main() {
       await client.dispose();
     },
   );
-  test('permission refusée ne lance pas register', () async {
+  test('réponse tardive à la permission donne quand même un token', () async {
+    // Essai 5.5 : Alanc touche « Autoriser » après plus de trois secondes.
+    authorization = 0;
+    final client = FirebaseNotificationClient();
+    await client.initialize();
+    authorization = 1;
+    permissionDelay = const Duration(seconds: 4);
+    expect(
+      await client.token(requestPermission: true),
+      'synthetic-fcm-token',
+    );
+    expect(client.availability, NotificationAvailability.ready);
+    await client.dispose();
+  });
+  test('onTokenRefresh publie une rotation du jeton', () async {
+    final client = FirebaseNotificationClient();
+    await client.initialize();
+    final next = client.rotations.first;
+    await messenger.handlePlatformMessage(
+      channel.name,
+      const StandardMethodCodec().encodeMethodCall(
+        const MethodCall('Messaging#onTokenRefresh', 'synthetic-fcm-token-2'),
+      ),
+      (_) {},
+    );
+    expect(await next, 'synthetic-fcm-token-2');
+    expect(await client.token(), 'synthetic-fcm-token-2');
+    await client.dispose();
+  });
+  test('permission refusée ne demande pas de token', () async {
     authorization = 0;
     final client = FirebaseNotificationClient();
     await client.initialize();
