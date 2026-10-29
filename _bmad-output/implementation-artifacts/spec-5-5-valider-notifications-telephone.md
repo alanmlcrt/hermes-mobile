@@ -2,7 +2,7 @@
 title: 'Story 5.5 - Valider les notifications sur mon téléphone'
 type: 'chore'
 created: '2026-10-27'
-status: 'in-progress'
+status: 'draft'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '43285140f163e0dbf9aa08bb0cece033320a2483'
@@ -72,6 +72,8 @@ context:
 - Étant donné tous les scénarios réussis, quand le contrat est mis à jour, alors `gate.status` vaut `crossed` et les tests contractuels passent ; sinon la porte reste `open` et les écarts sont remontés à Alanc.
 
 ## Implementation Notes
+
+**Repassée en `draft` (2026-10-29) :** proposition de changement approuvée ([sprint-change-proposal-2026-10-29.md](../planning-artifacts/sprint-change-proposal-2026-10-29.md)) — l'observateur est remplacé par le plugin Hermes. Critères réécrits dans `epics.md` (story 5.5) ; l'intention ci-dessus est à renégocier avec Alanc. Reprendre avec bmad-build après les stories 5.6, 5.7 et 5.8.
 
 **En pause (2026-10-29), à la demande d'Alanc :** priorité donnée à l'étude d'un plugin Hermes remplaçant l'observateur (voir ci-dessous). G3 reste ouverte.
 

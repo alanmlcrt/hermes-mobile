@@ -54,26 +54,26 @@ NFR6 : Corpus — Avant les tests d'acceptation, Alanc fournit un long texte, un
 **Starter et stack (impacte Epic 1 Story 1)**
 - Graine : `flutter create --empty --platforms=android,ios hermes_mobile`, Flutter 3.47.x (dernier correctif au bootstrap), Dart fourni. minSdk Android 24. Flutter n'est confirmé que si le bootstrap compile et tourne sur le téléphone Android d'Alanc ; sinon le choix de stack revient à Alanc avant toute autre story.
 - Paquets candidats : dynamic_color 2.1.0, sqflite 2.4.4+2, flutter_secure_storage 11.2.0 (`allowBackup=false`), firebase_messaging 17.0.0 + firebase_core ^5.0.0 sous réserve de G3. Pas de `flutter_markdown` (abandonné). Paquets réseau, fichiers, Markdown et routage choisis centralement, épinglés, résolus ensemble et compilés pour Android au bootstrap ; SDK épinglé + lockfile font référence.
-- Arborescence : `lib/app` (composition, routes, `resolveLaunchTarget`), `lib/models` (sans Flutter), `lib/data` (repositories, adaptateur, stockage), `lib/features` (vues, ViewModels), `lib/ui` (tokens, thème, composants, catalogue), `contracts/`, `server/notifier/` (après G3).
+- Arborescence : `lib/app` (composition, routes, `resolveLaunchTarget`), `lib/models` (sans Flutter), `lib/data` (repositories, adaptateur, stockage), `lib/features` (vues, ViewModels), `lib/ui` (tokens, thème, composants, catalogue), `contracts/`, `server/hermes-plugin/` (plugin de notifications).
 
 **Architecture applicative**
 - MVVM léger : ViewModels `ChangeNotifier`, repositories exposant des `Stream` de snapshots immuables, aucun autre framework d'état, injection explicite au démarrage sans service locator (AD-2).
 - Propriétaires uniques : `ConnectionRepository` (connexions, capacités, profils, profil sélectionné, unique socket par connexion), `ConversationRepository` (projection distante, `TimelineProjection`), `OutboxRepository` (brouillons, pièces sortantes, `ensureSession(DraftKey)` sérialisé, opérations envoi/arrêt/suivi notification). Les vues ne font ni réseau ni écriture persistante. Contrôle des imports en CI (AD-2).
-- Identités : `ConnectionKey` UUID local stable (URL modifiable sans réindexation), `ProfileKey`, `SessionKey` opaques sensibles à la casse ; `DraftKey` local associé à la session avant soumission ; `OperationKey` local distinct de l'identité d'exécution serveur ; `subscriptionId` opaque partagé avec l'observateur. Le profil d'un fil existant ne change jamais. Pas de profil par défaut inventé si la découverte échoue (AD-3).
-- Projection : table déclarative événements Hermes → états/terminaux/`ActivityKind` dans `contracts/`, partagée mobile/observateur et validée par les mêmes fixtures. Mutations sérialisées par session, projection et curseur enregistrés atomiquement. Curseur `(epoch, seq)` seulement si détecté, sinon snapshot complet. Doublons écartés, trou/troncature/nouvel epoch → snapshot, événements anciens écartés. Rapprochement local/serveur jamais par le texte (règle fixée en G1). Connexion et travail sont deux états distincts (AD-4).
+- Identités : `ConnectionKey` UUID local stable (URL modifiable sans réindexation), `ProfileKey`, `SessionKey` opaques sensibles à la casse ; `DraftKey` local associé à la session avant soumission ; `OperationKey` local distinct de l'identité d'exécution serveur ; `sessionId` stocké, porté par la notification push. Le profil d'un fil existant ne change jamais. Pas de profil par défaut inventé si la découverte échoue (AD-3).
+- Projection : table déclarative événements Hermes → états/terminaux/`ActivityKind` dans `contracts/`, côté mobile, validée par les mêmes fixtures. Mutations sérialisées par session, projection et curseur enregistrés atomiquement. Curseur `(epoch, seq)` seulement si détecté, sinon snapshot complet. Doublons écartés, trou/troncature/nouvel epoch → snapshot, événements anciens écartés. Rapprochement local/serveur jamais par le texte (règle fixée en G1). Connexion et travail sont deux états distincts (AD-4).
 - Soumission : opération persistée avant envoi (cible, contenu exact, références fichiers) ; pipeline nommé `ensureSession` → pièces → suivi notification (non bloquant) → soumission. Résultat incertain → `unknown`, brouillon conservé, pas de renvoi. Répétition seulement si idempotence détectée (un ID JSON-RPC n'en est pas une). Un seul envoi à la fois par session ; saisie conservée pendant le travail. Arrêt = opération persistée visant l'exécution observée, jamais rejouée après changement de tour ; `stopRequested` hors projection ; seul le serveur fournit un terminal (AD-5).
 - Pièces jointes : copie dans `attachments/<DraftKey>/`, résultats dans un emplacement séparé. Validation contre la limite la plus restrictive (app, proxy, Hermes, modèle). Prompt envoyé seulement après confirmation de toutes les pièces ; upload échoué ou incertain bloque le prompt. Résultat disponible seulement après accès authentifié résolu ; aucun fichier exécuté automatiquement (AD-6).
 
 **Intégration Hermes**
-- Point d'entrée unique : backend Desktop `hermes serve` (add-on `WolframRavenwolf/hermes-ha-addon` 1.3.9, option `enable_desktop_backend`, port 9119 à mapper) ; REST pour les ressources, JSON-RPC sur `/api/ws`. Ni ingress `:8123`, ni 8080/8443, ni `/v1/`. Seuls l'adaptateur et l'observateur connaissent les formats Hermes. Un fil n'est jamais réparti entre plusieurs transports (AD-7).
+- Point d'entrée unique : backend Desktop `hermes serve` (add-on `WolframRavenwolf/hermes-ha-addon` 1.3.9, option `enable_desktop_backend`, port 9119 à mapper) ; REST pour les ressources, JSON-RPC sur `/api/ws`. Ni ingress `:8123`, ni 8080/8443, ni `/v1/`. Seuls l'adaptateur et le plugin de notifications connaissent les formats Hermes. Un fil n'est jamais réparti entre plusieurs transports (AD-7).
 - Référence = tag de release correspondant au build installé, jamais HEAD. Capacités optionnelles (`replay_epoch`, `idempotency_key`, `file.attach`…) détectées à la connexion et enregistrées. Contrat, échanges anonymisés et fixtures figés dans `contracts/` avant les stories d'intégration. Méthode absente, refus d'auth et panne transitoire produisent des erreurs distinctes. Ne pas modifier le profil actif global du dashboard à chaque sélection mobile (AD-7, evidence).
 - Auth : login Basic (utilisateur `hermes`, `access_password`) → jeton d'accès 12 h + refresh 30 j ; sockets ouvertes par ticket WS. Le secret serveur change à chaque redémarrage : le mot de passe est gardé en stockage sécurisé et l'app se reconnecte seule quand le refresh échoue (AD-8).
 - Réseau : origine `http://<hôte>.ts.net:9119` ; exception `network_security_config` limitée à `ts.net`, refus de tout `http://` hors `*.ts.net`, `https://` accepté. QR contenant seulement l'origine, confirmation de l'origine puis saisie du mot de passe une fois ; script du dépôt pour générer le QR. Secrets sous `<ConnectionKey>/<usage>`, jamais dans URL persistées, notifications, diagnostics ou sauvegardes. Aucun credential envoyé à une autre origine après redirection (AD-8).
 
 **Notifications (G3)**
 - Observateur serveur distinct, registre de suivis (`subscriptionId`) et outbox durables, reprise après redémarrage par rattrapage depuis la source Hermes persistante, déduplication par cible/exécution/terminal, point de santé affiché dans l'app (AD-9).
-- Suivi demandé avant soumission mais jamais bloquant : tour marqué « notification non suivie » en cas d'échec. Payload minimal (identité stable, `subscriptionId`, libellé générique), sans texte, chemin ni secret. FCM HTTP v1 proposé, compte de service sur l'observateur. Ouverture à froid et à chaud, rotation/révocation du token, retries bornés (AD-9).
-- Le contrat du registre précède toute séparation mobile/observateur ; G3 bloque la story de transport push.
+- Suivi = jeton FCM transmis au plugin Hermes (`command.dispatch`) avant soumission, jamais bloquant : tour marqué « notification non suivie » si le plugin est absent (4018). Payload `{outcome, sessionId}` et libellé générique, sans texte, chemin ni secret. FCM HTTP v1, compte de service dans `HERMES_HOME/hermes-mobile/`. Ouverture à froid et à chaud, rotation du token, un seul nouvel essai FCM (AD-9).
+- Plugin `on_session_end` par profil, tours `tui` seulement ; sans outbox durable ni rattrapage (perte acceptée si Hermes plante en plein tour). Proposition de changement du 2026-10-29.
 
 **Exploitation**
 - Un seul fichier SQLite, tables préfixées par repository propriétaire, migrations en ajout seul et testées ; aucune migration de Hermes (AD-11).
@@ -87,9 +87,9 @@ NFR6 : Corpus — Avant les tests d'acceptation, Alanc fournit un long texte, un
 **Portes de validation**
 - G1 installation : backend Desktop actif, port 9119 mappé, tag installé et capacités détectées, origine joignable depuis le téléphone, login et ticket WS, deux profils, historique, envoi, reprise après redémarrage du backend, arrêt, règle de rapprochement. Bloque les stories d'intégration au-delà de la capture du contrat (qui en est la première) ; l'UI sur fixtures peut avancer.
 - G2 fichiers : limites et réception dans le bon fil, corpus d'Alanc.
-- G3 notification : déploiement, contrat du registre, auth mobile→observateur, rattrapage, version FCM, prérequis Android, essais app fermée/coupure/redémarrage.
+- G3 notification : plugin installé par profil, jeton app → plugin, filtre `tui`, version FCM, prérequis Android, essais app fermée, coupure réseau, sous-agent, reprise de conversation.
 - G4 produit/UX : FR-13/14, interventions en cours, issues notifiées, secours de thème.
-- Cas de contrat à tester : IDs similaires sur deux profils ; coupure après acceptation avant réponse ; événement dupliqué/tronqué/ancien ; arrêt après reconnexion ; upload échoué sans prompt ; fin app fermée ; observateur absent pendant un envoi ; changement d'URL sans réindexation.
+- Cas de contrat à tester : IDs similaires sur deux profils ; coupure après acceptation avant réponse ; événement dupliqué/tronqué/ancien ; arrêt après reconnexion ; upload échoué sans prompt ; fin app fermée ; plugin absent pendant un envoi ; changement d'URL sans réindexation.
 
 ### UX Design Requirements
 
@@ -112,7 +112,7 @@ UX-DR16 : Composant Arrêt — Contrôle accessible (nom « Arrêter ») toujour
 UX-DR17 : Composant Intervention (FR-13) — Question ou autorisation réellement émise par Hermes, affichée dans le fil avec réponse possible ; prise en compte immédiate ou différée explicite.
 UX-DR18 : Composant Résultat (FR-14) — Fichier résultat identifiable dans le fil (cf. `resume.md` de la scène), ouvrable/téléchargeable ; distinction résultat disponible / chemin serveur inaccessible.
 UX-DR19 : Notification de fin — Conversation concernée identifiable, issue (réussite, erreur, arrêt confirmé) ; refus de permission expliqué ; marque visible « notification non suivie » sur un tour.
-UX-DR20 : États de connexion — `connecté`, `resynchronisation`, `hors ligne` affichés distinctement des états du travail ; écart de capacités et santé de l'observateur visibles.
+UX-DR20 : États de connexion — `connecté`, `resynchronisation`, `hors ligne` affichés distinctement des états du travail ; écart de capacités visible.
 UX-DR21 : Accessibilité — Noms accessibles pour toutes les icônes d'action, cibles tactiles suffisantes, texte agrandi, lecteur d'écran (ordre de lecture et annonces des changements d'état), aucun état par la seule couleur, dans les deux thèmes.
 UX-DR22 : Contenu séparé — Libellés et messages d'interface séparés des dessins et styles ; vocabulaire quotidien (Profil, Conversation), détails techniques non dominants.
 UX-DR23 : Galerie de fixtures — Galerie des composants et états représentatifs, données fictives, examinable en clair, sombre, texte agrandi et mouvement réduit, pour comparer les changements visuels.
@@ -159,7 +159,7 @@ Alanc joint photos, captures, PDF et documents, voit aperçus et limites, retire
 **FRs covered:** FR5, FR6 · NFR6
 
 ### Epic 5 : Être averti quand Hermes a fini
-App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut l'observateur serveur, FCM et `resolveLaunchTarget`. Requiert G3.
+App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut le plugin Hermes de notifications, FCM et `resolveLaunchTarget` ; l'observateur des stories 5.1–5.4 est remplacé (proposition du 2026-10-29). Requiert G3.
 **FRs covered:** FR9 (et ouverture depuis notification de FR2)
 
 ### Epic 6 : Répondre à Hermes et récupérer ses résultats
@@ -762,9 +762,11 @@ Afin de savoir plus tard sur quoi Hermes a travaillé.
 
 ## Epic 5 : Être averti quand Hermes a fini
 
-App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut l'observateur serveur, FCM et l'ouverture depuis notification. Requiert la porte G3.
+App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut le plugin Hermes de notifications, FCM et l'ouverture depuis notification. L'observateur serveur des stories 5.1 à 5.4 est remplacé par le plugin (proposition de changement du 2026-10-29). Requiert la porte G3.
 
 ### Story 5.1 : Fixer le contrat de suivi et le déploiement de l'observateur
+
+*Remplacée le 2026-10-29 par le plugin Hermes (stories 5.6 à 5.8) ; conservée pour l'historique.*
 
 En tant qu'Alanc,
 Je veux que le fonctionnement des notifications soit décidé et vérifiable avant d'être construit,
@@ -787,6 +789,8 @@ Afin que le mobile et le serveur s'accordent sur ce qui déclenche une notificat
 **Alors** chaque cas est documenté avec le comportement attendu
 
 ### Story 5.2 : Faire tourner l'observateur de fins de travail
+
+*Remplacée le 2026-10-29 par le plugin Hermes (stories 5.6 à 5.8) ; conservée pour l'historique.*
 
 En tant qu'Alanc,
 Je veux un petit service sur mon serveur qui détecte les fins de travail de Hermes,
@@ -814,6 +818,8 @@ Afin d'être averti même quand mon téléphone n'est pas connecté.
 
 ### Story 5.3 : Recevoir une notification à la fin de mon travail
 
+*Remplacée le 2026-10-29 par le plugin Hermes (stories 5.6 à 5.8) ; conservée pour l'historique.*
+
 En tant qu'Alanc,
 Je veux recevoir une notification quand Hermes a terminé, même app fermée,
 Afin de ne pas avoir à surveiller l'app.
@@ -840,6 +846,8 @@ Afin de ne pas avoir à surveiller l'app.
 
 ### Story 5.4 : Ouvrir la bonne conversation depuis une notification
 
+*Le routage reste ; sa clé passe de `subscriptionId` à `sessionId` (story 5.7, 2026-10-29).*
+
 En tant qu'Alanc,
 Je veux qu'un toucher sur la notification m'amène directement à la conversation concernée,
 Afin de lire le résultat sans chercher.
@@ -858,7 +866,88 @@ Afin de lire le résultat sans chercher.
 **Quand** Alanc la touche
 **Alors** l'app l'explique et ouvre l'accueil, sans réaffecter le résultat au fil affiché
 
+### Story 5.6 : Recevoir mes notifications par le plugin Hermes
+
+En tant qu'Alanc,
+Je veux que Hermes envoie lui-même la notification de fin,
+Afin de n'avoir rien d'autre à installer qu'un plugin.
+
+**Critères d'acceptation :**
+
+**Étant donné** le plugin `hermes-mobile-notify` installé sur un profil
+**Quand** un tour lancé depuis l'app (`platform: tui`) se termine
+**Alors** une notification FCM générique part en arrière-plan sans retarder le tour, avec `data: {outcome, sessionId}`, sans texte, chemin ni secret (FR9)
+**Et** les tours de sous-agents, de cron ou d'autres plateformes ne notifient pas
+
+**Étant donné** l'app qui envoie un message
+**Quand** elle dispose d'un jeton FCM
+**Alors** elle le transmet par `command.dispatch hermes-mobile-token` sans bloquer l'envoi
+
+**Étant donné** FCM qui répond `UNREGISTERED`
+**Quand** le plugin le constate
+**Alors** il oublie le jeton jusqu'au prochain envoi de l'app
+**Et** une erreur réseau donne lieu à un seul nouvel essai
+
+**Étant donné** le dépôt
+**Quand** la CI tourne
+**Alors** l'auto-vérification du plugin s'exécute, et `contracts/notification-tracking.json` ne décrit plus que le payload (titres, canal, `outcome`, `sessionId`)
+
+**Étant donné** la procédure d'installation
+**Quand** Alanc l'applique à un profil
+**Alors** elle tient en : copier le plugin, copier la clé, activer, redémarrer
+
+### Story 5.7 : Basculer l'app sur le plugin
+
+En tant qu'Alanc,
+Je veux que l'app ne dépende plus de l'observateur,
+Afin de ne plus rien configurer par profil.
+
+**Critères d'acceptation :**
+
+**Étant donné** une notification du plugin
+**Quand** Alanc la touche, app à froid, à chaud ou depuis les récents
+**Alors** la conversation `sessionId` du bon profil s'ouvre (FR2, FR9)
+**Et** une session inconnue localement ouvre l'accueil avec une explication
+
+**Étant donné** une notification reçue app ouverte
+**Quand** elle arrive
+**Alors** elle est traitée avec `{outcome, sessionId}`
+
+**Étant donné** l'envoi d'un message
+**Quand** `command.dispatch` répond 4018
+**Alors** le tour affiche « notification non suivie » sans bloquer l'envoi (UX-DR19)
+
+**Étant donné** les réglages du profil
+**Quand** Alanc les ouvre
+**Alors** il n'y a plus d'URL ni de bearer d'observateur ; les explications permission et arrêt forcé restent
+
+**Étant donné** la base locale
+**Quand** l'app migre
+**Alors** une migration ajoutée supprime `notification_subscriptions`, `notification_settings` et le secret `observerBearer`, sans modifier les migrations existantes
+
+### Story 5.8 : Retirer l'observateur
+
+En tant qu'Alanc,
+Je veux que l'add-on Notifier et son code disparaissent,
+Afin de n'avoir qu'un seul chemin à maintenir.
+
+**Critères d'acceptation :**
+
+**Étant donné** le dépôt
+**Quand** le retrait est fait
+**Alors** `server/notifier/`, `repository.yaml`, les étapes CI du notifier, `contracts/notification-deployment.json`, la section 5.1 de `contracts/README.md` et les mentions de `README.md` n'existent plus
+
+**Étant donné** Home Assistant et Tailscale
+**Quand** Alanc suit la procédure de la proposition de changement (section 6)
+**Alors** l'add-on est désinstallé, son dépôt retiré, `/share/hermes-notifier/` supprimé et le service `svc:hermes-notifier` n'existe plus
+
+**Étant donné** `deferred-work.md`
+**Quand** le retrait est fait
+**Alors** les reports propres à l'observateur sont clos
+
 ### Story 5.5 : Valider les notifications sur mon téléphone
+
+*Critères réécrits le 2026-10-29 pour le plugin ; jouée après 5.8.*
 
 En tant qu'Alanc,
 Je veux que les notifications soient éprouvées dans les situations réelles,
@@ -866,10 +955,17 @@ Afin de pouvoir compter dessus au quotidien.
 
 **Critères d'acceptation :**
 
-**Étant donné** le téléphone d'Alanc et l'installation réelle (profil de test)
-**Quand** les scénarios G3 sont joués : app fermée, coupure réseau pendant le travail, redémarrage de l'observateur, observateur absent pendant un envoi
-**Alors** chaque fin est notifiée une fois au moins, sans notification d'un ancien terminal, et le toucher ouvre la bonne conversation
-**Et** l'absence d'observateur produit « notification non suivie » sans bloquer l'envoi
+**Étant donné** le téléphone d'Alanc et le plugin installé
+**Quand** sont joués : app fermée, coupure réseau pendant le travail, arrêt, délégation à un sous-agent, conversation reprise, `/new`
+**Alors** chaque fin de tour de l'app est notifiée au moins une fois, sans doublon de sous-agent, et le toucher ouvre la bonne conversation
+
+**Étant donné** un profil sans plugin
+**Quand** Alanc envoie un message
+**Alors** « notification non suivie » s'affiche sans bloquer l'envoi
+
+**Étant donné** un redémarrage de Hermes pendant un travail
+**Quand** il est joué
+**Alors** le résultat est consigné ; une notification perdue est acceptée et expliquée
 
 **Étant donné** l'arrêt forcé de l'app dans les réglages Android et la permission refusée
 **Quand** ils sont testés
