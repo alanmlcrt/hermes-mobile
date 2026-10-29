@@ -57,3 +57,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-4-ouvrir-conversation-depuis-notification.md`
   summary: Vérifier sur téléphone le chemin natif du toucher (extra `subscriptionId` posé par FCM et par `show`, `takeOpened` consommé une fois, `onNewIntent` à chaud, filtre `LAUNCHED_FROM_HISTORY`).
   evidence: aucun harnais de test Android (ni `src/test` ni `androidTest`) ; le test Dart scripte la réponse native. À couvrir par les essais G3 de la story 5.5 : toucher à froid, à chaud, relance depuis les récents.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-etude-plugin-hermes-notifications.md`
+  summary: Lancer l'auto-vérification du plugin Hermes en CI quand l'essai deviendra le vrai plugin FCM.
+  evidence: `.github/workflows/ci.yml` ne lance que `server/notifier/tests` et `tool` ; `server/hermes-plugin` n'est vérifié qu'à la main.
