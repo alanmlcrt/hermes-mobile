@@ -41,6 +41,9 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Auto-vérification du plugin Hermes de notifications
+        run: python server/hermes-plugin/hermes-mobile-notify/__init__.py
+
       - name: Contrats vendorisés du notifier (dérive)
         run: python server/notifier/sync_contracts.py --check
 

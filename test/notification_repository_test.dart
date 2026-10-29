@@ -524,7 +524,7 @@ void main() {
     await firebase.dispose();
   });
 
-  group('étude 2 : jeton FCM pour le plugin Hermes', () {
+  group('jeton FCM pour le plugin de notifications Hermes', () {
     Future<Draft> sendWith(Object? Function() dispatch) async {
       final draft = await outbox.openNewDraft(connection, profile);
       await outbox.saveText(draft.key, 'private prompt');

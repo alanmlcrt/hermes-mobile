@@ -1,8 +1,0 @@
-name: hermes-mobile-spike
-version: "0.1.0"
-description: Essai Hermes Mobile - journalise les métadonnées de chaque on_session_end (aucun contenu).
-author: Hermes Mobile
-hooks:
-  - on_session_end
-provides_hooks:
-  - on_session_end

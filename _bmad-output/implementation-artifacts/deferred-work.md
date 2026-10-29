@@ -58,16 +58,9 @@
   summary: Vérifier sur téléphone le chemin natif du toucher (extra `subscriptionId` posé par FCM et par `show`, `takeOpened` consommé une fois, `onNewIntent` à chaud, filtre `LAUNCHED_FROM_HISTORY`).
   evidence: aucun harnais de test Android (ni `src/test` ni `androidTest`) ; le test Dart scripte la réponse native. À couvrir par les essais G3 de la story 5.5 : toucher à froid, à chaud, relance depuis les récents.
 
-- source_spec: `_bmad-output/implementation-artifacts/spec-etude-plugin-hermes-notifications.md`
-  summary: Lancer l'auto-vérification du plugin Hermes en CI quand l'essai deviendra le vrai plugin FCM.
-  evidence: `.github/workflows/ci.yml` ne lance que `server/notifier/tests` et `tool` ; `server/hermes-plugin` n'est vérifié qu'à la main.
-
-- source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
-  summary: Plugin de notifications : oublier un jeton refusé par FCM (`UNREGISTERED`) et réessayer simplement en cas d'échec réseau.
-  evidence: le plugin d'essai garde le jeton et chaque tour suivant échouerait ; aucun nouvel essai après une erreur transitoire.
 - source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
   summary: Plugin de notifications : plusieurs téléphones par profil, sans qu'un client écrase le jeton d'un autre.
   evidence: `HERMES_HOME/hermes-mobile/fcm-token` est unique ; le dernier client qui appelle `command.dispatch` reçoit tout.
-- source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
-  summary: Lancer l'auto-vérification de `hermes-mobile-notify` en CI dans la story du plugin.
-  evidence: `.github/workflows/ci.yml` ne lance pas `server/hermes-plugin`.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-6-plugin-hermes-notifications.md`
+  summary: Réduire `contracts/notification-tracking.json` au seul payload du plugin (titres, canal, `outcome`, `sessionId`) dans la story 5.8, avec le retrait de l'observateur.
+  evidence: décision d'Alanc du 2026-10-29 ; le notifier (`contracts.py`, `sync_contracts.py --check`, tests, smoke Docker) et `test/notification_contract_test.dart` lisent encore le registre et le payload `subscriptionId`.

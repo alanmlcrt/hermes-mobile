@@ -1,4 +1,4 @@
-"""Plugin d'essai Hermes Mobile : notification FCM générique à chaque fin de tour.
+"""Plugin Hermes Mobile : notification FCM générique à chaque fin de tour.
 
 - ``/hermes-mobile-token <jeton>`` mémorise le jeton FCM du téléphone dans
   ``HERMES_HOME/hermes-mobile/fcm-token`` (l'app l'envoie par ``command.dispatch``
@@ -11,6 +11,10 @@ Le compte de service est lu dans ``HERMES_HOME/hermes-mobile/service-account.jso
 porte que ``outcome`` et ``sessionId``. Le journal ``session-end.jsonl`` (dossier
 du plugin) et ``agent.log`` ne gardent du jeton que ses 8 derniers caractères.
 Aucune erreur ne remonte au tour.
+
+Erreurs FCM : un seul nouvel essai (après ``_RETRY_DELAY``) sur erreur de
+transport ou HTTP 5xx ; ``UNREGISTERED`` supprime ``fcm-token`` s'il porte
+encore ce jeton (l'app le renverra au prochain message). Pas de file durable.
 """
 
 import json
@@ -29,6 +33,8 @@ _STATE_DIR = "hermes-mobile"
 _TOKEN_FILE = "fcm-token"
 _KEY_FILE = "service-account.json"
 _TIMEOUT = 8.0
+_RETRY_DELAY = 2.0  # secondes avant l'unique nouvel essai (patché par l'auto-vérification)
+_MAX_ATTEMPTS = 2
 _SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
 _TOKEN_URI = "https://oauth2.googleapis.com/token"
 
@@ -58,6 +64,7 @@ _SCALARS = (str, int, float, bool, type(None))
 _USAGE = "usage : /hermes-mobile-token <jeton FCM>"
 
 _journal_lock = threading.Lock()
+_token_lock = threading.Lock()  # écriture du jeton par la commande / oubli par le fil d'envoi
 _credentials_lock = threading.Lock()
 _credentials_cache = {}  # chemin -> (mtime, credentials, project_id)
 
@@ -115,19 +122,20 @@ def _cmd_token(raw_args=""):
         state = _state_dir()
         state.mkdir(parents=True, exist_ok=True)
         path = state / _TOKEN_FILE
-        try:
-            previous = path.read_text(encoding="utf-8").strip()
-        except OSError:
-            previous = None
-        changed = previous != token
-        if changed:
-            tmp = path.with_name(_TOKEN_FILE + ".tmp")
-            tmp.write_text(token, encoding="utf-8")
+        with _token_lock:
             try:
-                os.chmod(tmp, 0o600)
+                previous = path.read_text(encoding="utf-8").strip()
             except OSError:
-                pass
-            os.replace(tmp, path)
+                previous = None
+            changed = previous != token
+            if changed:
+                tmp = path.with_name(_TOKEN_FILE + ".tmp")
+                tmp.write_text(token, encoding="utf-8")
+                try:
+                    os.chmod(tmp, 0o600)
+                except OSError:
+                    pass
+                os.replace(tmp, path)
         try:
             _journal({"ts": _now(), "event": "token", "token_tail": _tail(token), "changed": changed})
         except Exception:
@@ -242,13 +250,39 @@ def _send(record, state):
         return "failed", None, "key_invalid"
     body = _payload(token, session_id, record["outcome"])
     url = f"https://fcm.googleapis.com/v1/projects/{project_id}/messages:send"
+    attempt = 0
+    while True:
+        attempt += 1
+        record["attempts"] = attempt
+        last = attempt >= _MAX_ATTEMPTS
+        try:
+            status, fcm_error = _post(url, body, credentials)
+        except Exception as exc:
+            if last:
+                return "failed", None, type(exc).__name__
+            time.sleep(_RETRY_DELAY)
+            continue
+        if 200 <= status < 300:
+            return "sent", status, None
+        if fcm_error == "UNREGISTERED":
+            _forget_token(state, token)
+            return "failed", status, fcm_error
+        if status >= 500 and not last:
+            time.sleep(_RETRY_DELAY)
+            continue
+        return "failed", status, fcm_error or "fcm_http"
+
+
+def _forget_token(state, token):
+    """Supprime ``fcm-token`` s'il contient encore ``token`` (jamais un jeton renvoyé depuis)."""
+    path = state / _TOKEN_FILE
     try:
-        status, fcm_error = _post(url, body, credentials)
-    except Exception as exc:
-        return "failed", None, type(exc).__name__
-    if 200 <= status < 300:
-        return "sent", status, None
-    return "failed", status, fcm_error or "fcm_http"
+        with _token_lock:
+            if path.read_text(encoding="utf-8").strip() == token:
+                path.unlink()
+                logger.info("hermes-mobile-notify jeton refusé par FCM oublié (…%s)", _tail(token))
+    except OSError:
+        pass
 
 
 def _payload(token, session_id, outcome):
@@ -340,8 +374,8 @@ _post = _http_post
 def _self_check():
     import tempfile
 
-    global _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn
-    saved = (_LOG_PATH, _hermes_home, _load_credentials, _post, _spawn)
+    global _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY
+    saved = (_LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY)
     token = "synthetic-fcm-token-0123456789-ABCDEFGH"
     hooks, commands, sent, threads, records, spawned = {}, {}, [], [], [], []
 
@@ -385,6 +419,7 @@ def _self_check():
             _LOG_PATH = os.path.join(tmp, "session-end.jsonl")
             _hermes_home = lambda: home
             _spawn = spawn
+            _RETRY_DELAY = 0.05
 
             def post(url, body, credentials):
                 sent.append((url, body))
@@ -425,6 +460,7 @@ def _self_check():
             )
             assert elapsed < 0.2, elapsed
             assert (line["action"], line["status"], line["outcome"]) == ("sent", 200, "succeeded"), line
+            assert line["attempts"] == 1, line
             assert line["duration_ms"] >= 500 and line["extra_keys"] == ["messages"], line
             url, body = sent[-1]
             assert url == "https://fcm.googleapis.com/v1/projects/hermes-mobile-test/messages:send"
@@ -445,22 +481,83 @@ def _self_check():
 
             # Sous-agent (ou toute plateforme hors app) : journalisé, ni fil ni envoi.
             before, forks = len(sent), len(spawned)
-            line, _ = end_turn(session_id="s2-child", completed=True, platform="subagent")
-            assert (line["action"], line["reason"], line["platform"]) == ("skipped", "platform", "subagent"), line
+            for platform in ("subagent", "cron", "telegram"):
+                line, _ = end_turn(session_id="s2-child", completed=True, platform=platform)
+                assert (line["action"], line["reason"], line["platform"]) == ("skipped", "platform", platform), line
             assert len(sent) == before and len(spawned) == forks
 
-            # FCM refuse : statut HTTP noté.
-            _post = lambda url, body, credentials: (404, "UNREGISTERED")
-            line, _ = end_turn(session_id="s3", completed=True)
-            assert (line["action"], line["status"], line["reason"]) == ("failed", 404, "UNREGISTERED"), line
+            token_path = state / _TOKEN_FILE
 
-            # Réseau en panne, clé illisible : aucune exception.
-            def down(url, body, credentials):
-                raise ConnectionError("synthetic")
+            def scripted(*answers):
+                """Transport rejouant ``answers`` : (statut, code) ou exception."""
+                calls = []
 
-            _post = down
+                def fake(url, body, credentials):
+                    calls.append(body)
+                    answer = answers[min(len(calls), len(answers)) - 1]
+                    if isinstance(answer, Exception):
+                        raise answer
+                    if callable(answer):
+                        return answer()
+                    return answer
+
+                return fake, calls
+
+            # Refus non transitoire (4xx autre qu'UNREGISTERED) : aucun nouvel essai, jeton gardé.
+            _post, calls = scripted((400, "INVALID_ARGUMENT"))
             line, _ = end_turn(session_id="s3", completed=True)
-            assert (line["action"], line["status"], line["reason"]) == ("failed", None, "ConnectionError"), line
+            assert (line["action"], line["status"], line["reason"], line["attempts"]) == (
+                "failed", 400, "INVALID_ARGUMENT", 1), line
+            assert len(calls) == 1 and token_path.read_text(encoding="utf-8") == token
+
+            # Erreur réseau puis succès : un seul nouvel essai, après le délai.
+            _post, calls = scripted(ConnectionError("synthetic"), (200, None))
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["status"], line["attempts"]) == ("sent", 200, 2), line
+            assert len(calls) == 2 and line["duration_ms"] >= 50, line
+
+            # HTTP 503 puis succès : nouvel essai aussi.
+            _post, calls = scripted((503, "UNAVAILABLE"), (200, None))
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["attempts"]) == ("sent", 2) and len(calls) == 2, line
+
+            # Deux erreurs réseau : échec, pas de troisième essai, aucune exception.
+            _post, calls = scripted(ConnectionError("synthetic"))
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["status"], line["reason"], line["attempts"]) == (
+                "failed", None, "ConnectionError", 2), line
+            assert len(calls) == 2
+
+            # 429 : refus 4xx, échec sans nouvel essai, jeton gardé.
+            _post, calls = scripted((429, "QUOTA_EXCEEDED"))
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["status"], line["attempts"]) == ("failed", 429, 1), line
+            assert len(calls) == 1 and token_path.read_text(encoding="utf-8") == token
+
+            # UNREGISTERED : jeton oublié, sans nouvel essai ; le tour suivant n'envoie rien.
+            _post, calls = scripted((404, "UNREGISTERED"))
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["status"], line["reason"], line["attempts"]) == (
+                "failed", 404, "UNREGISTERED", 1), line
+            assert len(calls) == 1 and not token_path.exists()
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["reason"]) == ("skipped", "no_token"), line
+            assert len(calls) == 1
+
+            # UNREGISTERED alors que l'app a renvoyé un autre jeton entre-temps : le nouveau est gardé.
+            assert cmd(token) == "ok"
+            fresh = "synthetic-fresh-token-9876543210-ZYXWVUTS"
+
+            def resent():
+                assert cmd(fresh) == "ok"
+                return 404, "UNREGISTERED"
+
+            _post, calls = scripted(resent)
+            line, _ = end_turn(session_id="s3", completed=True)
+            assert (line["action"], line["reason"]) == ("failed", "UNREGISTERED"), line
+            assert token_path.read_text(encoding="utf-8") == fresh
+            assert cmd(token) == "ok"
+            _post = post
 
             def bad_key(path):
                 raise ValueError("synthetic")
@@ -499,7 +596,7 @@ def _self_check():
             _Resp.json = lambda self: {"error": {"status": "free text"}}
             assert _fcm_error(_Resp()) is None
         finally:
-            _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn = saved
+            _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY = saved
             logger.removeHandler(capture)
     print("hermes-mobile-notify: auto-vérification réussie")
 

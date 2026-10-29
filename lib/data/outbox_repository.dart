@@ -762,7 +762,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     }
   }
 
-  /// Étude 2 : transmet le jeton FCM au plugin Hermes `hermes-mobile-notify`.
+  /// Transmet le jeton FCM au plugin de notifications Hermes `hermes-mobile-notify`.
   /// Lancé sans attente, à côté de `prompt.submit` ; ni le jeton ni la réponse
   /// ne sont attendus par l'envoi, et toute erreur est ignorée.
   Future<void> _shareTokenWithPlugin(ConnectionGateway g) async {
