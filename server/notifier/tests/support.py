@@ -443,6 +443,9 @@ class FakeHermes:
             session = self.sessions.get(session_id)
             if session is not None and session.since_error is not None:
                 error_code = session.since_error
+            elif "last_seen" in params and last_seen is None:
+                # Gateway réel (essai 5.5) : « last_seen must be an integer ».
+                error_code = -32602
             else:
                 error_code = None
             if session is not None and session.invalid_since:

@@ -750,15 +750,15 @@ class Observer:
         profile: str,
         last_seen: int | None,
     ) -> SinceResult:
-        result = await rpc.call(
-            "session.events.since",
-            {
-                "session_id": runtime,
-                "profile": profile or None,
-                "last_seen": last_seen,
-            },
-            timeout=15.0,
-        )
+        params: dict[str, Any] = {
+            "session_id": runtime,
+            "profile": profile or None,
+        }
+        # Le gateway réel refuse ``last_seen: null`` (essai 5.5) : sans
+        # curseur, on omet le champ, ce qui demande tout l'historique.
+        if last_seen is not None:
+            params["last_seen"] = last_seen
+        result = await rpc.call("session.events.since", params, timeout=15.0)
         raw_events = result.get("events")
         latest = result.get("latest_seq")
         truncated = result.get("truncated")
