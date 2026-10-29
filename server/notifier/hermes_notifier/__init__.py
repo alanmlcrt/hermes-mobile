@@ -6,4 +6,4 @@ lecture seule. Aucun push FCM réel n'est envoyé en 5.2 ; le transport est un
 dry-run local.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

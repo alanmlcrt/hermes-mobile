@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
+from hermes_notifier import __version__
 from hermes_notifier.errors import StorageError
 from hermes_notifier.health import HealthState
 from hermes_notifier.store import Store
@@ -42,7 +43,7 @@ class HealthTest(unittest.TestCase):
         self.assertEqual(response["reasons"], [])
         self.assertEqual(set(response["counters"]), set(self.contracts.health_counters))
         self.assertTrue(all(value == 0 for value in response["counters"].values()))
-        self.assertEqual(response["version"], "0.1.0")
+        self.assertEqual(response["version"], __version__)
         self.assertRegex(
             response["checkedAt"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"
         )

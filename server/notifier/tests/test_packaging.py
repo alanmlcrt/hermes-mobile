@@ -23,7 +23,8 @@ class PackagingTest(unittest.TestCase):
         self.assertEqual(data["version"], __version__)
         self.assertEqual(data["slug"], "hermes_notifier")
         self.assertNotIn("ports", data)
-        self.assertEqual(data["watchdog"], "tcp://[HOST]:[PORT:8787]")
+        self.assertNotIn("watchdog", data)
+        self.assertTrue(data["host_network"])
         self.assertEqual(data["arch"], ["amd64", "aarch64"])
         # `/data` est toujours monté par le Supervisor : aucune entrée `map`
         # n'est nécessaire, et aucun autre chemin persistant n'est exposé.
@@ -89,15 +90,16 @@ class PackagingTest(unittest.TestCase):
 
         self.assertEqual(sync_contracts.sync(True), 0)
 
-    def test_watchdog_et_port_par_defaut(self) -> None:
+    def test_ecoute_boucle_locale_et_port_par_defaut(self) -> None:
         data = yaml.safe_load((ADDON / "config.yaml").read_text(encoding="utf-8"))
-        match = re.fullmatch(r"tcp://\[HOST\]:\[PORT:(\d+)\]", data["watchdog"])
-        assert match is not None
         from hermes_notifier.config import Config
 
         config = Config.load(options=data["options"], environ={})
-        self.assertEqual(config.port, int(match.group(1)))
-        self.assertEqual(config.port, 8787)
+        self.assertEqual((config.bind, config.port), ("0.0.0.0", 8787))
+        bound = Config.load(options=data["options"], environ={"HERMES_NOTIFIER_BIND": "127.0.0.1"})
+        self.assertEqual(bound.bind, "127.0.0.1")
+        # L'add-on tourne sur le réseau hôte : run.sh doit forcer la boucle locale.
+        self.assertIn('HERMES_NOTIFIER_BIND="${HERMES_NOTIFIER_BIND:-127.0.0.1}"', (ADDON / "run.sh").read_text(encoding="utf-8"))
         self.assertNotIn("port", data["schema"])
         self.assertNotIn("ports", data)
 

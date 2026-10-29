@@ -1,4 +1,4 @@
-version: "0.1.0"
+version: "0.1.1"
 slug: "hermes_notifier"
 name: "Hermes Notifier"
 description: "Observateur des fins de travail Hermes, outbox durable et santé, en lecture seule."
@@ -9,7 +9,11 @@ arch:
 startup: application
 boot: auto
 init: false
-watchdog: "tcp://[HOST]:[PORT:8787]"
+# Réseau hôte, écoute sur 127.0.0.1:8787 seulement (run.sh) : Tailscale Services
+# (add-on Tailscale, cibles limitées à 127.0.0.1) publie l'API en HTTPS sur le
+# tailnet. Aucun port publié ; pas de watchdog TCP, le Supervisor ne joint pas
+# la boucle locale de l'hôte.
+host_network: true
 # `/data` est toujours monté par le Supervisor, en lecture-écriture et sans
 # Le dossier share est monté en lecture seule pour le compte de service privé.
 map:

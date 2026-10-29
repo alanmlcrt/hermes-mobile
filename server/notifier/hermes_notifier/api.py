@@ -105,7 +105,7 @@ class NotificationApi:
                 super().__init__(address, _Handler)
                 self.api = api
 
-        self._server = _Server(("0.0.0.0", self.config.port))
+        self._server = _Server((self.config.bind, self.config.port))
         return self._server
 
     @property

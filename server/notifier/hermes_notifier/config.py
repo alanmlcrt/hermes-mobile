@@ -63,6 +63,9 @@ class Config:
     rate_limit_per_minute: int = 120
     # Port d'écoute interne. Le contrat propose 8787 ; 0 est réservé aux tests.
     port: int = 8787
+    # Adresse d'écoute. L'add-on (réseau hôte) force 127.0.0.1 via run.sh :
+    # seul Tailscale Services, sur l'hôte, peut alors joindre l'API.
+    bind: str = "0.0.0.0"
     options_path: Path | None = field(default=None, compare=False, repr=False)
 
     # --- chargement -----------------------------------------------------
@@ -147,6 +150,7 @@ class Config:
             log_level=log_level,
             rate_limit_per_minute=rate_limit,
             port=port,
+            bind=str(environ.get("HERMES_NOTIFIER_BIND") or "0.0.0.0").strip(),
             options_path=path if options is None else None,
         )
 
