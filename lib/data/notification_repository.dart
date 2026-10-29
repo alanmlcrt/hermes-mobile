@@ -234,9 +234,12 @@ class NotificationRepository implements NotificationGateway {
     final sub = rows.single;
     if (sub['state'] == 'revoked' || sub['state'] == 'revokePending') return;
     final id = sub['subscription_id'] as String;
-    final execution = row == null || session.isEmpty
+    // Hermes ne reprend une session que par son id stocké (sinon 4007,
+    // essai 5.5) : l'observateur reçoit cet id et l'exécution en dérive.
+    final target = sub['stored_session_id'] as String? ?? session;
+    final execution = row == null || target.isEmpty
         ? null
-        : base64Url.encode(utf8.encode('$session:$row')).replaceAll('=', '');
+        : base64Url.encode(utf8.encode('$target:$row')).replaceAll('=', '');
     await database.update(
       'notification_subscriptions',
       {'session_id': session, 'execution_id': execution},
@@ -271,7 +274,7 @@ class NotificationRepository implements NotificationGateway {
         registered &&
         deadline.elapsed < budget &&
         await _request(config, 'POST', '/v1/subscriptions/$id/attach', {
-          'sessionId': session,
+          'sessionId': target,
           'profile': sub['profile_key'],
           'executionId': execution,
         }, budget: budget - deadline.elapsed);

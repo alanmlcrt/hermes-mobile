@@ -48,7 +48,8 @@ class _SessionGone(Exception):
 
 
 # Codes JSON-RPC du gateway Hermes utiles à la reprise.
-_RPC_SESSION_NOT_FOUND = -32004
+# -32004 du contrat ; 4007 « session not found » du gateway réel (essai 5.5).
+_RPC_SESSION_NOT_FOUND = frozenset({-32004, 4007})
 _RPC_INVALID_PARAMS = -32602
 _RPC_METHOD_NOT_FOUND = -32601
 _RPC_TRANSIENT = frozenset({-32603, -32000, -32001})
@@ -376,7 +377,7 @@ class Observer:
         except HermesRpcError as error:
             if error.rpc_code == _RPC_METHOD_NOT_FOUND:
                 raise _rpc_error(error) from error
-            if error.rpc_code == _RPC_SESSION_NOT_FOUND:
+            if error.rpc_code in _RPC_SESSION_NOT_FOUND:
                 raise _SessionGone() from error
             if error.rpc_code != _RPC_INVALID_PARAMS:
                 raise _rpc_error(error) from error
@@ -385,7 +386,7 @@ class Observer:
             try:
                 return await rpc.call("session.resume", base, timeout=15.0)
             except HermesRpcError as fallback:
-                if fallback.rpc_code == _RPC_SESSION_NOT_FOUND:
+                if fallback.rpc_code in _RPC_SESSION_NOT_FOUND:
                     raise _SessionGone() from fallback
                 raise _rpc_error(fallback) from fallback
 

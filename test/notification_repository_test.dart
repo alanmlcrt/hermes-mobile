@@ -174,7 +174,7 @@ void main() {
     await directory.delete(recursive: true);
   });
 
-  test('register précède submit ; attach utilise uniquement runtime et ligne confirmée', () async {
+  test('register précède submit ; attach utilise la session stockée et la ligne confirmée', () async {
     await configure();
     final draft = await send(verifyRegistration: true);
     expect(outbox.status(draft.key).state, OperationState.accepted);
@@ -182,10 +182,11 @@ void main() {
     expect(sub['state'], 'attached');
     expect(sub['stored_session_id'], '<SYNTHETIC_STORED_SESSION>');
     expect(jsonDecode(requests.last.body), {
-      'sessionId': 'a1b2c3d4',
+      // Essai 5.5 : Hermes ne reprend que l'id stocké (4007 pour le runtime).
+      'sessionId': '<SYNTHETIC_STORED_SESSION>',
       'profile': 'default',
       'executionId': base64Url
-          .encode(utf8.encode('a1b2c3d4:42'))
+          .encode(utf8.encode('<SYNTHETIC_STORED_SESSION>:42'))
           .replaceAll('=', ''),
     });
     expect(
@@ -256,7 +257,10 @@ void main() {
       (await db.query('notification_subscriptions')).single['state'],
       'attached',
     );
-    expect(jsonDecode(requests.last.body)['sessionId'], 'a1b2c3d4');
+    expect(
+      jsonDecode(requests.last.body)['sessionId'],
+      '<SYNTHETIC_STORED_SESSION>',
+    );
     expect(
       h.transport.frames.where((f) => f['method'] == 'prompt.submit'),
       hasLength(1),

@@ -456,7 +456,14 @@ class ObserverTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(self.fake.since_calls), 2)
 
     def test_session_disparue_expire_apres_max_attempts(self) -> None:
-        self.fake.add_session("s-gone", resume_error=True)
+        self._session_disparue_expire(True)
+
+    def test_session_disparue_code_gateway_4007_expire(self) -> None:
+        # Essai 5.5 : le gateway réel répond 4007 « session not found ».
+        self._session_disparue_expire(4007)
+
+    def _session_disparue_expire(self, resume_error: bool | int) -> None:
+        self.fake.add_session("s-gone", resume_error=resume_error)
         subscription = self.register()
         self.service.stop()
         # Le helper ``attach`` attend un curseur que la session absente ne

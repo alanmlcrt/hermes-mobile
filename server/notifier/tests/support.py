@@ -42,7 +42,7 @@ class SessionState:
     events: list[dict[str, Any]] = field(default_factory=list)
     latest_seq: int = 0
     truncated: bool = False
-    resume_error: bool = False
+    resume_error: bool | int = False
     omit_error: bool = False
     since_error: int | None = None
     invalid_since: bool = False
@@ -396,7 +396,10 @@ class FakeHermes:
             if session is None:
                 error = -32004
             elif session.resume_error:
-                error = -32004
+                # ``True`` : code du contrat ; un entier : code réel du gateway.
+                error = (
+                    -32004 if session.resume_error is True else session.resume_error
+                )
             elif omit and session.omit_error:
                 error = -32602
             else:
@@ -490,7 +493,7 @@ class FakeHermes:
         session_id: str,
         *,
         truncated: bool = False,
-        resume_error: bool = False,
+        resume_error: bool | int = False,
         omit_error: bool = False,
         since_error: int | None = None,
         invalid_since: bool = False,
