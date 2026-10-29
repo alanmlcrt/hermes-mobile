@@ -26,6 +26,7 @@ SAFE_FIELDS: Final = frozenset(
         "outcome",
         "port",
         "reason",
+        "rpc_code",
         "schema_valid",
         "state",
         "status",

@@ -283,6 +283,8 @@ class Observer:
                         "observer.unreachable",
                         attempt=session_failures,
                         reason=error.code,
+                        # Code JSON-RPC numérique, sans contenu : diagnostic 5.5.
+                        rpc_code=getattr(error, "rpc_code", None),
                     )
                     await self._sleep(self._delay(session_failures - 1))
                     continue
@@ -291,6 +293,7 @@ class Observer:
                     "observer.unreachable",
                     attempt=failures,
                     reason=error.code,
+                    rpc_code=getattr(error, "rpc_code", None),
                 )
                 await self._sleep(self._delay(failures - 1))
                 continue
