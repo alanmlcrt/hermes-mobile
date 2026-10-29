@@ -538,6 +538,12 @@ abstract final class HermesRpc {
     'text': text,
   };
 
+  /// Commande de plugin Hermes (`command.dispatch`), hors session.
+  static Map<String, dynamic> dispatchParams(String name, String arg) => {
+    'name': name,
+    'arg': arg,
+  };
+
   /// `null` si la réponse n'est pas une acceptation connue.
   static ({int? userRowId})? submitted(Map<String, dynamic> r) {
     if (!_accepted.contains(r['status'])) return null;

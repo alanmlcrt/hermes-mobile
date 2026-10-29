@@ -61,3 +61,13 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-etude-plugin-hermes-notifications.md`
   summary: Lancer l'auto-vérification du plugin Hermes en CI quand l'essai deviendra le vrai plugin FCM.
   evidence: `.github/workflows/ci.yml` ne lance que `server/notifier/tests` et `tool` ; `server/hermes-plugin` n'est vérifié qu'à la main.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
+  summary: Plugin de notifications : oublier un jeton refusé par FCM (`UNREGISTERED`) et réessayer simplement en cas d'échec réseau.
+  evidence: le plugin d'essai garde le jeton et chaque tour suivant échouerait ; aucun nouvel essai après une erreur transitoire.
+- source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
+  summary: Plugin de notifications : plusieurs téléphones par profil, sans qu'un client écrase le jeton d'un autre.
+  evidence: `HERMES_HOME/hermes-mobile/fcm-token` est unique ; le dernier client qui appelle `command.dispatch` reçoit tout.
+- source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
+  summary: Lancer l'auto-vérification de `hermes-mobile-notify` en CI dans la story du plugin.
+  evidence: `.github/workflows/ci.yml` ne lance pas `server/hermes-plugin`.

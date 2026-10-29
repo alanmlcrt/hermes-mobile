@@ -523,4 +523,76 @@ void main() {
     expect(await firebase.token(), isNull);
     await firebase.dispose();
   });
+
+  group('étude 2 : jeton FCM pour le plugin Hermes', () {
+    Future<Draft> sendWith(Object? Function() dispatch) async {
+      final draft = await outbox.openNewDraft(connection, profile);
+      await outbox.saveText(draft.key, 'private prompt');
+      h.transport.rpc = (method, params) => switch (method) {
+        'session.create' => Map<String, dynamic>.from(
+          fixture('session-create')['result'],
+        ),
+        'command.dispatch' => dispatch(),
+        'prompt.submit' => Map<String, dynamic>.from(
+          fixture('prompt-submit')['result'],
+        ),
+        _ => null,
+      };
+      await outbox.send(draft.key);
+      // Partage du jeton lancé sans attente : laisser sa trame partir.
+      await pumpEventQueue();
+      return draft;
+    }
+
+    List<String?> methods() => [
+      for (final f in h.transport.frames) f['method'] as String?,
+    ];
+
+    test('command.dispatch porte le jeton', () async {
+      final draft = await sendWith(
+        () => {'type': 'plugin', 'output': 'ok'},
+      );
+      expect(outbox.status(draft.key).state, OperationState.accepted);
+      final frame = h.transport.frames.singleWhere(
+        (f) => f['method'] == 'command.dispatch',
+      );
+      expect(frame['params'], {
+        'name': 'hermes-mobile-token',
+        'arg': 'synthetic-device',
+      });
+    });
+
+    for (final (label, answer) in [
+      ('refus', const RpcFail(4018)),
+      ('silence', null),
+    ]) {
+      test('$label de la commande : envoi accepté quand même', () async {
+        final draft = await sendWith(() => answer);
+        expect(outbox.status(draft.key).state, OperationState.accepted);
+        expect(methods(), contains('command.dispatch'));
+      });
+    }
+
+    test('jeton indisponible : aucune commande, envoi accepté', () async {
+      device.value = null;
+      final draft = await sendWith(() => fail('aucun appel attendu'));
+      expect(outbox.status(draft.key).state, OperationState.accepted);
+      expect(methods(), isNot(contains('command.dispatch')));
+    });
+
+    for (final (label, acquire) in <(String, Future<String?> Function())>[
+      ('muet', () => Completer<String?>().future),
+      ('en erreur', () => Future<String?>.error(StateError('synthetic'))),
+    ]) {
+      test('jeton $label : envoi accepté sans attendre', () async {
+        device.acquire = acquire;
+        final clock = Stopwatch()..start();
+        final draft = await sendWith(() => fail('aucun appel attendu'));
+        expect(clock.elapsed, lessThan(const Duration(seconds: 2)));
+        expect(outbox.status(draft.key).state, OperationState.accepted);
+        expect(methods(), contains('prompt.submit'));
+        expect(methods(), isNot(contains('command.dispatch')));
+      });
+    }
+  });
 }

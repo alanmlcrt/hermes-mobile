@@ -1,0 +1,8 @@
+name: hermes-mobile-notify
+version: "0.1.0"
+description: Essai Hermes Mobile - notification FCM générique à chaque fin de tour (aucun contenu) ; commande /hermes-mobile-token.
+author: Hermes Mobile
+hooks:
+  - on_session_end
+provides_hooks:
+  - on_session_end

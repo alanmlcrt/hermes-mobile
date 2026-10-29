@@ -762,6 +762,30 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     }
   }
 
+  /// Étude 2 : transmet le jeton FCM au plugin Hermes `hermes-mobile-notify`.
+  /// Lancé sans attente, à côté de `prompt.submit` ; ni le jeton ni la réponse
+  /// ne sont attendus par l'envoi, et toute erreur est ignorée.
+  Future<void> _shareTokenWithPlugin(ConnectionGateway g) async {
+    try {
+      final token = await notifications?.device.token().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
+      );
+      if (token == null || token.isEmpty) return;
+      unawaited(
+        g
+            .call(
+              'command.dispatch',
+              HermesRpc.dispatchParams('hermes-mobile-token', token),
+              timeout: timeout,
+            )
+            .then<void>((_) {}, onError: (Object _) {}),
+      );
+    } catch (_) {
+      /* Jeton facultatif : jamais bloquant. */
+    }
+  }
+
   @override
   Future<void> send(DraftKey key) async {
     // Gardes synchrones : aucun second envoi ne passe avant le premier await.
@@ -1044,6 +1068,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           /* Une panne de stockage reste indépendante de l'envoi. */
         }
       }
+      unawaited(_shareTokenWithPlugin(g));
       if (status(key).turnActive) {
         // Session reprise en plein tour : rien n'est soumis.
         await _finish(
