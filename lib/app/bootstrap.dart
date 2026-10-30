@@ -8,10 +8,12 @@ import '../data/intervention_repository.dart';
 import '../data/outbox_repository.dart';
 import '../data/notification_repository.dart';
 import '../data/firebase_notification_client.dart';
+import '../data/result_opener.dart';
 import '../data/storage/connection_store.dart';
 import '../data/storage/database.dart';
 import '../data/storage/companion_background_store.dart';
 import '../data/storage/profile_accent_store.dart';
+import '../data/storage/result_files.dart';
 import '../models/companion_background.dart';
 import '../data/storage/secret_store.dart';
 import '../models/connection_gateway.dart';
@@ -48,6 +50,9 @@ bootstrap() async {
     database,
     gateway: repository,
     mapping: await EventMapping.load(),
+    downloads: repository,
+    opener: const DeviceResultOpener(),
+    resultFiles: ResultFiles(),
   );
   return (
     gateway: repository,

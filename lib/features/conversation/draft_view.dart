@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/draft.dart';
 import '../../models/attachment.dart';
 import '../../models/profile.dart';
+import '../../models/result.dart';
 import '../../models/timeline.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/activity_group.dart';
@@ -13,6 +14,7 @@ import '../../ui/components/approval_card.dart';
 import '../../ui/components/message_bubble.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/components/question_card.dart';
+import '../../ui/components/result_card.dart';
 import '../../ui/components/status_label.dart';
 import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
@@ -314,7 +316,7 @@ class _DraftViewState extends State<DraftView> {
         Semantics(
           liveRegion: true,
           child: Text(
-            draft == null
+            draft == null || vm.error!.code.startsWith('result.')
                 ? Content.error(vm.error!.code)
                 : '${Content.error(vm.error!.code)} ${Content.draftKept}',
           ),
@@ -485,6 +487,12 @@ class _DraftViewState extends State<DraftView> {
       timeline.turns > timeline.userTurns ? timeline.turns : timeline.userTurns,
       (latest, item) => item.turn > latest ? item.turn : latest,
     );
+    // Activités ayant effectivement produit une carte : elles ne portent pas
+    // la mention « non récupérable ».
+    final resultKeys = {
+      for (final item in timeline.items)
+        if (item is ResultItem) item.resultKey,
+    };
     // Un seul passage de regroupement ; les blocs de chaque tour sont ensuite
     // des entrées distinctes du ListView.builder (pas de Column de tout le tour).
     final groups = <int, List<TimelineItem>>{};
@@ -507,6 +515,9 @@ class _DraftViewState extends State<DraftView> {
         completed: item.completed,
         paused: vm.resyncing,
         details: item.details,
+        resultProduced:
+            item.eventKey != null &&
+            resultKeys.contains(ResultKey.of(item.eventKey!)),
         expanded:
             _detailExpansion[(vm.draft?.key, item.eventKey ?? item)] ?? false,
         onChanged: (value) => setState(
@@ -537,6 +548,14 @@ class _DraftViewState extends State<DraftView> {
         previousUnanswered: item.previousUnanswered,
         canDecide: vm.canAnswer,
         onDecide: (choice) => vm.decide(item.requestId, choice),
+      ),
+      ResultItem() => ResultCard(
+        key: ValueKey(('result', vm.draft?.key, item.resultKey)),
+        item: item,
+        canDownload: vm.canDownloadResult,
+        blockedReason: vm.resultBlockedReason,
+        onDownload: () => vm.downloadResult(item.resultKey),
+        onOpen: () => vm.openResult(item.resultKey),
       ),
     };
     // Les activités provisoires du prochain envoi restent après l'historique,

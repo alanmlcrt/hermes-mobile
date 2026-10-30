@@ -134,7 +134,10 @@ class AppRoutes {
     ApprovalModes? approvalModes,
   }) : _gateway = gateway,
        _outbox = outbox,
-       _notifications = notifications {
+       _notifications = notifications,
+       _results = conversation is ResultGateway
+           ? conversation as ResultGateway
+           : null {
     connection = ConnectionViewModel(gateway);
     this.accents = ProfileAccents(gateway, accents);
     profiles = ProfilesViewModel(gateway, backgrounds: backgrounds);
@@ -240,6 +243,7 @@ class AppRoutes {
               gateway: gateway,
               conversation: conversation,
               interventions: interventions,
+              results: _results,
               key: DraftKey(state.pathParameters['draftKey']!),
             ),
             accents: this.accents,
@@ -297,6 +301,7 @@ class AppRoutes {
                 gateway: gateway,
                 conversation: conversation,
                 interventions: interventions,
+                results: _results,
                 key: key,
               ),
               accents: this.accents,
@@ -339,6 +344,7 @@ class AppRoutes {
   final ConnectionGateway _gateway;
   final OutboxGateway _outbox;
   final NotificationRepository? _notifications;
+  final ResultGateway? _results;
 
   /// Messages globaux (cible de notification absente), hors de toute page.
   final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();

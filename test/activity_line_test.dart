@@ -669,6 +669,98 @@ void main() {
     );
   }
 
+  group('chemins de fichiers', () {
+    testWidgets(
+      'activité non write_file : chemin absolu avec mention non récupérable',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: ActivityLine(
+                kind: ActivityKind.tool,
+                completed: true,
+                details: {
+                  'name': 'read_file',
+                  'args': {'path': '/home/u/x.csv'},
+                },
+              ),
+            ),
+          ),
+        );
+        expect(find.text(Content.activityPathUnavailable), findsOneWidget);
+        expect(find.byType(TextButton), findsNothing);
+        expect(
+          tester
+              .getSemantics(
+                find.bySemanticsLabel(
+                  '${Content.activityTool}, ${Content.activityEndAccessible}',
+                ),
+              )
+              .value,
+          contains(Content.activityPathUnavailable),
+        );
+        semantics.dispose();
+      },
+    );
+
+    testWidgets('write_file ayant produit une carte : aucune mention', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ActivityLine(
+              kind: ActivityKind.tool,
+              completed: true,
+              resultProduced: true,
+              details: {
+                'name': 'write_file',
+                'args': {'path': '/home/u/rapport.pdf'},
+              },
+            ),
+          ),
+        ),
+      );
+      expect(find.text(Content.activityPathUnavailable), findsNothing);
+      expect(find.text('/home/u/rapport.pdf'), findsOneWidget);
+    });
+
+    testWidgets('commande, URL et chemin relatif : aucune mention', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                ActivityLine(
+                  kind: ActivityKind.command,
+                  details: {
+                    'args': {'command': 'cat /home/u/x.csv'},
+                  },
+                ),
+                ActivityLine(
+                  kind: ActivityKind.tool,
+                  details: {
+                    'args': {'url': 'https://example.test/home/u/x.csv'},
+                  },
+                ),
+                ActivityLine(
+                  kind: ActivityKind.tool,
+                  details: {
+                    'args': {'path': 'notes/x.csv'},
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      expect(find.text(Content.activityPathUnavailable), findsNothing);
+    });
+  });
+
   testWidgets(
     'remplacement d’une entrée dans ActivityCatalog sans toucher au décodage ni au transport',
     (tester) async {

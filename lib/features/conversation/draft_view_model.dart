@@ -19,6 +19,7 @@ class DraftViewModel extends ChangeNotifier {
     required this.key,
     this.picker,
     this.interventions,
+    this.results,
   }) {
     _subscription = gateway.snapshots.listen((_) => _notify());
     _outboxChanges = outbox.changes.listen(_onOutbox);
@@ -35,6 +36,10 @@ class DraftViewModel extends ChangeNotifier {
 
   /// Réponses aux questions de Hermes ; sans lui, les cartes restent lisibles.
   final InterventionGateway? interventions;
+
+  /// Téléchargement et ouverture des fichiers produits ; sans lui, la carte
+  /// reste lisible mais aucune action ne part.
+  final ResultGateway? results;
   List<Attachment> attachments = const [];
   List<AttachmentLimit> attachmentLimits = const [];
   bool attachmentBusy = false;
@@ -199,6 +204,66 @@ class DraftViewModel extends ChangeNotifier {
       _timelineKey != null &&
       !resyncing &&
       gateway.snapshot.link == LinkState.connected;
+
+  /// Téléchargement possible : fil lié, socket ouverte et serveur qui ne dit
+  /// pas la fonction absente.
+  bool get canDownloadResult {
+    final capability = gateway.snapshot.capabilities
+        .where((c) => c.name == 'result_download')
+        .firstOrNull;
+    return results != null &&
+        _timelineKey != null &&
+        gateway.snapshot.link == LinkState.connected &&
+        capability?.state != CapabilityState.absent;
+  }
+
+  /// Raison affichée quand l'action de téléchargement est désactivée.
+  String? get resultBlockedReason {
+    if (gateway.snapshot.link != LinkState.connected) {
+      return Content.resultOffline;
+    }
+    final capability = gateway.snapshot.capabilities
+        .where((c) => c.name == 'result_download')
+        .firstOrNull;
+    if (capability?.state == CapabilityState.absent) {
+      return Content.resultUnavailable;
+    }
+    return null;
+  }
+
+  /// Télécharge la copie locale ; les échecs de la carte restent dans la
+  /// carte, un défaut de stockage remonte ici.
+  Future<void> downloadResult(String resultKey) async {
+    final k = _timelineKey;
+    final target = results;
+    if (k == null || target == null) return;
+    try {
+      await target.downloadResult(k, resultKey);
+      error = null;
+    } on AppError catch (e) {
+      error = e;
+    } catch (_) {
+      error = const AppError('result.unavailable');
+    }
+    _notify();
+  }
+
+  /// Ouvre la copie locale avec l'application système ; un refus est affiché
+  /// sans changer l'état du fichier.
+  Future<void> openResult(String resultKey) async {
+    final k = _timelineKey;
+    final target = results;
+    if (k == null || target == null) return;
+    try {
+      await target.openResult(k, resultKey);
+      error = null;
+    } on AppError catch (e) {
+      error = e;
+    } catch (_) {
+      error = const AppError('result.open');
+    }
+    _notify();
+  }
 
   /// Réponse saisie dans la carte : enregistrée puis envoyée une seule fois.
   Future<void> answer(String requestId, Map<String, String> answers) async {

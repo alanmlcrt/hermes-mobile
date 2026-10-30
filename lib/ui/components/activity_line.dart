@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/result.dart';
 import '../../models/timeline.dart';
 import '../content.dart';
 import '../tokens.dart';
@@ -18,6 +19,7 @@ class ActivityLine extends StatelessWidget {
     this.details = const {},
     this.expanded = false,
     this.onChanged,
+    this.resultProduced = false,
   });
 
   /// Famille issue du mapping (`tool`, `code`, `unknown`).
@@ -31,6 +33,10 @@ class ActivityLine extends StatelessWidget {
   final Map<String, Object?> details;
   final bool expanded;
   final ValueChanged<bool>? onChanged;
+
+  /// L'activité a produit une carte résultat : la mention « non récupérable »
+  /// ne s'applique alors pas.
+  final bool resultProduced;
 
   /// Capsule d'activité : dessin de la famille et libellé ; une fois
   /// terminée, coche à la couleur du profil doublée du texte.
@@ -83,6 +89,7 @@ class ActivityLine extends StatelessWidget {
     BuildContext context,
     String label,
     String? summary,
+    String? mention,
     bool expandable,
   ) {
     final theme = Theme.of(context);
@@ -135,6 +142,15 @@ class ActivityLine extends StatelessWidget {
                   ),
                 ),
               ],
+              if (mention != null) ...[
+                const SizedBox(height: Spacing.xs),
+                Text(
+                  mention,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.muted,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -157,11 +173,21 @@ class ActivityLine extends StatelessWidget {
     final label = Content.activityLabel(kind);
     final scheme = Theme.of(context).colorScheme;
     final summary = ActivityDetails.summary(details);
+    // Un chemin absolu affiché par une activité qui n'a rien produit reste
+    // sur Hermes ; jamais pour une commande, une URL ou le texte d'une réponse.
+    final mention =
+        !resultProduced &&
+            kind != ActivityKind.command &&
+            summary != null &&
+            ResultPaths.isAbsolute(summary)
+        ? Content.activityPathUnavailable
+        : null;
     final expandable =
         onChanged != null && ActivityDetails.sections(details).isNotEmpty;
     final spoken = completed
         ? '$label, ${Content.activityEndAccessible}'
         : label;
+    final spokenValue = [summary, mention].nonNulls.join('\n');
     if (summary == null && !expandable) {
       return Semantics(
         container: true,
@@ -171,7 +197,7 @@ class ActivityLine extends StatelessWidget {
       );
     }
     final card = ExcludeSemantics(
-      child: _card(context, label, summary, expandable),
+      child: _card(context, label, summary, mention, expandable),
     );
     // Sans AnimatedSize : à durée nulle il se redessine pendant sa mise en page.
     return DecoratedBox(
@@ -186,7 +212,7 @@ class ActivityLine extends StatelessWidget {
           Semantics(
             container: true,
             label: spoken,
-            value: summary,
+            value: spokenValue.isEmpty ? null : spokenValue,
             expanded: expandable ? expanded : null,
             hint: !expandable
                 ? null

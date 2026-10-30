@@ -12,10 +12,12 @@ import '../models/connection_gateway.dart';
 import '../models/draft.dart';
 import '../models/history.dart';
 import '../models/profile.dart';
+import '../models/result.dart';
 import '../models/timeline.dart';
 import 'event_mapping.dart';
 import 'hermes_adapter.dart';
 import 'storage/attachment_files.dart';
+import 'storage/result_files.dart';
 
 /// Registre des réponses et décisions locales aux interventions
 /// (`intervention_answers`), tenu par `InterventionRepository`.
@@ -30,14 +32,18 @@ abstract interface class QuestionLedger {
 /// Seul auteur de la projection distante (`conversation_*`). Ne crée ni session
 /// ni opération : l'outbox lui signale la liaison runtime et les demandes
 /// acceptées. Ne ferme pas la base partagée.
-class ConversationRepository implements ConversationGateway {
+class ConversationRepository implements ConversationGateway, ResultGateway {
   ConversationRepository(
     this.database, {
     required this.gateway,
     required this.mapping,
+    this.downloads,
+    this.opener,
+    ResultFiles? resultFiles,
     DateTime Function()? now,
     this.timeout = rpcTimeout,
-  }) : _now = now ?? (() => DateTime.now().toUtc()) {
+  }) : resultFiles = resultFiles ?? ResultFiles(),
+       _now = now ?? (() => DateTime.now().toUtc()) {
     _lastSelectedProfile = gateway.snapshot.selectedProfile;
     _events = gateway.events.listen(_onEvent);
     _snapshots = gateway.snapshots.listen(_onSnapshot);
@@ -45,6 +51,9 @@ class ConversationRepository implements ConversationGateway {
   final Database database;
   final ConnectionGateway gateway;
   final EventMapping mapping;
+  final ResultDownloads? downloads;
+  final ResultOpener? opener;
+  final ResultFiles resultFiles;
   final DateTime Function() _now;
   final Duration timeout;
 
@@ -98,6 +107,149 @@ class ConversationRepository implements ConversationGateway {
     );
   }
 
+  /// Télécharge la copie locale d'un résultat et met sa carte à jour ; toute
+  /// erreur reste dans la carte, jamais dans une fausse réussite.
+  @override
+  Future<void> downloadResult(TimelineKey key, String resultKey) async {
+    final p = _cache[key] ?? await _read(key);
+    final item = p.items
+        .whereType<ResultItem>()
+        .where((i) => i.resultKey == resultKey)
+        .firstOrNull;
+    if (item == null || item.state == ResultState.downloading) return;
+    final localKey = item.localKey ?? item.resultKey;
+    final downloads = this.downloads;
+    if (downloads == null) {
+      await _setResultState(
+        key,
+        resultKey,
+        (i) => i.copyWith(
+          state: ResultState.failed,
+          errorCode: 'result.unavailable',
+        ),
+      );
+      return;
+    }
+    final active = (key, resultKey);
+    if (!_downloading.add(active)) return;
+    try {
+      await _setResultState(
+        key,
+        resultKey,
+        (i) => i.copyWith(
+          state: ResultState.downloading,
+          localKey: localKey,
+          clearError: true,
+        ),
+      );
+      final target = await resultFiles.file(key, localKey);
+      final downloaded = await downloads.download(key, item.path, target.path);
+      await _setResultState(
+        key,
+        resultKey,
+        (i) => i.copyWith(
+          state: ResultState.downloaded,
+          bytes: downloaded.bytes,
+          clearBytes: downloaded.bytes == null,
+          // L'extension connue prime ; le type reçu ne comble que le vide.
+          mediaType: i.mediaType.isNotEmpty
+              ? i.mediaType
+              : downloaded.mediaType ?? '',
+          localKey: localKey,
+          clearError: true,
+        ),
+      );
+    } on AppError catch (error) {
+      await _failResult(key, resultKey, error.code);
+    } catch (_) {
+      await _failResult(key, resultKey, 'result.unavailable');
+    } finally {
+      _downloading.remove(active);
+    }
+  }
+
+  Future<void> _failResult(TimelineKey key, String resultKey, String code) =>
+      _setResultState(
+        key,
+        resultKey,
+        (i) => i.copyWith(
+          state: ResultState.failed,
+          errorCode: code,
+          clearBytes: true,
+        ),
+      );
+
+  /// Ouvre la copie locale ; sans elle, la carte redevient téléchargeable.
+  @override
+  Future<void> openResult(TimelineKey key, String resultKey) async {
+    final p = _cache[key] ?? await _read(key);
+    final item = p.items
+        .whereType<ResultItem>()
+        .where((i) => i.resultKey == resultKey)
+        .firstOrNull;
+    if (item == null ||
+        item.state != ResultState.downloaded ||
+        item.localKey == null) {
+      throw const AppError('result.missing');
+    }
+    final file = await resultFiles.file(key, item.localKey!);
+    if (!await file.exists()) {
+      await _setResultState(
+        key,
+        resultKey,
+        (i) => i.copyWith(state: ResultState.available, clearError: true),
+      );
+      throw const AppError('result.unreadable');
+    }
+    final opener = this.opener;
+    if (opener == null) throw const AppError('result.open');
+    await opener.open(
+      file.path,
+      item.mediaType.isEmpty ? null : item.mediaType,
+    );
+  }
+
+  Future<void> _setResultState(
+    TimelineKey key,
+    String resultKey,
+    ResultItem Function(ResultItem) change,
+  ) => _enqueue(key, (p) {
+    final at = p.items.indexWhere(
+      (item) => item is ResultItem && item.resultKey == resultKey,
+    );
+    if (at < 0) return null;
+    final next = change(p.items[at] as ResultItem);
+    return p.copyWith(items: [...p.items]..[at] = next);
+  });
+
+  /// Relit une carte résultat avec son fichier : un téléchargement interrompu
+  /// par un redémarrage devient réessayable, une copie locale disparue rend
+  /// la carte de nouveau téléchargeable.
+  Future<ResultItem> _hydrateResult(TimelineKey key, ResultItem item) async {
+    final localKey = item.localKey ?? item.resultKey;
+    if (item.state == ResultState.downloading) {
+      if (_downloading.contains((key, item.resultKey))) return item;
+      try {
+        await resultFiles.remove(key, localKey);
+      } catch (_) {
+        /* copie partielle inaccessible : l'état reste réessayable */
+      }
+      return item.copyWith(state: ResultState.interrupted, clearError: true);
+    }
+    if (item.state == ResultState.downloaded) {
+      var exists = false;
+      try {
+        exists = await (await resultFiles.file(key, localKey)).exists();
+      } catch (_) {
+        /* stockage illisible : la copie n'est pas présentée comme sûre */
+      }
+      if (!exists) {
+        return item.copyWith(state: ResultState.available, clearError: true);
+      }
+    }
+    return item;
+  }
+
   Future<TimelineProjection> _withAttachments(
     TimelineKey key,
     TimelineProjection p,
@@ -118,6 +270,10 @@ class ConversationRepository implements ConversationGateway {
     );
     final items = <TimelineItem>[];
     for (final item in p.items) {
+      if (item is ResultItem) {
+        items.add(await _hydrateResult(key, item));
+        continue;
+      }
       if (item is! UserItem) {
         items.add(item);
         continue;
@@ -207,6 +363,10 @@ class ConversationRepository implements ConversationGateway {
     }
     return p.copyWith(items: items);
   }
+
+  /// Téléchargements vivants : une hydratation concurrente ne les interrompt
+  /// pas ; après un redémarrage, l'ensemble est vide.
+  final _downloading = <(TimelineKey, String)>{};
 
   final _bindings = <TimelineKey, ({String runtime, int generation})>{};
   final _stopRevisions = <TimelineKey, int>{};
@@ -1113,38 +1273,80 @@ class ConversationRepository implements ConversationGateway {
           );
           if (at >= 0) {
             final old = items[at] as ActivityItem;
-            items[at] = old.copyWith(
+            final activity = old.copyWith(
               started: old.started || m.activityStarted,
               completed: old.completed || m.activityCompleted,
               detailPatch: m.activityDetails,
             );
+            items[at] = activity;
+            _insertResult(items, activity, e);
             return p.copyWith(items: items);
           }
         }
-        items.add(
-          ActivityItem(
-            turn,
-            kind,
-            toolId: id,
-            started: m.activityStarted,
-            completed: m.activityCompleted,
-            details: Map.unmodifiable(
-              {...m.activityDetails}..removeWhere((k, v) => v == null),
-            ),
-            eventKey: jsonEncode([
-              e.replayEpoch,
-              e.seq,
-              items.length,
-              e.generation,
-            ]),
+        final activity = ActivityItem(
+          turn,
+          kind,
+          toolId: id,
+          started: m.activityStarted,
+          completed: m.activityCompleted,
+          details: Map.unmodifiable(
+            {...m.activityDetails}..removeWhere((k, v) => v == null),
           ),
+          eventKey: jsonEncode([
+            e.replayEpoch,
+            e.seq,
+            items.length,
+            e.generation,
+          ]),
         );
+        items.add(activity);
+        _insertResult(items, activity, e);
         return p.copyWith(items: items);
       case EventEffect.terminal:
         return _finish(p, e, m);
       case EventEffect.ignore:
         return p;
     }
+  }
+
+  /// Seul un `tool.complete` de `write_file` avec `args.path` absolu produit
+  /// une carte, insérée juste après son activité et dédupliquée par une clé
+  /// stable. Un chemin relatif ou seulement cité ne produit rien.
+  static void _insertResult(
+    List<TimelineItem> items,
+    ActivityItem activity,
+    GatewayEvent event,
+  ) {
+    if (!activity.completed || activity.eventKey == null) return;
+    final rawName = event.payload['name'] ?? activity.details['name'];
+    final name = rawName is String
+        ? rawName.trim().split(RegExp(r'\s')).first
+        : null;
+    if (name != 'write_file') return;
+    final args = activity.details['args'];
+    if (args is! Map) return;
+    final rawPath = args['path'];
+    if (rawPath is! String) return;
+    final path = rawPath.trim();
+    if (!ResultPaths.isAbsolute(path)) return;
+    final fileName = ResultPaths.name(path);
+    if (fileName == null) return;
+    final key = ResultKey.of(activity.eventKey!);
+    if (items.any((item) => item is ResultItem && item.resultKey == key)) {
+      return;
+    }
+    final at = items.indexOf(activity);
+    items.insert(
+      (at < 0 ? items.length : at) + 1,
+      ResultItem(
+        activity.turn,
+        resultKey: key,
+        path: path,
+        name: fileName,
+        mediaType: ResultPaths.mediaTypeFor(fileName),
+        localKey: key,
+      ),
+    );
   }
 
   // La clé garde le contexte d'origine même si une reprise échoue et que le
@@ -1169,6 +1371,8 @@ class ConversationRepository implements ConversationGateway {
       for (final item in p.items)
         if (item is ActivityItem && item.turn == 0)
           item.copyWith(turn: p.turns + 1)
+        else if (item is ResultItem && item.turn == 0)
+          item.atTurn(p.turns + 1)
         else
           item,
     ],

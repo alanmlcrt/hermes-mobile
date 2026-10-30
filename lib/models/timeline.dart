@@ -3,6 +3,7 @@ import 'attachment.dart';
 import 'draft.dart';
 import 'history.dart';
 import 'profile.dart';
+import 'result.dart';
 
 /// État du travail distant ; distinct de l'état de la connexion.
 /// `waitingInput` : le tour est en cours et Hermes attend une réponse (6.2) ;
@@ -160,6 +161,7 @@ sealed class TimelineItem {
       'resp' => ResponseItem(turn, json['text'] as String),
       'ask' => QuestionItem.fromJson(json),
       'approve' => ApprovalItem.fromJson(json),
+      'result' => ResultItem.fromJson(json),
       _ => ActivityItem.fromJson(json),
     };
   }
@@ -452,6 +454,110 @@ class ApprovalItem extends InterventionItem {
     'state': state.name,
     'previousUnanswered': previousUnanswered,
   };
+}
+
+/// Fichier écrit par Hermes (`write_file` absolu), placé après l'activité
+/// qui l'a produit. Le chemin reste celui de Hermes ; la copie locale porte
+/// une clé hachée.
+class ResultItem extends TimelineItem {
+  const ResultItem(
+    super.turn, {
+    required this.resultKey,
+    required this.path,
+    required this.name,
+    required this.mediaType,
+    this.bytes,
+    this.localKey,
+    this.state = ResultState.available,
+    this.errorCode,
+  });
+
+  /// Hash stable de l'`eventKey` de l'activité d'origine.
+  final String resultKey;
+  final String path;
+  final String name;
+  final String mediaType;
+  final int? bytes;
+  final String? localKey;
+  final ResultState state;
+  final String? errorCode;
+
+  ResultItem copyWith({
+    ResultState? state,
+    String? mediaType,
+    int? bytes,
+    bool clearBytes = false,
+    String? localKey,
+    String? errorCode,
+    bool clearError = false,
+  }) => ResultItem(
+    turn,
+    resultKey: resultKey,
+    path: path,
+    name: name,
+    mediaType: mediaType ?? this.mediaType,
+    bytes: clearBytes ? null : bytes ?? this.bytes,
+    localKey: localKey ?? this.localKey,
+    state: state ?? this.state,
+    errorCode: clearError ? null : errorCode ?? this.errorCode,
+  );
+
+  /// Même carte rattachée au tour [value] quand un tour démarre après elle.
+  ResultItem atTurn(int value) => ResultItem(
+    value,
+    resultKey: resultKey,
+    path: path,
+    name: name,
+    mediaType: mediaType,
+    bytes: bytes,
+    localKey: localKey,
+    state: state,
+    errorCode: errorCode,
+  );
+
+  static ResultItem fromJson(Map<String, Object?> json) {
+    final modern = json['resultVersion'] == 1;
+    String text(String key) =>
+        modern && json[key] is String ? json[key] as String : '';
+    final bytes = modern ? json['bytes'] : null;
+    return ResultItem(
+      json['turn'] as int,
+      resultKey: text('resultKey'),
+      path: text('path'),
+      name: text('name'),
+      mediaType: text('mediaType'),
+      bytes: bytes is int && bytes >= 0 ? bytes : null,
+      localKey: text('localKey').isEmpty ? null : text('localKey'),
+      state: modern ? ResultState.decode(json['state']) : ResultState.available,
+      errorCode: text('errorCode').isEmpty ? null : text('errorCode'),
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() => {
+    'k': 'result',
+    'turn': turn,
+    'resultVersion': 1,
+    'resultKey': resultKey,
+    'path': path,
+    'name': name,
+    'mediaType': mediaType,
+    if (bytes != null) 'bytes': bytes,
+    if (localKey != null) 'localKey': localKey,
+    'state': state.name,
+    if (errorCode != null) 'errorCode': errorCode,
+  };
+}
+
+/// Téléchargement et ouverture d'un fichier résultat, depuis sa carte.
+abstract interface class ResultGateway {
+  /// Télécharge dans la copie locale et met la carte à jour ; un échec est
+  /// porté par la carte, jamais présenté comme une réussite.
+  Future<void> downloadResult(TimelineKey key, String resultKey);
+
+  /// Ouvre la copie locale avec l'application système ; lève `result.open`
+  /// ou `result.unreadable` si la copie locale a disparu.
+  Future<void> openResult(TimelineKey key, String resultKey);
 }
 
 /// Réponse aux interventions de Hermes, depuis la carte ; aucun appel direct.

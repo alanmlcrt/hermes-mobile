@@ -9,6 +9,7 @@ import '../models/app_error.dart';
 import '../models/connection_gateway.dart';
 import '../models/history.dart';
 import '../models/profile.dart';
+import '../models/result.dart';
 import '../models/timeline.dart';
 
 const networkTimeout = Duration(seconds: 15);
@@ -33,6 +34,9 @@ abstract interface class HermesTransport {
     Map<String, dynamic>? body,
     String? bearer,
   });
+
+  /// Flux binaire authentifié : écrit dans `targetPath.part` puis renomme.
+  Future<DownloadedFile> download(Uri uri, String targetPath, {String? bearer});
   Future<GatewaySocket> openSocket(Uri origin, String ticket);
   void close();
 }
@@ -103,6 +107,91 @@ class IoHermesTransport implements HermesTransport {
       decoded,
       cookies: response.headers['set-cookie'] ?? const [],
     );
+  }
+
+  @override
+  Future<DownloadedFile> download(
+    Uri uri,
+    String targetPath, {
+    String? bearer,
+  }) async {
+    final target = File(targetPath);
+    final part = File('$targetPath.part');
+    HttpClientRequest? request;
+    Future<void> discardPart() async {
+      try {
+        if (await part.exists()) await part.delete();
+      } catch (_) {
+        /* copie partielle déjà illisible */
+      }
+    }
+
+    try {
+      await target.parent.create(recursive: true);
+      request = await _open('GET', uri);
+      request.followRedirects = false;
+      if (bearer != null) {
+        request.headers.set('Authorization', 'Bearer $bearer');
+      }
+      final response = await _send(request);
+      final status = response.statusCode;
+      if (status != 200) {
+        try {
+          await response.drain<void>().timeout(networkTimeout);
+        } catch (_) {
+          /* corps d'erreur ignoré */
+        }
+        if (status >= 300 && status < 400) {
+          throw const AppError('transport.redirect');
+        }
+        if (status == 401) throw const AppError('auth.refused');
+        if (status == 403) throw const AppError('result.refused');
+        if (status == 404) throw const AppError('result.missing');
+        throw AppError(
+          'transport.server',
+          retryable: status == 429 || status >= 500,
+        );
+      }
+      if (await part.exists()) await part.delete();
+      final sink = part.openWrite();
+      try {
+        // `networkTimeout` borne l'inactivité du flux, pas sa durée totale.
+        await for (final chunk in response.timeout(networkTimeout)) {
+          sink.add(chunk);
+        }
+        await sink.flush();
+        await sink.close();
+      } catch (_) {
+        try {
+          await sink.close();
+        } catch (_) {
+          /* flux déjà rompu */
+        }
+        rethrow;
+      }
+      if (await target.exists()) await target.delete();
+      await part.rename(targetPath);
+      // La carte n'affiche une taille que si le serveur l'a annoncée.
+      final length = response.contentLength;
+      return DownloadedFile(
+        length < 0 ? null : length,
+        mediaType: response.headers.contentType?.mimeType,
+      );
+    } on AppError {
+      await discardPart();
+      rethrow;
+    } on TimeoutException {
+      request?.abort();
+      await discardPart();
+      throw const AppError('transport.unreachable', retryable: true);
+    } on FileSystemException {
+      await discardPart();
+      throw const AppError('result.write');
+    } catch (_) {
+      request?.abort();
+      await discardPart();
+      throw const AppError('transport.unreachable', retryable: true);
+    }
   }
 
   @override
@@ -311,6 +400,29 @@ class HermesAdapter {
         })
         .toList(growable: false);
   }
+
+  /// Fichier déjà écrit côté Hermes : `GET /api/fs/download` avec le profil
+  /// et la session du fil, jamais de redirection.
+  Future<DownloadedFile> download(
+    Uri origin, {
+    required String path,
+    required ProfileKey profile,
+    required String session,
+    required String targetPath,
+    required String bearer,
+  }) => transport.download(
+    origin
+        .resolve('/api/fs/download')
+        .replace(
+          queryParameters: {
+            'path': path,
+            'profile': profile.value,
+            'session_id': session,
+          },
+        ),
+    targetPath,
+    bearer: bearer,
+  );
 
   Future<GatewaySocket> socket(Uri origin, String bearer) async {
     final body = await _request(

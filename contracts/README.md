@@ -313,7 +313,10 @@ sa réponse (fixture `result-file-written.json`). `GET /api/fs/download?path=`
 (bearer, `profile` et `session_id` facultatifs) renvoie le fichier en
 `attachment` avec nom et type ; chemin absent = 404. Aucun événement dédié
 « résultat disponible » n'existe : l'identification d'un résultat est une
-décision de l'app.
+décision de l'app. La copie locale va dans
+`results/<connexion>/<profil>/<session>/<clé hachée>`, séparé des pièces
+jointes, et jamais sous le nom servi. Un 404, un 403, une authentification
+expirée ou un 5xx reste un échec réessayable, jamais un fichier récupéré.
 
 **Décisions d'Alanc (G4, 2026-10-30).** FR13 et FR14 sont retenus.
 Le mode d'autorisation reste celui de chaque profil, réglé côté Hermes ;

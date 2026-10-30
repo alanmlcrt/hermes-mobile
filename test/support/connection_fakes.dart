@@ -12,6 +12,7 @@ import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/attachment.dart';
 import 'package:hermes_mobile/models/history.dart';
 import 'package:hermes_mobile/models/profile.dart';
+import 'package:hermes_mobile/models/result.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 
 Map<String, dynamic> fixture(String name) =>
@@ -196,6 +197,22 @@ class FakeTransport implements HermesTransport {
   int ticketCount = 0;
   final sockets = <FakeSocket>[];
   void Function()? beforeRequest;
+
+  /// Téléchargements binaires demandés, dans l'ordre.
+  final downloads =
+      <
+        ({Uri uri, String targetPath, String? bearer})
+      >[];
+  List<int> downloadBytes = utf8.encode('SYNTHETIC_FILE');
+  String? downloadMediaType = 'text/plain';
+
+  /// Faux serveur qui n'annonce pas de `Content-Length`.
+  bool downloadLengthKnown = true;
+  AppError? downloadError;
+
+  /// Échecs ponctuels consommés dans l'ordre, avant [downloadError].
+  final downloadErrors = <AppError?>[];
+  Completer<void>? downloadGate;
   @override
   Future<TransportResponse> request(
     Uri uri, {
@@ -239,6 +256,30 @@ class FakeTransport implements HermesTransport {
     final socket = FakeSocket(this);
     sockets.add(socket);
     return socket;
+  }
+
+  @override
+  Future<DownloadedFile> download(
+    Uri uri,
+    String targetPath, {
+    String? bearer,
+  }) async {
+    downloads.add((uri: uri, targetPath: targetPath, bearer: bearer));
+    await downloadGate?.future;
+    if (downloadErrors.isNotEmpty) {
+      final error = downloadErrors.removeAt(0);
+      if (error != null) throw error;
+    }
+    if (downloadError != null) throw downloadError!;
+    final part = File('$targetPath.part');
+    await part.parent.create(recursive: true);
+    await part.writeAsBytes(downloadBytes);
+    if (await File(targetPath).exists()) await File(targetPath).delete();
+    await part.rename(targetPath);
+    return DownloadedFile(
+      downloadLengthKnown ? downloadBytes.length : null,
+      mediaType: downloadMediaType,
+    );
   }
 
   @override

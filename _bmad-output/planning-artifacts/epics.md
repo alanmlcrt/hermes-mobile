@@ -1301,3 +1301,356 @@ Afin de ne pas faire défiler tout mon historique.
 **Étant donné** l'option « Tous les profils »
 **Quand** Alanc l'active
 **Alors** les résultats de chaque profil sont regroupés et identifiés par leur profil, sans mélanger les conversations (FR3)
+
+## Epic 8 : Faire travailler mes agents en salon
+
+Alanc crée un salon de 2 à 6 profils, y écrit avec @mentions, voit qui répond, arrête le salon et gère ses membres ; quand un agent a besoin de lui (@user ou autorisation), une notification ouvre le salon et il répond depuis l'app. Requiert Bot Mode actif ; réutilise Epics 4, 5, 6 et 7.
+
+### Story 8.1 : Vérifier les salons sur mon installation
+
+En tant qu'Alanc,
+Je veux savoir si mon Hermes peut héberger des salons d'agents et comment l'app doit les piloter,
+Afin de décider du périmètre des salons sur des constats réels.
+
+**Critères d'acceptation :**
+
+**Étant donné** l'installation réelle (add-on Home Assistant, sans Desktop)
+**Quand** l'activation de Bot Mode est étudiée (`ui_meta.hermes-bots` dans `profile.yaml`, protocole `agent.bot_mode_protocol`)
+**Alors** la procédure d'activation pour deux profils de test est consignée, réversible, sans toucher aux autres profils
+
+**Étant donné** Bot Mode actif sur ces profils
+**Quand** `groups.capabilities`, `groups.list`, `groups.create`, `groups.send`, `groups.state`, `groups.log`, `groups.stop`, `groups.rename`, `groups.disband`, `groups.approve`, `groups.retry`, `groups.discard`, `groups.attachment.upload/download` sont essayés sur `/api/ws`
+**Alors** `contracts/` consigne paramètres, réponses, erreurs, événements poussés pendant un tour de salon et fixtures anonymisées (NFR7)
+**Et** sont documentés : `driver: true` (salon qui continue app fermée), idempotence de `groups.send` par `event_id`, modification des membres, reprise après coupure (curseur ou log complet), ordre des messages
+
+**Étant donné** l'escalade @user et les autorisations en salon
+**Quand** elles sont provoquées
+**Alors** leur forme (événement, `request_id`, `task_id`, `execution_generation`) et le moyen de les notifier app fermée (hook `on_room_member_activity` du plugin de notifications ou autre) sont consignés
+
+**Étant donné** ces constats
+**Quand** Alanc tranche la porte G5 (salons)
+**Alors** ses décisions sont consignées : salons retenus ou reportés, activation de Bot Mode acceptée, comportement app fermée confirmé
+**Et** une capacité absente masque la fonction avec un message clair (NFR4), jamais contournée
+
+### Story 8.2 : Voir mes salons
+
+En tant qu'Alanc,
+Je veux une liste de mes salons à part de mes conversations,
+Afin de retrouver mes groupes de travail.
+
+**Critères d'acceptation :**
+
+**Étant donné** une connexion où les salons sont disponibles (G5)
+**Quand** Alanc ouvre l'onglet « Salons »
+**Alors** `groups.list` alimente une liste où chaque salon montre son nom, ses membres (initiale et couleur du profil, plus le nom pour le lecteur d'écran), le dernier message et son heure
+**Et** un salon en cours de travail est signalé autrement que par la seule couleur (NFR1)
+
+**Étant donné** aucun salon, un chargement ou une erreur
+**Quand** la liste s'affiche
+**Alors** ces trois états sont distincts, l'erreur proposant de réessayer
+
+**Étant donné** des salons indisponibles sur l'installation
+**Quand** Alanc cherche les salons
+**Alors** l'onglet indique pourquoi (Bot Mode inactif ou capacité absente) au lieu d'une liste vide
+
+**Étant donné** un salon ouvert
+**Quand** la route est construite
+**Alors** elle est distincte de celle des conversations (`/room/<ConnectionKey>/<roomId>`) et `resolveLaunchTarget` sait la restaurer
+
+### Story 8.3 : Créer un salon
+
+En tant qu'Alanc,
+Je veux réunir plusieurs de mes profils dans un salon nommé,
+Afin de les faire travailler ensemble sur un sujet.
+
+**Critères d'acceptation :**
+
+**Étant donné** la liste des salons
+**Quand** Alanc choisit « Nouveau salon », saisit un nom et coche des profils
+**Alors** seuls les profils éligibles (Bot Mode actif) sont proposés, les autres étant listés avec la raison
+**Et** la création n'est possible qu'entre 2 et 6 profils, la limite étant expliquée
+
+**Étant donné** une création validée
+**Quand** `groups.create` répond
+**Alors** le salon s'ouvre, vide, prêt à recevoir un premier message
+**Et** un échec conserve nom et sélection et explique l'erreur
+
+### Story 8.4 : Écrire dans un salon et suivre les réponses
+
+En tant qu'Alanc,
+Je veux écrire au salon, appeler un ou plusieurs agents et lire qui répond quoi,
+Afin de piloter un travail à plusieurs.
+
+**Critères d'acceptation :**
+
+**Étant donné** un salon ouvert
+**Quand** Alanc tape `@`
+**Alors** les membres, `@all` et `@hermes` sont proposés ; une aide courte rappelle que sans mention tous peuvent répondre
+
+**Étant donné** un message envoyé
+**Quand** il part
+**Alors** il est d'abord enregistré dans l'outbox avec un `event_id` stable, puis transmis par `groups.send` ; un résultat incertain n'est renvoyé qu'avec le même `event_id` si l'idempotence est constatée en 8.1, sinon il est marqué inconnu (NFR2)
+**Et** le brouillon du salon survit à la fermeture de l'app
+
+**Étant donné** des agents qui répondent
+**Quand** leurs messages arrivent
+**Alors** chaque message est attribué à son profil (nom, initiale, couleur), rendu en Markdown comme une conversation, et l'activité de chaque agent réutilise les lignes compactes de l'Epic 3
+**Et** un tour silencieux n'affiche rien ; un indicateur montre quel agent travaille
+
+**Étant donné** une coupure ou un retour dans l'app
+**Quand** le salon est rouvert
+**Alors** l'historique est repris par `groups.log`/`groups.state` sans doublon ni trou, les messages produits pendant l'absence apparaissent
+
+**Étant donné** la limite de 10 messages par envoi ou de 3 tours atteinte
+**Quand** le salon se pose
+**Alors** l'app indique que le salon attend Alanc
+
+### Story 8.5 : Arrêter le travail d'un salon
+
+En tant qu'Alanc,
+Je veux arrêter les agents d'un salon,
+Afin de reprendre la main quand la discussion part dans la mauvaise direction.
+
+**Critères d'acceptation :**
+
+**Étant donné** un salon où au moins un agent travaille
+**Quand** Alanc touche « Arrêter »
+**Alors** `groups.stop` est envoyé et l'interface distingue arrêt demandé et arrêt confirmé par Hermes, comme en 3.5 (UX-DR16)
+**Et** une perte réseau ne vaut pas confirmation
+
+**Étant donné** un tour d'agent en échec
+**Quand** Hermes le signale
+**Alors** l'échec est attribué à l'agent avec sa raison ; « Réessayer » (`groups.retry`) n'est proposé que si Hermes le permet, et un travail au résultat inconnu ne propose que « Abandonner » (`groups.discard`) après confirmation
+
+### Story 8.6 : Être appelé par un agent
+
+En tant qu'Alanc,
+Je veux être prévenu quand un agent d'un salon a besoin de moi,
+Afin de ne pas bloquer le groupe sans le savoir.
+
+**Critères d'acceptation :**
+
+**Étant donné** un agent qui mentionne `@user` dans un salon
+**Quand** Alanc est dans l'app
+**Alors** le salon porte un badge « a besoin de toi » dans la liste et le message concerné est mis en évidence
+
+**Étant donné** l'app quittée
+**Quand** la même escalade survient
+**Alors** une notification est reçue par le moyen retenu en 8.1, avec un libellé générique et un payload `{roomId, outcome}` sans contenu (NFR3)
+**Et** la toucher ouvre le salon sur le message concerné, à froid comme à chaud (`resolveLaunchTarget`)
+
+**Étant donné** plusieurs escalades rapprochées dans le même salon
+**Quand** elles arrivent
+**Alors** une seule notification est affichée pour ce salon
+
+**Étant donné** le badge
+**Quand** Alanc ouvre le salon ou y répond
+**Alors** le badge disparaît
+
+### Story 8.7 : Autoriser une action demandée dans un salon
+
+En tant qu'Alanc,
+Je veux autoriser ou refuser une action qu'un agent demande dans un salon,
+Afin que le groupe continue sans que je passe par le PC.
+
+**Critères d'acceptation :**
+
+**Étant donné** une demande d'autorisation émise par un membre du salon
+**Quand** elle arrive
+**Alors** elle s'affiche dans le fil avec le composant Intervention de l'Epic 6, attribuée à l'agent demandeur, avec la demande réellement émise (UX-DR17)
+**Et** elle déclenche le badge et la notification de 8.6
+
+**Étant donné** Alanc qui choisit une réponse
+**Quand** il valide
+**Alors** `groups.approve` est envoyé avec `request_id`, `task_id`, `member_id` et `execution_generation` de la demande
+**Et** une réponse à une demande devenue obsolète (nouveau tour, salon arrêté) est refusée par l'app avec explication, jamais rejouée
+
+### Story 8.8 : Gérer un salon
+
+En tant qu'Alanc,
+Je veux renommer un salon, changer ses membres, le ranger ou le dissoudre,
+Afin que mes groupes de travail restent à jour.
+
+**Critères d'acceptation :**
+
+**Étant donné** un salon
+**Quand** Alanc le renomme ou modifie ses membres
+**Alors** le changement passe par la méthode vérifiée en 8.1, toujours entre 2 et 6 membres, et n'est affiché qu'après confirmation du serveur
+
+**Étant donné** la liste des salons
+**Quand** Alanc épingle, marque non lu ou masque un salon
+**Alors** le comportement est celui de l'Epic 7 pour les conversations
+
+**Étant donné** un salon
+**Quand** Alanc choisit « Dissoudre »
+**Alors** une confirmation indique l'effet, un travail en cours est arrêté d'abord, puis `groups.disband` est appelé ; le salon passe dans une section « Dissous » si Hermes les conserve
+
+### Story 8.9 : Partager des fichiers dans un salon
+
+En tant qu'Alanc,
+Je veux joindre des fichiers à un message de salon et récupérer ceux qu'un agent y dépose,
+Afin d'alimenter le groupe comme une conversation.
+
+**Critères d'acceptation :**
+
+**Étant donné** un message de salon en préparation
+**Quand** Alanc joint des fichiers
+**Alors** sélection, aperçu, retrait et limites réutilisent l'Epic 4, les limites étant celles constatées en 8.1 pour `groups.attachment.upload`
+**Et** le message n'est envoyé qu'après confirmation de toutes les pièces ; un upload échoué bloque l'envoi
+
+**Étant donné** un fichier déposé dans le salon
+**Quand** Alanc le touche
+**Alors** il est téléchargé par `groups.attachment.download` et ouvert selon son format, comme en 6.4 ; aucun fichier n'est exécuté automatiquement
+
+## Epic 9 : Programmer des routines
+
+Alanc crée et pilote les tâches planifiées de chaque profil, voit leur historique et est averti à la fin ; le résultat arrive dans la conversation du profil.
+
+### Story 9.1 : Vérifier les routines sur mon installation
+
+En tant qu'Alanc,
+Je veux savoir ce que mon Hermes expose pour les routines,
+Afin que l'app les pilote sur des constats réels.
+
+**Critères d'acceptation :**
+
+**Étant donné** les points repérés dans le source (`/api/cron/jobs[?profile=]`, `/api/cron/jobs/<id>` GET/PUT/DELETE, `/pause`, `/resume`, `/trigger`, `/runs?limit=`, `/api/cron/delivery-targets`, `/api/cron/blueprints`)
+**Quand** ils sont essayés sur le backend 9119 avec l'authentification de l'app, sur un profil de test
+**Alors** `contracts/` consigne pour chacun disponibilité, paramètres, champs de `CronJob` (planning, prompt, état, prochaine et dernière exécution, issue), erreurs et fixtures anonymisées (NFR7)
+**Et** le rattachement par profil (`?profile=`) est vérifié : la routine d'un profil n'apparaît pas dans un autre
+
+**Étant donné** les formats de planning acceptés (langage naturel, expression cron, une fois, intervalle)
+**Quand** ils sont essayés
+**Alors** les formats retenus pour le planning structuré de l'app et le champ avancé sont consignés, avec les messages d'erreur du serveur
+
+**Étant donné** une exécution de routine
+**Quand** elle se termine
+**Alors** sont consignés : la session produite (lue par `/runs` et `session.list`), sa source, l'endroit où le résultat est livré (`delivery-targets`), et si le plugin de notifications reçoit `on_session_end` pour cette source
+**Et** le comportement de `/trigger` (réponse synchrone jusqu'à la fin du travail) et de son interruption côté client est documenté
+
+**Étant donné** ces constats
+**Quand** Alanc les relit
+**Alors** ses décisions sont consignées et une capacité absente masque la fonction (NFR4)
+
+### Story 9.2 : Voir les routines d'un profil
+
+En tant qu'Alanc,
+Je veux voir les routines de chaque profil,
+Afin de savoir ce que Hermes fait tout seul et quand.
+
+**Critères d'acceptation :**
+
+**Étant donné** un profil sélectionné
+**Quand** Alanc ouvre « Routines »
+**Alors** chaque routine montre son nom, son planning en langage courant (« chaque lundi à 8 h », « toutes les 30 min »), sa prochaine exécution en heure locale, son état (active, en pause) et l'issue de la dernière exécution
+**Et** ces états ne sont pas exprimés par la seule couleur (NFR1)
+
+**Étant donné** aucune routine, un chargement ou une erreur
+**Quand** la liste s'affiche
+**Alors** ces trois états sont distincts
+
+**Étant donné** l'option « Tous les profils »
+**Quand** elle est active
+**Alors** les routines sont regroupées par profil, sans mélange
+
+### Story 9.3 : Créer et modifier une routine
+
+En tant qu'Alanc,
+Je veux créer ou modifier une routine depuis mon téléphone,
+Afin d'automatiser une tâche sans passer par le PC.
+
+**Critères d'acceptation :**
+
+**Étant donné** la liste des routines d'un profil
+**Quand** Alanc choisit « Nouvelle routine »
+**Alors** il saisit un nom, la demande à exécuter et un planning structuré : une fois (date et heure), jours choisis à une heure, ou toutes les N minutes (5 à 1 440)
+**Et** un champ avancé accepte le planning brut retenu en 9.1
+
+**Étant donné** les destinations de livraison exposées
+**Quand** le formulaire s'affiche
+**Alors** seules celles renvoyées par `delivery-targets` sont proposées, la conversation du profil par défaut
+
+**Étant donné** un formulaire validé
+**Quand** le serveur accepte
+**Alors** la routine apparaît avec sa prochaine exécution calculée par Hermes, jamais par l'app
+**Et** un refus (planning invalide, champ manquant) affiche le message du serveur et conserve la saisie (NFR2)
+
+**Étant donné** une routine existante
+**Quand** Alanc la modifie
+**Alors** seuls les champs changés sont envoyés par `PUT`, l'affichage n'étant mis à jour qu'après confirmation
+
+### Story 9.4 : Mettre en pause, lancer et supprimer une routine
+
+En tant qu'Alanc,
+Je veux suspendre, déclencher tout de suite ou supprimer une routine,
+Afin de garder la main sur ce qui tourne.
+
+**Critères d'acceptation :**
+
+**Étant donné** une routine active ou en pause
+**Quand** Alanc touche « Pause » ou « Reprendre »
+**Alors** l'appel correspondant est envoyé et l'état n'est changé qu'après réponse du serveur
+
+**Étant donné** une routine
+**Quand** Alanc touche « Lancer maintenant »
+**Alors** le déclenchement est demandé une seule fois, la routine est marquée « en cours », et l'app n'attend pas la fin du travail pour rendre la main ; quitter l'app n'annule pas l'exécution
+**Et** l'issue est retrouvée par l'historique (9.5) et la notification (9.6), jamais déduite d'une coupure réseau
+
+**Étant donné** une routine
+**Quand** Alanc choisit « Supprimer »
+**Alors** une confirmation est demandée, puis la routine disparaît après réponse positive du serveur ; ses exécutions passées restent dans l'historique du profil
+
+### Story 9.5 : Consulter les exécutions d'une routine
+
+En tant qu'Alanc,
+Je veux relire ce qu'une routine a produit à chaque passage,
+Afin de vérifier son travail.
+
+**Critères d'acceptation :**
+
+**Étant donné** une routine
+**Quand** Alanc ouvre son historique
+**Alors** les dernières exécutions (`/runs`) sont listées avec date, durée et issue (réussite, erreur, arrêt)
+
+**Étant donné** une exécution
+**Quand** Alanc la touche
+**Alors** sa session s'ouvre dans la vue conversation existante (réponse, activité, fichiers résultats de l'Epic 6), avec la mention « exécution de routine »
+**Et** elle n'est pas confondue avec les conversations ordinaires dans l'historique du profil, où elle est repérée comme telle
+
+### Story 9.6 : Être averti à la fin d'une routine
+
+En tant qu'Alanc,
+Je veux être prévenu quand une routine se termine,
+Afin de consulter son résultat sans surveiller l'app.
+
+**Critères d'acceptation :**
+
+**Étant donné** le constat de 9.1 sur la source des sessions de routine
+**Quand** le plugin de notifications est étendu
+**Alors** il notifie aussi la fin d'une exécution de routine, avec un payload `{sessionId, outcome}` et un libellé générique « Routine terminée » sans contenu (NFR3)
+**Et** le filtre existant des tours `tui` reste inchangé pour les conversations
+
+**Étant donné** une routine
+**Quand** Alanc désactive « Me prévenir » pour elle
+**Alors** ses fins ne sont plus notifiées, ce choix étant enregistré là où le plugin le lit (décision consignée)
+
+**Étant donné** une notification de fin de routine
+**Quand** Alanc la touche
+**Alors** l'exécution s'ouvre comme en 9.5, à froid comme à chaud
+
+### Story 9.7 : Partir d'un modèle de routine
+
+En tant qu'Alanc,
+Je veux choisir une routine toute faite proposée par Hermes,
+Afin de créer vite une automatisation courante.
+
+**Critères d'acceptation :**
+
+**Étant donné** des modèles exposés par `/api/cron/blueprints?profile=`
+**Quand** Alanc choisit « Depuis un modèle »
+**Alors** la galerie du profil s'affiche avec nom et description de chaque modèle
+
+**Étant donné** un modèle choisi
+**Quand** Alanc remplit ses champs et valide
+**Alors** la routine est créée par `/api/cron/blueprints/instantiate` dans ce profil et apparaît dans la liste
+**Et** l'absence de modèles masque l'option sans erreur

@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hermes_mobile/data/hermes_adapter.dart';
 import 'package:hermes_mobile/models/app_error.dart';
+import 'package:hermes_mobile/models/profile.dart';
 
 void main() {
   test(
@@ -153,6 +154,245 @@ void main() {
       ),
     );
   }, timeout: const Timeout(Duration(seconds: 45)));
+  test(
+    'téléchargement binaire : GET authentifié du fil, .part remplacé, type et '
+    'octets reçus',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'hermes-download-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      final body = <int>[0, 1, 2, 254, 255];
+      server.listen((request) async {
+        expect(request.method, 'GET');
+        expect(request.uri.path, '/api/fs/download');
+        expect(request.uri.queryParameters, {
+          'path': '/home/u/rapport.pdf',
+          'profile': 'default',
+          'session_id': 'a1b2c3d4',
+        });
+        expect(
+          request.headers.value('authorization'),
+          'Bearer SYNTHETIC_ACCESS',
+        );
+        request.response.headers.contentType = ContentType('application', 'pdf');
+        request.response.contentLength = body.length;
+        request.response.add(body);
+        await request.response.close();
+      });
+      final target = '${directory.path}/results/cle';
+      await File(target).parent.create(recursive: true);
+      await File('$target.part').writeAsString('ancien partiel');
+
+      final transport = IoHermesTransport();
+      addTearDown(transport.close);
+      final file = await HermesAdapter(transport).download(
+        Uri.parse('http://127.0.0.1:${server.port}'),
+        path: '/home/u/rapport.pdf',
+        profile: const ProfileKey('default'),
+        session: 'a1b2c3d4',
+        targetPath: target,
+        bearer: 'SYNTHETIC_ACCESS',
+      );
+
+      expect(file.bytes, body.length);
+      expect(file.mediaType, 'application/pdf');
+      expect(await File(target).readAsBytes(), body);
+      expect(await File('$target.part').exists(), isFalse);
+    },
+  );
+
+  test(
+    'téléchargement sans Content-Length : taille inconnue, octets reçus',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'hermes-download-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      final body = <int>[4, 5, 6];
+      server.listen((request) async {
+        request.response.headers.contentType = ContentType.binary;
+        request.response.add(body);
+        await request.response.close();
+      });
+      final target = '${directory.path}/results/cle';
+      final transport = IoHermesTransport();
+      addTearDown(transport.close);
+
+      final file = await HermesAdapter(transport).download(
+        Uri.parse('http://127.0.0.1:${server.port}'),
+        path: '/home/u/rapport.bin',
+        profile: const ProfileKey('default'),
+        session: 'a1b2c3d4',
+        targetPath: target,
+        bearer: 'SYNTHETIC_ACCESS',
+      );
+
+      expect(file.bytes, isNull);
+      expect(await File(target).readAsBytes(), body);
+    },
+  );
+
+  for (final (status, code, retryable) in const [
+    (404, 'result.missing', false),
+    (403, 'result.refused', false),
+    (401, 'auth.refused', false),
+    (429, 'transport.server', true),
+    (500, 'transport.server', true),
+    (503, 'transport.server', true),
+  ]) {
+    test('téléchargement HTTP $status → $code, aucun fichier', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'hermes-download-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      server.listen((request) async {
+        request.response.statusCode = status;
+        request.response.write('corps ignoré');
+        await request.response.close();
+      });
+      final target = '${directory.path}/results/cle';
+      await File(target).parent.create(recursive: true);
+      await File('$target.part').writeAsString('ancien partiel');
+
+      final transport = IoHermesTransport();
+      addTearDown(transport.close);
+      await expectLater(
+        HermesAdapter(transport).download(
+          Uri.parse('http://127.0.0.1:${server.port}'),
+          path: '/home/u/rapport.pdf',
+          profile: const ProfileKey('default'),
+          session: 'a1b2c3d4',
+          targetPath: target,
+          bearer: 'SYNTHETIC_ACCESS',
+        ),
+        throwsA(
+          isA<AppError>()
+              .having((error) => error.code, 'code', code)
+              .having((error) => error.retryable, 'retryable', retryable),
+        ),
+      );
+      expect(await File(target).exists(), isFalse);
+      expect(await File('$target.part').exists(), isFalse);
+    });
+  }
+
+  test('redirection refusée : aucune credential ni fichier vers la cible', () async {
+    final directory = await Directory.systemTemp.createTemp('hermes-download-');
+    addTearDown(() => directory.delete(recursive: true));
+    final source = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final external = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => source.close(force: true));
+    addTearDown(() => external.close(force: true));
+    var leaked = 0;
+    external.listen((request) {
+      leaked++;
+      request.response.close();
+    });
+    source.listen((request) {
+      request.response.statusCode = 302;
+      request.response.headers.set(
+        'Location',
+        'http://127.0.0.1:${external.port}/leak',
+      );
+      request.response.close();
+    });
+    final target = '${directory.path}/results/cle';
+    final transport = IoHermesTransport();
+    addTearDown(transport.close);
+    await expectLater(
+      HermesAdapter(transport).download(
+        Uri.parse('http://127.0.0.1:${source.port}'),
+        path: '/home/u/rapport.pdf',
+        profile: const ProfileKey('default'),
+        session: 'a1b2c3d4',
+        targetPath: target,
+        bearer: 'SYNTHETIC_ACCESS',
+      ),
+      throwsA(
+        isA<AppError>().having(
+          (error) => error.code,
+          'code',
+          'transport.redirect',
+        ),
+      ),
+    );
+    expect(leaked, 0);
+    expect(await File(target).exists(), isFalse);
+    expect(await File('$target.part').exists(), isFalse);
+  });
+
+  test(
+    'flux inactif : délai d’inactivité, partiel supprimé, rien présenté comme '
+    'reçu',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'hermes-download-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final release = Completer<void>();
+      addTearDown(() async {
+        if (!release.isCompleted) release.complete();
+        await server.close(force: true);
+      });
+      server.listen((request) async {
+        try {
+          request.response.headers.contentType = ContentType.binary;
+          request.response.contentLength = 100;
+          request.response.add([1, 2, 3]);
+          await request.response.flush();
+          await release.future;
+          await request.response.close();
+        } catch (_) {
+          /* client avorté après le délai */
+        }
+      });
+      final target = '${directory.path}/results/cle';
+      final transport = IoHermesTransport();
+      addTearDown(transport.close);
+      await expectLater(
+        runZoned(
+          () => HermesAdapter(transport).download(
+            Uri.parse('http://127.0.0.1:${server.port}'),
+            path: '/home/u/rapport.pdf',
+            profile: const ProfileKey('default'),
+            session: 'a1b2c3d4',
+            targetPath: target,
+            bearer: 'SYNTHETIC_ACCESS',
+          ),
+          zoneSpecification: ZoneSpecification(
+            createTimer: (self, parent, zone, duration, callback) =>
+                parent.createTimer(
+                  zone,
+                  duration == networkTimeout
+                      ? const Duration(milliseconds: 300)
+                      : duration,
+                  callback,
+                ),
+          ),
+        ),
+        throwsA(
+          isA<AppError>()
+              .having(
+                (error) => error.code,
+                'code',
+                'transport.unreachable',
+              )
+              .having((error) => error.retryable, 'retryable', isTrue),
+        ),
+      );
+      expect(await File(target).exists(), isFalse);
+      expect(await File('$target.part').exists(), isFalse);
+      release.complete();
+    },
+  );
   test(
     'REST et upgrade WS ne transmettent aucun secret à une redirection externe',
     () async {

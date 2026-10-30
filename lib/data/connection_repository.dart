@@ -5,6 +5,8 @@ import '../models/app_error.dart';
 import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/profile.dart';
+import '../models/result.dart';
+import '../models/timeline.dart';
 import 'hermes_adapter.dart';
 import 'storage/connection_store.dart';
 import 'storage/secret_store.dart';
@@ -12,7 +14,7 @@ import 'storage/secret_store.dart';
 typedef RetryDelay = Future<void> Function(Duration duration);
 
 /// Seul auteur des snapshots et de l'unique socket. Les mutations sont sérialisées.
-class ConnectionRepository implements ConnectionGateway {
+class ConnectionRepository implements ConnectionGateway, ResultDownloads {
   ConnectionRepository({
     required this.adapter,
     required this.store,
@@ -63,6 +65,7 @@ class ConnectionRepository implements ConnectionGateway {
     Capability('server_requests', CapabilityState.unverified),
     Capability('clarify', CapabilityState.unverified),
     Capability('approval', CapabilityState.unverified),
+    Capability('result_download', CapabilityState.unverified),
   ];
   @override
   ConnectionSnapshot get snapshot => _snapshot;
@@ -285,6 +288,30 @@ class ConnectionRepository implements ConnectionGateway {
       if (error.code != 'auth.refused') rethrow;
       return operation(await _renew());
     }
+  }
+
+  /// Un seul renouvellement sur `auth.refused`, comme les autres appels
+  /// authentifiés ; le profil et la session restent ceux du fil.
+  @override
+  Future<DownloadedFile> download(
+    TimelineKey key,
+    String path,
+    String targetPath,
+  ) async {
+    final connection = _snapshot.connection;
+    if (connection == null || connection.key != key.connection) {
+      throw const AppError('connection.mismatch');
+    }
+    return _authorized(
+      (bearer) => adapter.download(
+        connection.origin,
+        path: path,
+        profile: key.profile,
+        session: key.session,
+        targetPath: targetPath,
+        bearer: bearer,
+      ),
+    );
   }
 
   Future<void> _connect({String? access}) async {

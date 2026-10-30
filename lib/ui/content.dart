@@ -1,5 +1,6 @@
 // Libellés d'interface (UX-DR22), séparés des styles.
 // Vocabulaire du quotidien : pas de jargon technique en avant.
+import '../models/result.dart';
 import '../models/timeline.dart';
 import '../models/attachment.dart';
 
@@ -255,6 +256,74 @@ abstract final class Content {
       'Mode inchangé : Hermes a refusé le changement.';
   static const approvalModeUnconfirmed =
       'Changement non confirmé par Hermes. Le mode affiché est celui relu.';
+
+  // Fichier produit par Hermes (story 6.4).
+  static const resultTitle = 'Fichier produit par Hermes';
+  static const resultAvailable = 'Disponible';
+  static const resultDownloading = 'Téléchargement…';
+  static const resultDownloaded = 'Téléchargé';
+  static const resultFailed = 'Échec';
+  static const resultInterrupted = 'Échec — interrompu';
+  static const resultDownload = 'Télécharger';
+  static const resultRetry = 'Réessayer';
+  static const resultOpen = 'Ouvrir';
+  static String downloadResult(String name) => 'Télécharger le fichier $name';
+  static String retryResult(String name) =>
+      'Réessayer le téléchargement de $name';
+  static String openResult(String name) => 'Ouvrir le fichier $name';
+  static String resultStatus(ResultState state) => switch (state) {
+    ResultState.available => resultAvailable,
+    ResultState.downloading => resultDownloading,
+    ResultState.downloaded => resultDownloaded,
+    ResultState.failed => resultFailed,
+    ResultState.interrupted => resultInterrupted,
+  };
+  static String resultType(String mediaType) => switch (mediaType) {
+    'application/pdf' => attachmentPdf,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' =>
+      attachmentOffice,
+    'text/plain' => attachmentText,
+    'text/markdown' => 'Markdown',
+    'text/csv' => 'CSV',
+    'application/json' => 'JSON',
+    'application/zip' => 'Archive ZIP',
+    'image/png' => 'Image PNG',
+    'image/jpeg' => 'Image JPEG',
+    'image/webp' => 'Image WebP',
+    'image/gif' => 'Image GIF',
+    _ => mediaType,
+  };
+  static String resultSize(int bytes) {
+    if (bytes < 1024) return '$bytes o';
+    if (bytes < 1024 * 1024) {
+      final ko = (bytes / 1024).toStringAsFixed(1);
+      // Évite « 1024.0 Ko » juste sous le seuil du mégaoctet.
+      if (ko != '1024.0') return '$ko Ko';
+    }
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+  }
+
+  /// Un échec de fichier ne reprend jamais un message d'un autre domaine
+  /// (connexion, stockage, transport) qui parlerait d'autre chose.
+  static String resultError(String code) =>
+      code.startsWith('result.') ? error(code) : resultUnknown;
+
+  static const resultOffline = 'Téléchargement impossible hors connexion';
+  static const resultUnavailable =
+      'Téléchargement indisponible sur ce serveur.';
+  static const resultMissing = 'Ce fichier n’existe plus sur Hermes.';
+  static const resultRefused =
+      'Hermes a refusé le téléchargement de ce fichier.';
+  static const resultOpenFailed =
+      'Aucune application ne peut ouvrir ce fichier.';
+  static const resultUnreadable =
+      'Impossible de lire la copie locale. Téléchargez-la de nouveau.';
+  static const resultWrite =
+      'Impossible d’enregistrer le fichier sur le téléphone.';
+  static const resultUnknown = 'Le fichier n’a pas pu être récupéré.';
+  static const activityPathUnavailable =
+      'Chemin sur Hermes — non récupérable depuis le téléphone';
+
   static const workSucceeded = 'Terminé';
   static const workFailed = 'Erreur';
   static const workStopped = 'Arrêt confirmé';
@@ -368,6 +437,7 @@ abstract final class Content {
     'server_requests' => 'Questions et autorisations de Hermes',
     'clarify' => 'Questions de Hermes',
     'approval' => 'Autorisations de Hermes',
+    'result_download' => 'Fichiers produits par Hermes',
     _ => name,
   };
   static String error(String code) => switch (code) {
@@ -412,6 +482,14 @@ abstract final class Content {
     'approval.choice' => 'Cette décision n’est pas proposée.',
     'approval_mode.unreadable' => 'Hermes n’a pas rendu de mode lisible.',
     'approval_mode.invalid' => 'Ce mode n’existe pas.',
+    'result.missing' => resultMissing,
+    'result.refused' => resultRefused,
+    'result.open' => resultOpenFailed,
+    'result.unreadable' => resultUnreadable,
+    'result.write' => resultWrite,
+    'result.unavailable' => resultUnavailable,
+    'result.offline' => resultOffline,
+    final code when code.startsWith('result.') => resultUnknown,
     'send.not_received' => 'Hermes n’affiche pas cette demande. Vérifiez la conversation, puis renvoyez-la si besoin. Votre texte est conservé.',
     'turn.error' =>
       'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',

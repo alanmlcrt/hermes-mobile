@@ -9,6 +9,7 @@ import 'package:hermes_mobile/data/storage/database.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
+import 'package:hermes_mobile/models/result.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -264,6 +265,49 @@ void main() {
       'result': 'Sortie reçue',
     });
     expect(actions.last.details, isEmpty);
+    expect(count('session.history'), 0);
+    expect(count('prompt.submit'), 1);
+  });
+
+  test('rejeu write_file : une seule carte résultat, clé stable', () async {
+    await start();
+    await outbox.send(draft.key);
+    emit('message.start', {}, 1);
+    const payload = {
+      'tool_id': 'W',
+      'name': 'write_file',
+      'args': {'path': '/home/u/rapport.pdf'},
+    };
+    emit('tool.start', payload, 2);
+    emit('tool.complete', payload, 3);
+    emit('message.complete', {'status': 'complete'}, 4);
+    await until(() => timeline().seq == 4);
+    final first = timeline().items.whereType<ResultItem>().single;
+    expect(first.state, ResultState.available);
+
+    overrides['session.events.since'] = {
+      'events': [
+        {
+          'type': 'tool.complete',
+          'session_id': 'a1b2c3d4',
+          'payload': payload,
+          'seq': 5,
+        },
+      ],
+      'latest_seq': 5,
+      'truncated': false,
+      'count': 1,
+      'epoch': 'synthetic-epoch',
+      'open_requests': [],
+    };
+    await reconnect();
+    await until(() => timeline().seq == 5);
+
+    final results = timeline().items.whereType<ResultItem>().toList();
+    expect(results, hasLength(1));
+    expect(results.single.resultKey, first.resultKey);
+    final activity = timeline().items.whereType<ActivityItem>().single;
+    expect(ResultKey.of(activity.eventKey!), first.resultKey);
     expect(count('session.history'), 0);
     expect(count('prompt.submit'), 1);
   });
