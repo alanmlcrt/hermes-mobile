@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "payload": {
+    "transport": "fcm-http-v1",
+    "platforms": [
+      "android"
+    ],
+    "messageKind": "notification-and-data",
+    "dataFields": [
+      "outcome",
+      "sessionId"
+    ],
+    "dataValueType": "string",
+    "outcomeValues": [
+      "succeeded",
+      "failed",
+      "stopped"
+    ],
+    "notification": {
+      "title": "Hermes",
+      "bodyByOutcome": {
+        "succeeded": "Hermes a terminé",
+        "failed": "Hermes a échoué",
+        "stopped": "Hermes s'est arrêté"
+      }
+    },
+    "android": {
+      "channelId": "hermes_turn_complete",
+      "priority": "high",
+      "ttlSeconds": 86400,
+      "notificationTagTemplate": "hermes:{sessionId}:{outcome}",
+      "collapseKeyTemplate": "hermes:{sessionId}"
+    },
+    "forbiddenDataFields": [
+      "text",
+      "title",
+      "body",
+      "sessionKey",
+      "session_id",
+      "profileKey",
+      "profile",
+      "profile_id",
+      "connectionKey",
+      "connectionId",
+      "connection_id",
+      "executionId",
+      "execution_id",
+      "submission_id",
+      "user_row_id",
+      "path",
+      "filePath",
+      "error",
+      "message",
+      "tool",
+      "args",
+      "result",
+      "token",
+      "fcmToken",
+      "fcm_token",
+      "refresh_token",
+      "id_token",
+      "credential",
+      "secret",
+      "authorization"
+    ],
+    "maxBytes": 2048,
+    "note": "Payload envoyé par le plugin Hermes (server/hermes-plugin/hermes-mobile-notify) : le bloc notification affiche un libellé générique sans réveiller l'app ; le bloc data ne porte que outcome et sessionId. Aucun texte, chemin ni secret."
+  }
+}

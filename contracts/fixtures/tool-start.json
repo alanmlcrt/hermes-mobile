@@ -1,0 +1,21 @@
+{
+  "jsonrpc": "2.0",
+  "method": "event",
+  "params": {
+    "type": "tool.start",
+    "session_id": "a1b2c3d4",
+    "payload": {
+      "tool_id": "SYNTHETIC_TOOL_1",
+      "name": "SYNTHETIC",
+      "preview": "Exemple synthétique",
+      "context": "Exemple synthétique",
+      "args": {
+        "path": "example.dart",
+        "dry_run": false,
+        "limit": 0
+      },
+      "args_text": "Secours synthétique"
+    },
+    "seq": 5
+  }
+}

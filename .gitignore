@@ -6,11 +6,26 @@ android/key.properties
 *.jks
 *.keystore
 
+# Firebase : configuration privée préparée en 5.5 et secrets hors dépôt.
+android/app/google-services.json
+lib/firebase_options.dart
+**/service-account*.json
+**/*firebase-adminsdk*.json
+
 # FVM
 .fvm/
 
+# Corpus de mesure des pièces jointes (hors dépôt)
+_bmad-output/implementation-artifacts/corpus-pieces-jointes/
+
+# Sorties brutes des campagnes de mesure (le contrat fait foi)
+_bmad-output/implementation-artifacts/mesure-finale.json
+_bmad-output/implementation-artifacts/essai-*.json
+_bmad-output/implementation-artifacts/.diff-*.patch
+
 # Flutter / Dart
 .dart_tool/
+test/failures/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
@@ -24,6 +39,12 @@ coverage/
 .vscode/
 .DS_Store
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
 # Android
 android/.gradle/
 android/local.properties
@@ -31,3 +52,4 @@ android/captures/
 android/app/debug/
 android/app/profile/
 android/app/release/
+_bmad-output/implementation-artifacts/.hermes-mesure.env

@@ -1,0 +1,148 @@
+{
+  "evidence": "documentary",
+  "activityEvents": {
+    "documented": "present",
+    "actual": "unverified",
+    "fixtures": "synthetic",
+    "source": "https://github.com/NousResearch/hermes-agent/blob/9e01b44dd23978f9ff40b7837467f3a9f1582130/tui_gateway/contracts/events.py#L354-L387",
+    "identity": "tool_id",
+    "families": [
+      "tool",
+      "unknown"
+    ],
+    "historyTools": "unavailable-in-current-decoder"
+  },
+  "capabilities": [
+    {
+      "name": "profiles",
+      "required": true,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "GET /api/profiles"
+    },
+    {
+      "name": "websocket",
+      "required": true,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "gateway.ready"
+    },
+    {
+      "name": "replay_epoch",
+      "required": true,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "gateway.ready.payload.replay_epoch"
+    },
+    {
+      "name": "conversation",
+      "required": true,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "gateway.ready.payload.session_authority"
+    },
+    {
+      "name": "change_events",
+      "required": false,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "gateway.ready.payload.change_events"
+    },
+    {
+      "name": "heartbeat",
+      "required": false,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "gateway.ready.payload.heartbeat"
+    },
+    {
+      "name": "per_session_exclusive_submit",
+      "required": false,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "gateway.capabilities"
+    },
+    {
+      "name": "session.events.since",
+      "required": false,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "openrpc"
+    },
+    {
+      "name": "session.create.idempotency_key",
+      "required": false,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "openrpc"
+    },
+    {
+      "name": "file.attach",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "openrpc",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-24T15:15:13.312844Z",
+      "source": "contracts/file-limits.json"
+    },
+    {
+      "name": "session.interrupt",
+      "required": false,
+      "documented": "present",
+      "actual": "unverified",
+      "surface": "openrpc",
+      "fixtures": "synthetic"
+    },
+    {
+      "name": "server_requests",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "client.capabilities {server_requests: true}",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "clarify",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "requête serveur clarify",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "approval",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "requête serveur approval",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "steer",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "prompt.submit pendant un tour -> redirected",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "result_download",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "GET /api/fs/download?path=&profile=&session_id=",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    }
+  ]
+}

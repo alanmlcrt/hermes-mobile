@@ -1,0 +1,6 @@
+# Scénario 1 — app fermée (2026-10-29, observateur 0.1.4)
+INFO observer.resumed {"status":"attached"}
+INFO observer.terminal {"outcome":"succeeded","state":"pending","terminal":"succeeded"}
+INFO outbox.delivered {"attempt":1,"outcome":"succeeded","schema_valid":true,"status":"delivered","terminal":"succeeded"}
+# /v1/health après réception
+{"state":"ok","reasons":[],"counters":{"pending":0,"attached":7,"outboxPending":0,"delivered":1,"failed":0,"dropped":0,"expired":18,"revoked":0,"invalidToken":0},"version":"0.1.4","checkedAt":"2026-10-29T19:35:59Z"}

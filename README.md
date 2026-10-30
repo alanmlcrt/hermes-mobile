@@ -1,5 +1,17 @@
 # Hermes Mobile
 
+Les notifications de fin de travail sont envoyées par le plugin Hermes
+`hermes-mobile-notify`, installé sur chaque profil (voir
+[le plugin Hermes](server/hermes-plugin/README.md)). L’app transmet son jeton FCM
+au plugin à chaque envoi, sans rien à configurer par profil. Si le plugin est
+absent du profil, la demande part quand même et son tour est marqué
+« Notification non suivie ».
+
+Firebase est facultatif au démarrage. Le fichier `android/app/google-services.json`
+n’est pas versionné : le plugin Gradle Google Services n’est appliqué que s’il
+existe. Sans lui, le même APK démarre avec l’état « Firebase non configuré » ;
+aucun faux jeton n’est utilisé.
+
 Application Android personnelle (iPhone anticipé) servant d'interface distante à l'installation Hermes d'Alanc. Identifiant d'application : `fr.hermes_mobile`.
 
 ## Prérequis
@@ -76,6 +88,27 @@ APK produit : `build/app/outputs/flutter-apk/app-release.apk`.
 - Sans câble : copier l'APK sur le téléphone, l'ouvrir et autoriser l'installation depuis cette source.
 
 Lancer l'app et vérifier qu'elle s'ouvre sans erreur. Seule cette installation sur le téléphone réel valide la stack, pas un émulateur.
+
+## Connexion et profils (contrat documentaire)
+
+Le backend Desktop doit être activé et exposé sur le port 9119 via Tailscale. La référence publique est Hermes `v0.22.2`, SHA `d923a5eb487a17c0a68801bba9ef0f56c81040a8`. Le contrat est épinglé sur le build observé via `/api/health`, `v0.22.2+1690` (main, SHA `9e01b44dd23978f9ff40b7837467f3a9f1582130`) ; il n’est pas encore validé sur l’installation. Les données de `contracts/fixtures/` sont synthétiques et **ne valident pas 1.3/G1**.
+
+1. Saisir `http://<hôte>.ts.net:9119` ou une origine HTTPS. L’app refuse identifiants, chemin, query et fragment. HTTP n’est accepté que sous `ts.net`.
+2. Vérifier et confirmer l’origine affichée, puis saisir le mot de passe Hermes (utilisateur `hermes`). La connexion est mémorisée ; mots de passe et jetons restent dans le coffre sécurisé, jamais dans SQLite.
+3. Choisir un profil et actualiser la liste. Le choix est local au téléphone et ne modifie pas le profil global du dashboard. Sans choix explicite, seul le `is_default` fourni par le GET profils sert de défaut ; aucune valeur n’est inventée en cas d’échec.
+
+Pour générer un QR sans secret (à scanner avec la caméra Android) :
+
+```sh
+python -m pip install -r tool/requirements.txt
+python tool/generate_pairing_qr.py http://desktop.exemple.ts.net:9119 --output pairing.svg
+```
+
+Le QR contient uniquement `hermes-mobile://pair?url=<origine encodée>`. L’ouverture du lien affiche la confirmation avant tout accès au nouveau serveur. La saisie manuelle reste disponible. Un changement d’origine conserve la clé UUID locale, ferme l’ancienne socket et efface ses credentials avant tout nouvel accès réseau.
+
+La reconnexion renouvelle les jetons via `/auth/native/refresh`, puis retente le login depuis le coffre si le refresh est refusé. Chaque socket reçoit un nouveau ticket transmis par sous-protocole, jamais en URL. Les redirections authentifiées sont refusées. Après trois tentatives automatiques échouées, le bouton de reconnexion reste disponible.
+
+Les fonctions absentes et non vérifiées restent visibles. Les capacités futures ne sont pas sondées par création de session, envoi ou ajout de fichier. Après activation, comparer le build effectif, capturer des réponses expurgées, puis valider auth/profils/reconnexion sur PC et Pixel, texte 200 %, clavier et TalkBack. Cette validation réelle reste ouverte.
 
 ## CI
 

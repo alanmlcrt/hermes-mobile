@@ -1,0 +1,347 @@
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: DraftView : détails, focus, mises à jour, groupe, matrice et captures
+00:08 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: détail : pas de saut local, focus conservé en devenant groupe et à l’enrichissement
+00:08 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: clavier et nouveaux fragments : ancrage en bas conservé hors consultation
+00:08 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/action_details_page_test.dart: deux détails indépendants, retour après éviction et consultation refermée avant réponse
+00:09 +4: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_details_regression_test.dart
+00:09 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_details_regression_test.dart: chaîne structurée vide et patch vide : aucun ancien texte de secours
+00:09 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_details_regression_test.dart: détails reçus, copiés et restaurés : JSON gelé sans alias mutable
+00:09 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_details_regression_test.dart: insertion de section : Sortie conserve son propre défilement
+00:10 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_details_regression_test.dart: 320 px et texte 200 % : gestes dans les deux axes et fin visible (variant: TargetPlatform.android)
+00:10 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_details_regression_test.dart: sélection et copie conservées après ajout d’une section (variant: TargetPlatform.android)
+00:10 +9: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart
+00:11 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: (setUpAll)
+00:11 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: sortie longue : deux axes, texte intégral et corps sans repli
+00:11 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: aucun contenu utilisable : ligne statique sans faux contrôle
+00:12 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: détails : clavier, état annoncé, sélection et données sans exécution
+00:12 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: sections : aucune erreur déduite, valeurs et secours présents seulement
+00:12 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: fin neutre, libellé accessible et illustration 24 px
+00:12 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: commande native 48 px, clavier et sémantique dépliée
+00:12 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités dark Size(320.0, 740.0) texte 1.0 clavier mouvement réduit
+00:12 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités dark Size(320.0, 740.0) texte 2.0 clavier mouvement réduit
+00:12 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités dark Size(375.0, 812.0) texte 1.0 clavier mouvement réduit
+00:12 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités dark Size(375.0, 812.0) texte 2.0 clavier mouvement réduit
+00:12 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités dark Size(812.0, 375.0) texte 1.0 clavier mouvement réduit
+00:12 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités dark Size(812.0, 375.0) texte 2.0 clavier mouvement réduit
+00:13 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités light Size(320.0, 740.0) texte 1.0 clavier mouvement réduit
+00:13 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités light Size(320.0, 740.0) texte 2.0 clavier mouvement réduit
+00:13 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités light Size(375.0, 812.0) texte 1.0 clavier mouvement réduit
+00:13 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités light Size(375.0, 812.0) texte 2.0 clavier mouvement réduit
+00:13 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités light Size(812.0, 375.0) texte 1.0 clavier mouvement réduit
+00:13 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: galerie activités light Size(812.0, 375.0) texte 2.0 clavier mouvement réduit
+00:13 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/activity_line_test.dart: (tearDownAll)
+00:13 +27: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart
+00:14 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) modèle propre : aucune violation
+00:14 +28: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) modèle impur : fichier et import cités
+00:14 +29: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue fautive : import relatif vers data/
+00:14 +30: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue fautive : import package:hermes_mobile/data/
+00:14 +31: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) modèle impur : dart:ui compte comme import Flutter
+00:14 +32: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue fautive : export vers data/
+00:14 +33: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: importViolations (sources en mémoire) vue propre : models et ui autorisés
+00:14 +34: C:/Users/alanc/orca/projects/Hermes Mobile/test/architecture_imports_test.dart: lib/ respecte les frontières d'imports
+00:14 +35: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart
+00:14 +35: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: suppression et fin de sauvegarde dans la même frame préservent la route dessous
+00:15 +36: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: preview, annuler et retour ne sauvegardent rien
+00:15 +37: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: échec garde sélection, retry unique et retour bloqué pendant écriture
+00:16 +38: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_editor_test.dart: clair sombre, portrait paysage, 200 %, clavier et sémantique
+00:17 +39: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_store_test.dart
+00:17 +39: C:/Users/alanc/orca/projects/Hermes Mobile/test/companion_background_store_test.dart: migration v7, identité complète, casse et réouverture réelle
+00:18 +40: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart
+00:18 +40: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: lien Android reçu par le routeur exige confirmation du nouveau serveur
+00:19 +41: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: confirmation avant réseau et persistance puis connexion et profils
+00:19 +42: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: deep link prérempli exige confirmation ; invalide sans réseau
+00:19 +43: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: formulaire à 200 %, mouvement réduit, clavier et erreur (Size(375.0, 700.0))
+00:20 +44: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_flow_test.dart: formulaire à 200 %, mouvement réduit, clavier et erreur (Size(700.0, 375.0))
+00:20 +45: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart
+00:20 +45: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: réauthentification refusée ou vide invalide ancienne session : false
+00:21 +46: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: réauthentification refusée ou vide invalide ancienne session : true
+00:21 +47: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: refus final pendant actualisation invalide auth et ferme socket
+00:21 +48: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: connexion ne crée aucune socket après refus final des profils
+00:21 +49: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: changement origine avec échec secret reste déconnecté
+00:21 +50: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: changement origine avec échec sqlite reste déconnecté
+00:21 +51: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: RPC 5035 ferme immédiatement, borne retries et ignore callbacks doublés
+00:21 +52: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: capacités sans réponse expirent et permettent reprise explicite
+00:21 +53: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: délai capacités annulé lors de fermeture
+00:21 +54: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: capacité malformée reste non vérifiée : {}
+00:21 +55: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: capacité malformée reste non vérifiée : {per_session_exclusive_submit: false}
+00:21 +56: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_regressions_test.dart: réponse malformée ne conserve pas une ancienne capacité confirmée
+00:21 +57: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart
+00:21 +57: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: origine/lien invalide : refus avant réseau et persistance
+00:21 +58: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: login JSON, cookies, profils et défaut serveur sans mutation globale
+00:21 +59: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: refresh refusé : relogin depuis coffre, nouveau ticket, socket unique
+00:21 +60: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: redémarrage : connexion et choix explicite restaurés depuis stockage
+00:21 +61: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: changement origine : ferme socket et efface credentials avant tout réseau, UUID stable
+00:21 +62: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: transport, auth, méthode absente et redirection ont des codes distincts
+00:21 +63: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: profils loading, empty, error, refreshing ; aucun défaut inventé
+00:21 +64: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: choix explicite local prioritaire au défaut et conservé après actualisation
+00:21 +65: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: capacités requises absentes ou non vérifiées gardent acceptation ouverte
+00:21 +66: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: socket perdue : resynchronisation, retries bornés puis hors ligne
+00:21 +67: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: une succession de sockets ouvertes puis perdues reste bornée
+00:21 +68: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: retry périmé ne reconnecte pas une ancienne origine
+00:21 +69: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: méthode RPC absente : fonction visible et message dédié
+00:21 +70: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: cookies HTTPS préfixés et relogin sans RT efface le jeton obsolète
+00:21 +71: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_repository_test.dart: clé UUID v4 et usage coffre
+00:21 +72: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart
+00:22 +72: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: restauration tardive préserve saisie et lien : null
+00:23 +73: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: restauration tardive préserve saisie et lien : https://edited.example
+00:23 +74: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: restauration tardive préserve saisie et lien : hermes-mobile://pair?url=https%3A%2F%2Fincoming.example
+00:23 +75: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_restore_regressions_test.dart: échec restauration : reprise avec coffre sans ressaisie mot de passe
+00:23 +76: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_store_test.dart
+00:24 +76: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_store_test.dart: création, réouverture, sélection sensible à la casse et clé stable
+00:24 +77: C:/Users/alanc/orca/projects/Hermes Mobile/test/connection_store_test.dart: migration réelle v1 vers v2 conserve les données existantes
+00:24 +78: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/contracts_test.dart
+00:24 +78: C:/Users/alanc/orca/projects/Hermes Mobile/test/contracts_test.dart: outils : contrat documentaire et fixtures explicitement synthétiques
+00:24 +79: C:/Users/alanc/orca/projects/Hermes Mobile/test/contracts_test.dart: payload gateway.ready conforme aux champs requis et types du schéma embarqué
+00:24 +80: C:/Users/alanc/orca/projects/Hermes Mobile/test/contracts_test.dart: provenance officielle épinglée et capacités documentaires distinctes
+00:24 +81: C:/Users/alanc/orca/projects/Hermes Mobile/test/contracts_test.dart: mapping des fixtures et type inconnu explicite
+00:24 +82: C:/Users/alanc/orca/projects/Hermes Mobile/test/contracts_test.dart: fixtures sans secret réel ni origine privée
+00:24 +83: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_companion_test.dart
+00:25 +83: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_companion_test.dart: échelle non linéaire du corps et regard vers le texte dessous
+00:25 +84: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_companion_test.dart: poses, statut immédiat pendant chatouilles et aucun terminal différé
+00:25 +85: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_companion_test.dart: 320/375, paysage, clavier et 200 % : enveloppe stable par pose
+00:26 +86: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_companion_test.dart: historique neutre sans interaction ni annonce supplémentaire
+00:26 +87: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart
+00:27 +87: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: détails reçus : fusion, null, rejeu et persistance
+00:27 +88: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: détails : inconnu ignoré, sans ID indépendant, types invalides omis
+00:27 +89: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: texte sans message.start : regard reçu, jamais concentration supposée
+00:27 +90: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: activité avant démarrage attachée à la demande acceptée
+00:27 +91: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: activité avant accusé RPC rattachée sans supposer le démarrage
+00:28 +92: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: tour nominal : bulle liée par user_row_id, réponse, « Terminé », projection et curseur en une ligne
+00:28 +93: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: rapprochement par position (persisted_turn), jamais par le texte
+00:28 +94: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: événements avant la réponse de soumission : la bulle passe devant
+00:28 +95: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: doublon, autre session et ancienne génération sont ignorés
+00:28 +96: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete error → failed
+00:28 +97: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete interrupted → stopped
+00:28 +98: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete complete → succeeded
+00:28 +99: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: message.complete surprise → unknown
+00:28 +100: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: événement error : échec simple, détail du serveur jamais affiché
+00:28 +101: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: perte de socket en cours : « non synchronisé », jamais terminé
+00:28 +102: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: types inconnus et outils : ligne d’activité générique
+00:28 +103: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: actions distinctes, fin corrélée, fin seule et événements anonymes
+00:29 +104: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: identités cloisonnées par connexion, profil et session
+00:29 +105: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: fin seule avec erreur reçue : aucun début ni échec global supposé
+00:29 +106: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: repli attesté uniquement au fragment non vide : message.delta
+00:29 +107: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: repli attesté uniquement au fragment non vide : message.interim
+00:29 +108: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: repli attesté uniquement au fragment non vide : message.complete
+00:29 +109: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: début provisoire, démarrage puis fin avant accusé, ancien tour false
+00:29 +110: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: début provisoire, démarrage puis fin avant accusé, ancien tour true
+00:30 +111: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: projection ancienne : générique, sans phase ou identité inventée
+00:30 +112: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: premier texte avant accusé : repli conservé au rattachement
+00:30 +113: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: relance : fil relu depuis SQLite, travail en cours non synchronisé
+00:30 +114: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: migration réelle v4 vers v7 : ajout seul, données conservées
+00:30 +115: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: reconstruction du groupe : choix et focus stables, aucune action distante
+00:33 +116: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: plusieurs blocs par tour, une seule action et réservations anciennes
+00:33 +117: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: activité sans accusé : aucune réservation avant rattachement
+00:33 +118: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réservation complète stable depuis acceptation sans défilement
+00:34 +119: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: clavier sur la même page : pause, lecture et placement conservés
+00:34 +120: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: statut live monté pendant la lecture loin de la fin
+00:35 +121: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: page complète : acceptation, poses, clavier et texte agrandi
+00:41 +122: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: page : pose périmée neutralisée pendant reprise et après échec
+00:41 +123: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: blocs longs : construction paresseuse entre réponses du même tour
+00:42 +124: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: réponse riche à 200 % en sombre : code défilant, sans débordement ; reconstruction sans appel
+00:42 +125: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: mouvement réduit : aucune animation d’apparition
+00:42 +126: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: interim : already_streamed false en paragraphe, true sans effet
+00:42 +127: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: nouvel replay_epoch : seq plus bas appliqué ; bind efface le curseur
+00:42 +128: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: texte final : fait foi, ajouté sans deltas, ignoré si partiel
+00:42 +129: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: texte final sans deltas : réponse ajoutée
+00:43 +130: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: texte final partiel : deltas conservés
+00:43 +131: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: premier envoi : après le changement outbox, bulle et réponse affichées
+00:43 +132: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: projection en échec : message d’erreur du tour
+00:43 +133: C:/Users/alanc/orca/projects/Hermes Mobile/test/conversation_test.dart: image Markdown : texte alternatif, aucune image chargée
+00:43 +134: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart
+00:44 +134: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture authentifiée : /draft du profil par défaut, saisie enregistrée, même brouillon à la relance, aucune requête de session
+00:45 +135: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: aucun profil : écran des profils, aucun brouillon
+00:45 +136: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: ouverture du brouillon impossible : écran des profils
+00:45 +137: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: choix mémorisé et découverte échouée : brouillon du choix
+00:45 +138: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: authentification refusée sur le brouillon : connexion
+00:45 +139: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: lecture échouée : message, aucun champ de saisie
+00:45 +140: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: brouillon inconnu : message, aucun champ de saisie
+00:45 +141: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: envoi actif : texte saisi, connecté, tour terminé
+00:45 +142: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: tour en cours : saisie enregistrée, bouton désactivé et raison
+00:45 +143: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: envoi en cours puis résultat incertain : annoncé, explicite
+00:46 +144: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: acceptée : saisie envoyée retirée de l’écran
+00:46 +145: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: acceptée avec saisie plus récente : texte conservé
+00:46 +146: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: dialecte canonique : envoi désactivé, capacité absente dite
+00:46 +147: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: texte 200 % : état d’envoi lisible sans débordement
+00:46 +148: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: sélecteur : profil rattaché, annoncé, texte intact, choix enregistré
+00:46 +149: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: sélecteur : profil rattaché, annoncé, texte intact, choix enregistré (200 %)
+00:46 +150: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: sélecteur désactivé pendant un envoi
+00:46 +151: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: « Mes profils » depuis un brouillon neuf rattache le choix
+00:47 +152: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: perte d’authentification sur « Mes profils » : connexion
+00:47 +153: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: notification de profils sur le brouillon : « Mes profils » ne se rouvre pas
+00:48 +154: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: « Mes profils » : sélection en échec, brouillon inchangé
+00:48 +155: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: écriture échouée : brouillon et profil inchangés, erreur dite
+00:48 +156: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: conversation commencée : profil en lecture seule, inchangé
+00:48 +157: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: 200 %, lecteur d'écran, clavier, échec d'écriture (Size(375.0, 700.0))
+00:48 +158: C:/Users/alanc/orca/projects/Hermes Mobile/test/draft_flow_test.dart: 200 %, lecteur d'écran, clavier, échec d'écriture (Size(700.0, 375.0))
+00:49 +159: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/event_mapping_test.dart
+00:49 +159: C:/Users/alanc/orca/projects/Hermes Mobile/test/event_mapping_test.dart: chaque événement des fixtures a un effet connu
+00:49 +160: C:/Users/alanc/orca/projects/Hermes Mobile/test/event_mapping_test.dart: statut de message.complete et repli inconnu
+00:49 +161: C:/Users/alanc/orca/projects/Hermes Mobile/test/event_mapping_test.dart: début et fin proviennent du mapping, jamais du nom ou emoji
+00:49 +162: C:/Users/alanc/orca/projects/Hermes Mobile/test/event_mapping_test.dart: le fichier de mapping est déclaré en asset
+00:49 +163: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart
+00:50 +163: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:51 +164: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: scénario conversation piloté : texte, terminal pendant chatouille, reprise
+00:51 +165: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:54 +166: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:55 +167: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:58 +168: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+01:00 +169: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque composant rendu dans les quatre variantes
+01:01 +170: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: SectionCard respecte le mouvement réduit
+01:01 +171: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: StatusLabel annonce son libellé
+01:01 +172: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/hermes_adapter_test.dart
+01:01 +172: C:/Users/alanc/orca/projects/Hermes Mobile/test/hermes_adapter_test.dart: pair local sans pong : perte détectée par pingInterval borné
+01:02 +173: C:/Users/alanc/orca/projects/Hermes Mobile/test/hermes_adapter_test.dart: login HTTP réel : JSON, cookies explicites puis bearer sur profils
+01:02 +174: C:/Users/alanc/orca/projects/Hermes Mobile/test/hermes_adapter_test.dart: JSON 200 malformé est une erreur de contrat non retryable
+01:02 +175: C:/Users/alanc/orca/projects/Hermes Mobile/test/hermes_adapter_test.dart: REST et upgrade WS ne transmettent aucun secret à une redirection externe
+01:02 +176: C:/Users/alanc/orca/projects/Hermes Mobile/test/hermes_adapter_test.dart: vrai upgrade WS utilise sous-protocoles, jamais query de secret
+01:02 +177: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart
+01:03 +177: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: décodage de session.list ordre du serveur, titre sinon aperçu, date, casse des identifiants
+01:03 +178: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: décodage de session.list liste vide, ligne sans id écartée, forme invalide refusée
+01:03 +179: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: décodage de session.list paramètres : profil et limite par défaut
+01:03 +180: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: HistoryViewModel : rafraîchissements qui se chevauchent le plus récent gagne même terminé en premier (succès)
+01:03 +181: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: HistoryViewModel : rafraîchissements qui se chevauchent le plus récent gagne même terminé en premier (erreur)
+01:03 +182: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: décodage tolérant message_count numérique quelconque, started_at invalide : liste conservée
+01:03 +183: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: dépôts (SQLite et socket simulés) liste par profil : chaque profil demande et reçoit la sienne
+01:03 +184: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: dépôts (SQLite et socket simulés) autre connexion : refus sans requête ; erreur RPC : levée, sans reste
+01:03 +185: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: dépôts (SQLite et socket simulés) brouillon de suite : get-or-create par (connexion, profil, session), casse respectée
+01:03 +186: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: dépôts (SQLite et socket simulés) index unique en base ; accueil sans session même si un brouillon de suite a du texte
+01:03 +187: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: dépôts (SQLite et socket simulés) brouillon d'une conversation créée ici : retrouvé tel quel par la liste
+01:03 +188: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: dépôts (SQLite et socket simulés) poursuivre : envoi sur la session ouverte, aucune session.create
+01:03 +189: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans accueil : « Conversations » ouvre la liste du profil, dans l'ordre serveur, profil annoncé
+01:04 +190: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans vide, erreur distincte sans liste périmée, actualisation manuelle
+01:04 +191: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans ouvrir une ligne : /c/..., fil chargé, saisie sur le brouillon de cette conversation ; casse distincte
+01:05 +192: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans échec de reprise : message, brouillon intact
+01:05 +193: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans autre connexion : retour à l'accueil, aucun brouillon de suite
+01:05 +194: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans « Nouvelle conversation » depuis /c/... : brouillon neuf du profil, sans session
+01:05 +195: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans sans authentification : /history et /c mènent à la connexion
+01:05 +196: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans /?profile=inconnu : brouillon du profil courant
+01:05 +197: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans /c/... avec stockage en échec : erreur, « Réessayer » rouvre
+01:05 +198: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans /c/... : profil en lecture seule, aucun sélecteur
+01:06 +199: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans limite atteinte : note ; en dessous : aucune
+01:09 +200: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans 200 % : historique et conversation sans débordement (Size(375.0, 700.0))
+01:09 +201: C:/Users/alanc/orca/projects/Hermes Mobile/test/history_test.dart: écrans 200 % : historique et conversation sans débordement (Size(700.0, 375.0))
+01:09 +202: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart
+01:10 +202: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+01:11 +203: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp attend écriture avant fermeture gateway, échec=false
+01:11 +204: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp attend écriture avant fermeture gateway, échec=true
+01:11 +205: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp suit le thème du téléphone (Brightness.dark)
+01:11 +206: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp suit le thème du téléphone (Brightness.light)
+01:11 +207: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: retour au premier plan hors ligne : reconnect, jamais en ligne
+01:12 +208: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: retour au premier plan : ping en échec reconnecte ; occupé ou non authentifié, rien
+01:12 +209: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart
+01:12 +209: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: relance : même DraftKey et texte relu après réouverture
+01:12 +210: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft cible sans brouillon : le texte passe sur B
+01:12 +211: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft cible vide : supprimée, le texte passe sur B
+01:12 +212: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft cible non vide : les deux textes échangent leur profil
+01:12 +213: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft session déjà créée : profil inchangé
+01:12 +214: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft brouillon inconnu : draft.not_found
+01:12 +215: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft saisie non attendue puis rattachement : texte conservé
+01:12 +216: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft échec au milieu de l’échange : retour arrière complet
+01:13 +217: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft cible en envoi : draft.profile_busy, rien ne change
+01:13 +218: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: reassignNewDraft transaction en erreur : rien ne change
+01:13 +219: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: dispose attend l'écriture en cours avant fermeture
+01:13 +220: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: long collage : 200 000 caractères, emojis et /cmd intacts
+01:13 +221: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: saisies rapides : la dernière écriture gagne
+01:13 +222: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: écriture échouée : storage.unavailable, la suivante passe
+01:13 +223: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: migration v6 vers v7 : doublons de conversation dédupliqués, opérations rattachées
+01:13 +224: C:/Users/alanc/orca/projects/Hermes Mobile/test/outbox_repository_test.dart: migration réelle v2 vers v7 conserve la connexion
+01:13 +225: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart
+01:14 +225: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: background : A vers B vers A ignore la fin de l’ancienne édition
+01:14 +226: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: background : lectures obsolètes, retry, identité origine et écriture attachée à sa cible
+01:14 +227: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: background : lecture bloquante et édition abandonnée au changement de serveur
+01:15 +228: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils : suspension hors viewport, route et arrière-plan, libellé long accessible
+01:15 +229: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: Otc suit la sélection vérifiée, chargement stable et aucun profil inventé
+01:15 +230: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: changement de profil et serveur repart au repos ; pause et surface masquée
+01:15 +231: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: panneau : noms absents ou longs, thèmes et 200 % en portrait et paysage
+01:16 +232: C:/Users/alanc/orca/projects/Hermes Mobile/test/profiles_test.dart: profils à 200 %, sélection accessible, actualisation, erreur et vide distincts
+01:16 +233: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart
+01:16 +233: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: pose de travail courante après suspension et chatouille fixe
+01:17 +234: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: limites transformées du lapin et du viewport près du bord
+01:17 +235: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: surface inactive sans activation ni focus et sémantique désactivée
+01:17 +236: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: un ancêtre déplace un enfant constant sans cycle hors écran
+01:17 +237: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: remplacement du contrôleur avec enfant constant suit la nouvelle position
+01:17 +238: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: un changement de thème conserve la réaction fixe et son délai
+01:17 +239: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: focus en anneau sur pastel conserve le centre transparent
+01:17 +240: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: enveloppe peinte aux amplitudes extrêmes à 48/64/180 px
+01:17 +241: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: une route qui masque la surface suspend la réaction
+01:17 +242: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: regards espacés alternés avec retour face et enveloppe stable
+01:17 +243: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: touches supplémentaires ignorées ; annulation et glissement ne réagissent pas
+01:18 +244: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: clavier et action sémantique équivalents au toucher
+01:18 +245: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: mouvement réduit interrompt immédiatement et propose une pose fixe
+01:18 +246: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: pause, surface masquée et TickerMode reprennent depuis le repos
+01:18 +247: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: arrière-plan et viewport suspendent, sans rejouer au retour
+01:18 +248: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: tailles minimales et nom de secours
+01:18 +249: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: poses de travail à 48 et 64 px — référence raster
+01:18 +250: C:/Users/alanc/orca/projects/Hermes Mobile/test/rabbit_companion_test.dart: planche vectorielle v5 — face, gauche, droite, chatouilles et compacts
+01:18 +251: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart
+01:19 +251: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: projection compatible : détails reçus seulement, copies correctives
+01:19 +252: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+01:19 +253: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: rejeu outils : fin corrélée et doublon écarté sans renvoi
+01:19 +254: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: nouvel epoch et snapshot échoué : aucune fin héritée de l’ancien ID
+01:19 +255: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: snapshot textuel sans outils : aucune action reconstruite
+01:19 +256: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: rejeu sending sans start, reprise running : snapshot de la pose courante
+01:19 +257: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: tour toujours en cours : rejeu, fil « en cours », envoi bloqué
+01:19 +258: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: tronqué : snapshot par l'historique, bulle liée par row_id, curseur sur latest_seq, aucun renvoi
+01:19 +259: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: trou de seq : snapshot
+01:19 +260: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: redémarrage Hermes (autre replay_epoch) : snapshot, curseur vide, pas de events.since
+01:20 +261: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: relance : fil rouvert, snapshot avec le partiel assistant en cours
+01:21 +262: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: snapshot courant sans partial : regard reconstruit depuis le dernier tour
+01:22 +263: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: events.since en erreur : snapshot
+01:22 +264: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: epoch du corps de events.since différent : snapshot
+01:22 +265: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: latest_seq en avance sur les événements rejoués : snapshot
+01:22 +266: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: running:false alors que le tour était en cours : snapshot
+01:22 +267: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: deux bulles locales sans ligne : appariées par position, texte local gardé ; historique finissant par une ligne utilisateur
+01:23 +268: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: reprise en échec : resumeFailed signalé par un changement, effacé au succès
+01:24 +269: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: migration v6 : colonne row_watermark ajoutée
+01:24 +270: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine reçue : une seule ligne libre au-delà du repère → acceptée, texte du brouillon conservé, jamais de renvoi
+01:26 +271: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine non reçue : aucune nouvelle ligne, rien en cours → échec certain, brouillon intact, renvoi manuel permis
+01:27 +272: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine indémontrable : historique indisponible → reste unknown
+01:27 +273: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine tour encore en cours : reste unknown même sans ligne
+01:28 +274: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+01:29 +275: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+01:35 +276: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine file d'attente non vide sans ligne : reste unknown
+01:36 +277: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine ligne étrangère en plus : deux candidates → reste unknown, texte conservé
+01:38 +278: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart
+01:38 +278: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: premier envoi : opération en base avant toute trame, pipeline nommé, accepté, brouillon vidé, nouvel accueil sans session
+01:38 +279: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: deux ensureSession simultanés : une seule session.create
+01:38 +280: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: réponse perdue : unknown, brouillon intact, aucun 2e submit
+01:38 +281: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: timeout après écriture : unknown, sans renvoi
+01:38 +282: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: refus 4009 : failed, brouillon intact
+01:38 +283: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: refus 4090 : failed, brouillon intact
+01:39 +284: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: refus 5035 : failed, brouillon intact
+01:39 +285: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: 4001 : session.resume puis un seul nouveau submit
+01:39 +286: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: 4001 persistant : failed après un seul nouvel essai
+01:39 +287: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: saisie pendant l'envoi : la plus récente est conservée
+01:39 +288: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: un tour en cours bloque un nouvel envoi jusqu'à sa fin
+01:39 +289: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: dialecte canonique : aucun appel, capacité absente
+01:39 +290: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: connexion absente : failed retryable, aucune trame
+01:39 +291: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: échec de session.create : failed, la clé d'idempotence reste
+01:39 +292: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: reconnexion : tour terminé, session.resume, ancienne génération ignorée
+01:39 +293: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: session reprise en plein tour : aucun submit, tour actif
+01:39 +294: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: l'événement error termine le tour
+01:39 +295: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: statut de submit inconnu : unknown, brouillon gardé
+01:39 +296: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: session.create sans stored_session_id : failed, aucun submit
+01:39 +297: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: réponse queued : acceptée
+01:39 +298: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: écriture de prompt.submit en erreur : unknown, aucun renvoi
+01:39 +299: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: relance après interruption : état persisté visible
+01:39 +300: C:/Users/alanc/orca/projects/Hermes Mobile/test/send_flow_test.dart: migration réelle v3 vers v7 : données et index « nouveau »
+01:39 +301: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart
+01:40 +301: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: buildTheme (Brightness.dark) sans Dynamic Color : palette de secours
+01:40 +302: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: buildTheme (Brightness.dark) avec Dynamic Color : schéma fourni
+01:40 +303: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: buildTheme (Brightness.light) sans Dynamic Color : palette de secours
+01:40 +304: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: buildTheme (Brightness.light) avec Dynamic Color : schéma fourni
+01:40 +305: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: fromDynamicScheme null reste null (palette de secours)
+01:40 +306: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: fromDynamicScheme recopie chaque rôle du schéma dynamique (Brightness.dark)
+01:40 +307: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: fromDynamicScheme recopie chaque rôle du schéma dynamique (Brightness.light)
+01:40 +308: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: rôles mappés sur le schéma
+01:40 +309: C:/Users/alanc/orca/projects/Hermes Mobile/test/theme_test.dart: motionDuration respecte le mouvement réduit
+01:40 +310: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart
+01:41 +310: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: literalViolations (sources en mémoire) couleur littérale : fichier et ligne cités
+01:41 +311: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: literalViolations (sources en mémoire) EdgeInsets.all(8) refusé
+01:41 +312: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: literalViolations (sources en mémoire) Duration(milliseconds: 200) refusé
+01:41 +313: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: literalViolations (sources en mémoire) autres motifs refusés
+01:41 +314: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: literalViolations (sources en mémoire) 0 toléré, tokens acceptés, commentaires ignorés
+01:41 +315: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: literalViolations (sources en mémoire) littéral autorisé dans lib/ui/tokens.dart et lib/ui/theme.dart
+01:41 +316: C:/Users/alanc/orca/projects/Hermes Mobile/test/visual_literals_test.dart: lib/ ne contient aucun littéral visuel hors des tokens
+01:41 +317: All tests passed!

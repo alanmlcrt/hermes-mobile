@@ -1,0 +1,13 @@
+Suite complète : résumé final. Journal complet local : C:\Users\alanc\AppData\Local\Temp\hermes-43-tests-complets.log
+00:33 +408 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:33 +409 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:34 +410 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:34 +411 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:34 +412 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:35 +413 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:37 +414 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:37 +415 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:39 +416 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque composant rendu dans les quatre variantes
+00:39 +417 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: SectionCard respecte le mouvement réduit
+00:39 +418 ~17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: StatusLabel annonce son libellé
+00:39 +419 ~17: All tests passed!

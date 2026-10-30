@@ -1,0 +1,81 @@
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: partial receipt cleans only its own copy; durable names and states survive restart
+00:00 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: partial receipt cleans only its own copy; durable names and states survive restart
+00:00 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_send_test.dart: success: scoped references in prompt, receipt only from server history
+00:00 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+00:00 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: coupure après acceptation, même epoch : events.since rejoue la fin, doublon écarté, aucun renvoi
+00:00 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_store_test.dart: version 12 migration retains historical metadata and requires fresh cleanup proof
+00:00 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_store_test.dart: version 12 migration retains historical metadata and requires fresh cleanup proof
+00:00 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: interruption after deletion before cleanup flag is idempotent
+00:00 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: interruption after deletion before cleanup flag is idempotent
+00:00 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_send_test.dart: partial refusal keeps success and draft; explicit retry reuses success
+00:00 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_send_test.dart: partial refusal keeps success and draft; explicit retry reuses success
+00:00 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_send_test.dart: partial refusal keeps success and draft; explicit retry reuses success
+00:00 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:00 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:00 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +28: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +29: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +30: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +31: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +32: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +33: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:01 +34: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:02 +35: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_flow_test.dart: conversation reopened from stored projection renders attachments inside their message
+00:02 +36: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +37: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +38: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +39: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +40: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +41: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +42: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +43: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:02 +44: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:03 +45: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:03 +46: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:03 +47: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:03 +48: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:03 +49: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +50: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +51: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +52: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +53: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +54: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +55: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:04 +56: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:05 +57: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:05 +58: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:06 +59: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:08 +60: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:08 +61: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:09 +62: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:09 +63: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:09 +64: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:09 +65: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:10 +66: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:10 +67: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:11 +68: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:12 +69: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:13 +70: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: multiple fresh rows cannot be disambiguated by matching prompt text
+00:16 +71: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:16 +72: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:17 +73: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:20 +74: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: deferred receipt never cleans a same-name attachment in the current draft
+00:21 +75: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: deferred receipt never cleans a same-name attachment in the current draft
+00:22 +76: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: deferred receipt never cleans a same-name attachment in the current draft
+00:32 +77: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: unconfirmed image restores its validated private path across restart
+00:32 +78: C:/Users/alanc/orca/projects/Hermes Mobile/test/attachment_history_test.dart: legacy JSON and withRow preserve backward compatibility without trusting stored paths
+00:32 +79: All tests passed!

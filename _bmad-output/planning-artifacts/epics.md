@@ -1,6 +1,7 @@
 ---
-status: final
-stepsCompleted: [1, 2, 3, 4]
+status: draft
+stepsCompleted: [1, 2]
+extension: "post-MVP 2026-10-30 (Epics 7+) — étapes 1-4 relancées"
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-Hermes-Mobile-2026-10-20/prd.md
   - _bmad-output/planning-artifacts/prds/prd-Hermes-Mobile-2026-10-20/addendum.md
@@ -12,6 +13,7 @@ inputDocuments:
 decisions:
   - "2026-10-20 : FR-13 et FR-14 inclus dans le découpage (Alanc), stories conditionnées à la porte G4 et aux capacités Hermes détectées."
   - "2026-10-20 : voix, routines, groupes d'agents et diffusion publique exclus du MVP ; l'import Discord est retiré du projet (Alanc)."
+  - "2026-10-30 : périmètre post-MVP ouvert (Alanc) : routines, voix, salons d'agents (Bot Mode), ranger/rechercher, modèle et fiche profil (FR15–FR24, NFR7). Exclus : Kanban multi-agent (à reconsidérer), routage auto, import d'équipes, VM/écran distant, serveur MCP externe. Inspiration : OpenMausBot. PRD à réaligner via bmad-prd."
 ---
 
 # Hermes Mobile - Epic Breakdown
@@ -40,6 +42,19 @@ FR14 : Récupérer les résultats [inclus, conditionné à G4] — Les fichiers 
 
 Retiré : FR11 (sauvegarde de réglages depuis l'app), identifiant réservé. Hors MVP : écran de consultation ou d'administration des profils.
 
+**Post-MVP (décision du 2026-10-30)**
+
+FR15 : Routines — Alanc liste, crée, modifie, met en pause/reprend, lance manuellement et supprime les routines (cron Hermes) d'un profil depuis l'app. Planning structuré (une fois, jours choisis, toutes les N min) avec champ avancé. Historique des exécutions visible ; le résultat arrive dans la conversation du profil ; la fin d'une routine est notifiée.
+FR16 : Dictée — Alanc dicte sa demande dans la zone de saisie ; la transcription est modifiable et jamais envoyée automatiquement.
+FR17 : Lecture à voix haute — Une réponse peut être lue et arrêtée ; Markdown et code ne sont pas lus bruts.
+FR18 : Salons d'agents — Alanc crée un salon de 2 à 6 profils, le nomme, gère ses membres, le renomme ou le dissout ; les salons sont listés à part des conversations.
+FR19 : Converser dans un salon — Alanc écrit avec @mentions (@nom, @all), joint des fichiers, voit quel profil répond, arrête le salon ; le salon continue app quittée si Hermes le permet.
+FR20 : Besoin de toi — Quand un agent mentionne @user ou demande une autorisation dans un salon, un badge le signale et une notification ouvre le salon ; Alanc répond ou autorise depuis l'app.
+FR21 : Ranger — Épingler, renommer, marquer non lu, masquer et supprimer (avec confirmation) une conversation ou un salon.
+FR22 : Rechercher — Retrouver une conversation par titre ou contenu ; repli sur une recherche locale si Hermes n'expose pas de recherche.
+FR23 : Modèle — Voir le modèle d'une conversation, en changer en cours de route et régler l'effort de raisonnement, sans réécrire l'historique.
+FR24 : Fiche profil — Voir personnalité/description, modèle par défaut, outils et serveurs MCP actifs, en lecture seule.
+
 ### NonFunctional Requirements
 
 NFR1 : Mobile et accessibilité — Parcours essentiels utilisables au toucher avec clavier affiché, texte agrandi et lecteur d'écran. Icônes d'action avec libellé accessible ; aucun état exprimé seulement par la couleur.
@@ -48,32 +63,33 @@ NFR3 : Accès et secrets — Tailscale fournit le réseau ; l'authentification H
 NFR4 : Compatibilité — Les capacités du serveur sont vérifiées pour chaque fonction ; une fonction absente est signalée clairement. Une capacité obligatoire non démontrée sur l'installation réelle bloque l'acceptation du MVP ; son retrait ou report exige une décision explicite d'Alanc.
 NFR5 : Acceptation réelle — Le MVP est accepté après un essai Android à distance sur l'installation réelle : nouvelle conversation par défaut, profils affichés, échanges avec deux profils et reprise d'historique, long texte, image et document reçus par Hermes, détail d'une action, fin de travail notifiée app quittée, demande d'arrêt confirmée, réponse à une question, et si exposés : autorisation et récupération d'un fichier résultat. Indicateur : aucune duplication d'exécution ni perte de brouillon. Aucune simulation locale ne vaut validation.
 NFR6 : Corpus — Avant les tests d'acceptation, Alanc fournit un long texte, une photo ou capture, un PDF et un document bureautique représentatifs ; formats, volumes et limites prises en charge sont consignés.
+NFR7 : Vérification post-MVP — Chaque epic post-MVP commence par vérifier sur l'installation réelle la surface Hermes qu'il utilise (méthodes, événements, fixtures anonymisées dans `contracts/`). Une capacité absente masque ou signale la fonction, jamais contournée.
 
 ### Additional Requirements
 
 **Starter et stack (impacte Epic 1 Story 1)**
 - Graine : `flutter create --empty --platforms=android,ios hermes_mobile`, Flutter 3.47.x (dernier correctif au bootstrap), Dart fourni. minSdk Android 24. Flutter n'est confirmé que si le bootstrap compile et tourne sur le téléphone Android d'Alanc ; sinon le choix de stack revient à Alanc avant toute autre story.
 - Paquets candidats : dynamic_color 2.1.0, sqflite 2.4.4+2, flutter_secure_storage 11.2.0 (`allowBackup=false`), firebase_messaging 17.0.0 + firebase_core ^5.0.0 sous réserve de G3. Pas de `flutter_markdown` (abandonné). Paquets réseau, fichiers, Markdown et routage choisis centralement, épinglés, résolus ensemble et compilés pour Android au bootstrap ; SDK épinglé + lockfile font référence.
-- Arborescence : `lib/app` (composition, routes, `resolveLaunchTarget`), `lib/models` (sans Flutter), `lib/data` (repositories, adaptateur, stockage), `lib/features` (vues, ViewModels), `lib/ui` (tokens, thème, composants, catalogue), `contracts/`, `server/notifier/` (après G3).
+- Arborescence : `lib/app` (composition, routes, `resolveLaunchTarget`), `lib/models` (sans Flutter), `lib/data` (repositories, adaptateur, stockage), `lib/features` (vues, ViewModels), `lib/ui` (tokens, thème, composants, catalogue), `contracts/`, `server/hermes-plugin/` (plugin de notifications).
 
 **Architecture applicative**
 - MVVM léger : ViewModels `ChangeNotifier`, repositories exposant des `Stream` de snapshots immuables, aucun autre framework d'état, injection explicite au démarrage sans service locator (AD-2).
 - Propriétaires uniques : `ConnectionRepository` (connexions, capacités, profils, profil sélectionné, unique socket par connexion), `ConversationRepository` (projection distante, `TimelineProjection`), `OutboxRepository` (brouillons, pièces sortantes, `ensureSession(DraftKey)` sérialisé, opérations envoi/arrêt/suivi notification). Les vues ne font ni réseau ni écriture persistante. Contrôle des imports en CI (AD-2).
-- Identités : `ConnectionKey` UUID local stable (URL modifiable sans réindexation), `ProfileKey`, `SessionKey` opaques sensibles à la casse ; `DraftKey` local associé à la session avant soumission ; `OperationKey` local distinct de l'identité d'exécution serveur ; `subscriptionId` opaque partagé avec l'observateur. Le profil d'un fil existant ne change jamais. Pas de profil par défaut inventé si la découverte échoue (AD-3).
-- Projection : table déclarative événements Hermes → états/terminaux/`ActivityKind` dans `contracts/`, partagée mobile/observateur et validée par les mêmes fixtures. Mutations sérialisées par session, projection et curseur enregistrés atomiquement. Curseur `(epoch, seq)` seulement si détecté, sinon snapshot complet. Doublons écartés, trou/troncature/nouvel epoch → snapshot, événements anciens écartés. Rapprochement local/serveur jamais par le texte (règle fixée en G1). Connexion et travail sont deux états distincts (AD-4).
+- Identités : `ConnectionKey` UUID local stable (URL modifiable sans réindexation), `ProfileKey`, `SessionKey` opaques sensibles à la casse ; `DraftKey` local associé à la session avant soumission ; `OperationKey` local distinct de l'identité d'exécution serveur ; `sessionId` stocké, porté par la notification push. Le profil d'un fil existant ne change jamais. Pas de profil par défaut inventé si la découverte échoue (AD-3).
+- Projection : table déclarative événements Hermes → états/terminaux/`ActivityKind` dans `contracts/`, côté mobile, validée par les mêmes fixtures. Mutations sérialisées par session, projection et curseur enregistrés atomiquement. Curseur `(epoch, seq)` seulement si détecté, sinon snapshot complet. Doublons écartés, trou/troncature/nouvel epoch → snapshot, événements anciens écartés. Rapprochement local/serveur jamais par le texte (règle fixée en G1). Connexion et travail sont deux états distincts (AD-4).
 - Soumission : opération persistée avant envoi (cible, contenu exact, références fichiers) ; pipeline nommé `ensureSession` → pièces → suivi notification (non bloquant) → soumission. Résultat incertain → `unknown`, brouillon conservé, pas de renvoi. Répétition seulement si idempotence détectée (un ID JSON-RPC n'en est pas une). Un seul envoi à la fois par session ; saisie conservée pendant le travail. Arrêt = opération persistée visant l'exécution observée, jamais rejouée après changement de tour ; `stopRequested` hors projection ; seul le serveur fournit un terminal (AD-5).
 - Pièces jointes : copie dans `attachments/<DraftKey>/`, résultats dans un emplacement séparé. Validation contre la limite la plus restrictive (app, proxy, Hermes, modèle). Prompt envoyé seulement après confirmation de toutes les pièces ; upload échoué ou incertain bloque le prompt. Résultat disponible seulement après accès authentifié résolu ; aucun fichier exécuté automatiquement (AD-6).
 
 **Intégration Hermes**
-- Point d'entrée unique : backend Desktop `hermes serve` (add-on `WolframRavenwolf/hermes-ha-addon` 1.3.9, option `enable_desktop_backend`, port 9119 à mapper) ; REST pour les ressources, JSON-RPC sur `/api/ws`. Ni ingress `:8123`, ni 8080/8443, ni `/v1/`. Seuls l'adaptateur et l'observateur connaissent les formats Hermes. Un fil n'est jamais réparti entre plusieurs transports (AD-7).
+- Point d'entrée unique : backend Desktop `hermes serve` (add-on `WolframRavenwolf/hermes-ha-addon` 1.3.9, option `enable_desktop_backend`, port 9119 à mapper) ; REST pour les ressources, JSON-RPC sur `/api/ws`. Ni ingress `:8123`, ni 8080/8443, ni `/v1/`. Seuls l'adaptateur et le plugin de notifications connaissent les formats Hermes. Un fil n'est jamais réparti entre plusieurs transports (AD-7).
 - Référence = tag de release correspondant au build installé, jamais HEAD. Capacités optionnelles (`replay_epoch`, `idempotency_key`, `file.attach`…) détectées à la connexion et enregistrées. Contrat, échanges anonymisés et fixtures figés dans `contracts/` avant les stories d'intégration. Méthode absente, refus d'auth et panne transitoire produisent des erreurs distinctes. Ne pas modifier le profil actif global du dashboard à chaque sélection mobile (AD-7, evidence).
 - Auth : login Basic (utilisateur `hermes`, `access_password`) → jeton d'accès 12 h + refresh 30 j ; sockets ouvertes par ticket WS. Le secret serveur change à chaque redémarrage : le mot de passe est gardé en stockage sécurisé et l'app se reconnecte seule quand le refresh échoue (AD-8).
 - Réseau : origine `http://<hôte>.ts.net:9119` ; exception `network_security_config` limitée à `ts.net`, refus de tout `http://` hors `*.ts.net`, `https://` accepté. QR contenant seulement l'origine, confirmation de l'origine puis saisie du mot de passe une fois ; script du dépôt pour générer le QR. Secrets sous `<ConnectionKey>/<usage>`, jamais dans URL persistées, notifications, diagnostics ou sauvegardes. Aucun credential envoyé à une autre origine après redirection (AD-8).
 
 **Notifications (G3)**
 - Observateur serveur distinct, registre de suivis (`subscriptionId`) et outbox durables, reprise après redémarrage par rattrapage depuis la source Hermes persistante, déduplication par cible/exécution/terminal, point de santé affiché dans l'app (AD-9).
-- Suivi demandé avant soumission mais jamais bloquant : tour marqué « notification non suivie » en cas d'échec. Payload minimal (identité stable, `subscriptionId`, libellé générique), sans texte, chemin ni secret. FCM HTTP v1 proposé, compte de service sur l'observateur. Ouverture à froid et à chaud, rotation/révocation du token, retries bornés (AD-9).
-- Le contrat du registre précède toute séparation mobile/observateur ; G3 bloque la story de transport push.
+- Suivi = jeton FCM transmis au plugin Hermes (`command.dispatch`) avant soumission, jamais bloquant : tour marqué « notification non suivie » si le plugin est absent (4018). Payload `{outcome, sessionId}` et libellé générique, sans texte, chemin ni secret. FCM HTTP v1, compte de service dans `HERMES_HOME/hermes-mobile/`. Ouverture à froid et à chaud, rotation du token, un seul nouvel essai FCM (AD-9).
+- Plugin `on_session_end` par profil, tours `tui` seulement ; sans outbox durable ni rattrapage (perte acceptée si Hermes plante en plein tour). Proposition de changement du 2026-10-29.
 
 **Exploitation**
 - Un seul fichier SQLite, tables préfixées par repository propriétaire, migrations en ajout seul et testées ; aucune migration de Hermes (AD-11).
@@ -87,9 +103,19 @@ NFR6 : Corpus — Avant les tests d'acceptation, Alanc fournit un long texte, un
 **Portes de validation**
 - G1 installation : backend Desktop actif, port 9119 mappé, tag installé et capacités détectées, origine joignable depuis le téléphone, login et ticket WS, deux profils, historique, envoi, reprise après redémarrage du backend, arrêt, règle de rapprochement. Bloque les stories d'intégration au-delà de la capture du contrat (qui en est la première) ; l'UI sur fixtures peut avancer.
 - G2 fichiers : limites et réception dans le bon fil, corpus d'Alanc.
-- G3 notification : déploiement, contrat du registre, auth mobile→observateur, rattrapage, version FCM, prérequis Android, essais app fermée/coupure/redémarrage.
+- G3 notification : plugin installé par profil, jeton app → plugin, filtre `tui`, version FCM, prérequis Android, essais app fermée, coupure réseau, sous-agent, reprise de conversation.
 - G4 produit/UX : FR-13/14, interventions en cours, issues notifiées, secours de thème.
-- Cas de contrat à tester : IDs similaires sur deux profils ; coupure après acceptation avant réponse ; événement dupliqué/tronqué/ancien ; arrêt après reconnexion ; upload échoué sans prompt ; fin app fermée ; observateur absent pendant un envoi ; changement d'URL sans réindexation.
+- Cas de contrat à tester : IDs similaires sur deux profils ; coupure après acceptation avant réponse ; événement dupliqué/tronqué/ancien ; arrêt après reconnexion ; upload échoué sans prompt ; fin app fermée ; plugin absent pendant un envoi ; changement d'URL sans réindexation.
+
+**Post-MVP — surfaces Hermes repérées (source `NousResearch/hermes-agent` main, non validées sur l'installation v0.22.2)**
+- Routines : REST dashboard `/api/cron/jobs` (GET/POST/PUT/DELETE), `/api/cron/delivery-targets`, `/api/cron/blueprints` (cf. `apps/desktop/src/api/cron.ts`). À vérifier : exposition sur le backend 9119, rattachement par profil (routines Bot Mode nommées `[bot:<nom>] <routine>`, résultats dans le chat du profil), historique des exécutions.
+- Voix : JSON-RPC `voice.record`, `voice.toggle`, `voice.status`, `voice.tts`, événements `voice.partial`, `voice.transcript`, `voice.interrupted` (`tui_gateway/methods_voice.py`). Choix Hermes vs reconnaissance/synthèse natives Android tranché dans la story d'investigation ; natif Android par défaut si Hermes ne convient pas au mobile.
+- Salons : JSON-RPC `groups.capabilities`, `groups.list`, `groups.create`, `groups.send`, `groups.state`, `groups.log`, `groups.stop`, `groups.rename`, `groups.disband`, `groups.approve`, `groups.retry`, `groups.discard`, `groups.attachment.upload/download` (`tui_gateway/methods_groups.py`). Règles Bot Mode : 2–6 profils + Alanc, @nom / @all / @everyone / @hermes / @user, sans mention tous peuvent répondre, 3 tours sériels max, 10 messages max par envoi, stop/halt/pause adjacents à une mention, contexte ~200 messages / 32 000 caractères, driver durable si `groups.capabilities.driver: true`. Prérequis : Bot Mode actif (`ui_meta.hermes-bots` dans `profile.yaml`).
+- Escalade salon (@user, approbation) : via le plugin de notifications existant ; payload sans contenu (NFR3).
+- Interventions : `approval.pending`, `approval.respond`, `clarify.*` relèvent de l'Epic 6.
+- Modèle : `model_switch`, `agent.reasoning_effort` côté gateway ; exposition à vérifier.
+- Recherche : aucune surface publique repérée ; à vérifier, sinon repli local sur titres et historique en cache.
+- Les nouvelles surfaces restent confinées à l'adaptateur Hermes (AD-7) ; un salon est un fil distinct d'une conversation, avec sa propre clé de route.
 
 ### UX Design Requirements
 
@@ -112,7 +138,7 @@ UX-DR16 : Composant Arrêt — Contrôle accessible (nom « Arrêter ») toujour
 UX-DR17 : Composant Intervention (FR-13) — Question ou autorisation réellement émise par Hermes, affichée dans le fil avec réponse possible ; prise en compte immédiate ou différée explicite.
 UX-DR18 : Composant Résultat (FR-14) — Fichier résultat identifiable dans le fil (cf. `resume.md` de la scène), ouvrable/téléchargeable ; distinction résultat disponible / chemin serveur inaccessible.
 UX-DR19 : Notification de fin — Conversation concernée identifiable, issue (réussite, erreur, arrêt confirmé) ; refus de permission expliqué ; marque visible « notification non suivie » sur un tour.
-UX-DR20 : États de connexion — `connecté`, `resynchronisation`, `hors ligne` affichés distinctement des états du travail ; écart de capacités et santé de l'observateur visibles.
+UX-DR20 : États de connexion — `connecté`, `resynchronisation`, `hors ligne` affichés distinctement des états du travail ; écart de capacités visible.
 UX-DR21 : Accessibilité — Noms accessibles pour toutes les icônes d'action, cibles tactiles suffisantes, texte agrandi, lecteur d'écran (ordre de lecture et annonces des changements d'état), aucun état par la seule couleur, dans les deux thèmes.
 UX-DR22 : Contenu séparé — Libellés et messages d'interface séparés des dessins et styles ; vocabulaire quotidien (Profil, Conversation), détails techniques non dominants.
 UX-DR23 : Galerie de fixtures — Galerie des composants et états représentatifs, données fictives, examinable en clair, sombre, texte agrandi et mouvement réduit, pour comparer les changements visuels.
@@ -139,6 +165,17 @@ NFR3 : Epic 1 (secrets, auth), repris en Epic 5 (payload push)
 NFR4 : Epic 1 (détection des capacités), repris par chaque epic d'intégration
 NFR5 : Epic 6 — Story finale d'essai d'acceptation réel
 NFR6 : Epic 4 — Corpus de test fourni par Alanc
+FR15 : Epic 9 — Routines (cron) par profil, historique, fin notifiée
+FR16 : Epic 10 — Dictée dans la zone de saisie
+FR17 : Epic 10 — Lecture à voix haute
+FR18 : Epic 8 — Créer et gérer un salon d'agents
+FR19 : Epic 8 — Converser dans un salon
+FR20 : Epic 8 — Besoin de toi : escalade, autorisation, notification
+FR21 : Epic 7 — Ranger les conversations (salons : Epic 8)
+FR22 : Epic 7 — Rechercher une conversation
+FR23 : Epic 11 — Changer de modèle et d'effort
+FR24 : Epic 11 — Fiche profil en lecture seule
+NFR7 : Epics 7 à 11 — première story de chaque epic
 
 ## Epic List
 
@@ -159,12 +196,32 @@ Alanc joint photos, captures, PDF et documents, voit aperçus et limites, retire
 **FRs covered:** FR5, FR6 · NFR6
 
 ### Epic 5 : Être averti quand Hermes a fini
-App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut l'observateur serveur, FCM et `resolveLaunchTarget`. Requiert G3.
+App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut le plugin Hermes de notifications, FCM et `resolveLaunchTarget` ; l'observateur des stories 5.1–5.4 est remplacé (proposition du 2026-10-29). Requiert G3.
 **FRs covered:** FR9 (et ouverture depuis notification de FR2)
 
 ### Epic 6 : Répondre à Hermes et récupérer ses résultats
 Les questions et autorisations émises par Hermes apparaissent dans le fil et Alanc y répond ; les fichiers produits s'ouvrent ou se téléchargent depuis la conversation. Se termine par l'essai d'acceptation réel du MVP. Requiert G4 et les capacités exposées.
 **FRs covered:** FR13, FR14 · NFR5
+
+### Epic 7 : Ranger et retrouver mes conversations
+Alanc épingle, renomme, marque non lu, masque ou supprime une conversation et retrouve un fil par titre ou contenu. Pose la liste que les salons réutiliseront. Post-MVP, après l'Epic 6.
+**FRs covered:** FR21, FR22 · NFR7
+
+### Epic 8 : Faire travailler mes agents en salon
+Alanc crée un salon de 2 à 6 profils, y écrit avec @mentions, voit qui répond, arrête le salon et gère ses membres ; quand un agent a besoin de lui (@user ou autorisation), une notification ouvre le salon et il répond depuis l'app. Requiert Bot Mode actif ; réutilise Epics 4, 5 et 6.
+**FRs covered:** FR18, FR19, FR20 (+ FR21 pour les salons) · NFR7
+
+### Epic 9 : Programmer des routines
+Alanc crée et pilote les tâches planifiées de chaque profil, voit leur historique et est averti à la fin ; le résultat arrive dans la conversation du profil.
+**FRs covered:** FR15 · NFR7
+
+### Epic 10 : Parler à Hermes et l'écouter
+Alanc dicte ses demandes et fait lire une réponse à voix haute, avec arrêt. Mode appel hors périmètre.
+**FRs covered:** FR16, FR17 · NFR7
+
+### Epic 11 : Choisir le modèle et connaître mes profils
+Alanc change de modèle ou d'effort de raisonnement en cours de conversation et consulte la fiche d'un profil (personnalité, modèle par défaut, outils et MCP).
+**FRs covered:** FR23, FR24 · NFR7
 
 ## Epic 1 : Connecter l'app à mon Hermes et voir mes profils
 
@@ -762,9 +819,11 @@ Afin de savoir plus tard sur quoi Hermes a travaillé.
 
 ## Epic 5 : Être averti quand Hermes a fini
 
-App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut l'observateur serveur, FCM et l'ouverture depuis notification. Requiert la porte G3.
+App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt confirmé) qui ouvre la bonne conversation. Inclut le plugin Hermes de notifications, FCM et l'ouverture depuis notification. L'observateur serveur des stories 5.1 à 5.4 est remplacé par le plugin (proposition de changement du 2026-10-29). Requiert la porte G3.
 
 ### Story 5.1 : Fixer le contrat de suivi et le déploiement de l'observateur
+
+*Remplacée le 2026-10-29 par le plugin Hermes (stories 5.6 à 5.8) ; conservée pour l'historique.*
 
 En tant qu'Alanc,
 Je veux que le fonctionnement des notifications soit décidé et vérifiable avant d'être construit,
@@ -787,6 +846,8 @@ Afin que le mobile et le serveur s'accordent sur ce qui déclenche une notificat
 **Alors** chaque cas est documenté avec le comportement attendu
 
 ### Story 5.2 : Faire tourner l'observateur de fins de travail
+
+*Remplacée le 2026-10-29 par le plugin Hermes (stories 5.6 à 5.8) ; conservée pour l'historique.*
 
 En tant qu'Alanc,
 Je veux un petit service sur mon serveur qui détecte les fins de travail de Hermes,
@@ -814,6 +875,8 @@ Afin d'être averti même quand mon téléphone n'est pas connecté.
 
 ### Story 5.3 : Recevoir une notification à la fin de mon travail
 
+*Remplacée le 2026-10-29 par le plugin Hermes (stories 5.6 à 5.8) ; conservée pour l'historique.*
+
 En tant qu'Alanc,
 Je veux recevoir une notification quand Hermes a terminé, même app fermée,
 Afin de ne pas avoir à surveiller l'app.
@@ -840,6 +903,8 @@ Afin de ne pas avoir à surveiller l'app.
 
 ### Story 5.4 : Ouvrir la bonne conversation depuis une notification
 
+*Le routage reste ; sa clé passe de `subscriptionId` à `sessionId` (story 5.7, 2026-10-29).*
+
 En tant qu'Alanc,
 Je veux qu'un toucher sur la notification m'amène directement à la conversation concernée,
 Afin de lire le résultat sans chercher.
@@ -858,7 +923,88 @@ Afin de lire le résultat sans chercher.
 **Quand** Alanc la touche
 **Alors** l'app l'explique et ouvre l'accueil, sans réaffecter le résultat au fil affiché
 
+### Story 5.6 : Recevoir mes notifications par le plugin Hermes
+
+En tant qu'Alanc,
+Je veux que Hermes envoie lui-même la notification de fin,
+Afin de n'avoir rien d'autre à installer qu'un plugin.
+
+**Critères d'acceptation :**
+
+**Étant donné** le plugin `hermes-mobile-notify` installé sur un profil
+**Quand** un tour lancé depuis l'app (`platform: tui`) se termine
+**Alors** une notification FCM générique part en arrière-plan sans retarder le tour, avec `data: {outcome, sessionId}`, sans texte, chemin ni secret (FR9)
+**Et** les tours de sous-agents, de cron ou d'autres plateformes ne notifient pas
+
+**Étant donné** l'app qui envoie un message
+**Quand** elle dispose d'un jeton FCM
+**Alors** elle le transmet par `command.dispatch hermes-mobile-token` sans bloquer l'envoi
+
+**Étant donné** FCM qui répond `UNREGISTERED`
+**Quand** le plugin le constate
+**Alors** il oublie le jeton jusqu'au prochain envoi de l'app
+**Et** une erreur réseau donne lieu à un seul nouvel essai
+
+**Étant donné** le dépôt
+**Quand** la CI tourne
+**Alors** l'auto-vérification du plugin s'exécute, et `contracts/notification-tracking.json` ne décrit plus que le payload (titres, canal, `outcome`, `sessionId`)
+
+**Étant donné** la procédure d'installation
+**Quand** Alanc l'applique à un profil
+**Alors** elle tient en : copier le plugin, copier la clé, activer, redémarrer
+
+### Story 5.7 : Basculer l'app sur le plugin
+
+En tant qu'Alanc,
+Je veux que l'app ne dépende plus de l'observateur,
+Afin de ne plus rien configurer par profil.
+
+**Critères d'acceptation :**
+
+**Étant donné** une notification du plugin
+**Quand** Alanc la touche, app à froid, à chaud ou depuis les récents
+**Alors** la conversation `sessionId` du bon profil s'ouvre (FR2, FR9)
+**Et** une session inconnue localement ouvre l'accueil avec une explication
+
+**Étant donné** une notification reçue app ouverte
+**Quand** elle arrive
+**Alors** elle est traitée avec `{outcome, sessionId}`
+
+**Étant donné** l'envoi d'un message
+**Quand** `command.dispatch` répond 4018
+**Alors** le tour affiche « notification non suivie » sans bloquer l'envoi (UX-DR19)
+
+**Étant donné** les réglages du profil
+**Quand** Alanc les ouvre
+**Alors** il n'y a plus d'URL ni de bearer d'observateur ; les explications permission et arrêt forcé restent
+
+**Étant donné** la base locale
+**Quand** l'app migre
+**Alors** une migration ajoutée supprime `notification_subscriptions`, `notification_settings` et le secret `observerBearer`, sans modifier les migrations existantes
+
+### Story 5.8 : Retirer l'observateur
+
+En tant qu'Alanc,
+Je veux que l'add-on Notifier et son code disparaissent,
+Afin de n'avoir qu'un seul chemin à maintenir.
+
+**Critères d'acceptation :**
+
+**Étant donné** le dépôt
+**Quand** le retrait est fait
+**Alors** `server/notifier/`, `repository.yaml`, les étapes CI du notifier, `contracts/notification-deployment.json`, la section 5.1 de `contracts/README.md` et les mentions de `README.md` n'existent plus
+
+**Étant donné** Home Assistant et Tailscale
+**Quand** Alanc suit la procédure de la proposition de changement (section 6)
+**Alors** l'add-on est désinstallé, son dépôt retiré, `/share/hermes-notifier/` supprimé et le service `svc:hermes-notifier` n'existe plus
+
+**Étant donné** `deferred-work.md`
+**Quand** le retrait est fait
+**Alors** les reports propres à l'observateur sont clos
+
 ### Story 5.5 : Valider les notifications sur mon téléphone
+
+*Critères réécrits le 2026-10-29 pour le plugin ; jouée après 5.8.*
 
 En tant qu'Alanc,
 Je veux que les notifications soient éprouvées dans les situations réelles,
@@ -866,10 +1012,17 @@ Afin de pouvoir compter dessus au quotidien.
 
 **Critères d'acceptation :**
 
-**Étant donné** le téléphone d'Alanc et l'installation réelle (profil de test)
-**Quand** les scénarios G3 sont joués : app fermée, coupure réseau pendant le travail, redémarrage de l'observateur, observateur absent pendant un envoi
-**Alors** chaque fin est notifiée une fois au moins, sans notification d'un ancien terminal, et le toucher ouvre la bonne conversation
-**Et** l'absence d'observateur produit « notification non suivie » sans bloquer l'envoi
+**Étant donné** le téléphone d'Alanc et le plugin installé
+**Quand** sont joués : app fermée, coupure réseau pendant le travail, arrêt, délégation à un sous-agent, conversation reprise, `/new`
+**Alors** chaque fin de tour de l'app est notifiée au moins une fois, sans doublon de sous-agent, et le toucher ouvre la bonne conversation
+
+**Étant donné** un profil sans plugin
+**Quand** Alanc envoie un message
+**Alors** « notification non suivie » s'affiche sans bloquer l'envoi
+
+**Étant donné** un redémarrage de Hermes pendant un travail
+**Quand** il est joué
+**Alors** le résultat est consigné ; une notification perdue est acceptée et expliquée
 
 **Étant donné** l'arrêt forcé de l'app dans les réglages Android et la permission refusée
 **Quand** ils sont testés
@@ -948,6 +1101,11 @@ Afin de garder le contrôle des actions sensibles.
 **Quand** ils sont utilisés au lecteur d'écran et en texte agrandi
 **Alors** ils ont des noms accessibles distincts et des cibles tactiles suffisantes
 
+**Étant donné** un profil et son mode d'autorisation lu sur Hermes (`manual`, `smart`, `off`)
+**Quand** Alanc l'affiche puis le change depuis l'app
+**Alors** seul ce profil est modifié (`config.set approvals.mode` avec `profile`), la valeur affichée est celle relue sur Hermes après confirmation, et l'app n'impose aucun mode par défaut
+**Et** le passage en `off` est signalé comme désactivant toute demande d'autorisation
+
 ### Story 6.4 : Récupérer les fichiers produits par Hermes
 
 En tant qu'Alanc,
@@ -959,6 +1117,7 @@ Afin d'utiliser ses résultats directement sur mon téléphone.
 **Étant donné** un fichier résultat rendu accessible par Hermes
 **Quand** il apparaît dans la conversation
 **Alors** il est identifiable (nom, type, taille si connue) comme résultat disponible (FR14, UX-DR18)
+**Et** seuls les fichiers écrits par Hermes pendant le tour (`write_file`, chemin absolu) sont repérés comme résultats ; un chemin seulement cité dans le texte n'en est pas un (décision G4)
 
 **Étant donné** une simple mention de chemin serveur sans accès authentifié résolu
 **Quand** elle est affichée
@@ -997,3 +1156,501 @@ Afin de déclarer le MVP accepté sur des preuves et non sur des simulations.
 **Étant donné** un contrôle indisponible ou une capacité obligatoire non démontrée
 **Quand** le rapport d'essai est rédigé
 **Alors** il est expliqué et bloque l'acceptation, sauf décision explicite d'Alanc de retrait ou de report (NFR4)
+
+## Epic 7 : Ranger et retrouver mes conversations
+
+Alanc épingle, renomme, marque non lu, masque ou supprime une conversation et retrouve un fil par titre ou contenu. Pose la liste que les salons réutiliseront. Post-MVP, après l'Epic 6.
+
+### Story 7.1 : Vérifier le rangement et la recherche sur mon installation
+
+En tant qu'Alanc,
+Je veux savoir ce que mon Hermes permet pour renommer, masquer, archiver, supprimer et rechercher des conversations,
+Afin que l'app range côté serveur ce qui peut l'être et localement le reste, sans rien inventer.
+
+**Critères d'acceptation :**
+
+**Étant donné** les méthodes repérées dans le source (`session.title`, `session.set_hidden`, `session.archive`, `session.delete`)
+**Quand** elles sont essayées sur un profil de test de l'installation réelle
+**Alors** `contracts/` consigne pour chacune paramètres, réponses, erreurs et fixtures anonymisées, avec la capacité détectée (NFR7)
+**Et** l'effet de chacune sur `session.list` et sur l'historique vu depuis un autre client (dashboard, Desktop) est documenté
+
+**Étant donné** qu'aucune recherche serveur n'est repérée
+**Quand** l'installation est inspectée
+**Alors** la présence ou l'absence d'une recherche exposée est consignée, et le repli local est retenu en cas d'absence
+
+**Étant donné** ces constats
+**Quand** Alanc les relit
+**Alors** il est décidé et consigné ce qui est partagé avec Hermes (titre, masquage, suppression) et ce qui reste propre au téléphone (épingle, non lu)
+**Et** une méthode absente désactive la fonction correspondante avec un message clair (NFR4), jamais contournée
+
+### Story 7.2 : Renommer une conversation
+
+En tant qu'Alanc,
+Je veux donner un titre parlant à une conversation,
+Afin de la reconnaître d'un coup d'œil dans mon historique.
+
+**Critères d'acceptation :**
+
+**Étant donné** une conversation de l'historique d'un profil
+**Quand** Alanc choisit « Renommer » dans son menu, saisit un titre et valide
+**Alors** le titre est envoyé à Hermes par la méthode vérifiée en 7.1 et affiché seulement après confirmation du serveur
+**Et** un titre vide ou identique n'envoie rien
+
+**Étant donné** un échec réseau ou un refus du serveur
+**Quand** le renommage échoue
+**Alors** l'ancien titre reste affiché, l'erreur est expliquée et la saisie est conservée pour réessayer (NFR2)
+
+**Étant donné** une conversation renommée depuis un autre client
+**Quand** Alanc actualise l'historique
+**Alors** le nouveau titre apparaît
+
+### Story 7.3 : Épingler et marquer non lu
+
+En tant qu'Alanc,
+Je veux garder mes conversations importantes en haut et repérer celles où Hermes a répondu sans que je l'aie lu,
+Afin de ne rien laisser passer.
+
+**Critères d'acceptation :**
+
+**Étant donné** l'historique d'un profil
+**Quand** Alanc épingle ou désépingle une conversation
+**Alors** les conversations épinglées apparaissent en tête, dans l'ordre d'épinglage, avec un repère non exprimé par la seule couleur (NFR1)
+**Et** l'épingle est enregistrée sur le téléphone par connexion, profil et session, et survit au redémarrage de l'app
+
+**Étant donné** un tour terminé (réussite, erreur, arrêt confirmé) dans une conversation qu'Alanc n'a pas ouverte depuis
+**Quand** il revient à l'historique
+**Alors** la conversation est marquée non lue
+**Et** l'ouvrir la marque lue ; « Marquer non lu » dans son menu la remet non lue
+
+**Étant donné** une conversation supprimée ou disparue côté Hermes
+**Quand** l'historique est actualisé
+**Alors** son épingle et son marqueur locaux sont retirés
+
+**Étant donné** le lecteur d'écran actif
+**Quand** il parcourt une conversation épinglée ou non lue
+**Alors** ces états sont annoncés
+
+### Story 7.4 : Masquer et retrouver des conversations
+
+En tant qu'Alanc,
+Je veux sortir de ma liste les conversations dont je n'ai plus besoin sans les détruire,
+Afin de garder un historique lisible.
+
+**Critères d'acceptation :**
+
+**Étant donné** une conversation de l'historique
+**Quand** Alanc choisit « Masquer »
+**Alors** elle est masquée par la méthode retenue en 7.1 (masquage ou archivage) et disparaît de la liste principale
+**Et** un message éphémère propose « Annuler », qui la rétablit
+
+**Étant donné** des conversations masquées
+**Quand** Alanc ouvre la section « Masquées » de l'historique
+**Alors** il les retrouve, peut les ouvrir et les rétablir
+
+**Étant donné** un échec du serveur
+**Quand** le masquage échoue
+**Alors** la conversation reste visible et l'erreur est expliquée
+
+### Story 7.5 : Supprimer une conversation
+
+En tant qu'Alanc,
+Je veux supprimer définitivement une conversation,
+Afin de faire le ménage dans mon Hermes depuis le téléphone.
+
+**Critères d'acceptation :**
+
+**Étant donné** une conversation sans travail en cours
+**Quand** Alanc choisit « Supprimer »
+**Alors** une confirmation explicite indique que la suppression est définitive et touche aussi Hermes
+**Et** après confirmation, `session.delete` est appelé et la conversation n'est retirée de la liste qu'après réponse positive du serveur
+
+**Étant donné** une conversation avec un travail en cours ou un envoi non résolu
+**Quand** Alanc veut la supprimer
+**Alors** la suppression est refusée avec explication (arrêter d'abord)
+
+**Étant donné** une suppression confirmée par le serveur
+**Quand** elle aboutit
+**Alors** brouillon, pièces jointes locales, épingle et marqueur de cette conversation sont effacés du téléphone
+**Et** une notification de fin reçue ensuite pour cette session ouvre l'accueil avec un message « conversation supprimée », sans erreur
+
+**Étant donné** un échec réseau pendant la suppression
+**Quand** le résultat est incertain
+**Alors** la conversation reste affichée, marquée à vérifier, et l'historique actualisé tranche ; rien n'est supprimé localement avant confirmation (NFR2)
+
+### Story 7.6 : Rechercher une conversation
+
+En tant qu'Alanc,
+Je veux retrouver une conversation en tapant quelques mots,
+Afin de ne pas faire défiler tout mon historique.
+
+**Critères d'acceptation :**
+
+**Étant donné** l'historique d'un profil
+**Quand** Alanc saisit un texte dans la recherche
+**Alors** les conversations dont le titre ou l'aperçu contient ce texte (sans tenir compte de la casse ni des accents) sont listées, avec le passage trouvé mis en évidence
+**Et** la recherche porte aussi sur le contenu des conversations déjà présentes sur le téléphone
+
+**Étant donné** une recherche exposée par Hermes (constat de 7.1)
+**Quand** elle est disponible
+**Alors** elle est utilisée et ses résultats sont fusionnés sans doublon ; sinon l'app indique que la recherche porte sur les titres et le contenu déjà chargé
+
+**Étant donné** une recherche sans résultat
+**Quand** la liste est vide
+**Alors** un état vide le dit, distinct d'une erreur de chargement
+
+**Étant donné** l'option « Tous les profils »
+**Quand** Alanc l'active
+**Alors** les résultats de chaque profil sont regroupés et identifiés par leur profil, sans mélanger les conversations (FR3)
+
+## Epic 8 : Faire travailler mes agents en salon
+
+Alanc crée un salon de 2 à 6 profils, y écrit avec @mentions, voit qui répond, arrête le salon et gère ses membres ; quand un agent a besoin de lui (@user ou autorisation), une notification ouvre le salon et il répond depuis l'app. Requiert Bot Mode actif ; réutilise Epics 4, 5, 6 et 7.
+
+### Story 8.1 : Vérifier les salons sur mon installation
+
+En tant qu'Alanc,
+Je veux savoir si mon Hermes peut héberger des salons d'agents et comment l'app doit les piloter,
+Afin de décider du périmètre des salons sur des constats réels.
+
+**Critères d'acceptation :**
+
+**Étant donné** l'installation réelle (add-on Home Assistant, sans Desktop)
+**Quand** l'activation de Bot Mode est étudiée (`ui_meta.hermes-bots` dans `profile.yaml`, protocole `agent.bot_mode_protocol`)
+**Alors** la procédure d'activation pour deux profils de test est consignée, réversible, sans toucher aux autres profils
+
+**Étant donné** Bot Mode actif sur ces profils
+**Quand** `groups.capabilities`, `groups.list`, `groups.create`, `groups.send`, `groups.state`, `groups.log`, `groups.stop`, `groups.rename`, `groups.disband`, `groups.approve`, `groups.retry`, `groups.discard`, `groups.attachment.upload/download` sont essayés sur `/api/ws`
+**Alors** `contracts/` consigne paramètres, réponses, erreurs, événements poussés pendant un tour de salon et fixtures anonymisées (NFR7)
+**Et** sont documentés : `driver: true` (salon qui continue app fermée), idempotence de `groups.send` par `event_id`, modification des membres, reprise après coupure (curseur ou log complet), ordre des messages
+
+**Étant donné** l'escalade @user et les autorisations en salon
+**Quand** elles sont provoquées
+**Alors** leur forme (événement, `request_id`, `task_id`, `execution_generation`) et le moyen de les notifier app fermée (hook `on_room_member_activity` du plugin de notifications ou autre) sont consignés
+
+**Étant donné** ces constats
+**Quand** Alanc tranche la porte G5 (salons)
+**Alors** ses décisions sont consignées : salons retenus ou reportés, activation de Bot Mode acceptée, comportement app fermée confirmé
+**Et** une capacité absente masque la fonction avec un message clair (NFR4), jamais contournée
+
+### Story 8.2 : Voir mes salons
+
+En tant qu'Alanc,
+Je veux une liste de mes salons à part de mes conversations,
+Afin de retrouver mes groupes de travail.
+
+**Critères d'acceptation :**
+
+**Étant donné** une connexion où les salons sont disponibles (G5)
+**Quand** Alanc ouvre l'onglet « Salons »
+**Alors** `groups.list` alimente une liste où chaque salon montre son nom, ses membres (initiale et couleur du profil, plus le nom pour le lecteur d'écran), le dernier message et son heure
+**Et** un salon en cours de travail est signalé autrement que par la seule couleur (NFR1)
+
+**Étant donné** aucun salon, un chargement ou une erreur
+**Quand** la liste s'affiche
+**Alors** ces trois états sont distincts, l'erreur proposant de réessayer
+
+**Étant donné** des salons indisponibles sur l'installation
+**Quand** Alanc cherche les salons
+**Alors** l'onglet indique pourquoi (Bot Mode inactif ou capacité absente) au lieu d'une liste vide
+
+**Étant donné** un salon ouvert
+**Quand** la route est construite
+**Alors** elle est distincte de celle des conversations (`/room/<ConnectionKey>/<roomId>`) et `resolveLaunchTarget` sait la restaurer
+
+### Story 8.3 : Créer un salon
+
+En tant qu'Alanc,
+Je veux réunir plusieurs de mes profils dans un salon nommé,
+Afin de les faire travailler ensemble sur un sujet.
+
+**Critères d'acceptation :**
+
+**Étant donné** la liste des salons
+**Quand** Alanc choisit « Nouveau salon », saisit un nom et coche des profils
+**Alors** seuls les profils éligibles (Bot Mode actif) sont proposés, les autres étant listés avec la raison
+**Et** la création n'est possible qu'entre 2 et 6 profils, la limite étant expliquée
+
+**Étant donné** une création validée
+**Quand** `groups.create` répond
+**Alors** le salon s'ouvre, vide, prêt à recevoir un premier message
+**Et** un échec conserve nom et sélection et explique l'erreur
+
+### Story 8.4 : Écrire dans un salon et suivre les réponses
+
+En tant qu'Alanc,
+Je veux écrire au salon, appeler un ou plusieurs agents et lire qui répond quoi,
+Afin de piloter un travail à plusieurs.
+
+**Critères d'acceptation :**
+
+**Étant donné** un salon ouvert
+**Quand** Alanc tape `@`
+**Alors** les membres, `@all` et `@hermes` sont proposés ; une aide courte rappelle que sans mention tous peuvent répondre
+
+**Étant donné** un message envoyé
+**Quand** il part
+**Alors** il est d'abord enregistré dans l'outbox avec un `event_id` stable, puis transmis par `groups.send` ; un résultat incertain n'est renvoyé qu'avec le même `event_id` si l'idempotence est constatée en 8.1, sinon il est marqué inconnu (NFR2)
+**Et** le brouillon du salon survit à la fermeture de l'app
+
+**Étant donné** des agents qui répondent
+**Quand** leurs messages arrivent
+**Alors** chaque message est attribué à son profil (nom, initiale, couleur), rendu en Markdown comme une conversation, et l'activité de chaque agent réutilise les lignes compactes de l'Epic 3
+**Et** un tour silencieux n'affiche rien ; un indicateur montre quel agent travaille
+
+**Étant donné** une coupure ou un retour dans l'app
+**Quand** le salon est rouvert
+**Alors** l'historique est repris par `groups.log`/`groups.state` sans doublon ni trou, les messages produits pendant l'absence apparaissent
+
+**Étant donné** la limite de 10 messages par envoi ou de 3 tours atteinte
+**Quand** le salon se pose
+**Alors** l'app indique que le salon attend Alanc
+
+### Story 8.5 : Arrêter le travail d'un salon
+
+En tant qu'Alanc,
+Je veux arrêter les agents d'un salon,
+Afin de reprendre la main quand la discussion part dans la mauvaise direction.
+
+**Critères d'acceptation :**
+
+**Étant donné** un salon où au moins un agent travaille
+**Quand** Alanc touche « Arrêter »
+**Alors** `groups.stop` est envoyé et l'interface distingue arrêt demandé et arrêt confirmé par Hermes, comme en 3.5 (UX-DR16)
+**Et** une perte réseau ne vaut pas confirmation
+
+**Étant donné** un tour d'agent en échec
+**Quand** Hermes le signale
+**Alors** l'échec est attribué à l'agent avec sa raison ; « Réessayer » (`groups.retry`) n'est proposé que si Hermes le permet, et un travail au résultat inconnu ne propose que « Abandonner » (`groups.discard`) après confirmation
+
+### Story 8.6 : Être appelé par un agent
+
+En tant qu'Alanc,
+Je veux être prévenu quand un agent d'un salon a besoin de moi,
+Afin de ne pas bloquer le groupe sans le savoir.
+
+**Critères d'acceptation :**
+
+**Étant donné** un agent qui mentionne `@user` dans un salon
+**Quand** Alanc est dans l'app
+**Alors** le salon porte un badge « a besoin de toi » dans la liste et le message concerné est mis en évidence
+
+**Étant donné** l'app quittée
+**Quand** la même escalade survient
+**Alors** une notification est reçue par le moyen retenu en 8.1, avec un libellé générique et un payload `{roomId, outcome}` sans contenu (NFR3)
+**Et** la toucher ouvre le salon sur le message concerné, à froid comme à chaud (`resolveLaunchTarget`)
+
+**Étant donné** plusieurs escalades rapprochées dans le même salon
+**Quand** elles arrivent
+**Alors** une seule notification est affichée pour ce salon
+
+**Étant donné** le badge
+**Quand** Alanc ouvre le salon ou y répond
+**Alors** le badge disparaît
+
+### Story 8.7 : Autoriser une action demandée dans un salon
+
+En tant qu'Alanc,
+Je veux autoriser ou refuser une action qu'un agent demande dans un salon,
+Afin que le groupe continue sans que je passe par le PC.
+
+**Critères d'acceptation :**
+
+**Étant donné** une demande d'autorisation émise par un membre du salon
+**Quand** elle arrive
+**Alors** elle s'affiche dans le fil avec le composant Intervention de l'Epic 6, attribuée à l'agent demandeur, avec la demande réellement émise (UX-DR17)
+**Et** elle déclenche le badge et la notification de 8.6
+
+**Étant donné** Alanc qui choisit une réponse
+**Quand** il valide
+**Alors** `groups.approve` est envoyé avec `request_id`, `task_id`, `member_id` et `execution_generation` de la demande
+**Et** une réponse à une demande devenue obsolète (nouveau tour, salon arrêté) est refusée par l'app avec explication, jamais rejouée
+
+### Story 8.8 : Gérer un salon
+
+En tant qu'Alanc,
+Je veux renommer un salon, changer ses membres, le ranger ou le dissoudre,
+Afin que mes groupes de travail restent à jour.
+
+**Critères d'acceptation :**
+
+**Étant donné** un salon
+**Quand** Alanc le renomme ou modifie ses membres
+**Alors** le changement passe par la méthode vérifiée en 8.1, toujours entre 2 et 6 membres, et n'est affiché qu'après confirmation du serveur
+
+**Étant donné** la liste des salons
+**Quand** Alanc épingle, marque non lu ou masque un salon
+**Alors** le comportement est celui de l'Epic 7 pour les conversations
+
+**Étant donné** un salon
+**Quand** Alanc choisit « Dissoudre »
+**Alors** une confirmation indique l'effet, un travail en cours est arrêté d'abord, puis `groups.disband` est appelé ; le salon passe dans une section « Dissous » si Hermes les conserve
+
+### Story 8.9 : Partager des fichiers dans un salon
+
+En tant qu'Alanc,
+Je veux joindre des fichiers à un message de salon et récupérer ceux qu'un agent y dépose,
+Afin d'alimenter le groupe comme une conversation.
+
+**Critères d'acceptation :**
+
+**Étant donné** un message de salon en préparation
+**Quand** Alanc joint des fichiers
+**Alors** sélection, aperçu, retrait et limites réutilisent l'Epic 4, les limites étant celles constatées en 8.1 pour `groups.attachment.upload`
+**Et** le message n'est envoyé qu'après confirmation de toutes les pièces ; un upload échoué bloque l'envoi
+
+**Étant donné** un fichier déposé dans le salon
+**Quand** Alanc le touche
+**Alors** il est téléchargé par `groups.attachment.download` et ouvert selon son format, comme en 6.4 ; aucun fichier n'est exécuté automatiquement
+
+## Epic 9 : Programmer des routines
+
+Alanc crée et pilote les tâches planifiées de chaque profil, voit leur historique et est averti à la fin ; le résultat arrive dans la conversation du profil.
+
+### Story 9.1 : Vérifier les routines sur mon installation
+
+En tant qu'Alanc,
+Je veux savoir ce que mon Hermes expose pour les routines,
+Afin que l'app les pilote sur des constats réels.
+
+**Critères d'acceptation :**
+
+**Étant donné** les points repérés dans le source (`/api/cron/jobs[?profile=]`, `/api/cron/jobs/<id>` GET/PUT/DELETE, `/pause`, `/resume`, `/trigger`, `/runs?limit=`, `/api/cron/delivery-targets`, `/api/cron/blueprints`)
+**Quand** ils sont essayés sur le backend 9119 avec l'authentification de l'app, sur un profil de test
+**Alors** `contracts/` consigne pour chacun disponibilité, paramètres, champs de `CronJob` (planning, prompt, état, prochaine et dernière exécution, issue), erreurs et fixtures anonymisées (NFR7)
+**Et** le rattachement par profil (`?profile=`) est vérifié : la routine d'un profil n'apparaît pas dans un autre
+
+**Étant donné** les formats de planning acceptés (langage naturel, expression cron, une fois, intervalle)
+**Quand** ils sont essayés
+**Alors** les formats retenus pour le planning structuré de l'app et le champ avancé sont consignés, avec les messages d'erreur du serveur
+
+**Étant donné** une exécution de routine
+**Quand** elle se termine
+**Alors** sont consignés : la session produite (lue par `/runs` et `session.list`), sa source, l'endroit où le résultat est livré (`delivery-targets`), et si le plugin de notifications reçoit `on_session_end` pour cette source
+**Et** le comportement de `/trigger` (réponse synchrone jusqu'à la fin du travail) et de son interruption côté client est documenté
+
+**Étant donné** ces constats
+**Quand** Alanc les relit
+**Alors** ses décisions sont consignées et une capacité absente masque la fonction (NFR4)
+
+### Story 9.2 : Voir les routines d'un profil
+
+En tant qu'Alanc,
+Je veux voir les routines de chaque profil,
+Afin de savoir ce que Hermes fait tout seul et quand.
+
+**Critères d'acceptation :**
+
+**Étant donné** un profil sélectionné
+**Quand** Alanc ouvre « Routines »
+**Alors** chaque routine montre son nom, son planning en langage courant (« chaque lundi à 8 h », « toutes les 30 min »), sa prochaine exécution en heure locale, son état (active, en pause) et l'issue de la dernière exécution
+**Et** ces états ne sont pas exprimés par la seule couleur (NFR1)
+
+**Étant donné** aucune routine, un chargement ou une erreur
+**Quand** la liste s'affiche
+**Alors** ces trois états sont distincts
+
+**Étant donné** l'option « Tous les profils »
+**Quand** elle est active
+**Alors** les routines sont regroupées par profil, sans mélange
+
+### Story 9.3 : Créer et modifier une routine
+
+En tant qu'Alanc,
+Je veux créer ou modifier une routine depuis mon téléphone,
+Afin d'automatiser une tâche sans passer par le PC.
+
+**Critères d'acceptation :**
+
+**Étant donné** la liste des routines d'un profil
+**Quand** Alanc choisit « Nouvelle routine »
+**Alors** il saisit un nom, la demande à exécuter et un planning structuré : une fois (date et heure), jours choisis à une heure, ou toutes les N minutes (5 à 1 440)
+**Et** un champ avancé accepte le planning brut retenu en 9.1
+
+**Étant donné** les destinations de livraison exposées
+**Quand** le formulaire s'affiche
+**Alors** seules celles renvoyées par `delivery-targets` sont proposées, la conversation du profil par défaut
+
+**Étant donné** un formulaire validé
+**Quand** le serveur accepte
+**Alors** la routine apparaît avec sa prochaine exécution calculée par Hermes, jamais par l'app
+**Et** un refus (planning invalide, champ manquant) affiche le message du serveur et conserve la saisie (NFR2)
+
+**Étant donné** une routine existante
+**Quand** Alanc la modifie
+**Alors** seuls les champs changés sont envoyés par `PUT`, l'affichage n'étant mis à jour qu'après confirmation
+
+### Story 9.4 : Mettre en pause, lancer et supprimer une routine
+
+En tant qu'Alanc,
+Je veux suspendre, déclencher tout de suite ou supprimer une routine,
+Afin de garder la main sur ce qui tourne.
+
+**Critères d'acceptation :**
+
+**Étant donné** une routine active ou en pause
+**Quand** Alanc touche « Pause » ou « Reprendre »
+**Alors** l'appel correspondant est envoyé et l'état n'est changé qu'après réponse du serveur
+
+**Étant donné** une routine
+**Quand** Alanc touche « Lancer maintenant »
+**Alors** le déclenchement est demandé une seule fois, la routine est marquée « en cours », et l'app n'attend pas la fin du travail pour rendre la main ; quitter l'app n'annule pas l'exécution
+**Et** l'issue est retrouvée par l'historique (9.5) et la notification (9.6), jamais déduite d'une coupure réseau
+
+**Étant donné** une routine
+**Quand** Alanc choisit « Supprimer »
+**Alors** une confirmation est demandée, puis la routine disparaît après réponse positive du serveur ; ses exécutions passées restent dans l'historique du profil
+
+### Story 9.5 : Consulter les exécutions d'une routine
+
+En tant qu'Alanc,
+Je veux relire ce qu'une routine a produit à chaque passage,
+Afin de vérifier son travail.
+
+**Critères d'acceptation :**
+
+**Étant donné** une routine
+**Quand** Alanc ouvre son historique
+**Alors** les dernières exécutions (`/runs`) sont listées avec date, durée et issue (réussite, erreur, arrêt)
+
+**Étant donné** une exécution
+**Quand** Alanc la touche
+**Alors** sa session s'ouvre dans la vue conversation existante (réponse, activité, fichiers résultats de l'Epic 6), avec la mention « exécution de routine »
+**Et** elle n'est pas confondue avec les conversations ordinaires dans l'historique du profil, où elle est repérée comme telle
+
+### Story 9.6 : Être averti à la fin d'une routine
+
+En tant qu'Alanc,
+Je veux être prévenu quand une routine se termine,
+Afin de consulter son résultat sans surveiller l'app.
+
+**Critères d'acceptation :**
+
+**Étant donné** le constat de 9.1 sur la source des sessions de routine
+**Quand** le plugin de notifications est étendu
+**Alors** il notifie aussi la fin d'une exécution de routine, avec un payload `{sessionId, outcome}` et un libellé générique « Routine terminée » sans contenu (NFR3)
+**Et** le filtre existant des tours `tui` reste inchangé pour les conversations
+
+**Étant donné** une routine
+**Quand** Alanc désactive « Me prévenir » pour elle
+**Alors** ses fins ne sont plus notifiées, ce choix étant enregistré là où le plugin le lit (décision consignée)
+
+**Étant donné** une notification de fin de routine
+**Quand** Alanc la touche
+**Alors** l'exécution s'ouvre comme en 9.5, à froid comme à chaud
+
+### Story 9.7 : Partir d'un modèle de routine
+
+En tant qu'Alanc,
+Je veux choisir une routine toute faite proposée par Hermes,
+Afin de créer vite une automatisation courante.
+
+**Critères d'acceptation :**
+
+**Étant donné** des modèles exposés par `/api/cron/blueprints?profile=`
+**Quand** Alanc choisit « Depuis un modèle »
+**Alors** la galerie du profil s'affiche avec nom et description de chaque modèle
+
+**Étant donné** un modèle choisi
+**Quand** Alanc remplit ses champs et valide
+**Alors** la routine est créée par `/api/cron/blueprints/instantiate` dans ce profil et apparaît dans la liste
+**Et** l'absence de modèles masque l'option sans erreur

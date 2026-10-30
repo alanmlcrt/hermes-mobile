@@ -1,0 +1,467 @@
+{
+  "schemaVersion": 1,
+  "evidence": "install-measured",
+  "install": {
+    "build": "0.22.2+1690",
+    "measuredAt": "2026-10-24T15:15:13.312844Z",
+    "finishedAt": "2026-10-24T15:27:06.041107Z",
+    "profile": "dedicated-test-profile"
+  },
+  "corpus": {
+    "location": "_bmad-output/implementation-artifacts/corpus-pieces-jointes/",
+    "tracked": false,
+    "complete": true,
+    "categories": [
+      {
+        "category": "text",
+        "description": "long texte",
+        "pieces": 3,
+        "totalBytes": 16777361,
+        "mediaTypes": [
+          "text/plain"
+        ]
+      },
+      {
+        "category": "image",
+        "description": "photo ou capture",
+        "pieces": 5,
+        "totalBytes": 37746898,
+        "mediaTypes": [
+          "image/png"
+        ]
+      },
+      {
+        "category": "pdf",
+        "description": "PDF",
+        "pieces": 4,
+        "totalBytes": 16784840,
+        "mediaTypes": [
+          "application/pdf"
+        ]
+      },
+      {
+        "category": "office",
+        "description": "document bureautique",
+        "pieces": 3,
+        "totalBytes": 16777356,
+        "mediaTypes": [
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ]
+      }
+    ]
+  },
+  "transports": {
+    "file.attach": {
+      "contract": "pinned",
+      "source": "contracts/openrpc.json, méthode file.attach",
+      "parameters": [
+        "data_url"
+      ],
+      "status": "present",
+      "proof": {
+        "at": "2026-10-24T15:15:13.312844Z",
+        "pieces": 10,
+        "repetitions": 3,
+        "attempts": 30,
+        "accepted": 9,
+        "refused": 0,
+        "unverified": 1,
+        "absent": 0,
+        "partial": 0,
+        "received": 27,
+        "receipts": [
+          "history-attached-context"
+        ],
+        "error": null
+      }
+    },
+    "rest.image-upload": {
+      "contract": "outside-pinned",
+      "source": "source du build, route POST /api/chat/image-upload (hors extrait épinglé)",
+      "parameters": [
+        "data_url"
+      ],
+      "status": "present",
+      "proof": {
+        "at": "2026-10-24T15:15:13.312844Z",
+        "pieces": 5,
+        "repetitions": 3,
+        "attempts": 15,
+        "accepted": 5,
+        "refused": 0,
+        "unverified": 0,
+        "absent": 0,
+        "partial": 0,
+        "received": 15,
+        "receipts": [
+          "history-image-reference"
+        ],
+        "error": null
+      }
+    },
+    "image.attach_bytes": {
+      "contract": "outside-pinned",
+      "source": "contrat amont image.attach_bytes, absent de l’extrait épinglé",
+      "parameters": [
+        "content_base64"
+      ],
+      "status": "present",
+      "proof": {
+        "at": "2026-10-24T15:15:13.312844Z",
+        "pieces": 5,
+        "repetitions": 3,
+        "attempts": 15,
+        "accepted": 5,
+        "refused": 0,
+        "unverified": 0,
+        "absent": 0,
+        "partial": 0,
+        "received": 15,
+        "receipts": [
+          "history-image-reference"
+        ],
+        "error": null
+      },
+      "supplementalProofs": [
+        {
+          "mediaType": "image/jpeg",
+          "at": "2026-10-26T20:03:52.515429Z",
+          "finishedAt": "2026-10-26T20:04:46.713815Z",
+          "pieces": 2,
+          "repetitions": 3,
+          "attempts": 6,
+          "accepted": 2,
+          "refused": 0,
+          "unverified": 0,
+          "absent": 0,
+          "partial": 0,
+          "received": 6,
+          "distinctExactReceipts": 6,
+          "bytes": [3383, 20965448],
+          "ceilingMeaning": "largest-accepted-tested; local-app-policy",
+          "serverMaximumMeasured": false,
+          "fixtures": [
+            {
+              "file": "synthetique-petit.jpg",
+              "bytes": 3383,
+              "sha256": "504bec7294ab38db4d9d4b99d419cfa63bdbaea41dfc18dc94789576f47531c6"
+            },
+            {
+              "file": "synthetique-borne.jpeg",
+              "bytes": 20965448,
+              "sha256": "dfd4854a4ee7036e71a38db78fdae2ecb057b9d0af0daa07479f1ed038b963e8"
+            }
+          ],
+          "profile": "dedicated-test-profile",
+          "build": "0.22.2+1690"
+        }
+      ]
+    }
+  },
+  "limits": {
+    "text": {
+      "maxBytes": 10485812,
+      "maxBytesVerified": true,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": true,
+      "threshold": {
+        "bytes": "lower-bound",
+        "count": "lower-bound"
+      },
+      "observed": {
+        "acceptedBytes": [
+          5242906,
+          10485812
+        ],
+        "refusedBytes": [],
+        "acceptedCounts": [
+          3
+        ],
+        "refusedCounts": [],
+        "unverifiedBytes": [
+          1048643
+        ],
+        "unverifiedCounts": [
+          3
+        ],
+        "mediaTypes": [
+          "text/plain"
+        ],
+        "receipts": [
+          "file.attach:history-attached-context"
+        ]
+      },
+      "evidence": [
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 5242906,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 10485812,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        }
+      ]
+    },
+    "image": {
+      "maxBytes": 20965448,
+      "maxBytesVerified": true,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": true,
+      "threshold": {
+        "bytes": "lower-bound",
+        "count": "lower-bound"
+      },
+      "observed": {
+        "acceptedBytes": [
+          3383,
+          9911,
+          1048817,
+          5238107,
+          10484615,
+          20965448
+        ],
+        "refusedBytes": [],
+        "acceptedCounts": [
+          3
+        ],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "receipts": [
+          "image.attach_bytes:history-image-reference",
+          "rest.image-upload:history-image-reference"
+        ]
+      },
+      "evidence": [
+        {
+          "surface": "rest.image-upload",
+          "receipt": "history-image-reference",
+          "bytes": 1048817,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "rest.image-upload",
+          "receipt": "history-image-reference",
+          "bytes": 5238107,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "rest.image-upload",
+          "receipt": "history-image-reference",
+          "bytes": 10484615,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "rest.image-upload",
+          "receipt": "history-image-reference",
+          "bytes": 20965448,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "rest.image-upload",
+          "receipt": "history-image-reference",
+          "bytes": 9911,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 1048817,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 5238107,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 10484615,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 20965448,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 9911,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 3383,
+          "count": 3,
+          "at": "2026-10-26T20:03:52.515429Z",
+          "mediaType": "image/jpeg",
+          "synthetic": true
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 20965448,
+          "count": 3,
+          "at": "2026-10-26T20:03:52.515429Z",
+          "mediaType": "image/jpeg",
+          "synthetic": true
+        }
+      ]
+    },
+    "pdf": {
+      "maxBytes": 10485858,
+      "maxBytesVerified": true,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": true,
+      "threshold": {
+        "bytes": "lower-bound",
+        "count": "lower-bound"
+      },
+      "observed": {
+        "acceptedBytes": [
+          7278,
+          1048708,
+          5242996,
+          10485858
+        ],
+        "refusedBytes": [],
+        "acceptedCounts": [
+          3
+        ],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [
+          "application/pdf"
+        ],
+        "receipts": [
+          "file.attach:history-attached-context"
+        ]
+      },
+      "evidence": [
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 1048708,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 5242996,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 10485858,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 7278,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        }
+      ]
+    },
+    "office": {
+      "maxBytes": 10485797,
+      "maxBytesVerified": true,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": true,
+      "threshold": {
+        "bytes": "lower-bound",
+        "count": "lower-bound"
+      },
+      "observed": {
+        "acceptedBytes": [
+          1048649,
+          5242910,
+          10485797
+        ],
+        "refusedBytes": [],
+        "acceptedCounts": [
+          3
+        ],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ],
+        "receipts": [
+          "file.attach:history-attached-context"
+        ]
+      },
+      "evidence": [
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 1048649,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 5242910,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        },
+        {
+          "surface": "file.attach",
+          "receipt": "history-attached-context",
+          "bytes": 10485797,
+          "count": 3,
+          "at": "2026-10-24T15:15:13.312844Z"
+        }
+      ]
+    }
+  },
+  "vision": {
+    "profile": "dedicated-test-profile",
+    "model": "gpt-6-luna-900k",
+    "analyzesImages": true,
+    "evidence": "marker"
+  },
+  "unverified": [
+    "limits.text.maxCount",
+    "limits.image.maxCount",
+    "limits.pdf.maxCount",
+    "limits.office.maxCount"
+  ]
+}

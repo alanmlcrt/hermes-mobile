@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "evidence": "install-measured",
+  "install": {
+    "build": "0.22.2+1690",
+    "measuredAt": "2026-10-26T20:03:52.515429Z",
+    "finishedAt": "2026-10-26T20:04:46.713815Z",
+    "profile": "dedicated-test-profile"
+  },
+  "corpus": {
+    "location": "_bmad-output/implementation-artifacts/corpus-pieces-jointes/",
+    "tracked": false,
+    "complete": false,
+    "categories": [
+      {
+        "category": "text",
+        "description": "long texte",
+        "pieces": null,
+        "totalBytes": null,
+        "mediaTypes": []
+      },
+      {
+        "category": "image",
+        "description": "photo ou capture",
+        "pieces": 2,
+        "totalBytes": 20968831,
+        "mediaTypes": [
+          "image/jpeg"
+        ]
+      },
+      {
+        "category": "pdf",
+        "description": "PDF",
+        "pieces": null,
+        "totalBytes": null,
+        "mediaTypes": []
+      },
+      {
+        "category": "office",
+        "description": "document bureautique",
+        "pieces": null,
+        "totalBytes": null,
+        "mediaTypes": []
+      }
+    ]
+  },
+  "transports": {
+    "file.attach": {
+      "contract": "pinned",
+      "source": "contracts/openrpc.json, méthode file.attach",
+      "parameters": [
+        "data_url"
+      ],
+      "status": "unverified",
+      "proof": null
+    },
+    "rest.image-upload": {
+      "contract": "outside-pinned",
+      "source": "source du build, route POST /api/chat/image-upload (hors extrait épinglé)",
+      "parameters": [
+        "data_url"
+      ],
+      "status": "unverified",
+      "proof": null
+    },
+    "image.attach_bytes": {
+      "contract": "outside-pinned",
+      "source": "contrat amont image.attach_bytes, absent de l’extrait épinglé",
+      "parameters": [
+        "content_base64"
+      ],
+      "status": "present",
+      "proof": {
+        "at": "2026-10-26T20:03:52.515429Z",
+        "pieces": 2,
+        "repetitions": 3,
+        "attempts": 6,
+        "accepted": 2,
+        "refused": 0,
+        "unverified": 0,
+        "absent": 0,
+        "partial": 0,
+        "received": 6,
+        "receipts": [
+          "history-image-reference"
+        ],
+        "error": null
+      }
+    }
+  },
+  "limits": {
+    "text": {
+      "maxBytes": null,
+      "maxBytesVerified": false,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": false,
+      "threshold": {
+        "bytes": "not-measured",
+        "count": "not-measured"
+      },
+      "observed": {
+        "acceptedBytes": [],
+        "refusedBytes": [],
+        "acceptedCounts": [],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [],
+        "receipts": []
+      },
+      "evidence": []
+    },
+    "image": {
+      "maxBytes": 20965448,
+      "maxBytesVerified": true,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": true,
+      "threshold": {
+        "bytes": "lower-bound",
+        "count": "lower-bound"
+      },
+      "observed": {
+        "acceptedBytes": [
+          3383,
+          20965448
+        ],
+        "refusedBytes": [],
+        "acceptedCounts": [
+          3
+        ],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [
+          "image/jpeg"
+        ],
+        "receipts": [
+          "image.attach_bytes:history-image-reference"
+        ]
+      },
+      "evidence": [
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 3383,
+          "count": 3,
+          "at": "2026-10-26T20:03:52.515429Z"
+        },
+        {
+          "surface": "image.attach_bytes",
+          "receipt": "history-image-reference",
+          "bytes": 20965448,
+          "count": 3,
+          "at": "2026-10-26T20:03:52.515429Z"
+        }
+      ]
+    },
+    "pdf": {
+      "maxBytes": null,
+      "maxBytesVerified": false,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": false,
+      "threshold": {
+        "bytes": "not-measured",
+        "count": "not-measured"
+      },
+      "observed": {
+        "acceptedBytes": [],
+        "refusedBytes": [],
+        "acceptedCounts": [],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [],
+        "receipts": []
+      },
+      "evidence": []
+    },
+    "office": {
+      "maxBytes": null,
+      "maxBytesVerified": false,
+      "maxCount": null,
+      "maxCountVerified": false,
+      "verified": false,
+      "threshold": {
+        "bytes": "not-measured",
+        "count": "not-measured"
+      },
+      "observed": {
+        "acceptedBytes": [],
+        "refusedBytes": [],
+        "acceptedCounts": [],
+        "refusedCounts": [],
+        "unverifiedBytes": [],
+        "unverifiedCounts": [],
+        "mediaTypes": [],
+        "receipts": []
+      },
+      "evidence": []
+    }
+  },
+  "vision": {
+    "profile": null,
+    "model": null,
+    "analyzesImages": null,
+    "evidence": null
+  },
+  "unverified": [
+    "corpus.complete",
+    "transports.file.attach",
+    "transports.rest.image-upload",
+    "limits.text.maxBytes",
+    "limits.text.maxCount",
+    "limits.image.maxCount",
+    "limits.pdf.maxBytes",
+    "limits.pdf.maxCount",
+    "limits.office.maxBytes",
+    "limits.office.maxCount",
+    "vision.analyzesImages",
+    "vision.model"
+  ]
+}

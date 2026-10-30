@@ -1,0 +1,38 @@
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:00 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: activité : détails conservés après fin et repli du groupe
+00:01 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: redémarrage Hermes (autre replay_epoch) : snapshot, curseur vide, pas de events.since
+00:01 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: redémarrage Hermes (autre replay_epoch) : snapshot, curseur vide, pas de events.since
+00:02 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:03 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:03 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:03 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:03 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:03 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:03 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:04 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: deux bulles locales sans ligne : appariées par position, texte local gardé ; historique finissant par une ligne utilisateur
+00:05 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:06 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:06 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:06 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine reçue : une seule ligne libre au-delà du repère → acceptée, texte du brouillon conservé, jamais de renvoi
+00:07 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:08 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:08 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:09 +27: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine tour encore en cours : reste unknown même sans ligne
+00:09 +28: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:10 +29: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine deux opérations incertaines, une seule ligne neuve : les deux restent unknown
+00:10 +30: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque composant rendu dans les quatre variantes
+00:11 +31: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:11 +32: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:11 +33: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine repère absent : reste unknown, jamais échec
+00:17 +34: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine file d'attente non vide sans ligne : reste unknown
+00:18 +35: C:/Users/alanc/orca/projects/Hermes Mobile/test/resync_test.dart: opération incertaine ligne étrangère en plus : deux candidates → reste unknown, texte conservé
+00:19 +36: All tests passed!

@@ -1,0 +1,31 @@
+00:00 +0: loading <repo>/test/notification_contract_test.dart
+00:00 +0: <repo>/test/notification_contract_test.dart: contrat de suivi sch├®ma v1, provenance et mapping autoritaire
+00:00 +1: <repo>/test/notification_contract_test.dart: contrat de suivi trois terminaux r├®solus, couverture inverse du mapping
+00:00 +2: <repo>/test/notification_contract_test.dart: contrat de suivi un statut absent ou inconnu ne notifie jamais
+00:00 +3: <repo>/test/notification_contract_test.dart: contrat de suivi payload notification + data, data strict {subscriptionId, outcome}
+00:00 +4: <repo>/test/notification_contract_test.dart: contrat de suivi registre : token FCM, session et ex├®cution corr├®l├®es
+00:00 +5: <repo>/test/notification_contract_test.dart: contrat de suivi d├®duplication, premier terminal gagnant et doublons visibles
+00:00 +6: <repo>/test/notification_contract_test.dart: contrat de suivi endpoints exacts, corps fig├®s et statuts coh├®rents
+00:00 +7: <repo>/test/notification_contract_test.dart: contrat de suivi auth bearer, erreurs born├®es, journaux r├®dig├®s, retries born├®s
+00:00 +8: <repo>/test/notification_contract_test.dart: contrat de suivi rattrapage par last_seen et r├®tention born├®e
+00:00 +9: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +10: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +11: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +12: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +13: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +14: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +15: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +16: <repo>/test/event_mapping_test.dart: chaque ├®v├®nement des fixtures a un effet connu
+00:00 +17: <repo>/test/notification_contract_test.dart: aucun secret, chemin personnel ni promesse exactement une fois
+00:00 +18: <repo>/test/notification_contract_test.dart: aucun secret, chemin personnel ni promesse exactement une fois
+00:00 +19: <repo>/test/notification_contract_test.dart: aucun secret, chemin personnel ni promesse exactement une fois
+00:00 +20: <repo>/test/notification_contract_test.dart: aucun secret, chemin personnel ni promesse exactement une fois
+00:00 +21: <repo>/test/notification_contract_test.dart: aucun secret, chemin personnel ni promesse exactement une fois
+00:00 +22: <repo>/test/contracts_test.dart: outils : contrat documentaire et fixtures explicitement synth├®tiques
+00:00 +23: <repo>/test/contracts_test.dart: payload gateway.ready conforme aux champs requis et types du sch├®ma embarqu├®
+00:00 +24: <repo>/test/contracts_test.dart: provenance officielle ├®pingl├®e et capacit├®s documentaires distinctes
+00:00 +25: <repo>/test/contracts_test.dart: mapping des fixtures et type inconnu explicite
+00:00 +26: <repo>/test/contracts_test.dart: fixtures sans secret r├®el ni origine priv├®e
+00:00 +27: <repo>/test/contracts_test.dart: limites de fichiers : cat├®gories compl├¿tes et aucune valeur non mesur├®e
+00:00 +28: <repo>/test/contracts_test.dart: limites de fichiers sans chemin, identifiant ni secret
+00:00 +29: All tests passed!

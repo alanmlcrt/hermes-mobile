@@ -1,0 +1,29 @@
+00:00 +0: loading C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart
+00:00 +0: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+00:00 +1: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+00:00 +2: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+00:01 +3: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+00:02 +4: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+00:02 +5: C:/Users/alanc/orca/projects/Hermes Mobile/test/main_app_test.dart: MainApp : injection, aperçu isolé, confirmation SQLite puis réouverture et abandon
+00:02 +6: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:02 +7: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:02 +8: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:03 +9: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:03 +10: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:03 +11: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:03 +12: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:03 +13: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:03 +14: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:04 +15: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:04 +16: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:04 +17: C:/Users/alanc/orca/projects/Hermes Mobile/test/support/lot3_capture.dart: captures du lot 3
+00:04 +18: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:04 +19: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:06 +20: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie suit le mouvement réduit système pendant son ouverture
+00:06 +21: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: éditeur galerie : erreur simulée, retry puis succès local
+00:07 +22: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque aperçu visible applique Pause et Reprendre au lapin
+00:10 +23: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: lapin : pause utilisable, paysage et texte 200 % sans débordement
+00:11 +24: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: chaque composant rendu dans les quatre variantes
+00:11 +25: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: SectionCard respecte le mouvement réduit
+00:11 +26: C:/Users/alanc/orca/projects/Hermes Mobile/test/gallery_test.dart: StatusLabel annonce son libellé
+00:11 +27: All tests passed!

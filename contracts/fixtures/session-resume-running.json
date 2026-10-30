@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":"r2","result":{"session_id":"e5f6a7b8","session_key":"<SYNTHETIC_STORED_SESSION>","running":true,"status":"working","turn_started_at":1,"inflight":{"user":"SYNTHETIC_REQUEST","assistant":"SYNTHETIC_PARTIAL","streaming":true},"queued":[]}}
