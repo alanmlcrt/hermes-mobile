@@ -1,5 +1,5 @@
 name: hermes-mobile-notify
-version: "1.0.0"
+version: "1.0.2"
 description: Hermes Mobile - notification FCM générique à chaque fin de tour (aucun contenu) ; commande /hermes-mobile-token.
 author: Hermes Mobile
 hooks:

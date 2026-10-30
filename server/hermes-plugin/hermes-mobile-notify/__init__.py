@@ -184,6 +184,14 @@ def _on_session_end(**kwargs):
             # Tours hors app (ex. sous-agents « subagent ») : pas de notification.
             _finish(record, "skipped", None, "platform", started)
             return
+        if not kwargs.get("turn_id") and record["outcome"] == "stopped":
+            # Fermeture de session (session détachée récoltée après la fin du
+            # tour, app quittée) : pas une fin de tour, ne pas notifier « arrêté ».
+            # ponytail: seule forme observée (interrupted, sans turn_id) ; une fin
+            # réussie ou échouée sans turn_id reste notifiée.
+            del record["outcome"]
+            _finish(record, "skipped", None, "session_close", started)
+            return
         # Résolu ici : un fil neuf ne voit pas la surcharge de HERMES_HOME du tour.
         state = _state_dir()
         _spawn(_deliver, (record, state, started))
@@ -398,6 +406,7 @@ def _self_check():
 
     def end_turn(**kwargs):
         kwargs.setdefault("platform", "tui")
+        kwargs.setdefault("turn_id", "u")
         started = time.monotonic()
         hooks["on_session_end"](**kwargs)
         elapsed = time.monotonic() - started
@@ -478,6 +487,15 @@ def _self_check():
             assert sent[-1][1]["message"]["notification"]["body"] == "Hermes s'est arrêté"
             line, _ = end_turn(session_id="s2", completed=False, failed=True, interrupted=False)
             assert line["outcome"] == "failed" and sent[-1][1]["message"]["data"]["outcome"] == "failed"
+
+            # Fermeture de session (sans turn_id, observée en réel 8 s après la fin) : ni fil ni envoi.
+            before, forks = len(sent), len(spawned)
+            line, _ = end_turn(session_id="s2", completed=False, interrupted=True, turn_id=None)
+            assert (line["action"], line["reason"]) == ("skipped", "session_close") and "outcome" not in line, line
+            assert len(sent) == before and len(spawned) == forks
+            # Fin réussie sans turn_id : notifiée quand même.
+            line, _ = end_turn(session_id="s2", completed=True, turn_id=None)
+            assert (line["action"], line["outcome"]) == ("sent", "succeeded"), line
 
             # Sous-agent (ou toute plateforme hors app) : journalisé, ni fil ni envoi.
             before, forks = len(sent), len(spawned)

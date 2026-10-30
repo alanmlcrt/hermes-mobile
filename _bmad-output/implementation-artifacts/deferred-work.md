@@ -49,10 +49,25 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
   summary: Plugin de notifications : plusieurs téléphones par profil, sans qu'un client écrase le jeton d'un autre.
   evidence: `HERMES_HOME/hermes-mobile/fcm-token` est unique ; le dernier client qui appelle `command.dispatch` reçoit tout.
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-7-basculer-app-plugin.md`
-  summary: Vérifier sur téléphone le côté Kotlin de `sessionId` (extra FCM au toucher à froid et à chaud, regex, `show` en premier plan) avec le vrai payload du plugin.
-  evidence: Aucun test Android dans le dépôt ; les tests Dart simulent le canal `hermes/notifications`, une clé Kotlin erronée passerait inaperçue.
 
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-8-retirer-observateur.md`
-  summary: Vérifier sur téléphone la relance depuis les récents (`FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`) et la consommation unique de `takeOpened` avec la clé `sessionId`.
-  evidence: Report 5-4 clos avec l'observateur ; ces deux comportements de `MainActivity.kt` restent sans test Android. À jouer en 5.5.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
+  summary: Détecter un profil sans plugin de notifications (« Notification non suivie ») alors que Hermes sert tous les profils dans un seul processus.
+  evidence: G3 2026-10-30 : `/hermes-mobile-token` accepté sur `mesure-pieces-jointes` (aucun plugin), pas de 4018, mention absente ; bloque G3.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
+  summary: Trancher le scénario G3 `/new` : non applicable (aucune commande `/` dans l'app) ou story dédiée.
+  evidence: « /new … » envoyé comme message ordinaire (`kind=user`) ; bloque G3 tant que non tranché.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
+  summary: Constater dans l'app les explications de l'arrêt forcé et de la permission refusée.
+  evidence: Absence de notification constatée en G3, explications non regardées.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-7-basculer-app-plugin.md`
+  summary: Vérifier sur téléphone la notification reçue app ouverte (`show` en premier plan) avec le vrai payload du plugin.
+  evidence: G3 2026-10-30 a joué froid, chaud et récents (report Kotlin `sessionId` et récents clos) ; aucun essai explicite app au premier plan.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
+  summary: Décider du comportement des notifications pour une délégation asynchrone (annonce puis résultat : deux notifications).
+  evidence: G3 2026-10-30 : 09:33:02 et 09:33:11 (tour `kind=async_delegation_complete`) notifiés ; la matrice en attendait une.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
+  summary: Jouer un arrêt brutal de Hermes (plantage, kill) pendant un tour et constater la perte annoncée.
+  evidence: Seul l'arrêt propre (SIGTERM) a été joué : il interrompt le tour et notifie « arrêté ».
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
+  summary: Rejouer en réel la garde `session_close` restreinte du plugin 1.0.2 (seuls les arrêts sans `turn_id` sont ignorés).
+  evidence: 1.0.1 prouvé en réel (09:30:26) ; 1.0.2, restreinte après revue, couverte par l'auto-vérification seulement.

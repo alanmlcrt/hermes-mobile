@@ -52,6 +52,7 @@ Ainsi, pour le profil par défaut,
 4. **Redémarrer** — redémarrer l'add-on Hermes depuis Home Assistant.
 
 Mise à jour : recopier `plugin.yaml` et `__init__.py` (étape 1) puis redémarrer.
+Version minimale : **1.0.2** (avant 1.0.1, quitter l'app après un tour envoie un faux « arrêté »).
 Le profil `.hermes` porte encore la version des essais (qui notifie aussi les
 sous-agents) : y recopier la version actuelle.
 
@@ -79,7 +80,9 @@ de tour (`action: sent | skipped | failed`, `status` HTTP, `reason`,
 caractères (`token_tail`) sont écrits ; `agent.log` reçoit une ligne `INFO`
 `hermes-mobile-notify …` par tour.
 
-Raisons courantes : `platform` (tour hors app), `no_token` (l'app n'a pas encore
+Raisons courantes : `platform` (tour hors app), `session_close` (fermeture de
+session sans `turn_id`, par exemple session détachée récoltée après que l'app a
+été quittée : ce n'est pas une fin de tour), `no_token` (l'app n'a pas encore
 envoyé de jeton, ou il a été refusé par FCM), `no_key` (clé absente),
 `key_invalid`, `no_session_id`, `UNREGISTERED`, un autre code FCM tel quel
 (`INVALID_ARGUMENT`, `QUOTA_EXCEEDED`, `UNAVAILABLE`…), `fcm_http` (refus sans
