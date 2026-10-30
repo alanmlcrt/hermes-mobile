@@ -16,6 +16,8 @@ import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
 import 'components/question_card.dart';
+import 'components/approval_card.dart';
+import '../features/profiles/approval_mode_section.dart';
 import 'components/rabbit_companion.dart';
 import 'components/companion_background_editor.dart';
 import 'components/companion_backdrop.dart';
@@ -129,6 +131,45 @@ class ComponentGallery extends StatelessWidget {
     );
   }
 
+  static Widget _approvals() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ApprovalCard(
+        description: GalleryContent.sampleApprovalDescription,
+        command: GalleryContent.sampleApprovalCommand,
+        state: QuestionState.open,
+        onDecide: (_) {},
+      ),
+      for (final (state, blocked) in const [
+        (QuestionState.sent, null),
+        (QuestionState.confirmed, false),
+        (QuestionState.confirmed, true),
+        (QuestionState.expired, null),
+      ]) ...[
+        const SizedBox(height: Spacing.sm),
+        ApprovalCard(
+          description: GalleryContent.sampleApprovalDescription,
+          command: GalleryContent.sampleApprovalCommand,
+          state: state,
+          blocked: blocked,
+        ),
+      ],
+    ],
+  );
+
+  static Widget _approvalModes() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (final mode in [...ApprovalMode.values, null]) ...[
+        ApprovalModeSection(
+          modes: _DemoApprovalModes(mode),
+          profile: const ProfileKey('demo'),
+        ),
+        const SizedBox(height: Spacing.sm),
+      ],
+    ],
+  );
+
   static Widget _history() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -221,6 +262,8 @@ class ComponentGallery extends StatelessWidget {
       (GalleryContent.activitySection, _activityLines),
       (GalleryContent.workStateSection, _workStates),
       (GalleryContent.questionSection, _questions),
+      (GalleryContent.approvalSection, _approvals),
+      (GalleryContent.approvalModeSection, _approvalModes),
       (
         Content.stopDemo,
         () => Column(
@@ -786,4 +829,16 @@ class _VariantFrame extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Mode fictif de la galerie ; `null` : lecture impossible.
+class _DemoApprovalModes implements ApprovalModes {
+  const _DemoApprovalModes(this.mode);
+  final String? mode;
+  @override
+  Future<String> read(ProfileKey profile) async =>
+      mode ?? (throw StateError('illisible'));
+  @override
+  Future<String> write(ProfileKey profile, String mode) async =>
+      this.mode ?? (throw StateError('illisible'));
 }

@@ -131,6 +131,7 @@ class AppRoutes {
     ProfileAccentStore? accents,
     NotificationRepository? notifications,
     InterventionGateway? interventions,
+    ApprovalModes? approvalModes,
   }) : _gateway = gateway,
        _outbox = outbox,
        _notifications = notifications {
@@ -216,6 +217,7 @@ class AppRoutes {
           path: '/profile/:profile',
           builder: (context, state) => ProfileSettingsView(
             notifications: notifications?.device,
+            approvalModes: approvalModes,
             key: ValueKey(state.pathParameters['profile']),
             gateway: gateway,
             accents: this.accents,

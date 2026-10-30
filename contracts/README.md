@@ -278,6 +278,25 @@ signalées sont le plus souvent approuvées sans demande (constaté :
 mode `manual` ou quand le juge smart hésite. Les commandes de la liste
 absolue (`BLOCKED (hardline)`) ne sont jamais proposées.
 
+**Décision d'autorisation (story 6.3).** Une requête `approval` devient
+l'événement synthétique `server.approval` (payload `{id, description, command,
+choices, allow_session, allow_permanent}`), effet `intervention`, état de
+travail `waitingApproval` ; `open_requests` produit le même événement
+(`pending_approval` de `session.resume` n'est pas lu : il n'a pas l'id
+`srq-…`). L'app ne propose et n'envoie que `{choice: "once"}` (« Autoriser »)
+ou `{choice: "deny"}` (« Refuser »), jamais `session` ni `always`. La décision
+est enregistrée dans `intervention_answers.answers` sous la forme
+`{"choice": …}` avant la trame (fixture `approval-answer.json`) ; issue
+incertaine = « inconnue », sans renvoi. Aucun événement « autorisation
+résolue » n'existe : le `tool.complete` suivant (outil autre que `clarify`)
+confirme la dernière décision envoyée, refusée si `result.status = "blocked"`
+(fixture `approval-denied.json`), autorisée sinon. `request.cancel` ferme la
+carte comme pour une question. Les autres requêtes serveur (`sudo`,
+`secret`…) reçoivent toujours `-32601`. Le mode du profil se lit par
+`config.get {key: "approvals.mode", profile}` (`{value}`) et s'écrit par
+`config.set {key, value, profile}` suivi d'une relecture : la valeur affichée
+est toujours celle relue ; passer en `off` demande une confirmation.
+
 **Reconnexion.** Documentaire, non mesuré : les requêtes sans réponse reviennent
 dans `open_requests` de `session.resume` / `session.events.since` ; une
 requête expirée ou annulée émet `request.cancel {id, method, reason}` ; une

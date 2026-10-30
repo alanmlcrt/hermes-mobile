@@ -116,6 +116,14 @@
       "activityKind": null,
       "source": "synthétique : requête serveur clarify convertie par l'adaptateur"
     },
+    "server.approval": {
+      "effect": "intervention",
+      "connectionState": null,
+      "workState": "waitingApproval",
+      "terminal": false,
+      "activityKind": null,
+      "source": "synthétique : requête serveur approval convertie par l'adaptateur"
+    },
     "request.cancel": {
       "effect": "intervention",
       "connectionState": null,

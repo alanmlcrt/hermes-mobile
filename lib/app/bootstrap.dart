@@ -28,6 +28,7 @@ Future<
     ConversationGateway conversation,
     NotificationRepository notifications,
     InterventionGateway interventions,
+    ApprovalModes approvalModes,
   })
 >
 bootstrap() async {
@@ -65,5 +66,6 @@ bootstrap() async {
       gateway: repository,
       conversation: conversation,
     ),
+    approvalModes: HermesApprovalModes(repository),
   );
 }

@@ -16,9 +16,10 @@ import 'hermes_adapter.dart';
 enum AnswerState { sending, sent, confirmed, unknown, closed }
 
 /// Seul auteur de `intervention_answers` : la réponse à une question de
-/// Hermes est enregistrée avant la trame, puis envoyée une seule fois. Une
-/// issue incertaine reste `unknown` ; rien n'est jamais renvoyé
-/// automatiquement. Ne ferme pas la base partagée.
+/// Hermes ou la décision sur une autorisation (`{"choice": …}`) est
+/// enregistrée avant la trame, puis envoyée une seule fois. Une issue
+/// incertaine reste `unknown` ; rien n'est jamais renvoyé automatiquement.
+/// Ne ferme pas la base partagée.
 class InterventionRepository implements InterventionGateway, QuestionLedger {
   InterventionRepository(
     this.database, {
@@ -36,7 +37,7 @@ class InterventionRepository implements InterventionGateway, QuestionLedger {
   final _inFlight = <String>{};
   late final Future<void> _recovered;
 
-  /// Aucun texte de question ni de réponse dans les journaux.
+  /// Aucun texte de question, de réponse ni de commande dans les journaux.
   static void _log(String code) =>
       developer.log(code, name: 'hermes.intervention');
 
@@ -95,77 +96,47 @@ class InterventionRepository implements InterventionGateway, QuestionLedger {
     TimelineKey key,
     String requestId,
     Map<String, String> answers,
-  ) async {
+  ) => _guarded(requestId, () async {
+    final item = _open<QuestionItem>(key, requestId, 'question.closed');
+    final cleaned = {
+      for (final q in item.questions)
+        if (answers[q.qid]?.trim().isNotEmpty == true)
+          q.qid: answers[q.qid]!.trim(),
+    };
+    if (cleaned.length != item.questions.length) {
+      throw const AppError('question.empty');
+    }
+    await _send(
+      key,
+      requestId,
+      stored: cleaned,
+      result: HermesRpc.clarifyAnswer(cleaned),
+    );
+  });
+
+  @override
+  Future<void> decide(TimelineKey key, String requestId, String choice) =>
+      _guarded(requestId, () async {
+        _open<ApprovalItem>(key, requestId, 'approval.closed');
+        // Seuls « Autoriser » (once) et « Refuser » (deny) partent.
+        if (!ApprovalChoice.offered.contains(choice)) {
+          throw const AppError('approval.choice');
+        }
+        await _send(
+          key,
+          requestId,
+          stored: {'choice': choice},
+          result: HermesRpc.approvalAnswer(choice),
+          choice: choice,
+        );
+      });
+
+  /// Garde synchrone : un double appui n'écrit et n'envoie qu'une fois.
+  Future<void> _guarded(String requestId, Future<void> Function() body) async {
     await _recovered;
-    // Garde synchrone : un double appui n'écrit et n'envoie qu'une fois.
     if (!_inFlight.add(requestId)) return;
     try {
-      final item = conversation
-          .projection(key)
-          .items
-          .whereType<QuestionItem>()
-          .where((i) => i.requestId == requestId)
-          .firstOrNull;
-      // Seule une carte ouverte (ou rouverte par le serveur) accepte une
-      // réponse, saisie à la main.
-      if (item == null || item.state != QuestionState.open) {
-        throw const AppError('question.closed');
-      }
-      final cleaned = {
-        for (final q in item.questions)
-          if (answers[q.qid]?.trim().isNotEmpty == true)
-            q.qid: answers[q.qid]!.trim(),
-      };
-      if (cleaned.length != item.questions.length) {
-        throw const AppError('question.empty');
-      }
-      if (gateway.snapshot.link != LinkState.connected ||
-          gateway.snapshot.connection?.key != key.connection) {
-        throw const AppError('transport.offline', retryable: true);
-      }
-      // Enregistrée avant la trame ; une réponse rouverte remplace l'ancienne.
-      await database.insert('intervention_answers', {
-        'request_id': requestId,
-        'connection_key': key.connection.value,
-        'profile_key': key.profile.value,
-        'stored_session_id': key.session,
-        'answers': jsonEncode(cleaned),
-        'state': AnswerState.sending.name,
-        'created_at': _now().toIso8601String(),
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-      await conversation.markQuestion(key, requestId, QuestionState.sending);
-      AnswerState outcome;
-      try {
-        gateway.respond(requestId, result: HermesRpc.clarifyAnswer(cleaned));
-        outcome = AnswerState.sent;
-      } on AppError catch (error) {
-        if (error.code != 'transport.offline') {
-          // Trame peut-être partie : issue inconnue, jamais renvoyée.
-          outcome = AnswerState.unknown;
-          _log('intervention.answer_unknown');
-        } else {
-          // Rien n'est parti : la question reste ouverte, sans trace locale.
-          await database.delete(
-            'intervention_answers',
-            where: 'request_id = ? AND state = ?',
-            whereArgs: [requestId, AnswerState.sending.name],
-          );
-          await conversation.markQuestion(key, requestId, QuestionState.open);
-          rethrow;
-        }
-      } catch (_) {
-        // Trame peut-être partie : issue inconnue, jamais renvoyée.
-        outcome = AnswerState.unknown;
-        _log('intervention.answer_unknown');
-      }
-      await _write(requestId, outcome, from: AnswerState.sending);
-      await conversation.markQuestion(
-        key,
-        requestId,
-        outcome == AnswerState.sent
-            ? QuestionState.sent
-            : QuestionState.unknown,
-      );
+      await body();
     } on AppError {
       rethrow;
     } on DatabaseException {
@@ -173,6 +144,87 @@ class InterventionRepository implements InterventionGateway, QuestionLedger {
     } finally {
       _inFlight.remove(requestId);
     }
+  }
+
+  /// Seule une carte ouverte (ou rouverte par le serveur) accepte une
+  /// réponse, saisie à la main.
+  T _open<T extends InterventionItem>(
+    TimelineKey key,
+    String requestId,
+    String closed,
+  ) {
+    final item = conversation
+        .projection(key)
+        .items
+        .whereType<T>()
+        .where((i) => i.requestId == requestId)
+        .firstOrNull;
+    if (item == null || item.state != QuestionState.open) {
+      throw AppError(closed);
+    }
+    return item;
+  }
+
+  /// Ligne `sending` en base, trame unique, puis `sent` ou `unknown`. Si rien
+  /// n'est parti (`transport.offline`), la ligne est retirée et la carte
+  /// rouverte.
+  Future<void> _send(
+    TimelineKey key,
+    String requestId, {
+    required Map<String, Object?> stored,
+    required Map<String, dynamic> result,
+    String? choice,
+  }) async {
+    if (gateway.snapshot.link != LinkState.connected ||
+        gateway.snapshot.connection?.key != key.connection) {
+      throw const AppError('transport.offline', retryable: true);
+    }
+    // Enregistrée avant la trame ; une réponse rouverte remplace l'ancienne.
+    await database.insert('intervention_answers', {
+      'request_id': requestId,
+      'connection_key': key.connection.value,
+      'profile_key': key.profile.value,
+      'stored_session_id': key.session,
+      'answers': jsonEncode(stored),
+      'state': AnswerState.sending.name,
+      'created_at': _now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await conversation.markQuestion(
+      key,
+      requestId,
+      QuestionState.sending,
+      choice: choice,
+    );
+    AnswerState outcome;
+    try {
+      gateway.respond(requestId, result: result);
+      outcome = AnswerState.sent;
+    } on AppError catch (error) {
+      if (error.code != 'transport.offline') {
+        // Trame peut-être partie : issue inconnue, jamais renvoyée.
+        outcome = AnswerState.unknown;
+        _log('intervention.answer_unknown');
+      } else {
+        // Rien n'est parti : la carte reste ouverte, sans trace locale.
+        await database.delete(
+          'intervention_answers',
+          where: 'request_id = ? AND state = ?',
+          whereArgs: [requestId, AnswerState.sending.name],
+        );
+        await conversation.markQuestion(key, requestId, QuestionState.open);
+        rethrow;
+      }
+    } catch (_) {
+      // Trame peut-être partie : issue inconnue, jamais renvoyée.
+      outcome = AnswerState.unknown;
+      _log('intervention.answer_unknown');
+    }
+    await _write(requestId, outcome, from: AnswerState.sending);
+    await conversation.markQuestion(
+      key,
+      requestId,
+      outcome == AnswerState.sent ? QuestionState.sent : QuestionState.unknown,
+    );
   }
 
   Future<void> _write(
@@ -212,4 +264,38 @@ class InterventionRepository implements InterventionGateway, QuestionLedger {
         ? AnswerState.confirmed
         : AnswerState.closed,
   );
+}
+
+/// Mode d'autorisation d'un profil sur Hermes : `config.set` puis relecture
+/// par `config.get`, toujours avec `profile`. Aucun mode n'est écrit sans
+/// demande, ni gardé localement.
+class HermesApprovalModes implements ApprovalModes {
+  HermesApprovalModes(this.gateway);
+  final ConnectionGateway gateway;
+
+  @override
+  Future<String> read(ProfileKey profile) async {
+    final value = HermesRpc.configValue(
+      await gateway.call(
+        HermesRpc.configGet,
+        HermesRpc.approvalModeGet(profile.value),
+      ),
+    );
+    if (value == null || !ApprovalMode.values.contains(value)) {
+      throw const AppError('approval_mode.unreadable');
+    }
+    return value;
+  }
+
+  @override
+  Future<String> write(ProfileKey profile, String mode) async {
+    if (!ApprovalMode.values.contains(mode)) {
+      throw const AppError('approval_mode.invalid');
+    }
+    await gateway.call(
+      HermesRpc.configSet,
+      HermesRpc.approvalModeSet(profile.value, mode),
+    );
+    return read(profile);
+  }
 }

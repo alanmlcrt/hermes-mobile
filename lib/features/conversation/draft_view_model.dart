@@ -192,7 +192,8 @@ class DraftViewModel extends ChangeNotifier {
       outbox is StopGateway ? (outbox as StopGateway).stopStatus(key) : null;
   bool get showStop => outbox is StopGateway && timeline.working;
 
-  /// Une carte question peut envoyer sa réponse (socket ouverte, fil à jour).
+  /// Une carte question ou autorisation peut envoyer sa réponse (socket
+  /// ouverte, fil à jour).
   bool get canAnswer =>
       interventions != null &&
       _timelineKey != null &&
@@ -206,6 +207,23 @@ class DraftViewModel extends ChangeNotifier {
     if (k == null || target == null) return;
     try {
       await target.answer(k, requestId, answers);
+      error = null;
+    } on AppError catch (e) {
+      error = e;
+    } catch (_) {
+      error = const AppError('storage.unavailable');
+    }
+    _notify();
+  }
+
+  /// Décision prise dans la carte d'autorisation (`once` ou `deny`) :
+  /// enregistrée puis envoyée une seule fois.
+  Future<void> decide(String requestId, String choice) async {
+    final k = _timelineKey;
+    final target = interventions;
+    if (k == null || target == null) return;
+    try {
+      await target.decide(k, requestId, choice);
       error = null;
     } on AppError catch (e) {
       error = e;

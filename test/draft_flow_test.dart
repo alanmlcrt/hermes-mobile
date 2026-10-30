@@ -13,6 +13,7 @@ import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
 import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/content.dart';
+import 'package:hermes_mobile/ui/tokens.dart';
 
 import 'support/connection_fakes.dart';
 import 'support/home_helper.dart';
@@ -714,12 +715,166 @@ void main() {
     expect(tester.widget<FilledButton>(send).onPressed, isNull);
     expect(answers.calls, isEmpty);
   });
+  testWidgets('carte autorisation à 200 % et au lecteur d’écran : noms '
+      'distincts, cibles de 48 dp, décision prise dans la carte', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 700);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final semantics = tester.ensureSemantics();
+    final answers = _Answers();
+    final (timelineKey, conversation) = await _pumpApproval(tester, answers);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    // État dit par un libellé ; description et commande telles qu'émises.
+    expect(find.bySemanticsLabel(Content.approvalOpen), findsWidgets);
+    expect(find.text('delete in root path'), findsOne);
+    final command = find.widgetWithText(SelectableText, 'rm -rf /tmp/exemple');
+    expect(command, findsOne);
+    expect(
+      tester.widget<SelectableText>(command).style?.fontFamily,
+      CodeStyle.family,
+    );
+    // Seuls « Autoriser » et « Refuser » : ni session ni toujours.
+    expect(find.byType(FilledButton), findsWidgets);
+    final allow = find.bySemanticsLabel(Content.approvalAllowSemantics);
+    final deny = find.bySemanticsLabel(Content.approvalDenySemantics);
+    expect(allow, findsOne);
+    expect(deny, findsOne);
+    expect(
+      Content.approvalAllowSemantics,
+      isNot(Content.approvalDenySemantics),
+    );
+    // Le nom accessible est porté par le bouton, action comprise.
+    expect(
+      tester.getSemantics(
+        find.widgetWithText(FilledButton, Content.approvalAllow),
+      ),
+      isSemantics(
+        label: Content.approvalAllowSemantics,
+        isButton: true,
+        hasTapAction: true,
+      ),
+    );
+    expect(
+      tester.getSemantics(
+        find.widgetWithText(OutlinedButton, Content.approvalDeny),
+      ),
+      isSemantics(
+        label: Content.approvalDenySemantics,
+        isButton: true,
+        hasTapAction: true,
+      ),
+    );
+    for (final target in [
+      find.widgetWithText(FilledButton, Content.approvalAllow),
+      find.widgetWithText(OutlinedButton, Content.approvalDeny),
+    ]) {
+      await tester.ensureVisible(target);
+      final size = tester.getSize(target);
+      expect(size.height, greaterThanOrEqualTo(48), reason: '$target');
+      expect(size.width, greaterThanOrEqualTo(48), reason: '$target');
+    }
+    final denyButton = find.widgetWithText(
+      OutlinedButton,
+      Content.approvalDeny,
+    );
+    await tester.ensureVisible(denyButton);
+    await tester.pumpAndSettle();
+    await tester.tap(denyButton);
+    await tester.pumpAndSettle();
+    expect(answers.decisions, hasLength(1));
+    expect(answers.decisions.single.$1, timelineKey);
+    expect(answers.decisions.single.$2, 'srq-000000000002');
+    expect(answers.decisions.single.$3, ApprovalChoice.deny);
+    // Envoyée, puis refusée à la confirmation : plus de boutons.
+    conversation.set(
+      timelineKey,
+      TimelineProjection(
+        items: [
+          _approvalItem.copyWith(state: QuestionState.sent, choice: 'deny'),
+        ],
+        workState: WorkState.waitingApproval,
+        turns: 1,
+        userTurns: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(Content.approvalSent), findsWidgets);
+    expect(find.text(Content.approvalAllow), findsNothing);
+    conversation.set(
+      timelineKey,
+      TimelineProjection(
+        items: [
+          _approvalItem.copyWith(
+            state: QuestionState.confirmed,
+            choice: 'deny',
+            blocked: true,
+          ),
+        ],
+        workState: WorkState.running,
+        turns: 1,
+        userTurns: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(Content.approvalDenied), findsOne);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('carte autorisation : « Autoriser » envoie once, refus de la '
+      'décision dit à l’écran', (tester) async {
+    final answers = _Answers(const AppError('approval.closed'));
+    await _pumpApproval(tester, answers);
+    await tester.pumpAndSettle();
+    final allow = find.widgetWithText(FilledButton, Content.approvalAllow);
+    await tester.ensureVisible(allow);
+    await tester.pumpAndSettle();
+    await tester.tap(allow);
+    await tester.pumpAndSettle();
+    expect(answers.decisions.single.$3, ApprovalChoice.once);
+    expect(
+      find.textContaining(Content.error('approval.closed')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('carte autorisation hors connexion : boutons désactivés, la '
+      'carte reste', (tester) async {
+    final answers = _Answers();
+    await _pumpApproval(tester, answers, connected: false);
+    await tester.pumpAndSettle();
+    expect(find.text('rm -rf /tmp/exemple'), findsOne);
+    expect(find.text(Content.approvalOffline), findsOne);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, Content.approvalAllow),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, Content.approvalDeny),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(answers.decisions, isEmpty);
+  });
 }
 
 class _Answers implements InterventionGateway {
   _Answers([this.error]);
   final AppError? error;
   final calls = <(TimelineKey, String, Map<String, String>)>[];
+  final decisions = <(TimelineKey, String, String)>[];
   @override
   Future<void> answer(
     TimelineKey key,
@@ -729,6 +884,73 @@ class _Answers implements InterventionGateway {
     calls.add((key, requestId, answers));
     if (error != null) throw error!;
   }
+
+  @override
+  Future<void> decide(TimelineKey key, String requestId, String choice) async {
+    decisions.add((key, requestId, choice));
+    if (error != null) throw error!;
+  }
+}
+
+const _approvalItem = ApprovalItem(
+  1,
+  requestId: 'srq-000000000002',
+  description: 'delete in root path',
+  command: 'rm -rf /tmp/exemple',
+  choices: ['once', 'session', 'always', 'deny'],
+  allowSession: true,
+  allowPermanent: true,
+);
+
+/// Brouillon d'une session existante dont le fil porte une autorisation.
+Future<(TimelineKey, MemoryConversation)> _pumpApproval(
+  WidgetTester tester,
+  _Answers answers, {
+  bool connected = true,
+}) async {
+  final h = await _launched();
+  if (connected) await h.connect();
+  final outbox = MemoryOutbox();
+  const key = DraftKey('d-a');
+  final connection =
+      h.repository.snapshot.connection?.key ?? h.store.value!.key;
+  outbox.drafts[key] = Draft(
+    key: key,
+    connection: connection,
+    profile: const ProfileKey('default'),
+    body: '',
+    storedSessionId: 's-1',
+  );
+  final conversation = MemoryConversation();
+  final timelineKey = TimelineKey(
+    connection,
+    const ProfileKey('default'),
+    's-1',
+  );
+  conversation.set(
+    timelineKey,
+    const TimelineProjection(
+      items: [_approvalItem],
+      workState: WorkState.waitingApproval,
+      turns: 1,
+      userTurns: 1,
+    ),
+  );
+  await tester.pumpWidget(
+    MaterialApp(
+      home: DraftView(
+        create: () => DraftViewModel(
+          outbox: outbox,
+          gateway: h.repository,
+          conversation: conversation,
+          interventions: answers,
+          key: key,
+        ),
+        accents: ProfileAccents(h.repository),
+      ),
+    ),
+  );
+  return (timelineKey, conversation);
 }
 
 /// Brouillon d'une session existante dont le fil porte une question ouverte.

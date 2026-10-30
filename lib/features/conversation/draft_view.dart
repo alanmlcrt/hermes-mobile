@@ -9,6 +9,7 @@ import '../../ui/components/activity_group.dart';
 import '../../ui/components/appear.dart';
 import '../../ui/components/composer.dart';
 import '../../ui/components/attachment_list.dart';
+import '../../ui/components/approval_card.dart';
 import '../../ui/components/message_bubble.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/components/question_card.dart';
@@ -526,6 +527,16 @@ class _DraftViewState extends State<DraftView> {
         previousUnanswered: item.previousUnanswered,
         canAnswer: vm.canAnswer,
         onSubmit: (answers) => vm.answer(item.requestId, answers),
+      ),
+      ApprovalItem() => ApprovalCard(
+        key: ValueKey(('approval', vm.draft?.key, item.requestId)),
+        description: item.description,
+        command: item.command,
+        state: item.state,
+        blocked: item.blocked,
+        previousUnanswered: item.previousUnanswered,
+        canDecide: vm.canAnswer,
+        onDecide: (choice) => vm.decide(item.requestId, choice),
       ),
     };
     // Les activités provisoires du prochain envoi restent après l'historique,

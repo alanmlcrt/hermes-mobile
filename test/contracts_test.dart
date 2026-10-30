@@ -161,8 +161,8 @@ void main() {
       );
       final harness = Harness();
       addTearDown(harness.repository.dispose);
-      // Capacités mesurées en 6.1 mais pas encore suivies par l'app (6.3, 6.4).
-      const notTracked = {'approval', 'steer', 'result_download'};
+      // Capacités mesurées en 6.1 mais pas encore suivies par l'app (6.4).
+      const notTracked = {'steer', 'result_download'};
       expect(
         harness.repository.snapshot.capabilities.map((c) => c.name),
         capabilities

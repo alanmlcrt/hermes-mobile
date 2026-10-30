@@ -11,7 +11,8 @@ enum EventEffect {
   terminal,
   activity,
 
-  /// Question de Hermes ouverte (`server.clarify`) ou close (`request.cancel`).
+  /// Question ou autorisation de Hermes ouverte (`server.clarify`,
+  /// `server.approval`) ou close (`request.cancel`).
   intervention,
   ignore,
 }

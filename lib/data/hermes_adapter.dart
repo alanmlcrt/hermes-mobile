@@ -428,15 +428,24 @@ abstract final class HermesRpc {
   static const clientCapabilities = 'client.capabilities';
   static const clientCapabilitiesParams = {'server_requests': true};
 
-  /// Seule requête serveur prise en charge (6.2) ; type synthétique interne.
+  /// Requêtes serveur prises en charge (6.2, 6.3) ; types synthétiques internes.
   static const clarify = 'clarify';
   static const clarifyEvent = 'server.clarify';
+  static const approval = 'approval';
+  static const approvalEvent = 'server.approval';
   static const requestCancel = 'request.cancel';
   static const methodNotFound = -32601;
 
-  /// Requête serveur `clarify` (directe ou `open_requests`) rendue comme un
-  /// événement de session ; `null` si elle n'est pas exploitable.
-  static GatewayEvent? clarifyRequest(
+  /// Mode d'autorisation d'un profil : `config.get` / `config.set` avec
+  /// `profile` (mesuré sans effet sur les autres profils).
+  static const configGet = 'config.get';
+  static const configSet = 'config.set';
+  static const approvalsMode = 'approvals.mode';
+
+  /// Requête serveur `clarify` ou `approval` (directe ou `open_requests`)
+  /// rendue comme un événement de session ; `null` si elle n'est pas prise
+  /// en charge ou pas exploitable.
+  static GatewayEvent? serverRequest(
     Map<Object?, Object?> request, {
     String? runtime,
     required int generation,
@@ -444,18 +453,42 @@ abstract final class HermesRpc {
   }) {
     final id = request['id'];
     final params = request['params'];
-    if (request['method'] != clarify || id is! String || params is! Map) {
-      return null;
-    }
+    final method = request['method'];
+    if (id is! String || params is! Map) return null;
     final session = runtime ?? params['session_id'];
-    final questions = params['questions'];
-    if (session is! String || session.isEmpty || questions is! List) {
+    if (session is! String || session.isEmpty) return null;
+    final Map<String, Object?> payload;
+    final String type;
+    if (method == clarify) {
+      final questions = params['questions'];
+      if (questions is! List) return null;
+      type = clarifyEvent;
+      payload = {'id': id, 'questions': questions};
+    } else if (method == approval) {
+      final command = params['command'];
+      final description = params['description'];
+      if (command is! String) return null;
+      final choices = params['choices'];
+      type = approvalEvent;
+      payload = {
+        'id': id,
+        'description': description is String ? description : '',
+        'command': command,
+        'choices': [
+          if (choices is List)
+            for (final c in choices)
+              if (c is String) c,
+        ],
+        'allow_session': params['allow_session'] == true,
+        'allow_permanent': params['allow_permanent'] == true,
+      };
+    } else {
       return null;
     }
     return GatewayEvent(
       sessionId: session,
-      type: clarifyEvent,
-      payload: {'id': id, 'questions': questions},
+      type: type,
+      payload: payload,
       generation: generation,
       replayEpoch: replayEpoch,
     );
@@ -466,6 +499,30 @@ abstract final class HermesRpc {
     'answers': answers,
     'outcome': 'submitted',
   };
+
+  /// Décision d'autorisation : `{choice}` (`once` ou `deny` seulement).
+  static Map<String, dynamic> approvalAnswer(String choice) => {
+    'choice': choice,
+  };
+
+  /// `config.get` du mode d'autorisation de [profile].
+  static Map<String, dynamic> approvalModeGet(String profile) => {
+    'key': approvalsMode,
+    'profile': profile,
+  };
+
+  /// `config.set` du mode d'autorisation de [profile].
+  static Map<String, dynamic> approvalModeSet(String profile, String mode) => {
+    'key': approvalsMode,
+    'value': mode,
+    'profile': profile,
+  };
+
+  /// Valeur relue par `config.get` (`{value}`), `null` si absente.
+  static String? configValue(Map<String, dynamic> r) {
+    final value = r['value'];
+    return value is String ? value : null;
+  }
 
   /// Refus immédiat d'une requête serveur non prise en charge.
   static Map<String, dynamic> unsupportedRequest() => {

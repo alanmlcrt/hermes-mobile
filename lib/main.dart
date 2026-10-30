@@ -26,6 +26,7 @@ Future<void> main() async {
       :accents,
       :notifications,
       :interventions,
+      :approvalModes,
     ) = await bootstrap();
     runApp(
       MainApp(
@@ -36,6 +37,7 @@ Future<void> main() async {
         accents: accents,
         notifications: notifications,
         interventions: interventions,
+        approvalModes: approvalModes,
       ),
     );
   } catch (_) {
@@ -61,11 +63,15 @@ class MainApp extends StatefulWidget {
     this.accents,
     this.notifications,
     this.interventions,
+    this.approvalModes,
   });
   final ConnectionGateway gateway;
 
   /// Réponses aux questions de Hermes (6.2).
   final InterventionGateway? interventions;
+
+  /// Mode d'autorisation des profils sur Hermes (6.3).
+  final ApprovalModes? approvalModes;
   final CompanionBackgroundStore? backgrounds;
 
   /// Couleurs des profils ; en mémoire si nul.
@@ -92,6 +98,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       accents: widget.accents,
       notifications: widget.notifications,
       interventions: widget.interventions,
+      approvalModes: widget.approvalModes,
     );
     // Notification touchée : à chaud par le flux, à froid par l'intent de
     // lancement. Écoutée avant la restauration, qu'elle attend si besoin.

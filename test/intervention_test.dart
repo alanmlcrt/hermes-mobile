@@ -365,18 +365,26 @@ void main() {
     },
   );
 
-  test('requête serveur non prise en charge : erreur immédiate, rien dans '
-      'le fil', () async {
+  test('requête serveur non prise en charge (sudo) : erreur immédiate, rien '
+      'dans le fil', () async {
     await start();
     await asked();
-    h.transport.push(fixture('approval-request'));
+    final before = timeline().items.length;
+    h.transport.push({
+      'jsonrpc': '2.0',
+      'id': 'srq-000000000003',
+      'method': 'sudo',
+      'params': {'session_id': 'a1b2c3d4', 'command': 'apt update'},
+    });
     await until(() => h.transport.responses.isNotEmpty);
     final response = h.transport.responses.single;
-    expect(response['id'], 'srq-000000000002');
+    expect(response['id'], 'srq-000000000003');
     expect((response['error'] as Map)['code'], -32601);
     expect(response.containsKey('result'), isFalse);
     await settle();
-    expect(timeline().items.whereType<QuestionItem>(), hasLength(1));
+    expect(timeline().items, hasLength(before));
+    expect(timeline().items.whereType<ApprovalItem>(), isEmpty);
+    expect(timeline().workState, WorkState.waitingInput);
   });
 
   test('reconnexion, encore ouverte avec réponse locale : rouverte, mention '
@@ -571,6 +579,376 @@ void main() {
     await until(() => timeline().seq == 2);
     expect(timeline().turns, turns);
     expect(timeline().workState, WorkState.waitingInput);
+  });
+  // --- Autorisations (story 6.3) ---------------------------------------
+
+  const approvalId = 'srq-000000000002';
+  ApprovalItem? approval() =>
+      timeline().items.whereType<ApprovalItem>().firstOrNull;
+  Future<Map<String, Object?>?> storedRow(String id) async {
+    final rows = await database.query(
+      'intervention_answers',
+      where: 'request_id = ?',
+      whereArgs: [id],
+    );
+    return rows.isEmpty ? null : rows.single;
+  }
+
+  /// Tour accepté puis autorisation `approval` reçue en direct (fixture).
+  Future<void> approvalAsked() async {
+    await outbox.send(draft.key);
+    emit('message.start', {}, 1);
+    await until(() => timeline().seq == 1);
+    h.transport.push(fixture('approval-request'));
+    await until(() => approval() != null);
+  }
+
+  Map<String, Object?> approvalEntry() {
+    final request = fixture('approval-request');
+    return {
+      'id': request['id'],
+      'method': request['method'],
+      'params': request['params'],
+    };
+  }
+
+  test('autorisation reconnue par client.capabilities', () async {
+    await start();
+    final caps = {
+      for (final c in h.repository.snapshot.capabilities) c.name: c.state,
+    };
+    expect(caps['approval'], CapabilityState.present);
+  });
+
+  test('autorisation en direct : carte ouverte, description et commande '
+      'telles qu’émises, attente d’autorisation', () async {
+    await start();
+    await approvalAsked();
+    final a = approval()!;
+    expect(a.requestId, approvalId);
+    expect(a.state, QuestionState.open);
+    expect(a.description, 'delete in root path');
+    expect(a.command, 'rm -rf /tmp/exemple');
+    expect(a.choices, ['once', 'session', 'always', 'deny']);
+    expect(a.allowSession, isTrue);
+    expect(a.allowPermanent, isTrue);
+    expect(a.turn, timeline().turns);
+    expect(timeline().workState, WorkState.waitingApproval);
+    // Persistée avec la projection.
+    final row = (await database.query('conversation_timelines')).single;
+    final restored = TimelineProjection.fromJson(
+      jsonDecode(row['projection'] as String) as Map<String, Object?>,
+    );
+    final again = restored.items.whereType<ApprovalItem>().single;
+    expect(again.command, a.command);
+    expect(again.description, a.description);
+    expect(restored.workState, WorkState.waitingApproval);
+    // Rien ne part tout seul ; une fin d'outil ne touche pas une carte ouverte.
+    expect(h.transport.responses, isEmpty);
+    emit('tool.complete', {'tool_id': 'X', 'name': 'read_file'}, 2);
+    await until(() => timeline().seq == 2);
+    expect(approval()!.state, QuestionState.open);
+  });
+
+  test('refus : ligne en base avant la trame, trame deny conforme, « Décision '
+      'envoyée » puis refusée au tool.complete bloqué', () async {
+    await start();
+    await approvalAsked();
+    Future<List<Map<String, Object?>>>? atSend;
+    h.transport.onFrame = (frame) {
+      if (frame['method'] == null) {
+        atSend = database.query('intervention_answers');
+      }
+    };
+    await interventions.decide(key, approvalId, ApprovalChoice.deny);
+    final seen = await atSend!;
+    expect(seen.single['state'], 'sending');
+    expect(jsonDecode(seen.single['answers'] as String), {'choice': 'deny'});
+    final expected = fixture('approval-answer');
+    expect(h.transport.responses, [
+      {'jsonrpc': '2.0', 'id': expected['id'], 'result': expected['result']},
+    ]);
+    await until(() => approval()!.state == QuestionState.sent);
+    expect(approval()!.choice, 'deny');
+    expect(approval()!.blocked, isNull);
+    expect((await storedRow(approvalId))!['state'], 'sent');
+    h.transport.push(fixture('approval-denied'));
+    await until(() => approval()!.state == QuestionState.confirmed);
+    expect(approval()!.blocked, isTrue);
+    expect(timeline().workState, WorkState.running);
+    await settle();
+    expect((await storedRow(approvalId))!['state'], 'confirmed');
+    // Confirmation persistée avec la projection (écriture différée).
+    Future<ApprovalItem> persistedCard() async {
+      final row = (await database.query('conversation_timelines')).single;
+      return TimelineProjection.fromJson(
+        jsonDecode(row['projection'] as String) as Map<String, Object?>,
+      ).items.whereType<ApprovalItem>().single;
+    }
+
+    var persisted = await persistedCard();
+    for (
+      var i = 0;
+      i < 400 && persisted.state != QuestionState.confirmed;
+      i++
+    ) {
+      await settle();
+      persisted = await persistedCard();
+    }
+    expect(persisted.blocked, isTrue);
+    expect(persisted.choice, 'deny');
+    expect(persisted.state, QuestionState.confirmed);
+    // Une seconde décision au même id n'est jamais envoyée.
+    await expectLater(
+      interventions.decide(key, approvalId, ApprovalChoice.once),
+      throwsA(isA<AppError>().having((e) => e.code, 'code', 'approval.closed')),
+    );
+    expect(h.transport.responses, hasLength(1));
+  });
+
+  test(
+    'autorisation : trame once, autorisée au tool.complete non bloqué',
+    () async {
+      await start();
+      await approvalAsked();
+      await interventions.decide(key, approvalId, ApprovalChoice.once);
+      expect(h.transport.responses.single['result'], {'choice': 'once'});
+      await until(() => approval()!.state == QuestionState.sent);
+      emit('tool.complete', {
+        'tool_id': 'SYNTHETIC_TOOL_2',
+        'name': 'terminal',
+        'result': {'output': 'ok', 'exit_code': 0},
+      }, 2);
+      await until(() => approval()!.state == QuestionState.confirmed);
+      expect(approval()!.blocked, isFalse);
+      expect(timeline().workState, WorkState.running);
+    },
+  );
+
+  test('session et always ne sont jamais envoyés', () async {
+    await start();
+    await approvalAsked();
+    for (final choice in ['session', 'always']) {
+      await expectLater(
+        interventions.decide(key, approvalId, choice),
+        throwsA(
+          isA<AppError>().having((e) => e.code, 'code', 'approval.choice'),
+        ),
+      );
+    }
+    expect(h.transport.responses, isEmpty);
+    expect(await storedRow(approvalId), isNull);
+    expect(approval()!.state, QuestionState.open);
+  });
+
+  test(
+    'décision : écriture socket impossible, issue inconnue, aucun renvoi',
+    () async {
+      await start();
+      await approvalAsked();
+      h.transport.throwOnResponse = true;
+      await interventions.decide(key, approvalId, ApprovalChoice.deny);
+      await until(() => approval()!.state == QuestionState.unknown);
+      expect((await storedRow(approvalId))!['state'], 'unknown');
+      h.transport.throwOnResponse = false;
+      await expectLater(
+        interventions.decide(key, approvalId, ApprovalChoice.deny),
+        throwsA(isA<AppError>()),
+      );
+      expect(h.transport.responses, hasLength(1));
+    },
+  );
+
+  test(
+    'décision hors connexion : rien d’écrit ni d’envoyé, la carte reste',
+    () async {
+      await start();
+      await approvalAsked();
+      await h.transport.sockets.last.drop();
+      await until(() => h.repository.snapshot.link != LinkState.connected);
+      await expectLater(
+        interventions.decide(key, approvalId, ApprovalChoice.once),
+        throwsA(
+          isA<AppError>().having((e) => e.code, 'code', 'transport.offline'),
+        ),
+      );
+      expect(await storedRow(approvalId), isNull);
+      expect(approval()!.state, QuestionState.open);
+      expect(h.transport.responses, isEmpty);
+    },
+  );
+
+  test('request.cancel d’une autorisation : expirée ou annulée', () async {
+    await start();
+    await approvalAsked();
+    emit('request.cancel', {
+      'id': approvalId,
+      'method': 'approval',
+      'reason': 'timeout',
+    }, 2);
+    await until(() => approval()!.state == QuestionState.expired);
+    expect(timeline().workState, WorkState.running);
+    final other = fixture('approval-request');
+    other['id'] = 'srq-000000000008';
+    h.transport.push(other);
+    await until(() => timeline().items.whereType<ApprovalItem>().length == 2);
+    expect(timeline().workState, WorkState.waitingApproval);
+    emit('request.cancel', {
+      'id': 'srq-000000000008',
+      'method': 'approval',
+      'reason': 'interrupted',
+    }, 3);
+    await until(
+      () =>
+          timeline().items.whereType<ApprovalItem>().last.state ==
+          QuestionState.cancelled,
+    );
+    expect(h.transport.responses, isEmpty);
+  });
+
+  test('reconnexion, autorisation encore ouverte avec décision locale : '
+      'rouverte, mention de non-réception, aucun renvoi', () async {
+    await start();
+    await approvalAsked();
+    await interventions.decide(key, approvalId, ApprovalChoice.deny);
+    await until(() => approval()!.state == QuestionState.sent);
+    await reconnectWith([approvalEntry()]);
+    await until(() => approval()!.state == QuestionState.open);
+    expect(approval()!.previousUnanswered, isTrue);
+    expect(timeline().workState, WorkState.waitingApproval);
+    expect(h.transport.responses, hasLength(1));
+    // Nouvelle décision, prise à la main.
+    await interventions.decide(key, approvalId, ApprovalChoice.once);
+    expect(h.transport.responses, hasLength(2));
+    expect(h.transport.responses.last['result'], {'choice': 'once'});
+  });
+
+  test('reconnexion, autorisation close : fermée sans renvoi', () async {
+    await start();
+    await approvalAsked();
+    await interventions.decide(key, approvalId, ApprovalChoice.deny);
+    await until(() => approval()!.state == QuestionState.sent);
+    await reconnectWith([]);
+    await until(() => approval()!.state == QuestionState.closed);
+    expect(timeline().workState, WorkState.running);
+    expect(h.transport.responses, hasLength(1));
+    await settle();
+    expect((await storedRow(approvalId))!['state'], 'closed');
+  });
+
+  test('reconnexion : autorisation inconnue de la projection rouverte depuis '
+      'open_requests', () async {
+    await start();
+    await outbox.send(draft.key);
+    emit('message.start', {}, 1);
+    await until(() => timeline().seq == 1);
+    await reconnectWith([approvalEntry()]);
+    await until(() => approval() != null);
+    expect(approval()!.state, QuestionState.open);
+    expect(approval()!.previousUnanswered, isFalse);
+    expect(approval()!.command, 'rm -rf /tmp/exemple');
+    expect(timeline().workState, WorkState.waitingApproval);
+    expect(h.transport.responses, isEmpty);
+  });
+
+  test(
+    'relance : une décision en sending devient unknown, jamais renvoyée',
+    () async {
+      await start();
+      await approvalAsked();
+      await database.insert('intervention_answers', {
+        'request_id': approvalId,
+        'connection_key': connection.value,
+        'profile_key': profile.value,
+        'stored_session_id': _stored,
+        'answers': jsonEncode({'choice': 'deny'}),
+        'state': 'sending',
+        'created_at': '2026-10-30T00:00:00Z',
+      });
+      await conversation.markQuestion(key, approvalId, QuestionState.sending);
+      final relaunched = InterventionRepository(
+        database,
+        gateway: h.repository,
+        conversation: conversation,
+      );
+      await relaunched.recovered;
+      expect((await storedRow(approvalId))!['state'], 'unknown');
+      expect(approval()!.state, QuestionState.unknown);
+      expect(h.transport.responses, isEmpty);
+    },
+  );
+
+  test('question et autorisation ouvertes : l’autorisation prime, puis '
+      'l’attente de réponse revient', () async {
+    await start();
+    await asked();
+    h.transport.push(fixture('approval-request'));
+    await until(() => approval() != null);
+    expect(timeline().workState, WorkState.waitingApproval);
+    emit('request.cancel', {
+      'id': approvalId,
+      'method': 'approval',
+      'reason': 'timeout',
+    }, 2);
+    await until(() => approval()!.state == QuestionState.expired);
+    expect(timeline().workState, WorkState.waitingInput);
+  });
+
+  test('fin de tour : autorisation non close fermée', () async {
+    await start();
+    await approvalAsked();
+    emit('message.complete', {'status': 'complete', 'text': 'Fini'}, 2);
+    await until(() => timeline().workState == WorkState.succeeded);
+    expect(approval()!.state, QuestionState.closed);
+    expect(h.transport.responses, isEmpty);
+  });
+  test('refus suivi d’un tool.complete non bloqué : carte inchangée', () async {
+    await start();
+    await approvalAsked();
+    await interventions.decide(key, approvalId, ApprovalChoice.deny);
+    await until(() => approval()!.state == QuestionState.sent);
+    emit('tool.complete', {
+      'tool_id': 'AUTRE',
+      'name': 'read_file',
+      'result': {'output': 'ok'},
+    }, 2);
+    await until(() => timeline().seq == 2);
+    expect(approval()!.state, QuestionState.sent);
+    expect(approval()!.blocked, isNull);
+    expect(timeline().workState, WorkState.waitingApproval);
+  });
+
+  test(
+    'carte en cours d’envoi : un tool.complete ne la confirme pas',
+    () async {
+      await start();
+      await approvalAsked();
+      await conversation.markQuestion(
+        key,
+        approvalId,
+        QuestionState.sending,
+        choice: ApprovalChoice.deny,
+      );
+      await until(() => approval()!.state == QuestionState.sending);
+      h.transport.push(fixture('approval-denied'));
+      await settle();
+      await settle();
+      expect(approval()!.state, QuestionState.sending);
+      expect(approval()!.blocked, isNull);
+    },
+  );
+
+  test('issue inconnue puis tool.complete concordant : confirmée', () async {
+    await start();
+    await approvalAsked();
+    h.transport.throwOnResponse = true;
+    await interventions.decide(key, approvalId, ApprovalChoice.deny);
+    await until(() => approval()!.state == QuestionState.unknown);
+    h.transport.throwOnResponse = false;
+    h.transport.push(fixture('approval-denied'));
+    await until(() => approval()!.state == QuestionState.confirmed);
+    expect(approval()!.blocked, isTrue);
+    expect(timeline().workState, WorkState.running);
   });
 }
 

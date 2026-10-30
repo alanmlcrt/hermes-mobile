@@ -62,6 +62,7 @@ class ConnectionRepository implements ConnectionGateway {
     Capability('session.interrupt', CapabilityState.unverified),
     Capability('server_requests', CapabilityState.unverified),
     Capability('clarify', CapabilityState.unverified),
+    Capability('approval', CapabilityState.unverified),
   ];
   @override
   ConnectionSnapshot get snapshot => _snapshot;
@@ -439,12 +440,14 @@ class ConnectionRepository implements ConnectionGateway {
                   ? CapabilityState.present
                   : CapabilityState.absent,
             );
-            _capability(
-              'clarify',
-              methods is List && methods.contains(HermesRpc.clarify)
-                  ? CapabilityState.present
-                  : CapabilityState.absent,
-            );
+            for (final name in const [HermesRpc.clarify, HermesRpc.approval]) {
+              _capability(
+                name,
+                methods is List && methods.contains(name)
+                    ? CapabilityState.present
+                    : CapabilityState.absent,
+              );
+            }
           } else if (message['id'] is String &&
               _calls.containsKey(message['id'])) {
             final done = _calls.remove(message['id'])!;
@@ -540,15 +543,16 @@ class ConnectionRepository implements ConnectionGateway {
 
   static const _clientCapabilitiesId = 'client-capabilities';
 
-  /// Requête serveur → client : `clarify` suit le chemin des événements de
-  /// session ; toute autre reçoit aussitôt une erreur (l'agent n'attend pas).
+  /// Requête serveur → client : `clarify` et `approval` suivent le chemin des
+  /// événements de session ; toute autre reçoit aussitôt une erreur (l'agent
+  /// n'attend pas).
   void _serverRequest(
     Map<Object?, Object?> message,
     GatewaySocket socket,
     int generation,
     String? replayEpoch,
   ) {
-    final event = HermesRpc.clarifyRequest(
+    final event = HermesRpc.serverRequest(
       message,
       generation: generation,
       replayEpoch: replayEpoch,

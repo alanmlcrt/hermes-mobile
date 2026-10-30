@@ -5,11 +5,13 @@ import 'history.dart';
 import 'profile.dart';
 
 /// État du travail distant ; distinct de l'état de la connexion.
-/// `waitingInput` : le tour est en cours et Hermes attend une réponse (6.2).
+/// `waitingInput` : le tour est en cours et Hermes attend une réponse (6.2) ;
+/// `waitingApproval` : il attend une autorisation (6.3).
 enum WorkState {
   sending,
   running,
   waitingInput,
+  waitingApproval,
   succeeded,
   failed,
   stopped,
@@ -157,6 +159,7 @@ sealed class TimelineItem {
       ),
       'resp' => ResponseItem(turn, json['text'] as String),
       'ask' => QuestionItem.fromJson(json),
+      'approve' => ApprovalItem.fromJson(json),
       _ => ActivityItem.fromJson(json),
     };
   }
@@ -204,9 +207,10 @@ class ResponseItem extends TimelineItem {
   Map<String, Object?> toJson() => {'k': 'resp', 'turn': turn, 'text': text};
 }
 
-/// Cycle d'une question de Hermes (`clarify`) vu par l'app. Seuls `sent` →
-/// `confirmed` (fin de l'outil `clarify`) et les fermetures viennent du
-/// serveur ; `sending`, `sent` et `unknown` décrivent la réponse locale.
+/// Cycle d'une intervention de Hermes (question `clarify` ou autorisation
+/// `approval`) vue par l'app. Seuls `sent` → `confirmed` (fin de l'outil qui
+/// attendait) et les fermetures viennent du serveur ; `sending`, `sent` et
+/// `unknown` décrivent la réponse locale.
 enum QuestionState {
   open,
   sending,
@@ -267,22 +271,38 @@ class ClarifyQuestion {
   }
 }
 
-/// Carte « question » : une requête serveur `clarify` (id `srq-…`).
-class QuestionItem extends TimelineItem {
-  const QuestionItem(
+/// Carte d'intervention : une requête serveur (id `srq-…`) dans le fil.
+sealed class InterventionItem extends TimelineItem {
+  const InterventionItem(
     super.turn, {
     required this.requestId,
-    required this.questions,
     this.state = QuestionState.open,
     this.previousUnanswered = false,
   });
   final String requestId;
-  final List<ClarifyQuestion> questions;
   final QuestionState state;
 
   /// Rouverte par `open_requests` alors qu'une réponse locale existait.
   final bool previousUnanswered;
 
+  InterventionItem copyWith({QuestionState? state, bool? previousUnanswered});
+
+  /// Même carte rattachée au tour [turn] (reprise par snapshot).
+  InterventionItem atTurn(int turn);
+}
+
+/// Carte « question » : une requête serveur `clarify`.
+class QuestionItem extends InterventionItem {
+  const QuestionItem(
+    super.turn, {
+    required super.requestId,
+    required this.questions,
+    super.state,
+    super.previousUnanswered,
+  });
+  final List<ClarifyQuestion> questions;
+
+  @override
   QuestionItem copyWith({QuestionState? state, bool? previousUnanswered}) =>
       QuestionItem(
         turn,
@@ -291,6 +311,15 @@ class QuestionItem extends TimelineItem {
         state: state ?? this.state,
         previousUnanswered: previousUnanswered ?? this.previousUnanswered,
       );
+
+  @override
+  QuestionItem atTurn(int turn) => QuestionItem(
+    turn,
+    requestId: requestId,
+    questions: questions,
+    state: state,
+    previousUnanswered: previousUnanswered,
+  );
 
   static QuestionItem fromJson(Map<String, Object?> json) => QuestionItem(
     json['turn'] as int,
@@ -315,7 +344,117 @@ class QuestionItem extends TimelineItem {
   };
 }
 
-/// Réponse aux questions de Hermes, depuis la carte ; aucun appel direct.
+/// Décisions que l'app envoie ; `session` et `always` ne sont jamais proposés
+/// ni envoyés, même quand Hermes les permet.
+abstract final class ApprovalChoice {
+  static const once = 'once';
+  static const deny = 'deny';
+  static const offered = [once, deny];
+}
+
+/// Carte « autorisation » : une requête serveur `approval`, champs tels
+/// qu'émis (commande déjà expurgée par le serveur).
+class ApprovalItem extends InterventionItem {
+  const ApprovalItem(
+    super.turn, {
+    required super.requestId,
+    required this.description,
+    required this.command,
+    this.choices = const [],
+    this.allowSession = false,
+    this.allowPermanent = false,
+    this.choice,
+    this.blocked,
+    super.state,
+    super.previousUnanswered,
+  });
+  final String description;
+  final String command;
+
+  /// Choix permis par Hermes (`once`, `session`, `always`, `deny`), gardés
+  /// pour mémoire ; seuls `once` et `deny` sont proposés.
+  final List<String> choices;
+  final bool allowSession;
+  final bool allowPermanent;
+
+  /// Dernière décision envoyée (`once` ou `deny`).
+  final String? choice;
+
+  /// Posé par le `tool.complete` qui confirme : `true` si
+  /// `result.status = "blocked"` (refusée, la commande n'a pas été lancée).
+  final bool? blocked;
+
+  @override
+  ApprovalItem copyWith({
+    QuestionState? state,
+    bool? previousUnanswered,
+    String? choice,
+    bool? blocked,
+  }) => ApprovalItem(
+    turn,
+    requestId: requestId,
+    description: description,
+    command: command,
+    choices: choices,
+    allowSession: allowSession,
+    allowPermanent: allowPermanent,
+    choice: choice ?? this.choice,
+    blocked: blocked ?? this.blocked,
+    state: state ?? this.state,
+    previousUnanswered: previousUnanswered ?? this.previousUnanswered,
+  );
+
+  @override
+  ApprovalItem atTurn(int turn) => ApprovalItem(
+    turn,
+    requestId: requestId,
+    description: description,
+    command: command,
+    choices: choices,
+    allowSession: allowSession,
+    allowPermanent: allowPermanent,
+    choice: choice,
+    blocked: blocked,
+    state: state,
+    previousUnanswered: previousUnanswered,
+  );
+
+  static ApprovalItem fromJson(Map<String, Object?> json) => ApprovalItem(
+    json['turn'] as int,
+    requestId: json['id'] as String,
+    description: json['description'] as String? ?? '',
+    command: json['command'] as String? ?? '',
+    choices: [
+      for (final c in (json['choices'] as List? ?? const []))
+        if (c is String) c,
+    ],
+    allowSession: json['allowSession'] == true,
+    allowPermanent: json['allowPermanent'] == true,
+    choice: json['choice'] as String?,
+    blocked: json['blocked'] as bool?,
+    state:
+        QuestionState.values.asNameMap()[json['state']] ?? QuestionState.closed,
+    previousUnanswered: json['previousUnanswered'] == true,
+  );
+
+  @override
+  Map<String, Object?> toJson() => {
+    'k': 'approve',
+    'turn': turn,
+    'id': requestId,
+    'description': description,
+    'command': command,
+    'choices': choices,
+    'allowSession': allowSession,
+    'allowPermanent': allowPermanent,
+    'choice': choice,
+    'blocked': blocked,
+    'state': state.name,
+    'previousUnanswered': previousUnanswered,
+  };
+}
+
+/// Réponse aux interventions de Hermes, depuis la carte ; aucun appel direct.
 abstract interface class InterventionGateway {
   /// Enregistre la réponse ([answers] : `qid` → texte non vide) puis l'envoie
   /// une seule fois. Lève `AppError` si rien n'a pu partir.
@@ -324,6 +463,28 @@ abstract interface class InterventionGateway {
     String requestId,
     Map<String, String> answers,
   );
+
+  /// Enregistre la décision ([choice] : `once` ou `deny`) puis l'envoie une
+  /// seule fois. Lève `AppError` si rien n'a pu partir.
+  Future<void> decide(TimelineKey key, String requestId, String choice);
+}
+
+/// Les trois modes d'autorisation connus de Hermes (`approvals.mode`).
+abstract final class ApprovalMode {
+  static const manual = 'manual';
+  static const smart = 'smart';
+  static const off = 'off';
+  static const values = [manual, smart, off];
+}
+
+/// Mode d'autorisation d'un profil, lu et écrit sur Hermes à la demande
+/// d'Alanc ; l'app n'en impose jamais aucun.
+abstract interface class ApprovalModes {
+  /// Valeur lue sur Hermes (une de [ApprovalMode.values]) ; lève si illisible.
+  Future<String> read(ProfileKey profile);
+
+  /// Écrit [mode] pour ce seul profil, puis rend la valeur relue.
+  Future<String> write(ProfileKey profile, String mode);
 }
 
 /// Ligne d'activité générique ; [kind] vient de la table de mapping.
@@ -496,14 +657,13 @@ class TimelineProjection {
     companionPhase: companionPhase ?? this.companionPhase,
   );
 
-  bool get inFlight =>
-      workState == WorkState.sending ||
-      workState == WorkState.running ||
-      workState == WorkState.waitingInput;
+  bool get inFlight => workState == WorkState.sending || working;
 
-  /// Le tour serveur est en cours (travail ou attente d'une réponse).
+  /// Le tour serveur est en cours (travail ou attente d'une intervention).
   bool get working =>
-      workState == WorkState.running || workState == WorkState.waitingInput;
+      workState == WorkState.running ||
+      workState == WorkState.waitingInput ||
+      workState == WorkState.waitingApproval;
 
   /// Contenu sans curseur (le curseur a ses propres colonnes).
   Map<String, Object?> toJson() => {

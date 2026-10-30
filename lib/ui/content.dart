@@ -185,6 +185,7 @@ abstract final class Content {
   static const workSending = 'Envoi…';
   static const workRunning = 'Hermes travaille…';
   static const workWaitingInput = 'Hermes attend ta réponse';
+  static const workWaitingApproval = 'Hermes demande ton autorisation';
 
   // Question de Hermes (story 6.2).
   static const questionTitle = 'Question de Hermes';
@@ -204,6 +205,56 @@ abstract final class Content {
   static const questionSend = 'Envoyer la réponse';
   static const questionIncomplete = 'Réponds à chaque question pour envoyer.';
   static const questionOffline = 'Réponse impossible hors connexion.';
+
+  // Autorisation demandée par Hermes (story 6.3).
+  static const approvalTitle = 'Autorisation demandée par Hermes';
+  static const approvalOpen = workWaitingApproval;
+  static const approvalSending = 'Envoi de la décision…';
+  static const approvalSent = 'Décision envoyée';
+  static const approvalAllowed = 'Autorisée';
+  static const approvalDenied = 'Refusée, la commande n’a pas été lancée';
+  static const approvalUnknown = questionUnknown;
+  static const approvalExpired = 'Demande expirée';
+  static const approvalCancelled = 'Demande annulée';
+  static const approvalClosed = 'Demande close';
+  static const approvalPreviousUnanswered =
+      'Décision précédente non reçue. Tu peux décider à nouveau.';
+  static const approvalCommand = 'Commande';
+  static const approvalAllow = 'Autoriser';
+  static const approvalDeny = 'Refuser';
+  static const approvalAllowSemantics = 'Autoriser la commande';
+  static const approvalDenySemantics = 'Refuser la commande';
+  static const approvalOffline = 'Décision impossible hors connexion.';
+
+  // Mode d'autorisation d'un profil (story 6.3).
+  static const approvalModes = 'Autorisations';
+  static const approvalModesHint =
+      'Réglé sur Hermes pour ce profil. Le mode affiché est celui relu sur Hermes.';
+  static String approvalModeName(String mode) => switch (mode) {
+    'manual' => 'Toujours me demander',
+    'smart' => 'Hermes juge',
+    'off' => 'Ne jamais demander',
+    _ => mode,
+  };
+  static String approvalModeHint(String mode) => switch (mode) {
+    'manual' => 'Chaque commande signalée attend ta décision.',
+    'smart' =>
+      'Hermes approuve seul ce qu’il juge sûr et te demande quand il hésite.',
+    'off' => approvalModeOffWarning,
+    _ => '',
+  };
+  static const approvalModeOffWarning =
+      'Hermes ne demandera plus aucune autorisation pour ce profil.';
+  static const approvalModeUnreadable =
+      'Mode illisible : impossible de le lire sur Hermes. Changement désactivé.';
+  static const approvalModeRetry = 'Relire le mode';
+  static const approvalModeOffTitle = 'Ne plus jamais demander ?';
+  static const approvalModeOffConfirm = 'Ne plus demander';
+  static const approvalModeCancel = 'Annuler';
+  static const approvalModeRefused =
+      'Mode inchangé : Hermes a refusé le changement.';
+  static const approvalModeUnconfirmed =
+      'Changement non confirmé par Hermes. Le mode affiché est celui relu.';
   static const workSucceeded = 'Terminé';
   static const workFailed = 'Erreur';
   static const workStopped = 'Arrêt confirmé';
@@ -316,6 +367,7 @@ abstract final class Content {
     'conversation' => 'Conversations',
     'server_requests' => 'Questions et autorisations de Hermes',
     'clarify' => 'Questions de Hermes',
+    'approval' => 'Autorisations de Hermes',
     _ => name,
   };
   static String error(String code) => switch (code) {
@@ -356,6 +408,10 @@ abstract final class Content {
     'send.turn_active' => turnActive,
     'question.closed' => 'Cette question n’attend plus de réponse.',
     'question.empty' => questionIncomplete,
+    'approval.closed' => 'Cette demande n’attend plus de décision.',
+    'approval.choice' => 'Cette décision n’est pas proposée.',
+    'approval_mode.unreadable' => 'Hermes n’a pas rendu de mode lisible.',
+    'approval_mode.invalid' => 'Ce mode n’existe pas.',
     'send.not_received' => 'Hermes n’affiche pas cette demande. Vérifiez la conversation, puis renvoyez-la si besoin. Votre texte est conservé.',
     'turn.error' =>
       'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',
@@ -412,6 +468,12 @@ abstract final class GalleryContent {
   static const sampleChoices = ['rouge (Recommended)', 'bleu'];
   static const sampleMultiQuestion = 'Quels formats veux-tu ?';
   static const sampleMultiChoices = ['PDF', 'Markdown', 'HTML'];
+  static const approvalSection =
+      'Autorisation demandée par Hermes · démonstration fictive';
+  static const sampleApprovalDescription = 'delete in root path';
+  static const sampleApprovalCommand = 'rm -rf /tmp/exemple';
+  static const approvalModeSection =
+      'Mode d’autorisation · démonstration fictive';
   static const sectionCardSection = 'Carte de section';
   static const composerSection = 'Zone de saisie';
   static const messageSection = 'Message';

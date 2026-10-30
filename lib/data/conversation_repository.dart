@@ -17,13 +17,13 @@ import 'event_mapping.dart';
 import 'hermes_adapter.dart';
 import 'storage/attachment_files.dart';
 
-/// Registre des réponses locales aux questions (`intervention_answers`),
-/// tenu par `InterventionRepository`.
+/// Registre des réponses et décisions locales aux interventions
+/// (`intervention_answers`), tenu par `InterventionRepository`.
 abstract interface class QuestionLedger {
   /// Ids parmi [ids] pour lesquels une réponse locale existe déjà.
   Future<Set<String>> answered(Iterable<String> ids);
 
-  /// La question est close côté projection (prise en compte, expirée…).
+  /// L'intervention est close côté projection (prise en compte, expirée…).
   Future<void> settle(String requestId, QuestionState state);
 }
 
@@ -54,20 +54,28 @@ class ConversationRepository implements ConversationGateway {
   /// Posé par `InterventionRepository`.
   QuestionLedger? questions;
 
-  /// État local de la réponse à une question (envoi, envoyée, inconnue) ;
-  /// jamais appliqué à une question déjà close.
+  /// État local de la réponse à une question ou de la décision sur une
+  /// autorisation (envoi, envoyée, inconnue) ; jamais appliqué à une carte
+  /// déjà close. [choice] : décision envoyée, retenue par une autorisation.
   Future<void> markQuestion(
     TimelineKey key,
     String requestId,
-    QuestionState state,
-  ) => _enqueue(key, (p) {
+    QuestionState state, {
+    String? choice,
+  }) => _enqueue(key, (p) {
     final at = p.items.indexWhere(
-      (i) => i is QuestionItem && i.requestId == requestId,
+      (i) => i is InterventionItem && i.requestId == requestId,
     );
     if (at < 0) return null;
-    final item = p.items[at] as QuestionItem;
-    if (item.state.settled || item.state == state) return null;
-    return p.copyWith(items: [...p.items]..[at] = item.copyWith(state: state));
+    final item = p.items[at] as InterventionItem;
+    if (item.state.settled) return null;
+    final InterventionItem? next = item is ApprovalItem && choice != null
+        ? item.copyWith(state: state, choice: choice)
+        : item.state == state
+        ? null
+        : item.copyWith(state: state);
+    if (next == null) return null;
+    return p.copyWith(items: [...p.items]..[at] = next);
   });
   AttachmentFiles attachmentFiles = AttachmentFiles();
 
@@ -600,7 +608,7 @@ class ConversationRepository implements ConversationGateway {
     }
   }
 
-  /// Questions après reprise : seules celles de `open_requests` restent
+  /// Interventions après reprise : seules celles de `open_requests` restent
   /// ouvertes (une réponse locale non reçue le dit) ; les autres sont closes,
   /// sans jamais renvoyer la réponse locale. Sans `open_requests` (champ
   /// facultatif), rien n'est fermé : les cartes gardent leur état.
@@ -614,7 +622,7 @@ class ConversationRepository implements ConversationGateway {
   }) async {
     final requests = [
       for (final entry in open ?? const <Map<String, Object?>>[])
-        ?HermesRpc.clarifyRequest(
+        ?HermesRpc.serverRequest(
           entry,
           runtime: runtime,
           generation: generation,
@@ -626,13 +634,13 @@ class ConversationRepository implements ConversationGateway {
     // sont reprises dans le tour courant.
     final kept = {
       for (final i in next.items)
-        if (i is QuestionItem) i.requestId,
+        if (i is InterventionItem) i.requestId,
     };
     var p = next.copyWith(
       items: [
         for (final i in next.items)
           if (open != null &&
-              i is QuestionItem &&
+              i is InterventionItem &&
               !i.state.settled &&
               !ids.contains(i.requestId))
             i.copyWith(state: QuestionState.closed)
@@ -640,20 +648,18 @@ class ConversationRepository implements ConversationGateway {
             i,
         // Non closes avant la reprise : rouvrables, sinon closes (sans renvoi).
         for (final i in before.items)
-          if (i is QuestionItem &&
+          if (i is InterventionItem &&
               !kept.contains(i.requestId) &&
               !i.state.settled)
-            _atTurn(
-              open == null || ids.contains(i.requestId)
-                  ? i
-                  : i.copyWith(state: QuestionState.closed),
-              max(max(next.turns, next.userTurns), 1),
-            ),
+            (open == null || ids.contains(i.requestId)
+                    ? i
+                    : i.copyWith(state: QuestionState.closed))
+                .atTurn(max(max(next.turns, next.userTurns), 1)),
       ],
     );
     final known = {
       for (final i in p.items)
-        if (i is QuestionItem) i.requestId,
+        if (i is InterventionItem) i.requestId,
     };
     Set<String> answered = const {};
     final unseen = ids.difference(known);
@@ -683,28 +689,20 @@ class ConversationRepository implements ConversationGateway {
     return _afterQuestions(p);
   }
 
-  static QuestionItem _atTurn(QuestionItem i, int turn) => QuestionItem(
-    turn,
-    requestId: i.requestId,
-    questions: i.questions,
-    state: i.state,
-    previousUnanswered: i.previousUnanswered,
-  );
-
-  /// Ouvre (ou rouvre, après reprise) la carte d'une requête `clarify`.
+  /// Ouvre (ou rouvre, après reprise) la carte d'une requête `clarify` ou
+  /// `approval`.
   static TimelineProjection _ask(
     TimelineProjection p,
     GatewayEvent e, {
     bool reopen = false,
   }) {
     final id = e.payload['id'];
-    final raw = e.payload['questions'];
-    if (id is! String || raw is! List) return p;
+    if (id is! String) return p;
     final at = p.items.indexWhere(
-      (i) => i is QuestionItem && i.requestId == id,
+      (i) => i is InterventionItem && i.requestId == id,
     );
     if (at >= 0) {
-      final item = p.items[at] as QuestionItem;
+      final item = p.items[at] as InterventionItem;
       // Une question close n'est jamais reproposée.
       if (item.state.settled) return p;
       final retry =
@@ -712,40 +710,75 @@ class ConversationRepository implements ConversationGateway {
           (item.state == QuestionState.sent ||
               item.state == QuestionState.unknown);
       if (!retry && item.state != QuestionState.open) return p;
-      return p.copyWith(
-        items: [...p.items]
-          ..[at] = item.copyWith(
-            state: QuestionState.open,
-            previousUnanswered: item.previousUnanswered || retry,
-          ),
-        workState: WorkState.waitingInput,
+      final items = [...p.items]
+        ..[at] = item.copyWith(
+          state: QuestionState.open,
+          previousUnanswered: item.previousUnanswered || retry,
+        );
+      return p.copyWith(items: items, workState: _waiting(items));
+    }
+    final card = _card(id, e);
+    if (card == null) return p;
+    final turned = p.working && p.turns > 0 ? p : _startTurn(p);
+    final items = [
+      ...turned.items,
+      card.atTurn(max(turned.turns, turned.userTurns)),
+    ];
+    return turned.copyWith(items: items, workState: _waiting(items));
+  }
+
+  /// Nouvelle carte (tour posé par l'appelant) ; `null` si inexploitable.
+  static InterventionItem? _card(String id, GatewayEvent e) {
+    final previous = e.payload['answered_locally'] == true;
+    if (e.type == HermesRpc.approvalEvent) {
+      final command = e.payload['command'];
+      final description = e.payload['description'];
+      final choices = e.payload['choices'];
+      if (command is! String) return null;
+      return ApprovalItem(
+        0,
+        requestId: id,
+        description: description is String ? description : '',
+        command: command,
+        choices: [
+          if (choices is List)
+            for (final c in choices)
+              if (c is String) c,
+        ],
+        allowSession: e.payload['allow_session'] == true,
+        allowPermanent: e.payload['allow_permanent'] == true,
+        previousUnanswered: previous,
       );
     }
-    final questions = [for (final q in raw) ?ClarifyQuestion.fromJson(q)];
-    if (questions.isEmpty) return p;
-    final turned = p.working && p.turns > 0 ? p : _startTurn(p);
-    return turned.copyWith(
-      items: [
-        ...turned.items,
-        QuestionItem(
-          max(turned.turns, turned.userTurns),
-          requestId: id,
-          questions: questions,
-          previousUnanswered: e.payload['answered_locally'] == true,
-        ),
-      ],
-      workState: WorkState.waitingInput,
+    final raw = e.payload['questions'];
+    final questions = [
+      if (raw is List)
+        for (final q in raw) ?ClarifyQuestion.fromJson(q),
+    ];
+    if (questions.isEmpty) return null;
+    return QuestionItem(
+      0,
+      requestId: id,
+      questions: questions,
+      previousUnanswered: previous,
     );
   }
+
+  /// État d'attente quand une carte est ouverte : une autorisation prime sur
+  /// une question.
+  static WorkState _waiting(List<TimelineItem> items) =>
+      items.any((i) => i is ApprovalItem && i.state == QuestionState.open)
+      ? WorkState.waitingApproval
+      : WorkState.waitingInput;
 
   /// `request.cancel {id, method, reason}` : carte fermée, plus de saisie.
   static TimelineProjection _cancel(TimelineProjection p, GatewayEvent e) {
     final id = e.payload['id'];
     final at = p.items.indexWhere(
-      (i) => i is QuestionItem && i.requestId == id,
+      (i) => i is InterventionItem && i.requestId == id,
     );
     if (at < 0) return p;
-    final item = p.items[at] as QuestionItem;
+    final item = p.items[at] as InterventionItem;
     if (item.state.settled) return p;
     final reason = e.payload['reason'];
     return _afterQuestions(
@@ -780,15 +813,54 @@ class ConversationRepository implements ConversationGateway {
     );
   }
 
-  /// Plus aucune question ouverte : le tour reprend son état « en cours ».
+  /// Fin de l'outil qui attendait une autorisation (tout `tool.complete`
+  /// hors clarify) : la dernière décision envoyée (`sent` ou `unknown`) est
+  /// confirmée si le résultat concorde avec elle (`deny` ⇔ `result.status =
+  /// "blocked"`, `once` ⇔ non bloqué) ; sinon la carte ne change pas. Aucun
+  /// événement ne porte l'id : si deux outils concordants tournent en
+  /// parallèle, la mauvaise carte peut être confirmée (accepté, comme pour
+  /// clarify). Une carte ouverte ou en cours d'envoi n'est pas touchée.
+  static TimelineProjection _approvalDone(
+    TimelineProjection p,
+    Map<String, dynamic> payload,
+  ) {
+    final at = p.items.lastIndexWhere(
+      (i) =>
+          i is ApprovalItem &&
+          (i.state == QuestionState.sent || i.state == QuestionState.unknown),
+    );
+    if (at < 0) return p;
+    final item = p.items[at] as ApprovalItem;
+    final result = payload['result'];
+    final blocked = result is Map && result['status'] == 'blocked';
+    final agrees = blocked
+        ? item.choice == ApprovalChoice.deny
+        : item.choice == ApprovalChoice.once;
+    if (!agrees) return p;
+    return _afterQuestions(
+      p.copyWith(
+        items: [...p.items]
+          ..[at] = item.copyWith(
+            state: QuestionState.confirmed,
+            blocked: blocked,
+          ),
+      ),
+    );
+  }
+
+  /// Plus aucune carte ouverte : le tour reprend son état « en cours » ;
+  /// sinon `waitingApproval` si une autorisation est ouverte, `waitingInput`
+  /// pour une question.
   static TimelineProjection _afterQuestions(TimelineProjection p) {
     final waiting = p.items.any(
-      (i) => i is QuestionItem && i.state == QuestionState.open,
+      (i) => i is InterventionItem && i.state == QuestionState.open,
     );
     if (waiting && p.working) {
-      return p.copyWith(workState: WorkState.waitingInput);
+      return p.copyWith(workState: _waiting(p.items));
     }
-    if (!waiting && p.workState == WorkState.waitingInput) {
+    if (!waiting &&
+        (p.workState == WorkState.waitingInput ||
+            p.workState == WorkState.waitingApproval)) {
       return p.copyWith(workState: WorkState.running);
     }
     return p;
@@ -800,10 +872,10 @@ class ConversationRepository implements ConversationGateway {
     if (ledger == null) return;
     final previous = {
       for (final i in before.items)
-        if (i is QuestionItem) i.requestId: i.state,
+        if (i is InterventionItem) i.requestId: i.state,
     };
     for (final i in after.items) {
-      if (i is QuestionItem &&
+      if (i is InterventionItem &&
           i.state.settled &&
           previous[i.requestId] != i.state) {
         unawaited(
@@ -1001,8 +1073,10 @@ class ConversationRepository implements ConversationGateway {
       case EventEffect.intervention:
         return e.type == HermesRpc.requestCancel ? _cancel(p, e) : _ask(p, e);
       case EventEffect.activity:
-        if (m.activityCompleted && e.payload['name'] == HermesRpc.clarify) {
-          p = _clarifyDone(p);
+        if (m.activityCompleted) {
+          p = e.payload['name'] == HermesRpc.clarify
+              ? _clarifyDone(p)
+              : _approvalDone(p, e.payload);
         }
         final rawId = e.payload['tool_id'];
         final id =
@@ -1182,10 +1256,11 @@ class ConversationRepository implements ConversationGateway {
         position++;
       }
     }
-    // Le tour est fini : aucune question ne peut plus être reçue ni confirmée.
+    // Le tour est fini : aucune intervention ne peut plus être reçue ni
+    // confirmée.
     for (var i = 0; i < items.length; i++) {
       final item = items[i];
-      if (item is QuestionItem && !item.state.settled) {
+      if (item is InterventionItem && !item.state.settled) {
         items[i] = item.copyWith(state: QuestionState.closed);
       }
     }

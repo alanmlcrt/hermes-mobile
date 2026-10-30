@@ -313,55 +313,64 @@ void main() {
     },
   );
 
-  for (final stillOpen in [true, false]) {
-    test(
-      'snapshot par l’historique : carte question reprise '
-      '(${stillOpen ? 'encore ouverte' : 'close'}), aucune réponse',
-      () async {
-        await start();
-        await outbox.send(draft.key);
-        emit('message.start', {}, 1);
-        await until(() => timeline().seq == 1);
-        final request = fixture('clarify-request');
-        h.transport.sockets.last.controller.add(request);
-        await until(
-          () => timeline().items.whereType<QuestionItem>().isNotEmpty,
-        );
-        final open = [
-          if (stillOpen)
-            {
-              'id': request['id'],
-              'method': request['method'],
-              'params': request['params'],
-            },
-        ];
-        overrides['session.resume'] = {
-          ..._result('session-resume'),
-          'session_id': 'a1b2c3d4',
-          'running': true,
-          'open_requests': open,
-        };
-        overrides['session.events.since'] = {
-          'events': [],
-          'latest_seq': 1,
-          'truncated': true,
-          'count': 0,
-          'epoch': 'synthetic-epoch',
-          'open_requests': open,
-        };
-        overrides['session.history'] = _result('session-history');
-        await reconnect();
-        await until(() => count('session.history') == 1);
-        await until(() => !conversation.resyncing(key));
-        final q = timeline().items.whereType<QuestionItem>().single;
-        expect(q.state, stillOpen ? QuestionState.open : QuestionState.closed);
-        expect(
-          timeline().workState,
-          stillOpen ? WorkState.waitingInput : WorkState.running,
-        );
-        expect(h.transport.frames.where((f) => f['method'] == null), isEmpty);
-      },
-    );
+  for (final (kind, waiting) in const [
+    ('clarify', WorkState.waitingInput),
+    ('approval', WorkState.waitingApproval),
+  ]) {
+    for (final stillOpen in [true, false]) {
+      test(
+        'snapshot par l’historique : carte $kind reprise '
+        '(${stillOpen ? 'encore ouverte' : 'close'}), aucune réponse',
+        () async {
+          await start();
+          await outbox.send(draft.key);
+          emit('message.start', {}, 1);
+          await until(() => timeline().seq == 1);
+          final request = fixture('$kind-request');
+          h.transport.sockets.last.controller.add(request);
+          await until(
+            () => timeline().items.whereType<InterventionItem>().isNotEmpty,
+          );
+          final open = [
+            if (stillOpen)
+              {
+                'id': request['id'],
+                'method': request['method'],
+                'params': request['params'],
+              },
+          ];
+          overrides['session.resume'] = {
+            ..._result('session-resume'),
+            'session_id': 'a1b2c3d4',
+            'running': true,
+            'open_requests': open,
+          };
+          overrides['session.events.since'] = {
+            'events': [],
+            'latest_seq': 1,
+            'truncated': true,
+            'count': 0,
+            'epoch': 'synthetic-epoch',
+            'open_requests': open,
+          };
+          overrides['session.history'] = _result('session-history');
+          await reconnect();
+          await until(() => count('session.history') == 1);
+          await until(() => !conversation.resyncing(key));
+          final q = timeline().items.whereType<InterventionItem>().single;
+          expect(
+            q,
+            kind == 'approval' ? isA<ApprovalItem>() : isA<QuestionItem>(),
+          );
+          expect(
+            q.state,
+            stillOpen ? QuestionState.open : QuestionState.closed,
+          );
+          expect(timeline().workState, stillOpen ? waiting : WorkState.running);
+          expect(h.transport.frames.where((f) => f['method'] == null), isEmpty);
+        },
+      );
+    }
   }
 
   test('snapshot textuel sans outils : aucune action reconstruite', () async {

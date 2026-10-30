@@ -69,6 +69,9 @@ void main() {
     final ask = mapping.map('server.clarify', {});
     expect(ask.effect, EventEffect.intervention);
     expect(ask.workState, WorkState.waitingInput);
+    final approve = mapping.map('server.approval', {});
+    expect(approve.effect, EventEffect.intervention);
+    expect(approve.workState, WorkState.waitingApproval);
     final cancel = mapping.map('request.cancel', {'reason': 'timeout'});
     expect(cancel.effect, EventEffect.intervention);
     expect(cancel.workState, isNull);

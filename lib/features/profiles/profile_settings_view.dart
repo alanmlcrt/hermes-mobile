@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../models/connection_gateway.dart';
 import '../../models/profile.dart';
 import '../../models/profile_accent.dart';
+import '../../models/timeline.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
+import 'approval_mode_section.dart';
 import 'profile_accents.dart';
 import '../../models/notifications.dart';
 import '../../ui/components/notification_settings.dart';
@@ -21,6 +23,7 @@ class ProfileSettingsView extends StatelessWidget {
     required this.onChangeServer,
     required this.onAllProfiles,
     this.notifications,
+    this.approvalModes,
   });
   final ConnectionGateway gateway;
   final ProfileAccents accents;
@@ -28,6 +31,9 @@ class ProfileSettingsView extends StatelessWidget {
   final VoidCallback onChangeServer;
   final VoidCallback onAllProfiles;
   final NotificationClient? notifications;
+
+  /// Mode d'autorisation du profil sur Hermes (6.3) ; section absente sans lui.
+  final ApprovalModes? approvalModes;
 
   Future<void> _choose(BuildContext context, ProfileAccent accent) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -93,6 +99,11 @@ class ProfileSettingsView extends StatelessWidget {
                 const SizedBox(height: Spacing.md),
                 if (notifications != null)
                   NotificationSettings(device: notifications!),
+                if (approvalModes != null) ...[
+                  if (notifications != null) const SizedBox(height: Spacing.md),
+                  ApprovalModeSection(modes: approvalModes!, profile: profile),
+                  const SizedBox(height: Spacing.md),
+                ],
                 _Section(
                   icon: Icons.palette_outlined,
                   title: Content.appearance,
