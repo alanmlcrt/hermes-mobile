@@ -57,6 +57,7 @@ class DraftView extends StatefulWidget {
 class _DraftViewState extends State<DraftView> {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
+  final _attachmentScroll = ScrollController();
   late final _viewModel = widget.create();
   bool _filled = false;
   int _clearTick = 0;
@@ -75,6 +76,7 @@ class _DraftViewState extends State<DraftView> {
     _viewModel.dispose();
     _controller.dispose();
     _scroll.dispose();
+    _attachmentScroll.dispose();
     super.dispose();
   }
 
@@ -194,17 +196,46 @@ class _DraftViewState extends State<DraftView> {
                               null => const SizedBox.shrink(),
                             },
                           ),
-                          AttachmentList(
-                            attachments: vm.attachments,
-                            onRemove: vm.attachmentBusy || vm.sendStatus.busy
-                                ? null
-                                : vm.removeAttachment,
-                            onRetry: vm.attachmentBusy || vm.sendStatus.busy
-                                ? null
-                                : vm.retryAttachment,
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  viewport.maxHeight *
+                                  AttachmentTokens.composerHeightFraction,
+                            ),
+                            child: Scrollbar(
+                              controller: _attachmentScroll,
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                controller: _attachmentScroll,
+                                primary: false,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    AttachmentList(
+                                      attachments: vm.attachments,
+                                      onRemove:
+                                          vm.attachmentBusy ||
+                                              vm.sendStatus.busy
+                                          ? null
+                                          : vm.removeAttachment,
+                                      onRetry:
+                                          vm.attachmentBusy ||
+                                              vm.sendStatus.busy
+                                          ? null
+                                          : vm.retryAttachment,
+                                    ),
+                                    if (vm.attachments.any((a) => a.isImage))
+                                      const Text(
+                                        Content.attachmentVisionUnknown,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          if (vm.attachments.any((a) => a.isImage))
-                            const Text(Content.attachmentVisionUnknown),
+                          if (vm.attachments.isNotEmpty)
+                            const SizedBox(height: Spacing.sm),
                           if (vm.attachmentError != null)
                             Semantics(
                               liveRegion: true,
@@ -217,6 +248,9 @@ class _DraftViewState extends State<DraftView> {
                             ),
                           if (draft != null)
                             Composer(
+                              maxLines: vm.attachments.isEmpty
+                                  ? ComposerLines.max
+                                  : ComposerLines.withAttachments,
                               onAttach:
                                   vm.picker == null ||
                                       vm.attachmentBusy ||

@@ -69,6 +69,9 @@ abstract final class Spacing {
 abstract final class AttachmentTokens {
   static const double preview = 48;
   static const int cacheWidth = 192;
+
+  /// Part de la zone visible réservée aux pièces, clavier déjà déduit.
+  static const double composerHeightFraction = .3;
 }
 
 /// Rayons d'arrondi.
@@ -473,6 +476,7 @@ abstract final class Motion {
 abstract final class ComposerLines {
   static const int min = 1;
   static const int max = 8;
+  static const int withAttachments = 2;
 }
 
 /// Police à chasse fixe des blocs de code.

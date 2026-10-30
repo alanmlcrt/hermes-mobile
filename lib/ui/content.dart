@@ -55,6 +55,11 @@ abstract final class Content {
   static const attachmentLoading = 'Copie de la pièce jointe…';
   static const remove = 'Retirer';
   static String removeAttachment(String name) => 'Retirer $name';
+  static String compactFileSize(int bytes) => bytes < 1024
+      ? '$bytes o'
+      : bytes < 1024 * 1024
+      ? '${(bytes / 1024).toStringAsFixed(1)} Ko'
+      : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
   static String fileSize(int bytes) =>
       '${(bytes / (1024 * 1024)).toStringAsFixed(2)} Mo ($bytes octets)';
   static String attachmentTypeRefused(String type) =>

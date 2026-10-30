@@ -51,26 +51,75 @@ class AttachmentList extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: Spacing.sm),
+                    ] else ...[
+                      ExcludeSemantics(
+                        child: SizedBox(
+                          width: AttachmentTokens.preview,
+                          height: AttachmentTokens.preview,
+                          child: Icon(
+                            a.isImage
+                                ? Icons.image_outlined
+                                : Icons.description_outlined,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: Spacing.sm),
                     ],
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(a.name),
-                          Text(a.mediaType),
-                          Text(Content.fileSize(a.bytes)),
+                          Semantics(
+                            label: a.name,
+                            value:
+                                a.state == AttachmentState.selected &&
+                                    !a.missing
+                                ? Content.attachmentSelected
+                                : null,
+                            excludeSemantics: true,
+                            child: Tooltip(
+                              message: a.name,
+                              child: Text(
+                                a.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          Text(Content.compactFileSize(a.bytes)),
                         ],
                       ),
                     ),
+                    if (!a.sent)
+                      Semantics(
+                        label: Content.removeAttachment(a.name),
+                        button: true,
+                        enabled: onRemove != null,
+                        onTap: onRemove == null ? null : () => onRemove!(a),
+                        excludeSemantics: true,
+                        child: IconButton(
+                          tooltip: Content.removeAttachment(a.name),
+                          onPressed: onRemove == null
+                              ? null
+                              : () => onRemove!(a),
+                          constraints: const BoxConstraints.tightFor(
+                            width: Layout.touchTarget,
+                            height: Layout.touchTarget,
+                          ),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ),
                   ],
                 ),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    '${Content.attachmentStatus(a.state, a.sent, a.errorCode)}'
-                    '${a.missing && !a.sent ? ' ${Content.attachmentMissing}' : ''}',
+                if (a.state != AttachmentState.selected ||
+                    (a.missing && !a.sent))
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      '${Content.attachmentStatus(a.state, a.sent, a.errorCode)}'
+                      '${a.missing && !a.sent ? ' ${Content.attachmentMissing}' : ''}',
+                    ),
                   ),
-                ),
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
                   child: Wrap(
@@ -94,22 +143,6 @@ class AttachmentList extends StatelessWidget {
                               ),
                             ),
                             child: const Text(Content.attachmentRetry),
-                          ),
-                        ),
-                      if (!a.sent)
-                        Semantics(
-                          label: Content.removeAttachment(a.name),
-                          child: TextButton(
-                            onPressed: onRemove == null
-                                ? null
-                                : () => onRemove!(a),
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(
-                                Layout.stopButton,
-                                Layout.stopButton,
-                              ),
-                            ),
-                            child: const Text(Content.remove),
                           ),
                         ),
                     ],

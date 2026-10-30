@@ -339,7 +339,7 @@ void main() {
       );
       expect(
         find.descendant(of: bubble, matching: find.text('application/pdf')),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         find.descendant(
@@ -445,17 +445,19 @@ void main() {
       await tester.tap(find.text(Content.files));
       await tester.pumpAndSettle();
       expect(find.text('document.pdf'), findsOneWidget);
-      expect(find.text('application/pdf'), findsOneWidget);
-      expect(find.text(Content.fileSize(3)), findsOneWidget);
+      expect(find.text('application/pdf'), findsNothing);
+      expect(find.text(Content.compactFileSize(3)), findsOneWidget);
       await vm.send();
       expect(outbox.sent, [draft.key]);
       expect(outbox.drafts[draft.key]!.body, 'à conserver');
       expect(vm.attachments, hasLength(1));
       expect(
-        find.bySemanticsLabel(RegExp('Retirer document.pdf')),
+        find.byTooltip(Content.removeAttachment('document.pdf')),
         findsOneWidget,
       );
-      await tester.tap(find.text(Content.remove));
+      await tester.tap(
+        find.byTooltip(Content.removeAttachment('document.pdf')),
+      );
       await tester.pumpAndSettle();
       expect(find.text('document.pdf'), findsNothing);
       picker.files = [
@@ -574,7 +576,7 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(find.text('invalid.jpg'), findsOneWidget);
-    expect(find.text('image/jpeg'), findsOneWidget);
+    expect(find.text('image/jpeg'), findsNothing);
     expect(tester.takeException(), isNull);
   });
   for (final size in [const Size(375, 812), const Size(812, 375)]) {

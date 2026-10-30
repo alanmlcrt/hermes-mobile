@@ -18,6 +18,7 @@ class Composer extends StatelessWidget {
     this.disabledReason,
     this.status,
     this.hint = Content.composerLabel,
+    this.maxLines = ComposerLines.max,
   });
   final TextEditingController? controller;
   final VoidCallback? onAttach;
@@ -32,6 +33,7 @@ class Composer extends StatelessWidget {
 
   /// Indication dans le champ (« Écrire à Travail »).
   final String hint;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +72,7 @@ class Composer extends StatelessWidget {
                     keyboardType: TextInputType.multiline,
                     textCapitalization: TextCapitalization.sentences,
                     minLines: ComposerLines.min,
-                    maxLines: ComposerLines.max,
+                    maxLines: maxLines,
                     decoration: InputDecoration(
                       hintText: hint,
                       isDense: true,

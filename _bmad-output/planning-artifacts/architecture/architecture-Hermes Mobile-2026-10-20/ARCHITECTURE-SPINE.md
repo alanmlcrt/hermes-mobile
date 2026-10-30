@@ -249,6 +249,16 @@ server/hermes-plugin/  # plugin Hermes de notifications (on_session_end → FCM)
 | G3 — notification | Plugin installé par profil, jeton app → plugin, filtre `tui`, version FCM, prérequis Android. Essais app fermée, coupure réseau, arrêt, sous-agent, reprise de conversation, `/new`, plugin absent. **Statut 2026-10-30 : ouverte** (plugin ≥ 1.0.2 requis) — plugin absent non détecté, `/new` non jouable ([rapport](../../../implementation-artifacts/story-5-5-verification/rapport-g3.md)). | Acceptation de FR-8/9 sur téléphone réel. |
 | G4 — produit/UX | Alanc tranche FR-13/14, les interventions en cours et les issues notifiées. L'UX précise le secours de thème et les parcours ouverts. | Stories concernées, sans bloquer le socle indépendant confirmé. |
 
+**Essai global 6.5 (2026-10-30) : story clôturée sur décision d'Alanc, contrôles restants reportés pour passer à l'epic 7 ; acceptation technique réelle ouverte.** Le
+[rapport courant](../../../implementation-artifacts/story-6-5-verification/rapport-mvp.md)
+sépare les nouveaux constats des preuves historiques. G1/G2 attendent le
+rapprochement des parcours mobiles ; G3 reste ouverte avec tous ses écarts
+existants. G4 est fermée par les décisions d'Alanc du 2026-10-30 (FR13/14
+retenus et palette de secours validée, voir `contracts/README.md`) ; cette
+décision ne prouve pas l'exécution réelle des interventions et résultats.
+Un contrôle obligatoire non joué ou échoué interdit l'acceptation sans
+retrait ou report explicite d'Alanc consigné au rapport.
+
 Vérifications du contrat :
 
 - IDs similaires sur deux profils.
