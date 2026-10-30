@@ -98,7 +98,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       );
     }
     unawaited(widget.gateway.restore());
-    unawaited(widget.notifications?.resume() ?? Future<void>.value());
   }
 
   @override
@@ -127,9 +126,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   /// serveur n'est jamais annulé par l'app.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(widget.notifications?.resume() ?? Future<void>.value());
-    }
     final gateway = widget.gateway;
     final snapshot = gateway.snapshot;
     if (state != AppLifecycleState.resumed ||

@@ -106,20 +106,7 @@ class ConversationRepository implements ConversationGateway {
       var userRowId = item.userRowId;
       if (matches.length == 1) {
         final op = matches.single;
-        final tracking = await database.query(
-          'notification_subscriptions',
-          columns: ['state', 'attached_at'],
-          where: 'operation_key = ?',
-          whereArgs: [op['operation_key']],
-        );
-        notificationUnfollowed = tracking.singleOrNull?['attached_at'] != null
-            ? false
-            : op['notification_unfollowed'] == 1 ||
-                  tracking.isNotEmpty &&
-                      !{
-                        'attached',
-                        'notified',
-                      }.contains(tracking.single['state']);
+        notificationUnfollowed = op['notification_unfollowed'] == 1;
         userRowId ??= op['user_row_id'] as int?;
         final rows = await database.rawQuery(
           'SELECT a.*, s.state AS snapshot_state, s.reference AS snapshot_reference '

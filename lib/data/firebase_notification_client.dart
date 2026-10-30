@@ -15,7 +15,7 @@ class FirebaseNotificationClient implements NotificationClient {
   FirebaseNotificationClient() {
     _channel.setMethodCallHandler((call) async {
       if (call.method != 'opened') throw MissingPluginException();
-      if (isSubscriptionId(call.arguments) && !_opened.isClosed) {
+      if (isSessionId(call.arguments) && !_opened.isClosed) {
         _opened.add(call.arguments as String);
       }
       return null;
@@ -53,8 +53,8 @@ class FirebaseNotificationClient implements NotificationClient {
         // Reconstruire le libellé générique, sans afficher du texte reçu.
         final data = message.data;
         if (data.length == 2 &&
-            data.keys.toSet().containsAll({'subscriptionId', 'outcome'}) &&
-            isSubscriptionId(data['subscriptionId']) &&
+            data.keys.toSet().containsAll({'sessionId', 'outcome'}) &&
+            isSessionId(data['sessionId']) &&
             {'succeeded', 'failed', 'stopped'}.contains(data['outcome'])) {
           unawaited(
             _channel.invokeMethod<void>('show', data).catchError((_) {}),
@@ -75,11 +75,12 @@ class FirebaseNotificationClient implements NotificationClient {
   Future<String?> takeOpened() async {
     try {
       final id = await _channel.invokeMethod<Object?>('takeOpened');
-      return isSubscriptionId(id) ? id as String : null;
+      return isSessionId(id) ? id as String : null;
     } catch (_) {
       return null;
     }
   }
+
   @override
   Future<String?> token({bool requestPermission = false}) async {
     final messaging = _messaging;

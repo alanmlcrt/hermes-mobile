@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../models/connection.dart';
 
+// `observerBearer` : clé héritée de l'observateur, gardée pour la purge 5.7 et `clear()`.
 enum SecretUsage { password, accessToken, refreshToken, observerBearer }
 
 abstract interface class SecretStore {

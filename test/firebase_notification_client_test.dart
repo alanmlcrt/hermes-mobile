@@ -96,10 +96,7 @@ void main() {
     await client.initialize();
     authorization = 1;
     permissionDelay = const Duration(seconds: 4);
-    expect(
-      await client.token(requestPermission: true),
-      'synthetic-fcm-token',
-    );
+    expect(await client.token(requestPermission: true), 'synthetic-fcm-token');
     expect(client.availability, NotificationAvailability.ready);
     await client.dispose();
   });
@@ -138,36 +135,78 @@ void main() {
       await client.dispose();
     },
   );
-  test('toucher : handler posé avant Firebase, id validé, lancement consommé', () async {
-    Object? launch = 'subscription-launch-0000000';
+  test('premier plan : seul {outcome, sessionId} valide devient une notification générique', () async {
+    final shown = <Object?>[];
     messenger.setMockMethodCallHandler(
       const MethodChannel('hermes/notifications'),
       (call) async {
-        if (call.method != 'takeOpened') return null;
-        final id = launch;
-        launch = null;
-        return id;
+        if (call.method == 'show') shown.add(call.arguments);
+        return null;
       },
     );
-    // Sans `initialize()` : le canal fonctionne même sans Firebase.
     final client = FirebaseNotificationClient();
-    final opened = <String>[];
-    final subscription = client.opened.listen(opened.add);
-    Future<void> native(Object? id) => messenger.handlePlatformMessage(
-      'hermes/notifications',
-      const StandardMethodCodec().encodeMethodCall(MethodCall('opened', id)),
-      (_) {},
-    );
-    await native('subscription-hot-00000000000');
-    await native('invalide avec espaces');
-    await native(42);
+    await client.initialize();
+    Future<void> push(Map<String, Object?> data) =>
+        messenger.handlePlatformMessage(
+          channel.name,
+          const StandardMethodCodec().encodeMethodCall(
+            MethodCall('Messaging#onMessage', {'data': data}),
+          ),
+          (_) {},
+        );
+    for (final outcome in ['succeeded', 'failed', 'stopped']) {
+      await push({'outcome': outcome, 'sessionId': '20261029_101500_a1b2c3'});
+    }
+    // Clé en plus, ancienne clé, issue inconnue, id invalide : ignorés.
+    await push({
+      'outcome': 'succeeded',
+      'sessionId': '20261029_101500_a1b2c3',
+      'text': 'secret de conversation',
+    });
+    await push({'outcome': 'succeeded', 'subscriptionId': 'a' * 22});
+    await push({'outcome': 'paused', 'sessionId': 'abc'});
+    await push({'outcome': 'failed', 'sessionId': '../chemin'});
+    await push({'outcome': 'failed', 'sessionId': 'a' * 257});
     await pumpEventQueue();
-    expect(opened, ['subscription-hot-00000000000']);
-    expect(await client.takeOpened(), 'subscription-launch-0000000');
-    expect(await client.takeOpened(), isNull);
-    launch = '../chemin';
-    expect(await client.takeOpened(), isNull);
-    await subscription.cancel();
+    expect(shown, [
+      for (final outcome in ['succeeded', 'failed', 'stopped'])
+        {'outcome': outcome, 'sessionId': '20261029_101500_a1b2c3'},
+    ]);
     await client.dispose();
   });
+  test(
+    'toucher : handler posé avant Firebase, id validé, lancement consommé',
+    () async {
+      Object? launch = '20261029_101500_a1b2c3';
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('hermes/notifications'),
+        (call) async {
+          if (call.method != 'takeOpened') return null;
+          final id = launch;
+          launch = null;
+          return id;
+        },
+      );
+      // Sans `initialize()` : le canal fonctionne même sans Firebase.
+      final client = FirebaseNotificationClient();
+      final opened = <String>[];
+      final subscription = client.opened.listen(opened.add);
+      Future<void> native(Object? id) => messenger.handlePlatformMessage(
+        'hermes/notifications',
+        const StandardMethodCodec().encodeMethodCall(MethodCall('opened', id)),
+        (_) {},
+      );
+      await native('20261029_hot-session.1');
+      await native('invalide avec espaces');
+      await native(42);
+      await pumpEventQueue();
+      expect(opened, ['20261029_hot-session.1']);
+      expect(await client.takeOpened(), '20261029_101500_a1b2c3');
+      expect(await client.takeOpened(), isNull);
+      launch = '../chemin';
+      expect(await client.takeOpened(), isNull);
+      await subscription.cancel();
+      await client.dispose();
+    },
+  );
 }

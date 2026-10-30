@@ -27,7 +27,7 @@ class ProfileSettingsView extends StatelessWidget {
   final ProfileKey profile;
   final VoidCallback onChangeServer;
   final VoidCallback onAllProfiles;
-  final NotificationGateway? notifications;
+  final NotificationClient? notifications;
 
   Future<void> _choose(BuildContext context, ProfileAccent accent) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -91,11 +91,8 @@ class ProfileSettingsView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Spacing.md),
-                if (notifications != null && snapshot.connection != null)
-                  NotificationSettings(
-                    repository: notifications!,
-                    connection: snapshot.connection!.key,
-                  ),
+                if (notifications != null)
+                  NotificationSettings(device: notifications!),
                 _Section(
                   icon: Icons.palette_outlined,
                   title: Content.appearance,

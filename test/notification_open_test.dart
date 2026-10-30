@@ -19,11 +19,10 @@ import 'support/connection_fakes.dart';
 
 const _default = ProfileKey('default');
 const _travail = ProfileKey('travail');
-const _known = 'subscription-known-000000000';
-const _otherConnection = 'subscription-other-connection';
-const _noSession = 'subscription-no-session-00000';
-const _goneProfile = 'subscription-gone-profile-000';
-const _unknown = 'subscription-unknown-00000000';
+const _known = '20261029_101500_known';
+const _otherConnection = '20261029_101500_other';
+const _goneProfile = '20261029_101500_gone';
+const _unknown = '20261029_101500_unknown';
 
 /// Base jamais touchée : seules les associations de [_Targets] répondent.
 class _NoDatabase implements Database {
@@ -32,17 +31,17 @@ class _NoDatabase implements Database {
       throw UnsupportedError('database');
 }
 
-/// Associations conservées par 5.3, sans SQLite dans les tests de widgets.
+/// Sessions connues localement, sans SQLite dans les tests de widgets.
 class _Targets extends NotificationRepository {
-  _Targets(Device device) : super(_NoDatabase(), MemorySecrets(), device);
+  _Targets(Device device) : super(_NoDatabase(), device);
   final targets = <String, NotificationTarget>{};
   final lookups = <String>[];
   Completer<void>? gate;
   @override
-  Future<NotificationTarget?> target(String subscriptionId) async {
-    lookups.add(subscriptionId);
+  Future<NotificationTarget?> target(String sessionId) async {
+    lookups.add(sessionId);
     await gate?.future;
-    return targets[subscriptionId];
+    return targets[sessionId];
   }
 }
 
@@ -66,17 +65,16 @@ void main() {
       device = Device();
       notifications = _Targets(device);
       notifications.targets.addAll({
-        _known: (connection: connection, profile: _travail, session: 'abc'),
+        _known: (connection: connection, profile: _travail, session: _known),
         _otherConnection: (
           connection: const ConnectionKey('autre'),
           profile: _travail,
-          session: 'abc',
+          session: _otherConnection,
         ),
-        _noSession: (connection: connection, profile: _travail, session: null),
         _goneProfile: (
           connection: connection,
           profile: const ProfileKey('disparu'),
-          session: 'abc',
+          session: _goneProfile,
         ),
       });
       memory = MemoryConversation();
@@ -115,8 +113,11 @@ void main() {
         router(tester).go(conversationPath(connection, _default, 'courant'));
         await tester.pumpAndSettle();
         await tap(tester, _known);
-        expect(location(tester), conversationPath(connection, _travail, 'abc'));
-        expect(memory.loaded.last, TimelineKey(connection, _travail, 'abc'));
+        expect(
+          location(tester),
+          conversationPath(connection, _travail, _known),
+        );
+        expect(memory.loaded.last, TimelineKey(connection, _travail, _known));
         expect(find.text(Content.notificationTargetMissing), findsNothing);
         // Le même toucher ne rouvre rien une fois consommé.
         router(tester).go('/');
@@ -143,8 +144,11 @@ void main() {
         h.transport.loginStatus = 200;
         unawaited(h.repository.authenticate('<SYNTHETIC_PASSWORD>'));
         await tester.pumpAndSettle();
-        expect(location(tester), conversationPath(connection, _travail, 'abc'));
-        expect(memory.loaded, [TimelineKey(connection, _travail, 'abc')]);
+        expect(
+          location(tester),
+          conversationPath(connection, _travail, _known),
+        );
+        expect(memory.loaded, [TimelineKey(connection, _travail, _known)]);
         // Retour d'authentification ultérieur : aucune seconde ouverture.
         router(tester).go('/');
         await tester.pumpAndSettle();
@@ -170,7 +174,10 @@ void main() {
         h.transport.profilesStatus = 200;
         unawaited(h.repository.refreshProfiles());
         await tester.pumpAndSettle();
-        expect(location(tester), conversationPath(connection, _travail, 'abc'));
+        expect(
+          location(tester),
+          conversationPath(connection, _travail, _known),
+        );
         expect(notifications.lookups, [_known]);
         router(tester).go('/');
         await tester.pumpAndSettle();
@@ -207,8 +214,11 @@ void main() {
         h.transport.loginStatus = 200;
         unawaited(h.repository.authenticate('<SYNTHETIC_PASSWORD>'));
         await tester.pumpAndSettle();
-        expect(location(tester), conversationPath(connection, _travail, 'abc'));
-        expect(memory.loaded, [TimelineKey(connection, _travail, 'abc')]);
+        expect(
+          location(tester),
+          conversationPath(connection, _travail, _known),
+        );
+        expect(memory.loaded, [TimelineKey(connection, _travail, _known)]);
         expect(notifications.lookups, [_known, _known]);
         router(tester).go('/');
         await tester.pumpAndSettle();
@@ -219,19 +229,38 @@ void main() {
       },
     );
 
+    testWidgets(
+      'réglages du profil : carte des notifications et demande de permission',
+      (tester) async {
+        await launched();
+        await pumpApp(tester);
+        router(tester).go(profileSettingsPath(_travail));
+        await tester.pumpAndSettle();
+        expect(find.text(Content.notifications), findsOneWidget);
+        final allow = find.widgetWithText(
+          FilledButton,
+          Content.notificationEnable,
+        );
+        expect(allow, findsOneWidget);
+        await tester.ensureVisible(allow);
+        await tester.tap(allow);
+        await tester.pumpAndSettle();
+        expect(device.permissionRequests, 1);
+      },
+    );
+
     testWidgets('à froid, app restaurée : la cible s\'ouvre directement', (
       tester,
     ) async {
       await launched();
       device.launch = _known;
       await pumpApp(tester);
-      expect(location(tester), conversationPath(connection, _travail, 'abc'));
+      expect(location(tester), conversationPath(connection, _travail, _known));
     });
 
     for (final (cause, id) in [
       ('id inconnu', _unknown),
       ('autre connexion', _otherConnection),
-      ('session nulle', _noSession),
       ('profil disparu', _goneProfile),
     ]) {
       testWidgets(
@@ -268,13 +297,13 @@ void main() {
       tester,
     ) async {
       await launched();
-      device.launch = 'court';
+      device.launch = 'court invalide';
       await pumpApp(tester);
       expect(Uri.parse(location(tester)).path, '/');
       final current = conversationPath(connection, _default, 'courant');
       router(tester).go(current);
       await tester.pumpAndSettle();
-      for (final id in ['', 'invalide avec espaces', 'a' * 129, '../../x']) {
+      for (final id in ['', 'invalide avec espaces', 'a' * 257, '../../x']) {
         await tap(tester, id);
       }
       expect(location(tester), current);
@@ -284,22 +313,25 @@ void main() {
   });
 
   group('resolveLaunchTarget', () {
-    test('sans authentification, la cible attend (null, aucun message)', () async {
-      final h = Harness();
-      var explained = 0;
-      final path = await resolveLaunchTarget(
-        h.repository,
-        MemoryOutbox(),
-        notification: Future.value((
-          connection: const ConnectionKey('c'),
-          profile: _default,
-          session: 'abc',
-        )),
-        onMissingTarget: () => explained++,
-      );
-      expect(path, isNull);
-      expect(explained, 0);
-    });
+    test(
+      'sans authentification, la cible attend (null, aucun message)',
+      () async {
+        final h = Harness();
+        var explained = 0;
+        final path = await resolveLaunchTarget(
+          h.repository,
+          MemoryOutbox(),
+          notification: Future.value((
+            connection: const ConnectionKey('c'),
+            profile: _default,
+            session: 'abc',
+          )),
+          onMissingTarget: () => explained++,
+        );
+        expect(path, isNull);
+        expect(explained, 0);
+      },
+    );
   });
 
   group('NotificationRepository.target sur SQLite en mémoire', () {
@@ -312,42 +344,37 @@ void main() {
         path: inMemoryDatabasePath,
       );
       device = Device();
-      repository = NotificationRepository(db, MemorySecrets(), device);
-      var n = 0;
-      for (final (id, stored, state) in [
-        (_known, 'Abc', 'attached'),
-        (_noSession, null, 'unfollowed'),
-        (_goneProfile, 'abc', 'expired'),
-        (_otherConnection, 'abc', 'revoked'),
-      ]) {
-        await db.insert('notification_subscriptions', {
-          'subscription_id': id,
-          'operation_key': 'operation-${n++}',
-          'connection_key': 'c-1',
-          'profile_key': 'travail',
-          'session_id': 'runtime-must-not-route',
-          'stored_session_id': stored,
-          'state': state,
-          'created_at': DateTime.utc(2026, 10, 27).toIso8601String(),
-        });
-      }
+      repository = NotificationRepository(db, device);
+      final now = DateTime.utc(2026, 10, 29).toIso8601String();
+      await db.insert('conversation_timelines', {
+        'connection_key': 'c-1',
+        'profile_key': 'travail',
+        'stored_session_id': _known,
+        'projection': '{}',
+        'updated_at': now,
+      });
+      await db.insert('outbox_drafts', {
+        'draft_key': 'draft-gone',
+        'connection_key': 'c-1',
+        'profile_key': 'disparu',
+        'body': '',
+        'updated_at': now,
+        'stored_session_id': _goneProfile,
+      });
     });
     tearDown(() async {
       await repository.dispose();
       await db.close();
     });
 
-    test('connexion, profil et session stockée ; jamais l\'id runtime', () async {
+    test('connexion, profil et session stockée', () async {
       final target = await repository.target(_known);
       expect(target?.connection, const ConnectionKey('c-1'));
       expect(target?.profile, _travail);
-      expect(target?.session, 'Abc');
-      expect((await repository.target(_noSession))?.session, isNull);
-    });
-
-    test('états expired et revoked restent des indices valides', () async {
-      expect((await repository.target(_goneProfile))?.session, 'abc');
-      expect((await repository.target(_otherConnection))?.session, 'abc');
+      expect(target?.session, _known);
+      final draft = await repository.target(_goneProfile);
+      expect(draft?.profile, const ProfileKey('disparu'));
+      expect(draft?.session, _goneProfile);
     });
 
     test('inconnu, casse différente ou invalide : null', () async {

@@ -12,15 +12,15 @@ import android.content.Intent
 import android.os.Build
 
 class MainActivity : FlutterActivity() {
-    private val subscriptionPattern = Regex("^[A-Za-z0-9_-]{22,128}$")
+    private val sessionPattern = Regex("^[A-Za-z0-9_.:-]{1,256}$")
     private var notifications: MethodChannel? = null
 
-    /** `subscriptionId` validé d'un toucher ; FCM et `show` posent le même extra. */
+    /** `sessionId` validé d'un toucher ; FCM (data en extras) et `show` posent le même extra. */
     private fun openedId(intent: Intent?): String? {
         if (intent == null ||
             intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return null
-        val id = try { intent.getStringExtra(EXTRA_SUBSCRIPTION) } catch (_: RuntimeException) { null }
-        return if (id != null && subscriptionPattern.matches(id)) id else null
+        val id = try { intent.getStringExtra(EXTRA_SESSION) } catch (_: RuntimeException) { null }
+        return if (id != null && sessionPattern.matches(id)) id else null
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -30,7 +30,7 @@ class MainActivity : FlutterActivity() {
         // Consommé une fois : retiré seulement si Dart l'a reçu, sinon
         // `takeOpened` le relira au démarrage de l'interface.
         notifications?.invokeMethod("opened", id, object : MethodChannel.Result {
-            override fun success(result: Any?) { intent.removeExtra(EXTRA_SUBSCRIPTION) }
+            override fun success(result: Any?) { intent.removeExtra(EXTRA_SESSION) }
             override fun error(code: String, message: String?, details: Any?) {}
             override fun notImplemented() {}
         })
@@ -51,11 +51,11 @@ class MainActivity : FlutterActivity() {
                     "createChannel" -> result.success(null)
                     "takeOpened" -> {
                         val id = openedId(intent)
-                        intent?.removeExtra(EXTRA_SUBSCRIPTION)
+                        intent?.removeExtra(EXTRA_SESSION)
                         result.success(id)
                     }
                     "show" -> {
-                        val id = call.argument<String>("subscriptionId")
+                        val id = call.argument<String>("sessionId")
                         val outcome = call.argument<String>("outcome")
                         val body = when (outcome) {
                             "succeeded" -> "Hermes a terminé"
@@ -63,14 +63,14 @@ class MainActivity : FlutterActivity() {
                             "stopped" -> "Hermes s'est arrêté"
                             else -> null
                         }
-                        if (id != null && subscriptionPattern.matches(id) && body != null) {
+                        if (id != null && sessionPattern.matches(id) && body != null) {
                             val tag = "hermes:$id:$outcome"
-                            // Seul le `subscriptionId` voyage ; requestCode par tag,
+                            // Seul le `sessionId` voyage ; requestCode par tag,
                             // les extras ne distinguant pas deux PendingIntent.
                             val open = PendingIntent.getActivity(this, tag.hashCode(),
                                 Intent(this, MainActivity::class.java)
                                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                                    .putExtra(EXTRA_SUBSCRIPTION, id),
+                                    .putExtra(EXTRA_SESSION, id),
                                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                             val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, channel)
                                 else Notification.Builder(this)
@@ -92,6 +92,6 @@ class MainActivity : FlutterActivity() {
     }
 
     private companion object {
-        const val EXTRA_SUBSCRIPTION = "subscriptionId"
+        const val EXTRA_SESSION = "sessionId"
     }
 }

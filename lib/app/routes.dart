@@ -214,7 +214,7 @@ class AppRoutes {
         GoRoute(
           path: '/profile/:profile',
           builder: (context, state) => ProfileSettingsView(
-            notifications: notifications,
+            notifications: notifications?.device,
             key: ValueKey(state.pathParameters['profile']),
             gateway: gateway,
             accents: this.accents,
@@ -343,9 +343,9 @@ class AppRoutes {
 
   /// Ouvre la conversation d'une notification touchée (froid ou chaud). La
   /// cible attend l'authentification, puis n'est consommée qu'une fois.
-  void openNotification(String subscriptionId) {
-    if (!isSubscriptionId(subscriptionId) || _notifications == null) return;
-    _pendingNotification = subscriptionId;
+  void openNotification(String sessionId) {
+    if (!isSessionId(sessionId) || _notifications == null) return;
+    _pendingNotification = sessionId;
     _openPending();
   }
 

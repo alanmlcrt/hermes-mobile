@@ -215,7 +215,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         }
       });
 
-  /// Observateur du pipeline nommé (tests, diagnostic) ; jamais de contenu.
+  /// Sonde des étapes du pipeline (tests, diagnostic) ; jamais de contenu.
   final void Function(String step)? onStep;
 
   /// Reçoit la liaison runtime et les demandes acceptées ; jamais d'ordre inverse.
@@ -764,23 +764,38 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
 
   /// Transmet le jeton FCM au plugin de notifications Hermes `hermes-mobile-notify`.
   /// Lancé sans attente, à côté de `prompt.submit` ; ni le jeton ni la réponse
-  /// ne sont attendus par l'envoi, et toute erreur est ignorée.
-  Future<void> _shareTokenWithPlugin(ConnectionGateway g) async {
+  /// ne sont attendus par l'envoi. Seule une réponse 4018 (commande absente,
+  /// donc plugin absent du profil) marque le tour « notification non suivie » ;
+  /// toute autre erreur est ignorée.
+  Future<void> _shareTokenWithPlugin(
+    ConnectionGateway g,
+    OperationKey operation,
+    TimelineKey timelineKey,
+  ) async {
     try {
       final token = await notifications?.device.token().timeout(
         const Duration(seconds: 3),
         onTimeout: () => null,
       );
       if (token == null || token.isEmpty) return;
-      unawaited(
-        g
-            .call(
-              'command.dispatch',
-              HermesRpc.dispatchParams('hermes-mobile-token', token),
-              timeout: timeout,
-            )
-            .then<void>((_) {}, onError: (Object _) {}),
+      await g.call(
+        'command.dispatch',
+        HermesRpc.dispatchParams('hermes-mobile-token', token),
+        timeout: timeout,
       );
+    } on RpcError catch (error) {
+      if (error.code != 4018) return;
+      try {
+        await database.update(
+          'outbox_operations',
+          {'notification_unfollowed': 1},
+          where: 'operation_key = ?',
+          whereArgs: [operation.value],
+        );
+        conversation?.refreshAttachments(timelineKey);
+      } catch (_) {
+        /* Une panne de stockage reste indépendante de l'envoi. */
+      }
     } catch (_) {
       /* Jeton facultatif : jamais bloquant. */
     }
@@ -1053,22 +1068,13 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
         }
       }
       onStep?.call('notificationTracking'); // Epic 5, non bloquant
-      try {
-        await notifications?.prepare(operation, scoped, session: runtime);
-      } catch (_) {
-        /* Le suivi ne change jamais l'éligibilité à la soumission. */
-        try {
-          await database.update(
-            'outbox_operations',
-            {'notification_unfollowed': 1},
-            where: 'operation_key = ?',
-            whereArgs: [operation.value],
-          );
-        } catch (_) {
-          /* Une panne de stockage reste indépendante de l'envoi. */
-        }
-      }
-      unawaited(_shareTokenWithPlugin(g));
+      unawaited(
+        _shareTokenWithPlugin(
+          g,
+          operation,
+          TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
+        ),
+      );
       if (status(key).turnActive) {
         // Session reprise en plein tour : rien n'est soumis.
         await _finish(
@@ -1137,11 +1143,6 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     while (true) {
       try {
         if (pieces.isNotEmpty) _assertAttachmentScope(draft, generation);
-        try {
-          await notifications?.submitting(operation, runtime);
-        } catch (_) {
-          /* Suivi indépendant. */
-        }
         final result = await g.call(
           'prompt.submit',
           HermesRpc.submitParams(runtime, prompt),
@@ -1294,11 +1295,6 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       operation,
       draft.body,
       userRowId: userRowId,
-    );
-    await _attachNotification(
-      operation,
-      runtime ?? _runtime[key]?.id ?? '',
-      userRowId,
     );
     conversation?.refreshAttachments(
       TimelineKey(draft.connection, draft.profile, _storedIds[key]!),
@@ -1590,18 +1586,6 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
   });
 
   /// Reprise d'une session déjà connue (jamais de création) : lie le runtime à
-  Future<void> _attachNotification(
-    OperationKey operation,
-    String session,
-    int? row,
-  ) async {
-    try {
-      await notifications?.attach(operation, session, row);
-    } catch (_) {
-      /* Le travail reste accepté lorsque le suivi échoue. */
-    }
-  }
-
   /// Reprise d'une session déjà connue (jamais de création) : lie le runtime à
   /// la projection et rend le travail en cours.
   @override
@@ -1707,12 +1691,6 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           .toList();
       if (fresh.length == 1) {
         await _commitAccepted(draft, operation, fresh.single);
-        final submittedSession = await notifications?.submittedSession(
-          operation,
-        );
-        if (submittedSession != null) {
-          await _attachNotification(operation, submittedSession, fresh.single);
-        }
         await _checkPendingReceipts(draft, state.runtime);
         _set(draft, const SendStatus(state: OperationState.accepted));
       } else if (fresh.isEmpty &&

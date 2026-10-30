@@ -33,7 +33,7 @@ bootstrap() async {
   final secrets = SecureSecretStore(const FlutterSecureStorage());
   final device = FirebaseNotificationClient();
   await device.initialize().timeout(notificationSetupTimeout, onTimeout: () {});
-  final notifications = NotificationRepository(database, secrets, device);
+  final notifications = NotificationRepository(database, device);
   final repository = ConnectionRepository(
     adapter: HermesAdapter(IoHermesTransport()),
     store: SqliteConnectionStore(database),

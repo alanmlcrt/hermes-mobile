@@ -64,3 +64,10 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-6-plugin-hermes-notifications.md`
   summary: Réduire `contracts/notification-tracking.json` au seul payload du plugin (titres, canal, `outcome`, `sessionId`) dans la story 5.8, avec le retrait de l'observateur.
   evidence: décision d'Alanc du 2026-10-29 ; le notifier (`contracts.py`, `sync_contracts.py --check`, tests, smoke Docker) et `test/notification_contract_test.dart` lisent encore le registre et le payload `subscriptionId`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-7-basculer-app-plugin.md`
+  summary: Vérifier sur téléphone le côté Kotlin de `sessionId` (extra FCM au toucher à froid et à chaud, regex, `show` en premier plan) avec le vrai payload du plugin.
+  evidence: Aucun test Android dans le dépôt ; les tests Dart simulent le canal `hermes/notifications`, une clé Kotlin erronée passerait inaperçue.
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-7-basculer-app-plugin.md`
+  summary: Réécrire `contracts/notification-tracking.json` et `test/notification_contract_test.dart` sur le payload `{outcome, sessionId}` en 5.8.
+  evidence: Le test exige encore `subscriptionId` et interdit `sessionId`, à l'opposé de ce que l'app accepte depuis la 5.7.

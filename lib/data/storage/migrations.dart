@@ -1,4 +1,24 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite/sqflite.dart';
+
+import '../../models/connection.dart';
+import 'secret_store.dart';
+
+/// Efface le bearer hérité de l'observateur (5.7) ; remplaçable en test.
+/// Un échec du stockage sécurisé n'empêche jamais la migration d'aboutir.
+Future<void> Function(List<ConnectionKey> keys) purgeObserverBearer =
+    (keys) async {
+      final secrets = SecureSecretStore(const FlutterSecureStorage());
+      for (final key in keys) {
+        try {
+          await secrets
+              .delete(key, SecretUsage.observerBearer)
+              .timeout(const Duration(seconds: 3));
+        } catch (_) {
+          /* Secret hérité : sa purge reste facultative. */
+        }
+      }
+    };
 
 /// Registre en ajout seul : l'indice + 1 est la version SQLite.
 final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
@@ -214,5 +234,22 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
     await db.execute(
       "UPDATE notification_subscriptions SET attached_at = created_at WHERE state IN ('attached', 'notified')",
     );
+  },
+  (db) async {
+    // 5.7 : le plugin Hermes remplace l'observateur ; abonnements, réglages
+    // et bearer par connexion disparaissent.
+    final rows = await db.query(
+      'notification_settings',
+      columns: ['connection_key'],
+    );
+    await db.execute('DROP TABLE notification_subscriptions');
+    await db.execute('DROP TABLE notification_settings');
+    try {
+      await purgeObserverBearer([
+        for (final row in rows) ConnectionKey(row['connection_key'] as String),
+      ]);
+    } catch (_) {
+      /* Échec du stockage sécurisé ignoré : la migration aboutit. */
+    }
   },
 ];
