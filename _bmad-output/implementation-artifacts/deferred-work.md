@@ -46,28 +46,13 @@
   summary: Vérifier la classification d’un outil reconnu depuis les événements du repository jusqu’à la projection persistée.
   evidence: Verification 2 : forTool est testé seul ; le branchement repository préexistait à 3.5 et aucun scénario reçu reconnu ne le couvre.
 
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-2-faire-tourner-observateur-fins-travail.md`
-  summary: Monter un chemin lisible pour `fcm_service_account` (secret Home Assistant ou volume `/share`) avant d'activer `personal`.
-  evidence: `config.yaml` n'expose que `/data` et `Config.validate` exige un fichier existant ; en 5.2 `personal` est refus? avant usage. ? trancher avec la story 5.3 (FCM r?el).
-
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-2-faire-tourner-observateur-fins-travail.md`
-  summary: Permettre ? plusieurs abonnements (appareils) de suivre la m?me ex?cution `(sessionId, user_row_id)`.
-  evidence: `executions.execution_id` est cl? primaire et `Store.attach` renvoie `Conflict` (400) au second abonnement ; d?cision 5.2 : une ex?cution par abonnement. N?cessite une table de liaison et une politique de d?doublonnage par appareil.
-
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-4-ouvrir-conversation-depuis-notification.md`
-  summary: Vérifier sur téléphone le chemin natif du toucher (extra `subscriptionId` posé par FCM et par `show`, `takeOpened` consommé une fois, `onNewIntent` à chaud, filtre `LAUNCHED_FROM_HISTORY`).
-  evidence: aucun harnais de test Android (ni `src/test` ni `androidTest`) ; le test Dart scripte la réponse native. À couvrir par les essais G3 de la story 5.5 : toucher à froid, à chaud, relance depuis les récents.
-
 - source_spec: `_bmad-output/implementation-artifacts/spec-etude-2-plugin-hermes-fcm.md`
   summary: Plugin de notifications : plusieurs téléphones par profil, sans qu'un client écrase le jeton d'un autre.
   evidence: `HERMES_HOME/hermes-mobile/fcm-token` est unique ; le dernier client qui appelle `command.dispatch` reçoit tout.
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-6-plugin-hermes-notifications.md`
-  summary: Réduire `contracts/notification-tracking.json` au seul payload du plugin (titres, canal, `outcome`, `sessionId`) dans la story 5.8, avec le retrait de l'observateur.
-  evidence: décision d'Alanc du 2026-10-29 ; le notifier (`contracts.py`, `sync_contracts.py --check`, tests, smoke Docker) et `test/notification_contract_test.dart` lisent encore le registre et le payload `subscriptionId`.
-
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-7-basculer-app-plugin.md`
   summary: Vérifier sur téléphone le côté Kotlin de `sessionId` (extra FCM au toucher à froid et à chaud, regex, `show` en premier plan) avec le vrai payload du plugin.
   evidence: Aucun test Android dans le dépôt ; les tests Dart simulent le canal `hermes/notifications`, une clé Kotlin erronée passerait inaperçue.
-- source_spec: `_bmad-output/implementation-artifacts/spec-5-7-basculer-app-plugin.md`
-  summary: Réécrire `contracts/notification-tracking.json` et `test/notification_contract_test.dart` sur le payload `{outcome, sessionId}` en 5.8.
-  evidence: Le test exige encore `subscriptionId` et interdit `sessionId`, à l'opposé de ce que l'app accepte depuis la 5.7.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-8-retirer-observateur.md`
+  summary: Vérifier sur téléphone la relance depuis les récents (`FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`) et la consommation unique de `takeOpened` avec la clé `sessionId`.
+  evidence: Report 5-4 clos avec l'observateur ; ces deux comportements de `MainActivity.kt` restent sans test Android. À jouer en 5.5.

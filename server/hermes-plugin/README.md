@@ -41,8 +41,10 @@ Ainsi, pour le profil par défaut,
 2. **Copier la clé** — copier le fichier du compte de service Firebase vers
    `HERMES_HOME\hermes-mobile\service-account.json` (créer le dossier
    `hermes-mobile\` si besoin). Source : `.hermes\hermes-mobile\service-account.json`
-   (déjà installée) ou `\\homeassistant.local\share\hermes-notifier\service-account.json`.
-   Jamais dans le dossier du plugin ni dans le dépôt.
+   (déjà installée). Jamais dans le dossier du plugin ni dans le dépôt.
+   La clé est celle d'un compte de service du projet Firebase personnel, avec le
+   rôle `roles/firebasecloudmessaging.admin` : clé JSON générée depuis la console
+   Firebase (Paramètres du projet → Comptes de service), à garder hors dépôt.
 3. **Activer** — ajouter **seulement** la ligne `- hermes-mobile-notify` à la
    liste `plugins.enabled` de `HERMES_HOME\config.yaml`, sans retirer les autres
    entrées ; pour le profil par défaut, `hermes plugins enable hermes-mobile-notify`
@@ -57,10 +59,6 @@ Si `hermes-mobile-spike` (plugin de l'étude 1, retiré du dépôt) est encore a
 sur un profil, le désactiver (`hermes plugins disable hermes-mobile-spike` ou
 retirer sa ligne de `plugins.enabled`) et supprimer
 `HERMES_HOME\plugins\hermes-mobile-spike\`.
-
-Tant que l'observateur (add-on `hermes-notifier`) n'est pas retiré, un tour peut
-produire deux notifications si celles de l'observateur sont activées dans l'app
-pour ce profil : les désactiver dans les réglages de l'app.
 
 ## Vérification
 

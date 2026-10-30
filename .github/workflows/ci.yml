@@ -44,23 +44,6 @@ jobs:
       - name: Auto-vérification du plugin Hermes de notifications
         run: python server/hermes-plugin/hermes-mobile-notify/__init__.py
 
-      - name: Contrats vendorisés du notifier (dérive)
-        run: python server/notifier/sync_contracts.py --check
-
-      - name: Tests du notifier
-        run: |
-          python -m pip install -r server/notifier/requirements.txt -r server/notifier/requirements-dev.txt
-          python -m unittest discover -s server/notifier/tests -t server/notifier
-
-      # Le packaging statique ne prouve pas que l'image démarre : construire
-      # et exécuter le conteneur, puis charger les contrats embarqués.
-      - name: Image du notifier (build et smoke)
-        run: |
-          docker build -f server/notifier/Dockerfile -t hermes-notifier:ci server/notifier
-          docker run --rm hermes-notifier:ci python -m hermes_notifier --version
-          docker run --rm hermes-notifier:ci python -c "from pathlib import Path; from hermes_notifier.contracts import Contracts; Contracts.load(Path('vendor/contracts'))"
-          docker run --rm --entrypoint sh hermes-notifier:ci -c "test -x /run.sh"
-
       - name: Tests du lien et du QR
         run: |
           python -m pip install -r tool/requirements.txt
