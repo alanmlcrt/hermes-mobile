@@ -71,3 +71,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-5-valider-notifications-telephone.md`
   summary: Rejouer en réel la garde `session_close` restreinte du plugin 1.0.2 (seuls les arrêts sans `turn_id` sont ignorés).
   evidence: 1.0.1 prouvé en réel (09:30:26) ; 1.0.2, restreinte après revue, couverte par l'auto-vérification seulement.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-2-repondre-question-hermes.md`
+  summary: Notifier « Hermes attend ta réponse » sur le téléphone quand une question (clarify) est posée app fermée, via le plugin Hermes de notifications.
+  evidence: Le plugin de l'Epic 5 ne notifie que les fins de travail ; une question non vue expire après 300 s. Reporté par Alanc le 2026-10-30 pour garder la 6.2 côté app.
