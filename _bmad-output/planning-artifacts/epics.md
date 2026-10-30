@@ -1,6 +1,7 @@
 ---
-status: final
-stepsCompleted: [1, 2, 3, 4]
+status: draft
+stepsCompleted: [1, 2]
+extension: "post-MVP 2026-10-30 (Epics 7+) — étapes 1-4 relancées"
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-Hermes-Mobile-2026-10-20/prd.md
   - _bmad-output/planning-artifacts/prds/prd-Hermes-Mobile-2026-10-20/addendum.md
@@ -12,6 +13,7 @@ inputDocuments:
 decisions:
   - "2026-10-20 : FR-13 et FR-14 inclus dans le découpage (Alanc), stories conditionnées à la porte G4 et aux capacités Hermes détectées."
   - "2026-10-20 : voix, routines, groupes d'agents et diffusion publique exclus du MVP ; l'import Discord est retiré du projet (Alanc)."
+  - "2026-10-30 : périmètre post-MVP ouvert (Alanc) : routines, voix, salons d'agents (Bot Mode), ranger/rechercher, modèle et fiche profil (FR15–FR24, NFR7). Exclus : Kanban multi-agent (à reconsidérer), routage auto, import d'équipes, VM/écran distant, serveur MCP externe. Inspiration : OpenMausBot. PRD à réaligner via bmad-prd."
 ---
 
 # Hermes Mobile - Epic Breakdown
@@ -40,6 +42,19 @@ FR14 : Récupérer les résultats [inclus, conditionné à G4] — Les fichiers 
 
 Retiré : FR11 (sauvegarde de réglages depuis l'app), identifiant réservé. Hors MVP : écran de consultation ou d'administration des profils.
 
+**Post-MVP (décision du 2026-10-30)**
+
+FR15 : Routines — Alanc liste, crée, modifie, met en pause/reprend, lance manuellement et supprime les routines (cron Hermes) d'un profil depuis l'app. Planning structuré (une fois, jours choisis, toutes les N min) avec champ avancé. Historique des exécutions visible ; le résultat arrive dans la conversation du profil ; la fin d'une routine est notifiée.
+FR16 : Dictée — Alanc dicte sa demande dans la zone de saisie ; la transcription est modifiable et jamais envoyée automatiquement.
+FR17 : Lecture à voix haute — Une réponse peut être lue et arrêtée ; Markdown et code ne sont pas lus bruts.
+FR18 : Salons d'agents — Alanc crée un salon de 2 à 6 profils, le nomme, gère ses membres, le renomme ou le dissout ; les salons sont listés à part des conversations.
+FR19 : Converser dans un salon — Alanc écrit avec @mentions (@nom, @all), joint des fichiers, voit quel profil répond, arrête le salon ; le salon continue app quittée si Hermes le permet.
+FR20 : Besoin de toi — Quand un agent mentionne @user ou demande une autorisation dans un salon, un badge le signale et une notification ouvre le salon ; Alanc répond ou autorise depuis l'app.
+FR21 : Ranger — Épingler, renommer, marquer non lu, masquer et supprimer (avec confirmation) une conversation ou un salon.
+FR22 : Rechercher — Retrouver une conversation par titre ou contenu ; repli sur une recherche locale si Hermes n'expose pas de recherche.
+FR23 : Modèle — Voir le modèle d'une conversation, en changer en cours de route et régler l'effort de raisonnement, sans réécrire l'historique.
+FR24 : Fiche profil — Voir personnalité/description, modèle par défaut, outils et serveurs MCP actifs, en lecture seule.
+
 ### NonFunctional Requirements
 
 NFR1 : Mobile et accessibilité — Parcours essentiels utilisables au toucher avec clavier affiché, texte agrandi et lecteur d'écran. Icônes d'action avec libellé accessible ; aucun état exprimé seulement par la couleur.
@@ -48,6 +63,7 @@ NFR3 : Accès et secrets — Tailscale fournit le réseau ; l'authentification H
 NFR4 : Compatibilité — Les capacités du serveur sont vérifiées pour chaque fonction ; une fonction absente est signalée clairement. Une capacité obligatoire non démontrée sur l'installation réelle bloque l'acceptation du MVP ; son retrait ou report exige une décision explicite d'Alanc.
 NFR5 : Acceptation réelle — Le MVP est accepté après un essai Android à distance sur l'installation réelle : nouvelle conversation par défaut, profils affichés, échanges avec deux profils et reprise d'historique, long texte, image et document reçus par Hermes, détail d'une action, fin de travail notifiée app quittée, demande d'arrêt confirmée, réponse à une question, et si exposés : autorisation et récupération d'un fichier résultat. Indicateur : aucune duplication d'exécution ni perte de brouillon. Aucune simulation locale ne vaut validation.
 NFR6 : Corpus — Avant les tests d'acceptation, Alanc fournit un long texte, une photo ou capture, un PDF et un document bureautique représentatifs ; formats, volumes et limites prises en charge sont consignés.
+NFR7 : Vérification post-MVP — Chaque epic post-MVP commence par vérifier sur l'installation réelle la surface Hermes qu'il utilise (méthodes, événements, fixtures anonymisées dans `contracts/`). Une capacité absente masque ou signale la fonction, jamais contournée.
 
 ### Additional Requirements
 
@@ -90,6 +106,16 @@ NFR6 : Corpus — Avant les tests d'acceptation, Alanc fournit un long texte, un
 - G3 notification : plugin installé par profil, jeton app → plugin, filtre `tui`, version FCM, prérequis Android, essais app fermée, coupure réseau, sous-agent, reprise de conversation.
 - G4 produit/UX : FR-13/14, interventions en cours, issues notifiées, secours de thème.
 - Cas de contrat à tester : IDs similaires sur deux profils ; coupure après acceptation avant réponse ; événement dupliqué/tronqué/ancien ; arrêt après reconnexion ; upload échoué sans prompt ; fin app fermée ; plugin absent pendant un envoi ; changement d'URL sans réindexation.
+
+**Post-MVP — surfaces Hermes repérées (source `NousResearch/hermes-agent` main, non validées sur l'installation v0.22.2)**
+- Routines : REST dashboard `/api/cron/jobs` (GET/POST/PUT/DELETE), `/api/cron/delivery-targets`, `/api/cron/blueprints` (cf. `apps/desktop/src/api/cron.ts`). À vérifier : exposition sur le backend 9119, rattachement par profil (routines Bot Mode nommées `[bot:<nom>] <routine>`, résultats dans le chat du profil), historique des exécutions.
+- Voix : JSON-RPC `voice.record`, `voice.toggle`, `voice.status`, `voice.tts`, événements `voice.partial`, `voice.transcript`, `voice.interrupted` (`tui_gateway/methods_voice.py`). Choix Hermes vs reconnaissance/synthèse natives Android tranché dans la story d'investigation ; natif Android par défaut si Hermes ne convient pas au mobile.
+- Salons : JSON-RPC `groups.capabilities`, `groups.list`, `groups.create`, `groups.send`, `groups.state`, `groups.log`, `groups.stop`, `groups.rename`, `groups.disband`, `groups.approve`, `groups.retry`, `groups.discard`, `groups.attachment.upload/download` (`tui_gateway/methods_groups.py`). Règles Bot Mode : 2–6 profils + Alanc, @nom / @all / @everyone / @hermes / @user, sans mention tous peuvent répondre, 3 tours sériels max, 10 messages max par envoi, stop/halt/pause adjacents à une mention, contexte ~200 messages / 32 000 caractères, driver durable si `groups.capabilities.driver: true`. Prérequis : Bot Mode actif (`ui_meta.hermes-bots` dans `profile.yaml`).
+- Escalade salon (@user, approbation) : via le plugin de notifications existant ; payload sans contenu (NFR3).
+- Interventions : `approval.pending`, `approval.respond`, `clarify.*` relèvent de l'Epic 6.
+- Modèle : `model_switch`, `agent.reasoning_effort` côté gateway ; exposition à vérifier.
+- Recherche : aucune surface publique repérée ; à vérifier, sinon repli local sur titres et historique en cache.
+- Les nouvelles surfaces restent confinées à l'adaptateur Hermes (AD-7) ; un salon est un fil distinct d'une conversation, avec sa propre clé de route.
 
 ### UX Design Requirements
 
@@ -139,6 +165,17 @@ NFR3 : Epic 1 (secrets, auth), repris en Epic 5 (payload push)
 NFR4 : Epic 1 (détection des capacités), repris par chaque epic d'intégration
 NFR5 : Epic 6 — Story finale d'essai d'acceptation réel
 NFR6 : Epic 4 — Corpus de test fourni par Alanc
+FR15 : Epic 9 — Routines (cron) par profil, historique, fin notifiée
+FR16 : Epic 10 — Dictée dans la zone de saisie
+FR17 : Epic 10 — Lecture à voix haute
+FR18 : Epic 8 — Créer et gérer un salon d'agents
+FR19 : Epic 8 — Converser dans un salon
+FR20 : Epic 8 — Besoin de toi : escalade, autorisation, notification
+FR21 : Epic 7 — Ranger les conversations (salons : Epic 8)
+FR22 : Epic 7 — Rechercher une conversation
+FR23 : Epic 11 — Changer de modèle et d'effort
+FR24 : Epic 11 — Fiche profil en lecture seule
+NFR7 : Epics 7 à 11 — première story de chaque epic
 
 ## Epic List
 
@@ -165,6 +202,26 @@ App quittée, Alanc reçoit une notification de fin (réussite, erreur, arrêt c
 ### Epic 6 : Répondre à Hermes et récupérer ses résultats
 Les questions et autorisations émises par Hermes apparaissent dans le fil et Alanc y répond ; les fichiers produits s'ouvrent ou se téléchargent depuis la conversation. Se termine par l'essai d'acceptation réel du MVP. Requiert G4 et les capacités exposées.
 **FRs covered:** FR13, FR14 · NFR5
+
+### Epic 7 : Ranger et retrouver mes conversations
+Alanc épingle, renomme, marque non lu, masque ou supprime une conversation et retrouve un fil par titre ou contenu. Pose la liste que les salons réutiliseront. Post-MVP, après l'Epic 6.
+**FRs covered:** FR21, FR22 · NFR7
+
+### Epic 8 : Faire travailler mes agents en salon
+Alanc crée un salon de 2 à 6 profils, y écrit avec @mentions, voit qui répond, arrête le salon et gère ses membres ; quand un agent a besoin de lui (@user ou autorisation), une notification ouvre le salon et il répond depuis l'app. Requiert Bot Mode actif ; réutilise Epics 4, 5 et 6.
+**FRs covered:** FR18, FR19, FR20 (+ FR21 pour les salons) · NFR7
+
+### Epic 9 : Programmer des routines
+Alanc crée et pilote les tâches planifiées de chaque profil, voit leur historique et est averti à la fin ; le résultat arrive dans la conversation du profil.
+**FRs covered:** FR15 · NFR7
+
+### Epic 10 : Parler à Hermes et l'écouter
+Alanc dicte ses demandes et fait lire une réponse à voix haute, avec arrêt. Mode appel hors périmètre.
+**FRs covered:** FR16, FR17 · NFR7
+
+### Epic 11 : Choisir le modèle et connaître mes profils
+Alanc change de modèle ou d'effort de raisonnement en cours de conversation et consulte la fiche d'un profil (personnalité, modèle par défaut, outils et MCP).
+**FRs covered:** FR23, FR24 · NFR7
 
 ## Epic 1 : Connecter l'app à mon Hermes et voir mes profils
 
@@ -1044,6 +1101,11 @@ Afin de garder le contrôle des actions sensibles.
 **Quand** ils sont utilisés au lecteur d'écran et en texte agrandi
 **Alors** ils ont des noms accessibles distincts et des cibles tactiles suffisantes
 
+**Étant donné** un profil et son mode d'autorisation lu sur Hermes (`manual`, `smart`, `off`)
+**Quand** Alanc l'affiche puis le change depuis l'app
+**Alors** seul ce profil est modifié (`config.set approvals.mode` avec `profile`), la valeur affichée est celle relue sur Hermes après confirmation, et l'app n'impose aucun mode par défaut
+**Et** le passage en `off` est signalé comme désactivant toute demande d'autorisation
+
 ### Story 6.4 : Récupérer les fichiers produits par Hermes
 
 En tant qu'Alanc,
@@ -1055,6 +1117,7 @@ Afin d'utiliser ses résultats directement sur mon téléphone.
 **Étant donné** un fichier résultat rendu accessible par Hermes
 **Quand** il apparaît dans la conversation
 **Alors** il est identifiable (nom, type, taille si connue) comme résultat disponible (FR14, UX-DR18)
+**Et** seuls les fichiers écrits par Hermes pendant le tour (`write_file`, chemin absolu) sont repérés comme résultats ; un chemin seulement cité dans le texte n'en est pas un (décision G4)
 
 **Étant donné** une simple mention de chemin serveur sans accès authentifié résolu
 **Quand** elle est affichée
@@ -1093,3 +1156,148 @@ Afin de déclarer le MVP accepté sur des preuves et non sur des simulations.
 **Étant donné** un contrôle indisponible ou une capacité obligatoire non démontrée
 **Quand** le rapport d'essai est rédigé
 **Alors** il est expliqué et bloque l'acceptation, sauf décision explicite d'Alanc de retrait ou de report (NFR4)
+
+## Epic 7 : Ranger et retrouver mes conversations
+
+Alanc épingle, renomme, marque non lu, masque ou supprime une conversation et retrouve un fil par titre ou contenu. Pose la liste que les salons réutiliseront. Post-MVP, après l'Epic 6.
+
+### Story 7.1 : Vérifier le rangement et la recherche sur mon installation
+
+En tant qu'Alanc,
+Je veux savoir ce que mon Hermes permet pour renommer, masquer, archiver, supprimer et rechercher des conversations,
+Afin que l'app range côté serveur ce qui peut l'être et localement le reste, sans rien inventer.
+
+**Critères d'acceptation :**
+
+**Étant donné** les méthodes repérées dans le source (`session.title`, `session.set_hidden`, `session.archive`, `session.delete`)
+**Quand** elles sont essayées sur un profil de test de l'installation réelle
+**Alors** `contracts/` consigne pour chacune paramètres, réponses, erreurs et fixtures anonymisées, avec la capacité détectée (NFR7)
+**Et** l'effet de chacune sur `session.list` et sur l'historique vu depuis un autre client (dashboard, Desktop) est documenté
+
+**Étant donné** qu'aucune recherche serveur n'est repérée
+**Quand** l'installation est inspectée
+**Alors** la présence ou l'absence d'une recherche exposée est consignée, et le repli local est retenu en cas d'absence
+
+**Étant donné** ces constats
+**Quand** Alanc les relit
+**Alors** il est décidé et consigné ce qui est partagé avec Hermes (titre, masquage, suppression) et ce qui reste propre au téléphone (épingle, non lu)
+**Et** une méthode absente désactive la fonction correspondante avec un message clair (NFR4), jamais contournée
+
+### Story 7.2 : Renommer une conversation
+
+En tant qu'Alanc,
+Je veux donner un titre parlant à une conversation,
+Afin de la reconnaître d'un coup d'œil dans mon historique.
+
+**Critères d'acceptation :**
+
+**Étant donné** une conversation de l'historique d'un profil
+**Quand** Alanc choisit « Renommer » dans son menu, saisit un titre et valide
+**Alors** le titre est envoyé à Hermes par la méthode vérifiée en 7.1 et affiché seulement après confirmation du serveur
+**Et** un titre vide ou identique n'envoie rien
+
+**Étant donné** un échec réseau ou un refus du serveur
+**Quand** le renommage échoue
+**Alors** l'ancien titre reste affiché, l'erreur est expliquée et la saisie est conservée pour réessayer (NFR2)
+
+**Étant donné** une conversation renommée depuis un autre client
+**Quand** Alanc actualise l'historique
+**Alors** le nouveau titre apparaît
+
+### Story 7.3 : Épingler et marquer non lu
+
+En tant qu'Alanc,
+Je veux garder mes conversations importantes en haut et repérer celles où Hermes a répondu sans que je l'aie lu,
+Afin de ne rien laisser passer.
+
+**Critères d'acceptation :**
+
+**Étant donné** l'historique d'un profil
+**Quand** Alanc épingle ou désépingle une conversation
+**Alors** les conversations épinglées apparaissent en tête, dans l'ordre d'épinglage, avec un repère non exprimé par la seule couleur (NFR1)
+**Et** l'épingle est enregistrée sur le téléphone par connexion, profil et session, et survit au redémarrage de l'app
+
+**Étant donné** un tour terminé (réussite, erreur, arrêt confirmé) dans une conversation qu'Alanc n'a pas ouverte depuis
+**Quand** il revient à l'historique
+**Alors** la conversation est marquée non lue
+**Et** l'ouvrir la marque lue ; « Marquer non lu » dans son menu la remet non lue
+
+**Étant donné** une conversation supprimée ou disparue côté Hermes
+**Quand** l'historique est actualisé
+**Alors** son épingle et son marqueur locaux sont retirés
+
+**Étant donné** le lecteur d'écran actif
+**Quand** il parcourt une conversation épinglée ou non lue
+**Alors** ces états sont annoncés
+
+### Story 7.4 : Masquer et retrouver des conversations
+
+En tant qu'Alanc,
+Je veux sortir de ma liste les conversations dont je n'ai plus besoin sans les détruire,
+Afin de garder un historique lisible.
+
+**Critères d'acceptation :**
+
+**Étant donné** une conversation de l'historique
+**Quand** Alanc choisit « Masquer »
+**Alors** elle est masquée par la méthode retenue en 7.1 (masquage ou archivage) et disparaît de la liste principale
+**Et** un message éphémère propose « Annuler », qui la rétablit
+
+**Étant donné** des conversations masquées
+**Quand** Alanc ouvre la section « Masquées » de l'historique
+**Alors** il les retrouve, peut les ouvrir et les rétablir
+
+**Étant donné** un échec du serveur
+**Quand** le masquage échoue
+**Alors** la conversation reste visible et l'erreur est expliquée
+
+### Story 7.5 : Supprimer une conversation
+
+En tant qu'Alanc,
+Je veux supprimer définitivement une conversation,
+Afin de faire le ménage dans mon Hermes depuis le téléphone.
+
+**Critères d'acceptation :**
+
+**Étant donné** une conversation sans travail en cours
+**Quand** Alanc choisit « Supprimer »
+**Alors** une confirmation explicite indique que la suppression est définitive et touche aussi Hermes
+**Et** après confirmation, `session.delete` est appelé et la conversation n'est retirée de la liste qu'après réponse positive du serveur
+
+**Étant donné** une conversation avec un travail en cours ou un envoi non résolu
+**Quand** Alanc veut la supprimer
+**Alors** la suppression est refusée avec explication (arrêter d'abord)
+
+**Étant donné** une suppression confirmée par le serveur
+**Quand** elle aboutit
+**Alors** brouillon, pièces jointes locales, épingle et marqueur de cette conversation sont effacés du téléphone
+**Et** une notification de fin reçue ensuite pour cette session ouvre l'accueil avec un message « conversation supprimée », sans erreur
+
+**Étant donné** un échec réseau pendant la suppression
+**Quand** le résultat est incertain
+**Alors** la conversation reste affichée, marquée à vérifier, et l'historique actualisé tranche ; rien n'est supprimé localement avant confirmation (NFR2)
+
+### Story 7.6 : Rechercher une conversation
+
+En tant qu'Alanc,
+Je veux retrouver une conversation en tapant quelques mots,
+Afin de ne pas faire défiler tout mon historique.
+
+**Critères d'acceptation :**
+
+**Étant donné** l'historique d'un profil
+**Quand** Alanc saisit un texte dans la recherche
+**Alors** les conversations dont le titre ou l'aperçu contient ce texte (sans tenir compte de la casse ni des accents) sont listées, avec le passage trouvé mis en évidence
+**Et** la recherche porte aussi sur le contenu des conversations déjà présentes sur le téléphone
+
+**Étant donné** une recherche exposée par Hermes (constat de 7.1)
+**Quand** elle est disponible
+**Alors** elle est utilisée et ses résultats sont fusionnés sans doublon ; sinon l'app indique que la recherche porte sur les titres et le contenu déjà chargé
+
+**Étant donné** une recherche sans résultat
+**Quand** la liste est vide
+**Alors** un état vide le dit, distinct d'une erreur de chargement
+
+**Étant donné** l'option « Tous les profils »
+**Quand** Alanc l'active
+**Alors** les résultats de chaque profil sont regroupés et identifiés par leur profil, sans mélanger les conversations (FR3)

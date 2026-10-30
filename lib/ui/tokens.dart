@@ -7,7 +7,8 @@ import '../models/profile_accent.dart';
 
 /// Neutres de l'app (refonte 2026-10-23, DESIGN.md) : fond gris-bleu très
 /// clair, cartes blanches, encre quasi noire ; inversés en sombre. La seule
-/// couleur vive est l'accent du profil ([AccentTokens]).
+/// couleur vive est l'accent du profil ([AccentTokens]). Validée par Alanc le
+/// 2026-10-30 (G4, clair et sombre) : texte ≥ 4,5:1, contours décoratifs.
 abstract final class Palette {
   static const Color bgLight = Color(0xFFF7F8FA);
   static const Color bgDark = Color(0xFF0E1013);

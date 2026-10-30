@@ -230,3 +230,66 @@ de `event-mapping.json`.
 contrat, les constantes du plugin et l'app Android (`MainActivity.kt`,
 `AndroidManifest.xml`) : toute divergence de libellé, de canal ou de champ
 `data` le fait échouer.
+
+## Interventions et résultats (story 6.1, porte G4)
+
+Mesuré le 2026-10-30 sur l'installation réelle, profil de test
+`mesure-pieces-jointes`, avec `tool/sonde_interventions.dart` (journal brut
+hors dépôt). Source lue : commit épinglé, `tui_gateway/server_requests.py` et
+`tui_gateway/contracts/server_requests.py`.
+
+**Prérequis.** Questions et autorisations sont des requêtes JSON-RPC
+serveur → client (`id` = `srq-<12 hex>`, champ `method`, sans `result`). Hermes
+ne les envoie qu'au client qui a dit une fois par connexion
+`client.capabilities {server_requests: true}` (`fixtures/client-capabilities.json`).
+Sans cela, la requête n'est jamais écrite et l'agent attend jusqu'à son délai
+(300 s pour clarify). L'app actuelle ne l'envoie pas.
+
+**Question (`clarify`).** Params : `session_id`, `questions[]` (`qid`,
+`question`, `choices?`, `multi_select`). Réponse : trame `{id, result:
+{answers: {qid: texte}, outcome: "submitted"}}` ; sans `answers` = annulation.
+Prise en compte immédiate : `tool.complete` du clarify suit dans la seconde.
+Le serveur peut suffixer un choix par « (Recommended) » : l'afficher tel quel.
+Fixtures `clarify-request.json`, `clarify-answer.json`.
+
+**Autorisation (`approval`).** Params : `request_id`, `command` (expurgée par le
+serveur), `description`, `pattern_key(s)`, `choices` (`once`, `session`,
+`always`, `deny`), `allow_session`, `allow_permanent`. Réponse `{choice}`.
+Un refus produit `tool.complete` avec `result.status = "blocked"` et
+`user_summary` ; la commande ne s'exécute pas. Fixtures `approval-*.json`.
+Les profils de l'installation sont en `approvals.mode = smart` : les commandes
+signalées sont le plus souvent approuvées sans demande (constaté :
+« auto-approved by smart approval »). Une demande n'arrive au téléphone qu'en
+mode `manual` ou quand le juge smart hésite. Les commandes de la liste
+absolue (`BLOCKED (hardline)`) ne sont jamais proposées.
+
+**Reconnexion.** Documentaire, non mesuré : les requêtes sans réponse reviennent
+dans `open_requests` de `session.resume` / `session.events.since` ; une
+requête expirée ou annulée émet `request.cancel {id, method, reason}` ; une
+réponse à un id fermé est ignorée. `approval.pending` relit les autorisations
+en attente.
+
+**Message pendant le travail.** Un `prompt.submit` pendant un tour répond
+`redirected` : le message est injecté dans le tour en cours, pris en compte
+immédiatement (fixture `prompt-submit-redirected.json`).
+
+**Fichiers résultats.** Sur ce canal, Hermes n'attache pas de fichier : il
+l'écrit côté serveur (`write_file`, `args.path` absolu) et cite le chemin dans
+sa réponse (fixture `result-file-written.json`). `GET /api/fs/download?path=`
+(bearer, `profile` et `session_id` facultatifs) renvoie le fichier en
+`attachment` avec nom et type ; chemin absent = 404. Aucun événement dédié
+« résultat disponible » n'existe : l'identification d'un résultat est une
+décision de l'app.
+
+**Décisions d'Alanc (G4, 2026-10-30).** FR13 et FR14 sont retenus.
+Le mode d'autorisation reste celui de chaque profil, réglé côté Hermes ;
+l'app l'affiche et permet de le changer profil par profil (`config.get` /
+`config.set approvals.mode` avec `profile`, mesuré sans effet sur le profil
+par défaut), critère ajouté à la story 6.3.
+Un fichier résultat est un fichier écrit par Hermes pendant le tour
+(`tool.complete` de `write_file`, `args.path` absolu), téléchargé par
+`/api/fs/download`. Les chemins seulement cités dans le texte de la réponse
+ne sont pas repérés comme résultats.
+Palette de secours (UX-DR3) validée par Alanc le 2026-10-30 en clair et en
+sombre : texte et erreur ≥ 5,3:1 ; contours 1,5 à 1,8:1, acceptés car
+décoratifs (les éléments se distinguent par leur fond). Porte G4 fermée.

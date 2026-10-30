@@ -93,6 +93,56 @@
       "actual": "unverified",
       "surface": "openrpc",
       "fixtures": "synthetic"
+    },
+    {
+      "name": "server_requests",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "client.capabilities {server_requests: true}",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "clarify",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "requête serveur clarify",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "approval",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "requête serveur approval",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "steer",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "prompt.submit pendant un tour -> redirected",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
+    },
+    {
+      "name": "result_download",
+      "required": false,
+      "documented": "present",
+      "actual": "present",
+      "surface": "GET /api/fs/download?path=&profile=&session_id=",
+      "evidence": "install-measured",
+      "measuredAt": "2026-10-30T10:20:00Z",
+      "source": "tool/sonde_interventions.dart"
     }
   ]
 }

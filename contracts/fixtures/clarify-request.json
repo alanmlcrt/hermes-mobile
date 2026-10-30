@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":"srq-000000000001","method":"clarify","params":{"session_id":"a1b2c3d4","questions":[{"qid":"q0","question":"Quelle est ta couleur préférée ?","choices":["rouge (Recommended)","bleu"],"multi_select":false}]}}

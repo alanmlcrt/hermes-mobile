@@ -8,6 +8,10 @@ import 'ui/dynamic_color_bridge.dart';
 import 'ui/gallery.dart';
 import 'ui/theme.dart';
 
+// `--dart-define=SECOURS=true` ignore Dynamic Color pour juger la palette de
+// secours sur un téléphone qui en dispose.
+const _secours = bool.fromEnvironment('SECOURS');
+
 void main() {
   runApp(const GalleryApp());
 }
@@ -19,8 +23,8 @@ class GalleryApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
-        final light = fromDynamicScheme(lightDynamic);
-        final dark = fromDynamicScheme(darkDynamic);
+        final light = _secours ? null : fromDynamicScheme(lightDynamic);
+        final dark = _secours ? null : fromDynamicScheme(darkDynamic);
         return MaterialApp(
           title: GalleryContent.title,
           theme: buildTheme(light, Brightness.light),
