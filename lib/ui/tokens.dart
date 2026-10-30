@@ -489,6 +489,9 @@ abstract final class Layout {
   /// Diamètre du bouton d'envoi rond.
   static const double sendButton = 40;
   static const double stopButton = 48;
+
+  /// Cible tactile minimale (choix et bouton d'une carte question).
+  static const double touchTarget = 48;
   static const double threadMinHeight = 96;
 
   /// Marge haute de l'accueil d'un brouillon vide, en fraction du fil.

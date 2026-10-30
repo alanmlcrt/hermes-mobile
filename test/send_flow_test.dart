@@ -38,7 +38,9 @@ void main() {
 
   List<String> methods() => [
     for (final f in h.transport.frames)
-      if (f['id'] != 'capabilities') f['method'] as String,
+      // Trames de connexion, hors flux d'envoi.
+      if (f['id'] != 'capabilities' && f['id'] != 'client-capabilities')
+        f['method'] as String,
   ];
   Future<Map<String, Object?>> operation() async =>
       (await database.query('outbox_operations')).single;
@@ -205,10 +207,12 @@ void main() {
       'session.resume',
       'prompt.submit',
     ]);
-    expect(h.transport.frames[3]['params'], {
-      'session_id': '<SYNTHETIC_STORED_SESSION>',
-      'profile': 'default',
-    });
+    expect(
+      h.transport.frames.lastWhere(
+        (f) => f['method'] == 'session.resume',
+      )['params'],
+      {'session_id': '<SYNTHETIC_STORED_SESSION>', 'profile': 'default'},
+    );
     expect(h.transport.frames.last['params']['session_id'], 'e5f6a7b8');
     expect(outbox.status(draft.key).state, OperationState.accepted);
   });

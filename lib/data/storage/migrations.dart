@@ -252,4 +252,15 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       /* Échec du stockage sécurisé ignoré : la migration aboutit. */
     }
   },
+  (db) async {
+    // 6.2 : réponse à une question de Hermes, enregistrée avant envoi ; l'id
+    // de requête (`srq-…`) empêche tout second envoi automatique.
+    await db.execute(
+      'CREATE TABLE intervention_answers ('
+      'request_id TEXT PRIMARY KEY COLLATE BINARY, '
+      'connection_key TEXT NOT NULL, profile_key TEXT NOT NULL, '
+      'stored_session_id TEXT NOT NULL, answers TEXT NOT NULL, '
+      'state TEXT NOT NULL, created_at TEXT NOT NULL)',
+    );
+  },
 ];

@@ -7,6 +7,7 @@ import 'package:hermes_mobile/ui/components/composer.dart';
 import 'package:hermes_mobile/ui/components/attachment_list.dart';
 import 'package:hermes_mobile/ui/components/message_bubble.dart';
 import 'package:hermes_mobile/ui/components/work_state_label.dart';
+import 'package:hermes_mobile/ui/components/question_card.dart';
 import 'package:hermes_mobile/ui/components/section_card.dart';
 import 'package:hermes_mobile/ui/components/status_label.dart';
 import 'package:hermes_mobile/ui/components/rabbit_companion.dart';
@@ -467,7 +468,7 @@ void main() {
       GalleryContent.variantReducedMotion,
     ]) {
       // Une fois par composant, dont le scénario conversation pilotable.
-      expect(find.text(variant), findsNWidgets(13), reason: variant);
+      expect(find.text(variant), findsNWidgets(14), reason: variant);
     }
 
     // Les surcharges de chaque variante s'appliquent à son contenu.
@@ -510,9 +511,14 @@ void main() {
     expect(find.text(GalleryContent.pauseRabbit), findsNWidgets(8));
     expect(find.byType(Composer), findsNWidgets(8));
     expect(find.byType(AttachmentList), findsNWidgets(4));
-    // Trois états de connexion et quatre états de travail en libellé ; envoi
-    // et travail en cours sont des bulles à trois points.
-    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 4 + 2)));
+    // Trois états de connexion et cinq états de travail en libellé ; envoi
+    // et travail en cours sont des bulles à trois points. Quatre cartes
+    // question, chacune avec son libellé d'état.
+    expect(find.byType(StatusLabel), findsNWidgets(4 * (3 + 5 + 2 + 4)));
+    expect(find.byType(QuestionCard), findsNWidgets(4 * 4));
+    // Choix affichés tels qu'émis, seulement tant que la question est ouverte.
+    expect(find.text('rouge (Recommended)'), findsNWidgets(4));
+    expect(find.text(GalleryContent.sampleQuestion), findsNWidgets(4 * 4));
     expect(find.byType(MessageBubble), findsNWidgets(4 * 2));
     expect(find.byType(ActivityLine), findsNWidgets(4 * 2));
     expect(

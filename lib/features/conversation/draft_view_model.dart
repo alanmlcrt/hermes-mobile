@@ -18,6 +18,7 @@ class DraftViewModel extends ChangeNotifier {
     required this.conversation,
     required this.key,
     this.picker,
+    this.interventions,
   }) {
     _subscription = gateway.snapshots.listen((_) => _notify());
     _outboxChanges = outbox.changes.listen(_onOutbox);
@@ -31,6 +32,9 @@ class DraftViewModel extends ChangeNotifier {
   final ConversationGateway conversation;
   final DraftKey key;
   final AttachmentPicker? picker;
+
+  /// Réponses aux questions de Hermes ; sans lui, les cartes restent lisibles.
+  final InterventionGateway? interventions;
   List<Attachment> attachments = const [];
   List<AttachmentLimit> attachmentLimits = const [];
   bool attachmentBusy = false;
@@ -186,8 +190,31 @@ class DraftViewModel extends ChangeNotifier {
   SendStatus get sendStatus => outbox.status(key);
   StopStatus? get stopStatus =>
       outbox is StopGateway ? (outbox as StopGateway).stopStatus(key) : null;
-  bool get showStop =>
-      outbox is StopGateway && timeline.workState == WorkState.running;
+  bool get showStop => outbox is StopGateway && timeline.working;
+
+  /// Une carte question peut envoyer sa réponse (socket ouverte, fil à jour).
+  bool get canAnswer =>
+      interventions != null &&
+      _timelineKey != null &&
+      !resyncing &&
+      gateway.snapshot.link == LinkState.connected;
+
+  /// Réponse saisie dans la carte : enregistrée puis envoyée une seule fois.
+  Future<void> answer(String requestId, Map<String, String> answers) async {
+    final k = _timelineKey;
+    final target = interventions;
+    if (k == null || target == null) return;
+    try {
+      await target.answer(k, requestId, answers);
+      error = null;
+    } on AppError catch (e) {
+      error = e;
+    } catch (_) {
+      error = const AppError('storage.unavailable');
+    }
+    _notify();
+  }
+
   bool get canStop =>
       showStop &&
       !resyncing &&

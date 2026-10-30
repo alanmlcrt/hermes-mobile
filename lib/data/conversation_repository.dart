@@ -17,6 +17,16 @@ import 'event_mapping.dart';
 import 'hermes_adapter.dart';
 import 'storage/attachment_files.dart';
 
+/// Registre des réponses locales aux questions (`intervention_answers`),
+/// tenu par `InterventionRepository`.
+abstract interface class QuestionLedger {
+  /// Ids parmi [ids] pour lesquels une réponse locale existe déjà.
+  Future<Set<String>> answered(Iterable<String> ids);
+
+  /// La question est close côté projection (prise en compte, expirée…).
+  Future<void> settle(String requestId, QuestionState state);
+}
+
 /// Seul auteur de la projection distante (`conversation_*`). Ne crée ni session
 /// ni opération : l'outbox lui signale la liaison runtime et les demandes
 /// acceptées. Ne ferme pas la base partagée.
@@ -40,6 +50,25 @@ class ConversationRepository implements ConversationGateway {
 
   /// Posé par l'outbox : seul appelant de `session.resume`.
   SessionResumer? resumer;
+
+  /// Posé par `InterventionRepository`.
+  QuestionLedger? questions;
+
+  /// État local de la réponse à une question (envoi, envoyée, inconnue) ;
+  /// jamais appliqué à une question déjà close.
+  Future<void> markQuestion(
+    TimelineKey key,
+    String requestId,
+    QuestionState state,
+  ) => _enqueue(key, (p) {
+    final at = p.items.indexWhere(
+      (i) => i is QuestionItem && i.requestId == requestId,
+    );
+    if (at < 0) return null;
+    final item = p.items[at] as QuestionItem;
+    if (item.state.settled || item.state == state) return null;
+    return p.copyWith(items: [...p.items]..[at] = item.copyWith(state: state));
+  });
   AttachmentFiles attachmentFiles = AttachmentFiles();
 
   /// Queued outside receipt reconciliation: that may already own this queue.
@@ -186,7 +215,7 @@ class ConversationRepository implements ConversationGateway {
         gateway.snapshot.connection?.key != key.connection ||
         resyncing(key) ||
         (_pendingBoundaries[key] ?? 0) > 0 ||
-        p.workState != WorkState.running) {
+        !p.working) {
       return null;
     }
     return StopTarget(
@@ -466,6 +495,7 @@ class ConversationRepository implements ConversationGateway {
       final epoch = gateway.replayEpoch;
       int? latest;
       TimelineProjection? next;
+      var open = info.openRequests;
       // Une opération incertaine se tranche sur un snapshot, jamais sur un rejeu.
       if (!await resumer.hasUnknown(key) &&
           before?.runtime == info.runtime &&
@@ -484,6 +514,7 @@ class ConversationRepository implements ConversationGateway {
             replayEpoch: epoch,
           );
           latest = since.latest;
+          open = since.openRequests ?? open;
           next = _replay(current, since, info);
         } on RpcError {
           /* rejeu indisponible : snapshot */
@@ -508,7 +539,7 @@ class ConversationRepository implements ConversationGateway {
         latest = null;
         if (epoch != null) {
           try {
-            latest = HermesRpc.since(
+            final cursor = HermesRpc.since(
               await gateway.call(
                 'session.events.since',
                 HermesRpc.sinceParams(
@@ -520,7 +551,9 @@ class ConversationRepository implements ConversationGateway {
               runtime: info.runtime,
               generation: generation,
               replayEpoch: epoch,
-            ).latest;
+            );
+            latest = cursor.latest;
+            open = cursor.openRequests ?? open;
           } on RpcError {
             /* curseur vide */
           } on AppError {
@@ -533,10 +566,19 @@ class ConversationRepository implements ConversationGateway {
           info,
         ).copyWith(replayEpoch: epoch, seq: latest, resetSeq: latest == null);
       }
+      next = await _reconcileQuestions(
+        current,
+        next,
+        open,
+        runtime: info.runtime,
+        generation: generation,
+        replayEpoch: epoch,
+      );
       if (!currentScope()) return;
       await _write(key, next);
       _dirty.remove(key);
       _timers.remove(key)?.cancel();
+      _settle(current, next);
       _cache[key] = next;
       if (!_changes.isClosed) _changes.add(key);
       _synced[key] = generation;
@@ -558,11 +600,232 @@ class ConversationRepository implements ConversationGateway {
     }
   }
 
+  /// Questions après reprise : seules celles de `open_requests` restent
+  /// ouvertes (une réponse locale non reçue le dit) ; les autres sont closes,
+  /// sans jamais renvoyer la réponse locale. Sans `open_requests` (champ
+  /// facultatif), rien n'est fermé : les cartes gardent leur état.
+  Future<TimelineProjection> _reconcileQuestions(
+    TimelineProjection before,
+    TimelineProjection next,
+    List<Map<String, Object?>>? open, {
+    required String runtime,
+    required int generation,
+    required String? replayEpoch,
+  }) async {
+    final requests = [
+      for (final entry in open ?? const <Map<String, Object?>>[])
+        ?HermesRpc.clarifyRequest(
+          entry,
+          runtime: runtime,
+          generation: generation,
+          replayEpoch: replayEpoch,
+        ),
+    ];
+    final ids = {for (final r in requests) r.payload['id'] as String};
+    // Un snapshot ne reconstruit pas les cartes : les précédentes non closes
+    // sont reprises dans le tour courant.
+    final kept = {
+      for (final i in next.items)
+        if (i is QuestionItem) i.requestId,
+    };
+    var p = next.copyWith(
+      items: [
+        for (final i in next.items)
+          if (open != null &&
+              i is QuestionItem &&
+              !i.state.settled &&
+              !ids.contains(i.requestId))
+            i.copyWith(state: QuestionState.closed)
+          else
+            i,
+        // Non closes avant la reprise : rouvrables, sinon closes (sans renvoi).
+        for (final i in before.items)
+          if (i is QuestionItem &&
+              !kept.contains(i.requestId) &&
+              !i.state.settled)
+            _atTurn(
+              open == null || ids.contains(i.requestId)
+                  ? i
+                  : i.copyWith(state: QuestionState.closed),
+              max(max(next.turns, next.userTurns), 1),
+            ),
+      ],
+    );
+    final known = {
+      for (final i in p.items)
+        if (i is QuestionItem) i.requestId,
+    };
+    Set<String> answered = const {};
+    final unseen = ids.difference(known);
+    if (unseen.isNotEmpty) {
+      try {
+        answered = await questions?.answered(unseen) ?? const {};
+      } catch (_) {
+        _log('conversation.questions_unavailable');
+      }
+    }
+    for (final r in requests) {
+      final id = r.payload['id'] as String;
+      p = _ask(
+        p,
+        answered.contains(id)
+            ? GatewayEvent(
+                sessionId: r.sessionId,
+                type: r.type,
+                payload: {...r.payload, 'answered_locally': true},
+                generation: r.generation,
+                replayEpoch: r.replayEpoch,
+              )
+            : r,
+        reopen: true,
+      );
+    }
+    return _afterQuestions(p);
+  }
+
+  static QuestionItem _atTurn(QuestionItem i, int turn) => QuestionItem(
+    turn,
+    requestId: i.requestId,
+    questions: i.questions,
+    state: i.state,
+    previousUnanswered: i.previousUnanswered,
+  );
+
+  /// Ouvre (ou rouvre, après reprise) la carte d'une requête `clarify`.
+  static TimelineProjection _ask(
+    TimelineProjection p,
+    GatewayEvent e, {
+    bool reopen = false,
+  }) {
+    final id = e.payload['id'];
+    final raw = e.payload['questions'];
+    if (id is! String || raw is! List) return p;
+    final at = p.items.indexWhere(
+      (i) => i is QuestionItem && i.requestId == id,
+    );
+    if (at >= 0) {
+      final item = p.items[at] as QuestionItem;
+      // Une question close n'est jamais reproposée.
+      if (item.state.settled) return p;
+      final retry =
+          reopen &&
+          (item.state == QuestionState.sent ||
+              item.state == QuestionState.unknown);
+      if (!retry && item.state != QuestionState.open) return p;
+      return p.copyWith(
+        items: [...p.items]
+          ..[at] = item.copyWith(
+            state: QuestionState.open,
+            previousUnanswered: item.previousUnanswered || retry,
+          ),
+        workState: WorkState.waitingInput,
+      );
+    }
+    final questions = [for (final q in raw) ?ClarifyQuestion.fromJson(q)];
+    if (questions.isEmpty) return p;
+    final turned = p.working && p.turns > 0 ? p : _startTurn(p);
+    return turned.copyWith(
+      items: [
+        ...turned.items,
+        QuestionItem(
+          max(turned.turns, turned.userTurns),
+          requestId: id,
+          questions: questions,
+          previousUnanswered: e.payload['answered_locally'] == true,
+        ),
+      ],
+      workState: WorkState.waitingInput,
+    );
+  }
+
+  /// `request.cancel {id, method, reason}` : carte fermée, plus de saisie.
+  static TimelineProjection _cancel(TimelineProjection p, GatewayEvent e) {
+    final id = e.payload['id'];
+    final at = p.items.indexWhere(
+      (i) => i is QuestionItem && i.requestId == id,
+    );
+    if (at < 0) return p;
+    final item = p.items[at] as QuestionItem;
+    if (item.state.settled) return p;
+    final reason = e.payload['reason'];
+    return _afterQuestions(
+      p.copyWith(
+        items: [...p.items]
+          ..[at] = item.copyWith(
+            state: reason == 'timeout' || reason == 'expired'
+                ? QuestionState.expired
+                : QuestionState.cancelled,
+          ),
+      ),
+    );
+  }
+
+  /// Fin de l'outil `clarify` : la réponse envoyée est prise en compte ; une
+  /// question encore ouverte a été tranchée ailleurs.
+  static TimelineProjection _clarifyDone(TimelineProjection p) {
+    final at = p.items.lastIndexWhere(
+      (i) => i is QuestionItem && !i.state.settled,
+    );
+    if (at < 0) return p;
+    final item = p.items[at] as QuestionItem;
+    return _afterQuestions(
+      p.copyWith(
+        items: [...p.items]
+          ..[at] = item.copyWith(
+            state: item.state == QuestionState.open
+                ? QuestionState.closed
+                : QuestionState.confirmed,
+          ),
+      ),
+    );
+  }
+
+  /// Plus aucune question ouverte : le tour reprend son état « en cours ».
+  static TimelineProjection _afterQuestions(TimelineProjection p) {
+    final waiting = p.items.any(
+      (i) => i is QuestionItem && i.state == QuestionState.open,
+    );
+    if (waiting && p.working) {
+      return p.copyWith(workState: WorkState.waitingInput);
+    }
+    if (!waiting && p.workState == WorkState.waitingInput) {
+      return p.copyWith(workState: WorkState.running);
+    }
+    return p;
+  }
+
+  /// Signale au registre les questions closes par cette transition.
+  void _settle(TimelineProjection before, TimelineProjection after) {
+    final ledger = questions;
+    if (ledger == null) return;
+    final previous = {
+      for (final i in before.items)
+        if (i is QuestionItem) i.requestId: i.state,
+    };
+    for (final i in after.items) {
+      if (i is QuestionItem &&
+          i.state.settled &&
+          previous[i.requestId] != i.state) {
+        unawaited(
+          ledger
+              .settle(i.requestId, i.state)
+              .catchError((Object _) => _log('conversation.settle_failed')),
+        );
+      }
+    }
+  }
+
   /// Applique les événements manqués ; `null` quand le rejeu n'est pas sûr
   /// (tronqué, autre epoch, trou de `seq`, travail indéterminé).
   TimelineProjection? _replay(
     TimelineProjection current,
-    ({List<GatewayEvent> events, int? latest, bool truncated, String? epoch})
+    ({
+      List<GatewayEvent> events,
+      int? latest,
+      bool truncated,
+      String? epoch,
+      List<Map<String, Object?>>? openRequests,
+    })
     since,
     Resumed info,
   ) {
@@ -588,7 +851,7 @@ class ConversationRepository implements ConversationGateway {
     // L'accusé local ne prouve aucun démarrage ; la reprise le confirme mais
     // sans événement frais le snapshot fournit le contenu et le tour courants.
     if (info.running && p.workState == WorkState.sending) return null;
-    if (info.running && p.workState == WorkState.running) {
+    if (info.running && p.working) {
       p = p.copyWith(
         companionPhase:
             info.partial?.isNotEmpty == true ||
@@ -735,7 +998,12 @@ class ConversationRepository implements ConversationGateway {
         return text == null || text.isEmpty
             ? p
             : _append(_ensureTurn(p), text, sealed: true);
+      case EventEffect.intervention:
+        return e.type == HermesRpc.requestCancel ? _cancel(p, e) : _ask(p, e);
       case EventEffect.activity:
+        if (m.activityCompleted && e.payload['name'] == HermesRpc.clarify) {
+          p = _clarifyDone(p);
+        }
         final rawId = e.payload['tool_id'];
         final id =
             m.activityKind == ActivityKind.tool &&
@@ -837,7 +1105,7 @@ class ConversationRepository implements ConversationGateway {
   );
 
   static TimelineProjection _ensureTurn(TimelineProjection p) =>
-      p.workState == WorkState.running && p.turns > 0 ? p : _startTurn(p);
+      p.working && p.turns > 0 ? p : _startTurn(p);
 
   static TimelineProjection _append(
     TimelineProjection p,
@@ -914,6 +1182,13 @@ class ConversationRepository implements ConversationGateway {
         position++;
       }
     }
+    // Le tour est fini : aucune question ne peut plus être reçue ni confirmée.
+    for (var i = 0; i < items.length; i++) {
+      final item = items[i];
+      if (item is QuestionItem && !item.state.settled) {
+        items[i] = item.copyWith(state: QuestionState.closed);
+      }
+    }
     return p.copyWith(
       items: items,
       workState: work,
@@ -951,6 +1226,7 @@ class ConversationRepository implements ConversationGateway {
         _timers[key] ??= Timer(flushInterval, () => _flush(key));
       }
       if (canPublish?.call() == false) return;
+      _settle(current, changed);
       _cache[key] = changed;
       if (!_changes.isClosed) _changes.add(key);
     } catch (_) {

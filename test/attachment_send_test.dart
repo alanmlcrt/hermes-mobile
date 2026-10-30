@@ -72,6 +72,12 @@ class ScopedGateway implements ConnectionGateway {
   }
 
   @override
+  void respond(
+    String id, {
+    Map<String, dynamic>? result,
+    Map<String, dynamic>? error,
+  }) => base.respond(id, result: result, error: error);
+  @override
   Future<void> restore() => base.restore();
   @override
   Future<void> confirmOrigin(Uri origin) => base.confirmOrigin(origin);

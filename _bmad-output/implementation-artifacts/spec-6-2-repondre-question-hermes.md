@@ -2,7 +2,8 @@
 title: 'Story 6.2 — Répondre à une question de Hermes'
 type: 'feature'
 created: '2026-10-30'
-status: 'ready-for-dev'
+status: 'done'
+baseline_commit: '4790f792f964b36f792ea7993593648b0f648b10'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -32,7 +33,7 @@ context:
 - Pas de traitement des autorisations (6.3), ni de modification du plugin de notifications.
 
 **Décisions d'Alanc (2026-10-30) :**
-- La réponse se saisit dans la carte question : choix et champ propres. Le composeur reste celui des messages ordinaires. Un message envoyé pendant l'attente part en `prompt.submit`, redirigé dans le tour en cours.
+- La réponse se saisit dans la carte question : choix et champ propres. Le composeur reste celui des messages ordinaires et reste bloqué pendant le travail, comme aujourd'hui (« Hermes traite encore la demande précédente »). Corrigé par Alanc le 2026-10-30 : la première version de cette décision supposait à tort un envoi redirigé. L'envoi pendant le travail est reporté.
 - Pas de notification de question app fermée dans cette story : c'est reporté (`deferred-work.md`), et une question non vue expire côté Hermes.
 - La spec reste entière malgré sa taille (~2 400 tokens).
 
@@ -67,13 +68,13 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `contracts/fixtures/request-cancel.json`, `contracts/event-mapping.json`, `contracts/README.md` -- fixture `request.cancel` (format lu dans `server_requests.py` épinglé : événement `request.cancel`, payload `{id, method, reason}`), mapping, ligne README -- couvrir le contrat.
-- [ ] `lib/models/connection_gateway.dart`, `lib/data/connection_repository.dart` -- capacité, routage des requêtes serveur, `respond`, refus des autres méthodes -- point d'entrée unique.
-- [ ] `lib/data/hermes_adapter.dart`, `lib/models/timeline.dart` -- `open_requests`, `QuestionItem`, `waitingInput` -- modèle.
-- [ ] `lib/data/storage/migrations.dart`, nouveau `lib/data/intervention_repository.dart` -- persister puis envoyer, états, `_recover` (sending → unknown) -- pas de rejeu.
-- [ ] `lib/data/conversation_repository.dart`, `contracts`-driven `event_mapping.dart` -- projection et réconciliation au resync.
-- [ ] `lib/ui/components/question_card.dart`, `content.dart`, `work_state_label.dart`, `gallery.dart`, `draft_view.dart`, `draft_view_model.dart` -- affichage et saisie.
-- [ ] `test/connection_repository_test.dart`, `test/conversation_test.dart`, `test/resync_test.dart`, nouveau `test/intervention_test.dart`, `test/draft_flow_test.dart`, `test/gallery_test.dart` -- couvrir chaque ligne de la matrice, avec les fixtures `clarify-*`.
+- [x] `contracts/fixtures/request-cancel.json`, `contracts/event-mapping.json`, `contracts/README.md` -- fixture `request.cancel` (format lu dans `server_requests.py` épinglé : événement `request.cancel`, payload `{id, method, reason}`), mapping, ligne README -- couvrir le contrat.
+- [x] `lib/models/connection_gateway.dart`, `lib/data/connection_repository.dart` -- capacité, routage des requêtes serveur, `respond`, refus des autres méthodes -- point d'entrée unique.
+- [x] `lib/data/hermes_adapter.dart`, `lib/models/timeline.dart` -- `open_requests`, `QuestionItem`, `waitingInput` -- modèle.
+- [x] `lib/data/storage/migrations.dart`, nouveau `lib/data/intervention_repository.dart` -- persister puis envoyer, états, `_recover` (sending → unknown) -- pas de rejeu.
+- [x] `lib/data/conversation_repository.dart`, `contracts`-driven `event_mapping.dart` -- projection et réconciliation au resync.
+- [x] `lib/ui/components/question_card.dart`, `content.dart`, `work_state_label.dart`, `gallery.dart`, `draft_view.dart`, `draft_view_model.dart` -- affichage et saisie.
+- [x] `test/connection_repository_test.dart`, `test/conversation_test.dart`, `test/resync_test.dart`, nouveau `test/intervention_test.dart`, `test/draft_flow_test.dart`, `test/gallery_test.dart` -- couvrir chaque ligne de la matrice, avec les fixtures `clarify-*`.
 
 **Acceptance Criteria:**
 - Étant donné une connexion ouverte, quand `gateway.ready` arrive, alors une seule trame `client.capabilities {server_requests: true}` est envoyée sur ce socket.
@@ -82,9 +83,42 @@ context:
 
 ## Implementation Notes
 
+- Le composeur reste bloqué pendant l'attente (`send.turn_active`, Epic 2). C'est la décision corrigée d'Alanc ; l'envoi pendant le travail est reporté.
+- `request.cancel` : `reason` vaut `timeout` (expirée) ou `interrupted` (annulée), d'après le source épinglé (`_emit_cancel`).
+- `tool.complete` de `clarify` ne porte pas d'id de requête. Il confirme la dernière carte non close de la session.
+- Couverture de la matrice : `test/intervention_test.dart` (13 cas), plus `resync_test.dart` et `draft_flow_test.dart`. `connection_repository_test.dart` et `conversation_test.dart` n'ont pas été modifiés.
+- `tool/sonde_interventions.dart` : deux corrections d'analyse (`?profileKey`, `value: before`).
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Constat | Verdict | Preuve / route |
+|---|--------|---------|---------|----------------|
+| 1 | blind | ids `srq-` = compteur par processus, collisions de clé | false | `server_requests.py` : `srq-<12 hex>` aléatoire (uuid) ; les zéros ne viennent que des fixtures. |
+| 2 | blind, edge | `_clarifyDone` peut confirmer la mauvaise carte si plusieurs sont non closes | low | Réel seulement si une carte `sent`/`unknown` survit à la fin de tour (voir #4). Avec #4 corrigé, il ne reste que deux clarify simultanés dans une session, non observé → rejeté. |
+| 3 | blind, edge×2 | `transport.offline` levé par `respond` (rien écrit) enregistré comme `unknown` | medium | `respond` lève `transport.offline` avant toute écriture ; `answer` attrape tout en `unknown`, et la carte reste bloquée → patch. |
+| 4 | edge | Fin de tour avec carte `sending`/`sent`/`unknown` : reste « Réponse envoyée », registre jamais soldé | low | `_finish` ne ferme que `open`. Correction directe → patch. |
+| 5 | blind, edge | `open_requests` absent → toutes les questions closes à la reprise | medium | `SessionResumeResult` ne l'exige pas (openrpc). Sur le chemin snapshot, le `session.events.since` du curseur jette son `openRequests` → patch : le lire, et ne rien fermer si l'info manque. |
+| 6 | blind, edge | clarify malformé : `-32601` au lieu de `-32602`, ou aucune réponse si toutes les questions sont invalides | low | Le schéma Hermes garantit `qid`/`question` ; la correction ajoute des branches → rejeté. |
+| 7 | blind | La carte ne montre pas la réponse envoyée | low | Confort ; ajoute de la surface → rejeté. |
+| 8 | blind | `intervention_answers` jamais purgée, pas d'index `state` | low | Volume minime, même régime que le texte des conversations → rejeté. |
+| 9 | blind | Choix unique : le texte tapé remplace le chip resté sélectionné | low | Réel et fréquent (chip puis saisie) ; correction directe dans `question_card.dart` → patch. |
+| 10 | blind | `_settle` sauté quand `canPublish` est faux ; états fusionnés en `closed` ; `_recover` avant chargement | maybe-false | Il faudrait tracer `canPublish` (projection non publiée = non appliquée) ; au pire faible → rejeté. |
+| 11 | blind | `canAnswer` ignore la capacité et la connexion | low | Carte visible ⇒ clarify présent ; un écart de connexion est refusé avec une erreur affichée → rejeté. |
+| 12 | blind, edge×2 | Sonde : `value: before` peut envoyer null | low | Avant : la chaîne `"null"`, pire. Outil de mesure hors app → rejeté. |
+| 13 | blind | `contracts_test` : liste `notTracked` figée | low | Gêne développeur seulement ; 6.3/6.4 la retireront → rejeté. |
+| 14 | edge | `respond` ne vérifie ni la connexion ni la génération | low | `answer` vérifie la connexion juste avant ; Hermes résout par id quel que soit le socket → rejeté. |
+| 15 | edge | clarify pour une session sans liaison : ignoré, agent bloqué 300 s | maybe-false | Hermes n'envoie qu'aux clients attachés à la session ; au retour, `open_requests` restaure la carte. Il faudrait un essai réel → rejeté (faible). |
+| 16 | edge | id JSON-RPC numérique non traité | false | Hermes émet toujours `srq-…` en chaîne. |
+| 17 | edge | clarify reçu en `sending` avant `message.start` : tour en double | false | clarify est un outil, émis après `message.start`. |
+| 18 | edge | Carte persistée sans questions : réponse vide envoyée | false | `_ask` ne crée aucune carte quand `questions` est vide. |
+| 19 | edge | `canAnswer` avant le début du resync | low | Hermes ignore une réponse à un id clos, puis la réconciliation ferme la carte → rejeté. |
+| 20 | edge | Choix en double répétés | low | Négligeable → rejeté. |
+| 21 | edge | Les tâches citent `connection_repository_test`/`conversation_test` non modifiés | low | Correction = éditer la spec ; consigné dans les Implementation Notes → rejeté. |
+| 22 | gap | Stop pendant `waitingInput` non testé | medium | Seule sortie d'une question (Never) ; aucun test ne l'atteint → patch. |
+| 23 | gap | Texte reçu pendant `waitingInput` : même tour et même état, non testé | medium | `_ensureTurn` modifié sans test → patch. |
+| 24 | gap | Erreur de `vm.answer` et blocage hors connexion non testés | medium | Aucun test widget ou ViewModel → patch. |
 
 ## Design Notes
 

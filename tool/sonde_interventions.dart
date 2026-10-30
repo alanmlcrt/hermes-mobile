@@ -139,7 +139,7 @@ Future<void> main(List<String> args) async {
       // « manual » sur le seul profil de test, rétabli ensuite.
       Future<Object?> mode([String? profileKey]) async => ((await _call(
         'config.get',
-        {'key': 'approvals.mode', if (profileKey != null) 'profile': profileKey},
+        {'key': 'approvals.mode', 'profile': ?profileKey},
       ))['result'] as Map?)?['value'];
       final before = await mode(profile.key.value);
       final otherBefore = await mode();
@@ -163,7 +163,7 @@ Future<void> main(List<String> args) async {
       } finally {
         await _call('config.set', {
           'key': 'approvals.mode',
-          'value': '$before',
+          'value': before,
           'profile': profile.key.value,
         });
         stdout.writeln('  rétabli : test=${await mode(profile.key.value)}, '

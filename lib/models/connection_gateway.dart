@@ -55,6 +55,15 @@ abstract interface class ConnectionGateway {
     Map<String, dynamic> params, {
     Duration timeout = rpcTimeout,
   });
+
+  /// Réponse à une requête serveur → client ([id] `srq-…`) : une seule trame
+  /// `{id, result}` ou `{id, error}`, sans attente. Lève `transport.offline`
+  /// (rien écrit) ou `rpc.uncertain` (écriture peut-être partielle).
+  void respond(
+    String id, {
+    Map<String, dynamic>? result,
+    Map<String, dynamic>? error,
+  });
   Future<void> restore();
   Future<void> confirmOrigin(Uri origin);
   Future<void> authenticate(String password);

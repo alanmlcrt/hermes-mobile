@@ -4,7 +4,17 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/timeline.dart';
 
-enum EventEffect { turnStart, textDelta, interim, terminal, activity, ignore }
+enum EventEffect {
+  turnStart,
+  textDelta,
+  interim,
+  terminal,
+  activity,
+
+  /// Question de Hermes ouverte (`server.clarify`) ou close (`request.cancel`).
+  intervention,
+  ignore,
+}
 
 /// Résultat du mapping d'un événement : jamais de détail inventé.
 class MappedEvent {

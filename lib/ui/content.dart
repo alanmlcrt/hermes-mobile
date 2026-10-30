@@ -184,6 +184,26 @@ abstract final class Content {
   static const collapseActivities = 'Replier les activités';
   static const workSending = 'Envoi…';
   static const workRunning = 'Hermes travaille…';
+  static const workWaitingInput = 'Hermes attend ta réponse';
+
+  // Question de Hermes (story 6.2).
+  static const questionTitle = 'Question de Hermes';
+  static const questionOpen = workWaitingInput;
+  static const questionSending = 'Envoi de la réponse…';
+  static const questionSent = 'Réponse envoyée';
+  static const questionConfirmed = 'Réponse prise en compte';
+  static const questionUnknown = 'Issue inconnue. Aucun renvoi automatique.';
+  static const questionExpired = 'Question expirée';
+  static const questionCancelled = 'Question annulée';
+  static const questionClosed = 'Question close';
+  static const questionPreviousUnanswered =
+      'Réponse précédente non reçue. Tu peux répondre à nouveau.';
+  static const questionMultiHint = 'Plusieurs choix possibles';
+  static String questionFieldLabel(int index, int count) =>
+      count == 1 ? 'Ta réponse' : 'Ta réponse à la question ${index + 1}';
+  static const questionSend = 'Envoyer la réponse';
+  static const questionIncomplete = 'Réponds à chaque question pour envoyer.';
+  static const questionOffline = 'Réponse impossible hors connexion.';
   static const workSucceeded = 'Terminé';
   static const workFailed = 'Erreur';
   static const workStopped = 'Arrêt confirmé';
@@ -294,6 +314,8 @@ abstract final class Content {
     'session.create.idempotency_key' => 'Création sans doublon',
     'file.attach' => 'Pièces jointes',
     'conversation' => 'Conversations',
+    'server_requests' => 'Questions et autorisations de Hermes',
+    'clarify' => 'Questions de Hermes',
     _ => name,
   };
   static String error(String code) => switch (code) {
@@ -332,6 +354,8 @@ abstract final class Content {
     'draft.not_found' => 'Ce brouillon est introuvable.',
     'send.unknown' => 'Résultat incertain : vérifiez la conversation avant de renvoyer. Votre texte est conservé.',
     'send.turn_active' => turnActive,
+    'question.closed' => 'Cette question n’attend plus de réponse.',
+    'question.empty' => questionIncomplete,
     'send.not_received' => 'Hermes n’affiche pas cette demande. Vérifiez la conversation, puis renvoyez-la si besoin. Votre texte est conservé.',
     'turn.error' =>
       'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',
@@ -383,6 +407,11 @@ abstract final class GalleryContent {
   static const variantReducedMotion = 'Mouvement réduit';
 
   static const statusLabelSection = 'Indicateur d\'état';
+  static const questionSection = 'Question de Hermes · démonstration fictive';
+  static const sampleQuestion = 'Quelle est ta couleur préférée ?';
+  static const sampleChoices = ['rouge (Recommended)', 'bleu'];
+  static const sampleMultiQuestion = 'Quels formats veux-tu ?';
+  static const sampleMultiChoices = ['PDF', 'Markdown', 'HTML'];
   static const sectionCardSection = 'Carte de section';
   static const composerSection = 'Zone de saisie';
   static const messageSection = 'Message';

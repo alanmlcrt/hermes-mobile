@@ -60,6 +60,8 @@ class ConnectionRepository implements ConnectionGateway {
     Capability('session.create.idempotency_key', CapabilityState.unverified),
     Capability('file.attach', CapabilityState.unverified),
     Capability('session.interrupt', CapabilityState.unverified),
+    Capability('server_requests', CapabilityState.unverified),
+    Capability('clarify', CapabilityState.unverified),
   ];
   @override
   ConnectionSnapshot get snapshot => _snapshot;
@@ -105,6 +107,28 @@ class ConnectionRepository implements ConnectionGateway {
       _calls.remove(id);
     }
   }
+
+  @override
+  void respond(
+    String id, {
+    Map<String, dynamic>? result,
+    Map<String, dynamic>? error,
+  }) {
+    final socket = _socket;
+    if (socket == null || _snapshot.link != LinkState.connected) {
+      throw const AppError('transport.offline', retryable: true);
+    }
+    try {
+      socket.send({
+        'jsonrpc': '2.0',
+        'id': id,
+        if (error != null) 'error': error else 'result': result ?? const {},
+      });
+    } catch (_) {
+      throw const AppError('rpc.uncertain');
+    }
+  }
+
   void _emit(ConnectionSnapshot value) {
     if (_disposed) return;
     _snapshot = value;
@@ -317,6 +341,7 @@ class ConnectionRepository implements ConnectionGateway {
     final ready = Completer<void>();
     // Propre à cette socket : change à chaque redémarrage du processus Hermes.
     String? replayEpoch;
+    var declared = false;
     _subscription = socket.messages.listen(
       (raw) {
         if (_disposed || _epoch != epoch || !identical(_socket, socket)) return;
@@ -371,6 +396,17 @@ class ConnectionRepository implements ConnectionGateway {
               'method': 'gateway.capabilities',
               'params': <String, dynamic>{},
             });
+            // Sans cette déclaration, Hermes n'écrit aucune question ;
+            // une seule fois par socket.
+            if (!declared) {
+              declared = true;
+              socket.send({
+                'jsonrpc': '2.0',
+                'id': _clientCapabilitiesId,
+                'method': HermesRpc.clientCapabilities,
+                'params': HermesRpc.clientCapabilitiesParams,
+              });
+            }
             if (!ready.isCompleted) ready.complete();
           } else if (message['method'] == 'event' &&
               params is Map &&
@@ -389,6 +425,25 @@ class ConnectionRepository implements ConnectionGateway {
                 generation: generation,
                 replayEpoch: replayEpoch,
               ),
+            );
+          } else if (message['id'] is String &&
+              message['method'] is String &&
+              message['method'] != 'event') {
+            _serverRequest(message, socket, generation, replayEpoch);
+          } else if (message['id'] == _clientCapabilitiesId) {
+            final result = message['result'];
+            final methods = result is Map ? result['server_requests'] : null;
+            _capability(
+              'server_requests',
+              methods is List
+                  ? CapabilityState.present
+                  : CapabilityState.absent,
+            );
+            _capability(
+              'clarify',
+              methods is List && methods.contains(HermesRpc.clarify)
+                  ? CapabilityState.present
+                  : CapabilityState.absent,
             );
           } else if (message['id'] is String &&
               _calls.containsKey(message['id'])) {
@@ -480,6 +535,36 @@ class ConnectionRepository implements ConnectionGateway {
     } catch (_) {
       await _closeSocket();
       throw const AppError('transport.websocket', retryable: true);
+    }
+  }
+
+  static const _clientCapabilitiesId = 'client-capabilities';
+
+  /// Requête serveur → client : `clarify` suit le chemin des événements de
+  /// session ; toute autre reçoit aussitôt une erreur (l'agent n'attend pas).
+  void _serverRequest(
+    Map<Object?, Object?> message,
+    GatewaySocket socket,
+    int generation,
+    String? replayEpoch,
+  ) {
+    final event = HermesRpc.clarifyRequest(
+      message,
+      generation: generation,
+      replayEpoch: replayEpoch,
+    );
+    if (event != null) {
+      _events.add(event);
+      return;
+    }
+    try {
+      socket.send({
+        'jsonrpc': '2.0',
+        'id': message['id'],
+        'error': HermesRpc.unsupportedRequest(),
+      });
+    } catch (_) {
+      /* La perte de socket est traitée par onError/onDone. */
     }
   }
 

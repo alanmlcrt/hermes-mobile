@@ -252,6 +252,21 @@ Prise en compte immédiate : `tool.complete` du clarify suit dans la seconde.
 Le serveur peut suffixer un choix par « (Recommended) » : l'afficher tel quel.
 Fixtures `clarify-request.json`, `clarify-answer.json`.
 
+**Réponse aux questions (story 6.2).** L'app déclare
+`client.capabilities {server_requests: true}` une fois par socket, juste après
+`gateway.capabilities`. Une requête `clarify` devient l'événement synthétique
+`server.clarify` (payload `{id, questions}`), routé comme les autres événements
+de session ; `open_requests` de `session.resume` / `session.events.since`
+(entrées `{id, method, params}`) produit les mêmes événements. Toute autre
+requête serveur reçoit aussitôt une erreur JSON-RPC `-32601` (méthode non prise
+en charge) jusqu'à la 6.3. `request.cancel {id, method, reason}` ferme la carte
+(fixture synthétique `request-cancel.json`, format lu dans
+`tui_gateway/server_requests.py` épinglé) : `reason` `timeout` ou `expired`
+= question expirée, sinon annulée. `event-mapping.json` porte ces deux types
+avec l'effet `intervention`. La réponse est enregistrée
+(`intervention_answers`, clé = id `srq-…`) avant la trame ; une issue incertaine
+reste « inconnue » et n'est jamais renvoyée automatiquement.
+
 **Autorisation (`approval`).** Params : `request_id`, `command` (expurgée par le
 serveur), `description`, `pattern_key(s)`, `choices` (`once`, `session`,
 `always`, `deny`), `allow_session`, `allow_permanent`. Réponse `{choice}`.

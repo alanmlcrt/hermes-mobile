@@ -5,7 +5,16 @@ import 'history.dart';
 import 'profile.dart';
 
 /// État du travail distant ; distinct de l'état de la connexion.
-enum WorkState { sending, running, succeeded, failed, stopped, unknown }
+/// `waitingInput` : le tour est en cours et Hermes attend une réponse (6.2).
+enum WorkState {
+  sending,
+  running,
+  waitingInput,
+  succeeded,
+  failed,
+  stopped,
+  unknown,
+}
 
 enum ActivityKind {
   tool,
@@ -147,6 +156,7 @@ sealed class TimelineItem {
         ],
       ),
       'resp' => ResponseItem(turn, json['text'] as String),
+      'ask' => QuestionItem.fromJson(json),
       _ => ActivityItem.fromJson(json),
     };
   }
@@ -192,6 +202,128 @@ class ResponseItem extends TimelineItem {
   final String text;
   @override
   Map<String, Object?> toJson() => {'k': 'resp', 'turn': turn, 'text': text};
+}
+
+/// Cycle d'une question de Hermes (`clarify`) vu par l'app. Seuls `sent` →
+/// `confirmed` (fin de l'outil `clarify`) et les fermetures viennent du
+/// serveur ; `sending`, `sent` et `unknown` décrivent la réponse locale.
+enum QuestionState {
+  open,
+  sending,
+  sent,
+  confirmed,
+  unknown,
+  expired,
+  cancelled,
+  closed;
+
+  /// Plus aucune saisie ni réouverture possible.
+  bool get settled =>
+      this == confirmed ||
+      this == expired ||
+      this == cancelled ||
+      this == closed;
+}
+
+/// Une question telle qu'émise (`questions[]`), choix inclus, sans reformulation.
+class ClarifyQuestion {
+  const ClarifyQuestion({
+    required this.qid,
+    required this.text,
+    this.choices = const [],
+    this.multiSelect = false,
+  });
+  final String qid;
+  final String text;
+  final List<String> choices;
+  final bool multiSelect;
+
+  Map<String, Object?> toJson() => {
+    'qid': qid,
+    'question': text,
+    'choices': choices,
+    'multi_select': multiSelect,
+  };
+
+  /// `null` si l'entrée n'est pas exploitable (pas d'identifiant ni de texte).
+  static ClarifyQuestion? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final qid = json['qid'];
+    final text = json['question'];
+    if (qid is! String || qid.isEmpty || text is! String || text.isEmpty) {
+      return null;
+    }
+    final choices = json['choices'];
+    return ClarifyQuestion(
+      qid: qid,
+      text: text,
+      choices: [
+        if (choices is List)
+          for (final c in choices)
+            if (c is String && c.isNotEmpty) c,
+      ],
+      multiSelect: json['multi_select'] == true,
+    );
+  }
+}
+
+/// Carte « question » : une requête serveur `clarify` (id `srq-…`).
+class QuestionItem extends TimelineItem {
+  const QuestionItem(
+    super.turn, {
+    required this.requestId,
+    required this.questions,
+    this.state = QuestionState.open,
+    this.previousUnanswered = false,
+  });
+  final String requestId;
+  final List<ClarifyQuestion> questions;
+  final QuestionState state;
+
+  /// Rouverte par `open_requests` alors qu'une réponse locale existait.
+  final bool previousUnanswered;
+
+  QuestionItem copyWith({QuestionState? state, bool? previousUnanswered}) =>
+      QuestionItem(
+        turn,
+        requestId: requestId,
+        questions: questions,
+        state: state ?? this.state,
+        previousUnanswered: previousUnanswered ?? this.previousUnanswered,
+      );
+
+  static QuestionItem fromJson(Map<String, Object?> json) => QuestionItem(
+    json['turn'] as int,
+    requestId: json['id'] as String,
+    questions: [
+      for (final q in (json['questions'] as List? ?? const []))
+        ?ClarifyQuestion.fromJson(q),
+    ],
+    state:
+        QuestionState.values.asNameMap()[json['state']] ?? QuestionState.closed,
+    previousUnanswered: json['previousUnanswered'] == true,
+  );
+
+  @override
+  Map<String, Object?> toJson() => {
+    'k': 'ask',
+    'turn': turn,
+    'id': requestId,
+    'questions': [for (final q in questions) q.toJson()],
+    'state': state.name,
+    'previousUnanswered': previousUnanswered,
+  };
+}
+
+/// Réponse aux questions de Hermes, depuis la carte ; aucun appel direct.
+abstract interface class InterventionGateway {
+  /// Enregistre la réponse ([answers] : `qid` → texte non vide) puis l'envoie
+  /// une seule fois. Lève `AppError` si rien n'a pu partir.
+  Future<void> answer(
+    TimelineKey key,
+    String requestId,
+    Map<String, String> answers,
+  );
 }
 
 /// Ligne d'activité générique ; [kind] vient de la table de mapping.
@@ -365,7 +497,13 @@ class TimelineProjection {
   );
 
   bool get inFlight =>
-      workState == WorkState.sending || workState == WorkState.running;
+      workState == WorkState.sending ||
+      workState == WorkState.running ||
+      workState == WorkState.waitingInput;
+
+  /// Le tour serveur est en cours (travail ou attente d'une réponse).
+  bool get working =>
+      workState == WorkState.running || workState == WorkState.waitingInput;
 
   /// Contenu sans curseur (le curseur a ses propres colonnes).
   Map<String, Object?> toJson() => {
@@ -405,6 +543,7 @@ class Resumed {
     this.partial,
     this.queued = false,
     this.generation = 0,
+    this.openRequests,
   });
   final String runtime;
   final bool running;
@@ -421,6 +560,10 @@ class Resumed {
   /// Génération de socket qui a porté la reprise.
   final int generation;
 
+  /// Requêtes serveur encore ouvertes (`open_requests`, entrées
+  /// `{id, method, params}`) ; `null` si le serveur n'en dit rien.
+  final List<Map<String, Object?>>? openRequests;
+
   Resumed at(int generation) => Resumed(
     runtime: runtime,
     running: running,
@@ -428,6 +571,7 @@ class Resumed {
     partial: partial,
     queued: queued,
     generation: generation,
+    openRequests: openRequests,
   );
 }
 

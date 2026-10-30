@@ -75,3 +75,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-6-2-repondre-question-hermes.md`
   summary: Notifier « Hermes attend ta réponse » sur le téléphone quand une question (clarify) est posée app fermée, via le plugin Hermes de notifications.
   evidence: Le plugin de l'Epic 5 ne notifie que les fins de travail ; une question non vue expire après 300 s. Reporté par Alanc le 2026-10-30 pour garder la 6.2 côté app.
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-2-repondre-question-hermes.md`
+  summary: Permettre d'envoyer un message pendant un travail en cours (`prompt.submit` répond `redirected`, injecté dans le tour), aujourd'hui bloqué par `send.turn_active`.
+  evidence: Mesuré en 6.1 (fixture `prompt-submit-redirected.json`) ; écarté de la 6.2 par Alanc le 2026-10-30, car cela touche le flux d'envoi de l'Epic 2.

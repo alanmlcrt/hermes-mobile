@@ -20,6 +20,7 @@ void main() {
       'tool.start': EventEffect.activity,
       'tool.complete': EventEffect.activity,
       'gateway.ready': EventEffect.ignore,
+      'request.cancel': EventEffect.intervention,
       'future.synthetic': EventEffect.activity, // repli : type absent
     };
     var seen = 0;
@@ -34,7 +35,8 @@ void main() {
       expect(mapped.effect, expected[params['type']], reason: file.path);
       seen++;
     }
-    expect(seen, 11); // dont deux gateway.ready et deux message.complete
+    // Dont deux gateway.ready, deux message.complete et trois tool.complete.
+    expect(seen, 14);
   });
 
   test('statut de message.complete et repli inconnu', () {
@@ -61,6 +63,15 @@ void main() {
     expect(end.activityCompleted, isTrue);
     expect(end.workState, isNull);
     expect(mapping.map('mcp.browser', {}).activityKind, ActivityKind.unknown);
+  });
+
+  test('questions : ouverture en attente de réponse, annulation sans état', () {
+    final ask = mapping.map('server.clarify', {});
+    expect(ask.effect, EventEffect.intervention);
+    expect(ask.workState, WorkState.waitingInput);
+    final cancel = mapping.map('request.cancel', {'reason': 'timeout'});
+    expect(cancel.effect, EventEffect.intervention);
+    expect(cancel.workState, isNull);
   });
 
   test('le fichier de mapping est déclaré en asset', () {

@@ -6,6 +6,7 @@
     "interim",
     "terminal",
     "activity",
+    "intervention",
     "ignore"
   ],
   "events": {
@@ -106,6 +107,22 @@
       "workState": null,
       "terminal": false,
       "activityKind": null
+    },
+    "server.clarify": {
+      "effect": "intervention",
+      "connectionState": null,
+      "workState": "waitingInput",
+      "terminal": false,
+      "activityKind": null,
+      "source": "synthétique : requête serveur clarify convertie par l'adaptateur"
+    },
+    "request.cancel": {
+      "effect": "intervention",
+      "connectionState": null,
+      "workState": null,
+      "terminal": false,
+      "activityKind": null,
+      "source": "https://github.com/NousResearch/hermes-agent/blob/9e01b44dd23978f9ff40b7837467f3a9f1582130/tui_gateway/server_requests.py"
     }
   },
   "fallback": "unknown"

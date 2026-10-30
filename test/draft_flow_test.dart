@@ -7,9 +7,11 @@ import 'package:hermes_mobile/features/profiles/profile_accents.dart';
 import 'package:hermes_mobile/features/conversation/draft_view.dart';
 import 'package:hermes_mobile/features/conversation/draft_view_model.dart';
 import 'package:hermes_mobile/main.dart';
+import 'package:hermes_mobile/models/app_error.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/models/profile.dart';
+import 'package:hermes_mobile/models/timeline.dart';
 import 'package:hermes_mobile/ui/content.dart';
 
 import 'support/connection_fakes.dart';
@@ -370,7 +372,12 @@ void main() {
     expect(_announced(Content.sendCapabilityMissing), findsWidgets);
     expect(sendEnabled(tester), isFalse);
     expect(outbox.sent, isEmpty);
-    expect(h.transport.frames.where((f) => f['id'] != 'capabilities'), isEmpty);
+    expect(
+      h.transport.frames.where(
+        (f) => f['id'] != 'capabilities' && f['id'] != 'client-capabilities',
+      ),
+      isEmpty,
+    );
   });
 
   testWidgets('texte 200 % : état d’envoi lisible sans débordement', (
@@ -569,6 +576,222 @@ void main() {
       semantics.dispose();
     });
   }
+
+  testWidgets('carte question à 200 % et au lecteur d’écran : noms distincts, '
+      'cibles suffisantes, réponse saisie dans la carte', (tester) async {
+    tester.view.physicalSize = const Size(375, 700);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final semantics = tester.ensureSemantics();
+    final answers = _Answers();
+    final (timelineKey, conversation) = await _pumpQuestion(tester, answers);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    // État dit par un libellé ; choix et question tels qu'émis.
+    expect(find.bySemanticsLabel(Content.questionOpen), findsWidgets);
+    expect(find.text('Quelle est ta couleur préférée ?'), findsOne);
+    final send = find.widgetWithText(FilledButton, Content.questionSend);
+    final field = find.widgetWithText(
+      TextField,
+      Content.questionFieldLabel(0, 1),
+    );
+    for (final target in [
+      find.widgetWithText(ChoiceChip, 'rouge (Recommended)'),
+      find.widgetWithText(ChoiceChip, 'bleu'),
+      send,
+    ]) {
+      await tester.ensureVisible(target);
+      final size = tester.getSize(target);
+      expect(size.height, greaterThanOrEqualTo(48), reason: '$target');
+      expect(size.width, greaterThanOrEqualTo(48), reason: '$target');
+    }
+    expect(field, findsOne);
+    // Le composeur des messages reste distinct de l'envoi de la réponse.
+    expect(find.byTooltip(Content.send), findsOne);
+    expect(Content.questionSend, isNot(Content.send));
+    expect(tester.widget<FilledButton>(send).onPressed, isNull);
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'bleu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'bleu'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'bleu'))
+          .selected,
+      isTrue,
+    );
+    expect(
+      tester.getSemantics(find.widgetWithText(ChoiceChip, 'bleu')).label,
+      'bleu',
+    );
+    expect(tester.widget<FilledButton>(send).onPressed, isNotNull);
+    // Choix unique : texte saisi et puce ne coexistent jamais.
+    bool chipSelected() => tester
+        .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'bleu'))
+        .selected;
+    await tester.enterText(field, 'vert');
+    await tester.pumpAndSettle();
+    expect(chipSelected(), isFalse);
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'bleu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'bleu'));
+    await tester.pumpAndSettle();
+    expect(chipSelected(), isTrue);
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+    await tester.ensureVisible(send);
+    await tester.tap(send);
+    await tester.pumpAndSettle();
+    expect(answers.calls, hasLength(1));
+    expect(answers.calls.single.$1, timelineKey);
+    expect(answers.calls.single.$2, 'srq-000000000001');
+    expect(answers.calls.single.$3, {'q0': 'bleu'});
+    // Close : plus aucune saisie.
+    conversation.set(
+      timelineKey,
+      const TimelineProjection(
+        items: [
+          QuestionItem(
+            1,
+            requestId: 'srq-000000000001',
+            questions: [
+              ClarifyQuestion(
+                qid: 'q0',
+                text: 'Quelle est ta couleur préférée ?',
+              ),
+            ],
+            state: QuestionState.expired,
+          ),
+        ],
+        workState: WorkState.running,
+        turns: 1,
+        userTurns: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(Content.questionExpired), findsOne);
+    expect(find.text(Content.questionSend), findsNothing);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('carte question : refus de la réponse dit à l’écran', (
+    tester,
+  ) async {
+    final answers = _Answers(const AppError('question.closed'));
+    await _pumpQuestion(tester, answers);
+    await tester.pumpAndSettle();
+    final chip = find.widgetWithText(ChoiceChip, 'bleu');
+    await tester.ensureVisible(chip);
+    await tester.pumpAndSettle();
+    await tester.tap(chip);
+    await tester.pumpAndSettle();
+    final send = find.widgetWithText(FilledButton, Content.questionSend);
+    await tester.ensureVisible(send);
+    await tester.tap(send);
+    await tester.pumpAndSettle();
+    expect(answers.calls, hasLength(1));
+    expect(
+      find.textContaining(Content.error('question.closed')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('carte question hors connexion : envoi désactivé, raison dite', (
+    tester,
+  ) async {
+    final answers = _Answers();
+    await _pumpQuestion(tester, answers, connected: false);
+    await tester.pumpAndSettle();
+    final chip = find.widgetWithText(ChoiceChip, 'bleu');
+    await tester.ensureVisible(chip);
+    await tester.pumpAndSettle();
+    await tester.tap(chip);
+    await tester.pumpAndSettle();
+    expect(find.text(Content.questionOffline), findsOne);
+    final send = find.widgetWithText(FilledButton, Content.questionSend);
+    expect(tester.widget<FilledButton>(send).onPressed, isNull);
+    expect(answers.calls, isEmpty);
+  });
+}
+
+class _Answers implements InterventionGateway {
+  _Answers([this.error]);
+  final AppError? error;
+  final calls = <(TimelineKey, String, Map<String, String>)>[];
+  @override
+  Future<void> answer(
+    TimelineKey key,
+    String requestId,
+    Map<String, String> answers,
+  ) async {
+    calls.add((key, requestId, answers));
+    if (error != null) throw error!;
+  }
+}
+
+/// Brouillon d'une session existante dont le fil porte une question ouverte.
+Future<(TimelineKey, MemoryConversation)> _pumpQuestion(
+  WidgetTester tester,
+  _Answers answers, {
+  bool connected = true,
+}) async {
+  final h = await _launched();
+  if (connected) await h.connect();
+  final outbox = MemoryOutbox();
+  const key = DraftKey('d-q');
+  final connection =
+      h.repository.snapshot.connection?.key ?? h.store.value!.key;
+  outbox.drafts[key] = Draft(
+    key: key,
+    connection: connection,
+    profile: const ProfileKey('default'),
+    body: '',
+    storedSessionId: 's-1',
+  );
+  final conversation = MemoryConversation();
+  final timelineKey = TimelineKey(
+    connection,
+    const ProfileKey('default'),
+    's-1',
+  );
+  conversation.set(
+    timelineKey,
+    const TimelineProjection(
+      items: [
+        QuestionItem(
+          1,
+          requestId: 'srq-000000000001',
+          questions: [
+            ClarifyQuestion(
+              qid: 'q0',
+              text: 'Quelle est ta couleur préférée ?',
+              choices: ['rouge (Recommended)', 'bleu'],
+            ),
+          ],
+        ),
+      ],
+      workState: WorkState.waitingInput,
+      turns: 1,
+      userTurns: 1,
+    ),
+  );
+  await tester.pumpWidget(
+    MaterialApp(
+      home: DraftView(
+        create: () => DraftViewModel(
+          outbox: outbox,
+          gateway: h.repository,
+          conversation: conversation,
+          interventions: answers,
+          key: key,
+        ),
+        accents: ProfileAccents(h.repository),
+      ),
+    ),
+  );
+  return (timelineKey, conversation);
 }
 
 /// Statut ou raison de blocage : annoncé (région live ou indication du bouton

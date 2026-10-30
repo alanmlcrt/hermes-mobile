@@ -15,6 +15,7 @@ import 'components/work_state_label.dart';
 import 'components/section_card.dart';
 import 'components/status_label.dart';
 import 'components/profile_choice.dart';
+import 'components/question_card.dart';
 import 'components/rabbit_companion.dart';
 import 'components/companion_background_editor.dart';
 import 'components/companion_backdrop.dart';
@@ -95,6 +96,38 @@ class ComponentGallery extends StatelessWidget {
     runSpacing: Spacing.sm,
     children: [for (final s in WorkState.values) WorkStateLabel(state: s)],
   );
+
+  static Widget _questions() {
+    const single = ClarifyQuestion(
+      qid: 'q0',
+      text: GalleryContent.sampleQuestion,
+      choices: GalleryContent.sampleChoices,
+    );
+    const multi = ClarifyQuestion(
+      qid: 'q1',
+      text: GalleryContent.sampleMultiQuestion,
+      choices: GalleryContent.sampleMultiChoices,
+      multiSelect: true,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        QuestionCard(
+          questions: const [single, multi],
+          state: QuestionState.open,
+          onSubmit: (_) {},
+        ),
+        for (final state in const [
+          QuestionState.sent,
+          QuestionState.confirmed,
+          QuestionState.expired,
+        ]) ...[
+          const SizedBox(height: Spacing.sm),
+          QuestionCard(questions: const [single], state: state),
+        ],
+      ],
+    );
+  }
 
   static Widget _history() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -187,6 +220,7 @@ class ComponentGallery extends StatelessWidget {
       (GalleryContent.messageSection, _messages),
       (GalleryContent.activitySection, _activityLines),
       (GalleryContent.workStateSection, _workStates),
+      (GalleryContent.questionSection, _questions),
       (
         Content.stopDemo,
         () => Column(

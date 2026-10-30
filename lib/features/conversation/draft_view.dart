@@ -11,6 +11,7 @@ import '../../ui/components/composer.dart';
 import '../../ui/components/attachment_list.dart';
 import '../../ui/components/message_bubble.dart';
 import '../../ui/components/profile_avatar.dart';
+import '../../ui/components/question_card.dart';
 import '../../ui/components/status_label.dart';
 import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
@@ -517,6 +518,14 @@ class _DraftViewState extends State<DraftView> {
         text: item.text,
         fromUser: true,
         attachments: item.attachments,
+      ),
+      QuestionItem() => QuestionCard(
+        key: ValueKey(('question', vm.draft?.key, item.requestId)),
+        questions: item.questions,
+        state: item.state,
+        previousUnanswered: item.previousUnanswered,
+        canAnswer: vm.canAnswer,
+        onSubmit: (answers) => vm.answer(item.requestId, answers),
       ),
     };
     // Les activités provisoires du prochain envoi restent après l'historique,

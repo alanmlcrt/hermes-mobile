@@ -152,16 +152,22 @@ void main() {
         capabilities.every(
           (c) =>
               c['actual'] == 'unverified' ||
-              // Seule file.attach peut être mesurée sur l'installation.
-              c['name'] == 'file.attach',
+              // Une valeur réelle ne vient que d'une mesure datée et sourcée.
+              (c['evidence'] == 'install-measured' &&
+                  DateTime.tryParse(c['measuredAt'] as String? ?? '') != null &&
+                  (c['source'] as String? ?? '').isNotEmpty),
         ),
         isTrue,
       );
       final harness = Harness();
       addTearDown(harness.repository.dispose);
+      // Capacités mesurées en 6.1 mais pas encore suivies par l'app (6.3, 6.4).
+      const notTracked = {'approval', 'steer', 'result_download'};
       expect(
         harness.repository.snapshot.capabilities.map((c) => c.name),
-        capabilities.map((c) => c['name']),
+        capabilities
+            .map((c) => c['name'])
+            .where((name) => !notTracked.contains(name)),
       );
       expect(
         harness.repository.snapshot.capabilities

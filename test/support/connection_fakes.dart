@@ -90,11 +90,18 @@ class FakeSocket implements GatewaySocket {
   @override
   void send(Map<String, dynamic> message) {
     owner.frames.add(message);
-    if (message['method'] == owner.throwOnMethod) {
+    owner.onFrame?.call(message);
+    if ((message['method'] != null &&
+            message['method'] == owner.throwOnMethod) ||
+        (message['method'] == null && owner.throwOnResponse)) {
       throw StateError('synthetic write failure');
     }
+    // Réponse de l'app à une requête serveur : rien à répondre.
+    if (message['method'] == null) return;
     final script = owner.rpc;
-    if (script != null && message['id'] != 'capabilities') {
+    if (script != null &&
+        message['id'] != 'capabilities' &&
+        message['id'] != 'client-capabilities') {
       final outcome = script(
         message['method'] as String,
         Map<String, dynamic>.from(message['params'] as Map),
@@ -117,6 +124,10 @@ class FakeSocket implements GatewaySocket {
       return;
     }
     if (owner.silentRpc) return;
+    if (message['id'] == 'client-capabilities') {
+      controller.add(fixture('client-capabilities')..['id'] = message['id']);
+      return;
+    }
     controller.add({
       'jsonrpc': '2.0',
       'id': message['id'],
@@ -151,6 +162,21 @@ class FakeTransport implements HermesTransport {
 
   /// Méthode dont l'écriture lève une erreur (trame peut-être partie).
   String? throwOnMethod;
+
+  /// L'écriture d'une réponse à une requête serveur lève une erreur.
+  bool throwOnResponse = false;
+
+  /// Observe chaque trame écrite par l'app, au moment de l'écriture.
+  void Function(Map<String, dynamic> frame)? onFrame;
+
+  /// Envoie une trame serveur sur la dernière socket ouverte.
+  void push(Object? message) => sockets.last.controller.add(message);
+
+  /// Trames de réponse de l'app aux requêtes serveur.
+  List<Map<String, dynamic>> get responses => [
+    for (final f in frames)
+      if (f['method'] == null) f,
+  ];
 
   /// Script des appels hors `gateway.capabilities` : Map = résultat,
   /// [RpcFail] = erreur, [RpcDrop] = socket coupée, autre = silence.

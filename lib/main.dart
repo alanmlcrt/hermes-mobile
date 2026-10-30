@@ -25,6 +25,7 @@ Future<void> main() async {
       :backgrounds,
       :accents,
       :notifications,
+      :interventions,
     ) = await bootstrap();
     runApp(
       MainApp(
@@ -34,6 +35,7 @@ Future<void> main() async {
         backgrounds: backgrounds,
         accents: accents,
         notifications: notifications,
+        interventions: interventions,
       ),
     );
   } catch (_) {
@@ -58,8 +60,12 @@ class MainApp extends StatefulWidget {
     this.backgrounds,
     this.accents,
     this.notifications,
+    this.interventions,
   });
   final ConnectionGateway gateway;
+
+  /// Réponses aux questions de Hermes (6.2).
+  final InterventionGateway? interventions;
   final CompanionBackgroundStore? backgrounds;
 
   /// Couleurs des profils ; en mémoire si nul.
@@ -85,6 +91,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       backgrounds: widget.backgrounds,
       accents: widget.accents,
       notifications: widget.notifications,
+      interventions: widget.interventions,
     );
     // Notification touchée : à chaud par le flux, à froid par l'intent de
     // lancement. Écoutée avant la restauration, qu'elle attend si besoin.

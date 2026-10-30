@@ -4,6 +4,7 @@ import '../data/connection_repository.dart';
 import '../data/conversation_repository.dart';
 import '../data/event_mapping.dart';
 import '../data/hermes_adapter.dart';
+import '../data/intervention_repository.dart';
 import '../data/outbox_repository.dart';
 import '../data/notification_repository.dart';
 import '../data/firebase_notification_client.dart';
@@ -26,6 +27,7 @@ Future<
     OutboxGateway outbox,
     ConversationGateway conversation,
     NotificationRepository notifications,
+    InterventionGateway interventions,
   })
 >
 bootstrap() async {
@@ -58,5 +60,10 @@ bootstrap() async {
       notifications: notifications,
     ),
     conversation: conversation,
+    interventions: InterventionRepository(
+      database,
+      gateway: repository,
+      conversation: conversation,
+    ),
   );
 }

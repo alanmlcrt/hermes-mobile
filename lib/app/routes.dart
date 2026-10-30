@@ -130,6 +130,7 @@ class AppRoutes {
     CompanionBackgroundStore? backgrounds,
     ProfileAccentStore? accents,
     NotificationRepository? notifications,
+    InterventionGateway? interventions,
   }) : _gateway = gateway,
        _outbox = outbox,
        _notifications = notifications {
@@ -236,6 +237,7 @@ class AppRoutes {
               outbox: outbox,
               gateway: gateway,
               conversation: conversation,
+              interventions: interventions,
               key: DraftKey(state.pathParameters['draftKey']!),
             ),
             accents: this.accents,
@@ -292,6 +294,7 @@ class AppRoutes {
                 outbox: outbox,
                 gateway: gateway,
                 conversation: conversation,
+                interventions: interventions,
                 key: key,
               ),
               accents: this.accents,

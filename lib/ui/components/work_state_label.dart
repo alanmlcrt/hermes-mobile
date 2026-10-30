@@ -19,6 +19,7 @@ class WorkStateLabel extends StatelessWidget {
   static String label(WorkState state) => switch (state) {
     WorkState.sending => Content.workSending,
     WorkState.running => Content.workRunning,
+    WorkState.waitingInput => Content.workWaitingInput,
     WorkState.succeeded => Content.workSucceeded,
     WorkState.failed => Content.workFailed,
     WorkState.stopped => Content.workStopped,
@@ -28,6 +29,7 @@ class WorkStateLabel extends StatelessWidget {
   static IconData icon(WorkState state) => switch (state) {
     WorkState.sending => Icons.upload_outlined,
     WorkState.running => Icons.hourglass_empty,
+    WorkState.waitingInput => Icons.help_outline,
     WorkState.succeeded => Icons.check_circle_outline,
     WorkState.failed => Icons.error_outline,
     WorkState.stopped => Icons.stop_circle_outlined,

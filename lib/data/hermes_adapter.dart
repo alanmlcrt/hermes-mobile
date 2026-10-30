@@ -408,8 +408,70 @@ abstract final class HermesRpc {
       inflight: _filled(inflight),
       partial: partial is String && partial.isNotEmpty ? partial : null,
       queued: _filled(r['queued']),
+      openRequests: openRequests(r),
     );
   }
+
+  /// Entrées `open_requests` (`OpenRequestEntry {id, method, params}`) ;
+  /// `null` si le champ est absent ou mal formé.
+  static List<Map<String, Object?>>? openRequests(Map<String, dynamic> r) {
+    final raw = r['open_requests'];
+    if (raw is! List) return null;
+    return [
+      for (final e in raw)
+        if (e is Map && e['id'] is String && e['method'] is String)
+          Map<String, Object?>.from(e),
+    ];
+  }
+
+  /// Déclaration des requêtes serveur, une fois par socket.
+  static const clientCapabilities = 'client.capabilities';
+  static const clientCapabilitiesParams = {'server_requests': true};
+
+  /// Seule requête serveur prise en charge (6.2) ; type synthétique interne.
+  static const clarify = 'clarify';
+  static const clarifyEvent = 'server.clarify';
+  static const requestCancel = 'request.cancel';
+  static const methodNotFound = -32601;
+
+  /// Requête serveur `clarify` (directe ou `open_requests`) rendue comme un
+  /// événement de session ; `null` si elle n'est pas exploitable.
+  static GatewayEvent? clarifyRequest(
+    Map<Object?, Object?> request, {
+    String? runtime,
+    required int generation,
+    required String? replayEpoch,
+  }) {
+    final id = request['id'];
+    final params = request['params'];
+    if (request['method'] != clarify || id is! String || params is! Map) {
+      return null;
+    }
+    final session = runtime ?? params['session_id'];
+    final questions = params['questions'];
+    if (session is! String || session.isEmpty || questions is! List) {
+      return null;
+    }
+    return GatewayEvent(
+      sessionId: session,
+      type: clarifyEvent,
+      payload: {'id': id, 'questions': questions},
+      generation: generation,
+      replayEpoch: replayEpoch,
+    );
+  }
+
+  /// Réponse soumise : `{answers: {qid: texte}, outcome: "submitted"}`.
+  static Map<String, dynamic> clarifyAnswer(Map<String, String> answers) => {
+    'answers': answers,
+    'outcome': 'submitted',
+  };
+
+  /// Refus immédiat d'une requête serveur non prise en charge.
+  static Map<String, dynamic> unsupportedRequest() => {
+    'code': methodNotFound,
+    'message': 'method not supported by client',
+  };
 
   static bool _filled(Object? value) => switch (value) {
     Map() => value.isNotEmpty,
@@ -497,6 +559,7 @@ abstract final class HermesRpc {
     int? latest,
     bool truncated,
     String? epoch,
+    List<Map<String, Object?>>? openRequests,
   })
   since(
     Map<String, dynamic> r, {
@@ -530,6 +593,7 @@ abstract final class HermesRpc {
       latest: latest is int ? latest : null,
       truncated: r['truncated'] != false,
       epoch: epoch is String ? epoch : null,
+      openRequests: openRequests(r),
     );
   }
 
