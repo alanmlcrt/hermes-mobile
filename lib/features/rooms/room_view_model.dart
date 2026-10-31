@@ -32,11 +32,11 @@ class RoomViewModel extends ChangeNotifier {
       text.trim().isNotEmpty &&
       available.contains(RoomFeature.send) &&
       !sends.any((s) => s.state == 'unknown' || s.state == 'sending');
-  List<String> get mentions => [
-    'all',
-    'hermes',
-    ...?snapshot?.room.members.map((m) => m.handle),
-  ];
+  List<RoomMention> get mentions =>
+      snapshot == null ? const [] : rooms.mentions(snapshot!.room);
+  String displayText(RoomEntry entry) => snapshot == null
+      ? entry.text
+      : rooms.displayText(snapshot!.room, entry.text);
 
   Future<void> open() async {
     try {

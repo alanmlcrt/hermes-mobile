@@ -645,19 +645,85 @@ abstract final class HermesRpc {
 
   static Map<String, dynamic> roomCreate(
     String name,
-    Set<ProfileKey> members,
-  ) => {
+    Set<ProfileKey> members, {
+    Map<ProfileKey, String> displayNames = const {},
+  }) => {
     'name': name,
     'members': [
       for (final p in members)
         {
           'member_id': p.value,
           'profile': p.value,
-          'handle': 'agent${members.toList().indexOf(p) + 1}',
-          'display_name': p.value,
+          'handle': _roomProfileMention(p, members),
+          'display_name': displayNames[p]?.isNotEmpty == true
+              ? displayNames[p]
+              : p.value,
         },
     ],
   };
+
+  static String _roomProfileMention(
+    ProfileKey profile,
+    Iterable<ProfileKey> members,
+  ) {
+    if (profile.value == 'default' &&
+        !members.contains(const ProfileKey('hermes'))) {
+      return 'hermes';
+    }
+    if (const {'all', 'everyone', 'user'}.contains(profile.value)) {
+      return 'agent-${profile.value}';
+    }
+    return profile.value;
+  }
+
+  static String _roomMemberMention(RoomSummary room, RoomMember member) =>
+      _roomProfileMention(member.profile, room.members.map((m) => m.profile));
+
+  static List<RoomMention> roomMentions(RoomSummary room) {
+    final members = [
+      for (final m in room.members)
+        RoomMention(
+          _roomMemberMention(room, m),
+          m.name.isEmpty ? m.profile.value : m.name,
+        ),
+    ];
+    return [
+      const RoomMention('all', 'all'),
+      ...members,
+      if (!members.any((m) => m.token == 'hermes'))
+        const RoomMention('hermes', 'hermes'),
+    ];
+  }
+
+  /// Les anciens salons ont des handles agent1/agent2 immuables. Le journal
+  /// conserve le format serveur ; seul l'affichage utilise les alias humains.
+  static String roomDisplayText(RoomSummary room, String text) =>
+      _roomMentionText(text, {
+        for (final m in room.members) m.handle: _roomMemberMention(room, m),
+      });
+  static String roomOutgoingText(RoomSummary room, String text) =>
+      _roomMentionText(text, {
+        for (final m in room.members) _roomMemberMention(room, m): m.handle,
+      });
+  static String _roomMentionText(String text, Map<String, String> aliases) =>
+      text.splitMapJoin(
+        RegExp(r'```[\s\S]*?(?:```|$)|`[^`\n]*`|https?://\S+'),
+        onMatch: (m) => m.group(0)!,
+        onNonMatch: (part) => part.replaceAllMapped(
+          RegExp(r'(^|[^\w@])@([A-Za-z0-9][A-Za-z0-9._:-]*)'),
+          (m) {
+            final token = m.group(2)!;
+            final candidates = aliases.entries
+                .where((e) => e.key.toLowerCase() == token.toLowerCase())
+                .map((e) => e.value)
+                .toSet();
+            final replacement =
+                aliases[token] ??
+                (candidates.length == 1 ? candidates.single : token);
+            return '${m.group(1)}@$replacement';
+          },
+        ),
+      );
   static ({bool working, bool blocked}) roomStatus(Map r) {
     final status = r['driver_status'];
     return (

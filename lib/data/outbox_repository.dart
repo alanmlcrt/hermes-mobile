@@ -111,12 +111,14 @@ class OutboxRepository
         throw const AppError('rpc.uncertain');
       }
       final eventId = randomUuid();
+      final room = await repo.find(key);
+      final outgoing = HermesRpc.roomOutgoingText(room, text);
       await database.insert('outbox_room_operations', {
         'connection_key': key.connection.value,
         'profile_key': key.profile.value,
         'room_id': key.room,
         'event_id': eventId,
-        'text': text,
+        'text': outgoing,
         'state': 'sending',
       });
       Future<void> status(String state) async {
@@ -132,7 +134,7 @@ class OutboxRepository
         final result = await repo.call(
           key,
           HermesRpc.groupsSend,
-          HermesRpc.roomSend(eventId, text),
+          HermesRpc.roomSend(eventId, outgoing),
         );
         if (!HermesRpc.roomAccepted(result, key, eventId)) {
           throw const AppError('rpc.uncertain');

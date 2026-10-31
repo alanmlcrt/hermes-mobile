@@ -31,9 +31,56 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _text.addListener(_caretChanged);
     vm.addListener(_changed);
     unawaited(vm.open());
   }
+
+  void _caretChanged() {
+    if (mounted) setState(() {});
+  }
+
+  TextRange? get _activeMention {
+    final value = _text.value;
+    if (!value.selection.isValid || !value.selection.isCollapsed) return null;
+    final at = value.selection.baseOffset;
+    final before = value.text.substring(0, at);
+    if (!RegExp(r'(^|[\s(])@([A-Za-z0-9._:-]*)$').hasMatch(before)) return null;
+    final start = before.lastIndexOf('@');
+    final tail = RegExp(r'^[A-Za-z0-9._:-]*')
+        .firstMatch(value.text.substring(at))!;
+    return TextRange(start: start, end: at + tail.group(0)!.length);
+  }
+
+  void _insertMention(RoomMention mention, TextRange range) {
+    final current = _text.text;
+    if (range.end > current.length) return;
+    final end = range.end < current.length && current[range.end] == ' '
+        ? range.end + 1
+        : range.end;
+    final inserted = '@${mention.token} ';
+    final next = current.replaceRange(range.start, end, inserted);
+    _text.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: range.start + inserted.length),
+    );
+    vm.edit(next);
+  }
+
+  Future<void> _help() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      scrollable: true,
+      title: const Text(Content.roomMentionsTitle),
+      content: const Text(Content.roomMentionHelp),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(Content.roomHelpClose),
+        ),
+      ],
+    ),
+  );
 
   void _changed() {
     if (!_focusedAttention &&
@@ -62,6 +109,7 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     vm.removeListener(_changed);
     vm.dispose();
+    _text.removeListener(_caretChanged);
     _text.dispose();
     super.dispose();
   }
@@ -102,7 +150,10 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
               details: entry.details,
             )
           else
-            MessageBubble(text: entry.text, fromUser: entry.fromUser),
+            MessageBubble(
+              text: vm.displayText(entry),
+              fromUser: entry.fromUser,
+            ),
         ],
       ),
     );
@@ -210,109 +261,143 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: vm,
-    builder: (context, _) => Scaffold(
-      appBar: AppBar(
-        title: Text(vm.snapshot?.room.name ?? Content.rooms),
-        actions: [
-          IconButton(
-            tooltip: Content.roomRefresh,
-            onPressed: vm.loading ? null : vm.refresh,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(Spacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (vm.snapshot == null && vm.loading)
-                      const Text(Content.roomsLoading),
-                    const Text(Content.roomNotificationsPending),
-                    if (vm.error != null)
-                      Semantics(
-                        liveRegion: true,
-                        child: Text(Content.roomError(vm.error!)),
-                      ),
-                    if (vm.snapshot?.working == true)
-                      const Text(Content.roomWorking),
-                    if (vm.stopState != null)
-                      Semantics(
-                        liveRegion: true,
-                        child: Text(Content.roomStopStatus(vm.stopState!)),
-                      ),
-                    if (vm.snapshot?.working == true &&
-                        vm.available.contains(RoomFeature.stop))
-                      TextButton.icon(
-                        onPressed: vm.busy ? null : vm.stop,
-                        icon: const Icon(Icons.stop_circle_outlined),
-                        label: const Text(Content.roomStop),
-                      ),
-                    for (final task in vm.snapshot?.tasks ?? <RoomTask>[])
-                      _task(task),
-                    if (vm.snapshot?.waiting == true)
-                      const Text(Content.roomWaiting),
-                    for (final entry in vm.snapshot?.entries ?? <RoomEntry>[])
-                      _entry(entry),
-                    for (final a in vm.approvals) _approval(a),
-                    for (final send in vm.sends)
-                      if (send.state != 'confirmed')
-                        Text(Content.roomSendStatus(send.state)),
-                  ],
-                ),
-              ),
+    builder: (context, _) {
+      final range = _activeMention;
+      final query = range == null
+          ? ''
+          : _text.text
+                .substring(range.start + 1, _text.selection.baseOffset)
+                .toLowerCase();
+      final suggestions = range == null
+          ? const <RoomMention>[]
+          : vm.mentions
+                .where(
+                  (m) =>
+                      m.label.toLowerCase().contains(query) ||
+                      m.token.toLowerCase().startsWith(query),
+                )
+                .toList();
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(vm.snapshot?.room.name ?? Content.rooms),
+          actions: [
+            IconButton(
+              tooltip: Content.roomMentionsTitle,
+              onPressed: _help,
+              icon: const Icon(Icons.alternate_email),
             ),
-            Flexible(
-              flex: Layout.roomComposerFlex,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(Spacing.sm),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(Content.roomMentionHelp),
-                    if (vm.text.contains('@'))
-                      Wrap(
-                        spacing: Spacing.xs,
-                        children: [
-                          for (final mention in vm.mentions)
-                            ActionChip(
-                              label: Text('@$mention'),
-                              onPressed: () {
-                                final at = _text.selection.isValid
-                                    ? _text.selection.baseOffset
-                                    : vm.text.length;
-                                final start = vm.text.lastIndexOf(
-                                  '@',
-                                  at > 0 ? at - 1 : 0,
-                                );
-                                if (start >= 0) {
-                                  vm.edit(
-                                    '${vm.text.substring(0, start)}@$mention ${vm.text.substring(at)}',
-                                  );
-                                }
-                              },
-                            ),
-                        ],
-                      ),
-                    Composer(
-                      controller: _text,
-                      onChanged: vm.edit,
-                      onSend: vm.canSend ? vm.send : null,
-                      disabledReason: vm.available.contains(RoomFeature.send)
-                          ? null
-                          : Content.roomSendUnavailable,
-                    ),
-                  ],
-                ),
-              ),
+            IconButton(
+              tooltip: Content.roomRefresh,
+              onPressed: vm.loading ? null : vm.refresh,
+              icon: const Icon(Icons.refresh),
             ),
           ],
         ),
-      ),
-    ),
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, viewport) => Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(Spacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (vm.snapshot == null && vm.loading)
+                          const Text(Content.roomsLoading),
+                        if (vm.error != null)
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(Content.roomError(vm.error!)),
+                          ),
+                        if (vm.snapshot?.working == true)
+                          const Text(Content.roomWorking),
+                        if (vm.stopState != null)
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(Content.roomStopStatus(vm.stopState!)),
+                          ),
+                        if (vm.snapshot?.working == true &&
+                            vm.available.contains(RoomFeature.stop))
+                          TextButton.icon(
+                            onPressed: vm.busy ? null : vm.stop,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text(Content.roomStop),
+                          ),
+                        for (final task in vm.snapshot?.tasks ?? <RoomTask>[])
+                          _task(task),
+                        if (vm.snapshot?.waiting == true)
+                          const Text(Content.roomWaiting),
+                        for (final entry
+                            in vm.snapshot?.entries ?? <RoomEntry>[])
+                          _entry(entry),
+                        for (final a in vm.approvals) _approval(a),
+                        for (final send in vm.sends)
+                          if (send.state != 'confirmed')
+                            Text(Content.roomSendStatus(send.state)),
+                      ],
+                    ),
+                  ),
+                ),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight:
+                        viewport.maxHeight *
+                        (viewport.maxHeight < Layout.roomCompactViewport
+                            ? Layout.roomComposerShortFraction
+                            : Layout.roomComposerMaxFraction),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(Spacing.sm),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (suggestions.isNotEmpty)
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final mention in suggestions)
+                                  Padding(
+                                    padding: const EdgeInsetsDirectional.only(
+                                      end: Spacing.xs,
+                                    ),
+                                    child: ActionChip(
+                                      label: Text(
+                                        Content.roomMentionLabel(mention.label),
+                                      ),
+                                      onPressed: () =>
+                                          _insertMention(mention, range!),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        Composer(
+                          compact: true,
+                          hint: Content.roomComposerLabel,
+                          maxLines:
+                              viewport.maxHeight < Layout.roomCompactViewport
+                              ? ComposerLines.roomShort
+                              : ComposerLines.room,
+                          controller: _text,
+                          onChanged: vm.edit,
+                          onSend: vm.canSend ? vm.send : null,
+                          disabledReason:
+                              vm.available.contains(RoomFeature.send)
+                              ? null
+                              : Content.roomSendUnavailable,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
   );
 }

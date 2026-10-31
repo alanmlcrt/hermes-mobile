@@ -20,6 +20,11 @@ class RoomRepository implements RoomGateway {
   final ConnectionGateway gateway;
   final Duration timeout;
   final _busy = <RoomKey>{};
+  @override
+  List<RoomMention> mentions(RoomSummary room) => HermesRpc.roomMentions(room);
+  @override
+  String displayText(RoomSummary room, String text) =>
+      HermesRpc.roomDisplayText(room, text);
   final _capabilities = <(ConnectionKey, ProfileKey, int), RoomCapabilities>{};
   @override
   RoomCapabilities? knownCapabilities(
@@ -222,8 +227,13 @@ class RoomRepository implements RoomGateway {
   String newId() => randomUuid();
 
   @override
-  Future<RoomSummary> find(RoomKey key) async =>
-      HermesRpc.roomFromResult(await call(key, HermesRpc.groupsState));
+  Future<RoomSummary> find(RoomKey key) async {
+    final room = HermesRpc.roomFromResult(
+      await call(key, HermesRpc.groupsState),
+    );
+    if (room.id != key.room) throw const AppError('contract.invalid_response');
+    return room;
+  }
 
   @override
   Future<RoomSummary> create(
@@ -246,7 +256,13 @@ class RoomRepository implements RoomGateway {
     final result = await call(
       key,
       HermesRpc.groupsCreate,
-      HermesRpc.roomCreate(name.trim(), members),
+      HermesRpc.roomCreate(
+        name.trim(),
+        members,
+        displayNames: {
+          for (final p in gateway.snapshot.profiles) p.key: p.label,
+        },
+      ),
     );
     try {
       final room = HermesRpc.roomFromResult(result);

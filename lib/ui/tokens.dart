@@ -475,6 +475,8 @@ abstract final class Motion {
 
 /// Hauteur visible du champ de saisie, en lignes ; au-delà il défile.
 abstract final class ComposerLines {
+  static const int room = 4;
+  static const int roomShort = 2;
   static const int min = 1;
   static const int max = 8;
   static const int withAttachments = 2;
@@ -488,7 +490,9 @@ abstract final class CodeStyle {
 /// Échelles de texte de référence (galerie : texte agrandi 200 %).
 /// Proportions de mise en page.
 abstract final class Layout {
-  static const int roomComposerFlex = 1;
+  static const double roomComposerMaxFraction = .45;
+  static const double roomComposerShortFraction = .65;
+  static const double roomCompactViewport = 320;
 
   /// Largeur max d'une bulle, en fraction de l'écran.
   static const double bubbleMaxWidth = .85;

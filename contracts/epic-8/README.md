@@ -65,6 +65,14 @@ preuve de notification app fermée. Les fichiers restent hors périmètre 8.1–
 
 ## Conventions préparées dans l'app, à confirmer au téléphone
 
+- Release 32 : les nouveaux salons utilisent les noms des profils comme handles,
+  et leurs noms d'affichage pour les libellés. Les anciens salons conservent leurs
+  handles serveur : les mentions humaines sont converties dans HermesRpc avant
+  envoi, puis le texte effectivement transmis est persisté dans l'outbox avant
+  la trame. Le fil conserve le journal brut et affiche les alias humains. Les
+  identifiants de profils et de salons ne sont ni renommés ni normalisés ; aucun
+  changement de membres n'est simulé. Code et URL ne sont pas réécrits.
+
 - Release 31 : `seatable_profiles` est optionnel. Son absence ne bloque plus
   `groups.list`. Pour créer, l'app lit `profiles.list` avec `include_sessions: false`
   et le même profil RPC ; elle retient uniquement les profils de la connexion

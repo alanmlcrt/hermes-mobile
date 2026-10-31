@@ -7,6 +7,8 @@ import 'timeline.dart';
 const roomPollInterval = Duration(seconds: 3);
 
 abstract interface class RoomGateway {
+  List<RoomMention> mentions(RoomSummary room);
+  String displayText(RoomSummary room, String text);
   Future<void> markSeen(
     RoomKey key,
     int seq, {
@@ -55,6 +57,12 @@ class RoomMember {
   final ProfileKey profile;
   final String name;
   final String handle;
+}
+
+class RoomMention {
+  const RoomMention(this.token, this.label);
+  final String token;
+  final String label;
 }
 
 class RoomSummary {

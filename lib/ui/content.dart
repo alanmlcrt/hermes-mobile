@@ -8,6 +8,10 @@ import '../models/room.dart';
 abstract final class Content {
   static const rooms = 'Salons';
   static const roomRefresh = 'Actualiser le salon';
+  static const roomComposerLabel = 'Message au salon';
+  static const roomMentionsTitle = 'Appeler un agent';
+  static const roomHelpClose = 'Fermer';
+  static String roomMentionLabel(String name) => '@$name';
   static const roomStop = 'Arrêter le salon';
   static const roomDiscard = 'Abandonner';
   static const roomDiscardConfirm =
