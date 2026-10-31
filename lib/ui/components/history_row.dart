@@ -21,7 +21,23 @@ class HistoryRow extends StatefulWidget {
     this.marker = const ConversationMarker(),
     this.onTogglePin,
     this.onToggleUnread,
+    this.hidden = false,
+    this.onHide,
+    this.onDelete,
+    this.notice,
+    this.busy = false,
   });
+
+  /// Ligne de la section « Masquées » : l'entrée devient « Rétablir ».
+  final bool hidden;
+  final VoidCallback? onHide;
+  final VoidCallback? onDelete;
+
+  /// Erreur ou état à vérifier, annoncé sous la ligne.
+  final String? notice;
+
+  /// Masquage ou suppression en cours : actions suspendues.
+  final bool busy;
   final ConversationMarker marker;
   final VoidCallback? onTogglePin;
   final VoidCallback? onToggleUnread;
@@ -99,11 +115,21 @@ class _HistoryRowState extends State<HistoryRow> {
         ],
       ),
       visualDensity: VisualDensity.compact,
-      subtitle: Text(
-        [
-          if (date != null) Content.historyDate(date),
-          Content.messageCount(session.messageCount),
-        ].join(' · '),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            [
+              if (date != null) Content.historyDate(date),
+              Content.messageCount(session.messageCount),
+            ].join(' · '),
+          ),
+          if (widget.busy || widget.notice != null)
+            Semantics(
+              liveRegion: true,
+              child: Text(widget.busy ? Content.rowWorking : widget.notice!),
+            ),
+        ],
       ),
       trailing: widget.onRename == null
           ? null
@@ -135,6 +161,22 @@ class _HistoryRowState extends State<HistoryRow> {
                           ? Content.markRead
                           : Content.markUnread,
                     ),
+                  ),
+                if (widget.onHide != null)
+                  MenuItemButton(
+                    leadingIcon: Icon(
+                      widget.hidden
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    onPressed: widget.busy ? null : widget.onHide,
+                    child: Text(widget.hidden ? Content.restore : Content.hide),
+                  ),
+                if (widget.onDelete != null)
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.delete_outline),
+                    onPressed: widget.busy ? null : widget.onDelete,
+                    child: const Text(Content.delete),
                   ),
                 MenuItemButton(
                   leadingIcon: const Icon(Icons.edit_outlined),

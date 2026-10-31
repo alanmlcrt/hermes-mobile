@@ -654,9 +654,13 @@ abstract final class HermesRpc {
   /// Limite par défaut du serveur : pas de pagination au-delà.
   static const listLimit = sessionListLimit;
 
-  static Map<String, dynamic> listParams(ProfileKey profile) => {
+  static Map<String, dynamic> listParams(
+    ProfileKey profile, {
+    bool includeHidden = false,
+  }) => {
     'profile': profile.value,
     'limit': listLimit,
+    if (includeHidden) 'include_hidden': true,
   };
 
   /// Lignes de `session.list` dans l'ordre du serveur ; une ligne sans `id` est écartée.
@@ -692,6 +696,32 @@ abstract final class HermesRpc {
   /// `session.title` (contrat documentaire, non qualifié sur installation) :
   /// identifiant runtime, profil et titre déjà normalisé.
   static const sessionTitle = 'session.title';
+  static const sessionSetHidden = 'session.set_hidden';
+  static const sessionDelete = 'session.delete';
+
+  /// `session.set_hidden` vise l'ID stocké (contrat documentaire, non
+  /// qualifié sur installation).
+  static Map<String, dynamic> hiddenParams(
+    String stored,
+    ProfileKey profile,
+    bool hidden,
+  ) => {'session_id': stored, 'hidden': hidden, 'profile': profile.value};
+
+  static bool hiddenResult(Map<String, dynamic> r) {
+    final hidden = r['hidden'];
+    if (hidden is! bool) throw const AppError('contract.invalid_response');
+    return hidden;
+  }
+
+  static Map<String, dynamic> deleteParams(String stored, ProfileKey profile) =>
+      {'session_id': stored, 'profile': profile.value};
+
+  /// `{deleted: <id stocké>}` : seule une réponse visant [stored] confirme.
+  static bool deleted(Map<String, dynamic> r, String stored) {
+    final id = r['deleted'];
+    if (id is! String) throw const AppError('contract.invalid_response');
+    return id == stored;
+  }
 
   static Map<String, dynamic> titleParams(
     String runtime,

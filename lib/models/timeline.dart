@@ -854,6 +854,18 @@ abstract interface class SessionResumer {
   Future<void> reconcile(TimelineKey key, Resumed state, List<int> userRows);
 }
 
+/// Données locales d'une conversation tenues par l'outbox (7.5).
+abstract interface class SessionPurger {
+  /// Réserve [key] pour une suppression : lève `delete.busy` si un envoi y
+  /// est en cours ou incertain ; tout nouvel envoi est refusé jusqu'à
+  /// [release].
+  Future<void> reserve(TimelineKey key);
+  void release(TimelineKey key);
+
+  /// Efface brouillons, opérations et pièces privées de [key] ; idempotent.
+  Future<void> purge(TimelineKey key);
+}
+
 /// Lecture de la projection par les ViewModels ; aucun appel Hermes.
 abstract interface class ConversationGateway {
   /// Relit la projection enregistrée (ouverture de l'écran, relance).
@@ -885,6 +897,43 @@ abstract interface class ConversationGateway {
 
   /// `session.title` absente constatée sur la connexion courante.
   bool renameMissing(ConnectionKey connection);
+
+  /// Conversations masquées du profil (7.4) : `include_hidden` moins la liste
+  /// par défaut. Jamais mises en cache.
+  Future<List<SessionSummary>> hiddenSessions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  );
+
+  /// Masque ou rétablit [key] (`session.set_hidden`) et rend l'état confirmé.
+  /// Lève `hide.busy`, `hide.missing`, `hide.refused`, `rpc.uncertain`
+  /// (jamais rejoué) ou `transport.offline`.
+  Future<bool> setHidden(TimelineKey key, bool hidden);
+
+  /// Méthode de masquage absente constatée sur la connexion courante.
+  bool hideMissing(ConnectionKey connection);
+
+  /// Supprime définitivement [key] (`session.delete`), puis ses données
+  /// locales. Lève `delete.busy` (travail ou envoi en cours), `delete.missing`,
+  /// `delete.refused`, `rpc.uncertain` (suppression « à vérifier », données
+  /// conservées) ou `transport.offline`.
+  Future<void> delete(TimelineKey key);
+
+  /// Suppressions au résultat inconnu du profil (« à vérifier »).
+  Future<Set<String>> uncertainDeletions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  );
+
+  /// [key] a été supprimée depuis ce téléphone (tombstone).
+  Future<bool> isDeleted(TimelineKey key);
+
+  /// Textes affichables déjà enregistrés localement (messages utilisateur et
+  /// réponses), par `stored_session_id` ; aucun réseau (7.6).
+  Future<Map<String, List<String>>> loadedTexts(
+    ConnectionKey connection,
+    ProfileKey profile,
+  );
 
   /// Marqueurs locaux des conversations du profil, par `stored_session_id`.
   Future<Map<String, ConversationMarker>> markers(

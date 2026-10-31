@@ -276,4 +276,16 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'PRIMARY KEY (connection_key, profile_key, stored_session_id))',
     );
   },
+  (db) async {
+    // 7.5 : suppression `pending` (résultat inconnu, données conservées) ou
+    // `deleted` (tombstone sans contenu ; nettoyage local à reprendre).
+    await db.execute(
+      'CREATE TABLE conversation_deletions ('
+      'connection_key TEXT NOT NULL COLLATE BINARY, '
+      'profile_key TEXT NOT NULL COLLATE BINARY, '
+      'stored_session_id TEXT NOT NULL COLLATE BINARY, '
+      'state TEXT NOT NULL, purged INTEGER NOT NULL DEFAULT 0, '
+      'PRIMARY KEY (connection_key, profile_key, stored_session_id))',
+    );
+  },
 ];

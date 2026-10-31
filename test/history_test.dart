@@ -690,12 +690,22 @@ void main() {
       await tester.scrollUntilVisible(
         find.text(Content.historyLimitNote),
         500,
-        scrollable: find.byType(Scrollable).last,
+        scrollable: find
+            .descendant(
+              of: find.byType(HistoryView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       expect(find.text(Content.historyLimitNote), findsOne);
       memory.lists[(connection, _default)] = [row('a', title: 'A')];
       await tester.fling(
-        find.byType(Scrollable).last,
+        find
+            .descendant(
+              of: find.byType(HistoryView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
         const Offset(0, 100000),
         100000,
       );
@@ -729,10 +739,12 @@ void main() {
           await tester.scrollUntilVisible(
             find.byType(HistoryRow),
             200,
-            scrollable: find.descendant(
-              of: find.byType(HistoryView),
-              matching: find.byType(Scrollable),
-            ),
+            scrollable: find
+                .descendant(
+                  of: find.byType(HistoryView),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
           );
           expect(find.byType(HistoryRow), findsOne);
           expect(tester.takeException(), isNull);

@@ -18,7 +18,8 @@ import 'notification_repository.dart';
 
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
 /// base partagée.
-class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
+class OutboxRepository
+    implements OutboxGateway, SessionResumer, StopGateway, SessionPurger {
   OutboxRepository(
     this.database, {
     required this.gateway,
@@ -35,6 +36,7 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
     _loadFileLimits = loadFileLimits ?? FileLimits.load;
     _events = gateway.events.listen(_onEvent);
     conversation?.resumer = this;
+    conversation?.purger = this;
   }
   final Database database;
   final ConnectionGateway gateway;
@@ -214,6 +216,78 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
           }
         }
       });
+
+  // ── Suppression d'une conversation (7.5) ────────────────────────────────
+
+  final _reserved = <TimelineKey>{};
+
+  Future<List<DraftKey>> _sessionDrafts(TimelineKey key) async => [
+    for (final r in await database.query(
+      'outbox_drafts',
+      columns: ['draft_key'],
+      where: 'connection_key = ? AND profile_key = ? AND stored_session_id = ?',
+      whereArgs: [key.connection.value, key.profile.value, key.session],
+    ))
+      DraftKey(r['draft_key'] as String),
+  ];
+
+  @override
+  Future<void> reserve(TimelineKey key) async {
+    if (!_reserved.add(key)) throw const AppError('delete.busy');
+    try {
+      for (final draft in await _sessionDrafts(key)) {
+        final open = await database.query(
+          'outbox_operations',
+          columns: ['operation_key'],
+          where: 'draft_key = ? AND state IN (?, ?, ?)',
+          whereArgs: [
+            draft.value,
+            OperationState.preparing.name,
+            OperationState.sending.name,
+            OperationState.unknown.name,
+          ],
+          limit: 1,
+        );
+        if (status(draft).busy ||
+            _attachmentWrites.containsKey(draft) ||
+            open.isNotEmpty) {
+          throw const AppError('delete.busy');
+        }
+      }
+    } catch (_) {
+      _reserved.remove(key);
+      rethrow;
+    }
+  }
+
+  @override
+  void release(TimelineKey key) => _reserved.remove(key);
+
+  @override
+  Future<void> purge(TimelineKey key) async {
+    for (final draft in await _sessionDrafts(key)) {
+      await database.transaction((t) async {
+        await t.rawDelete(
+          'DELETE FROM outbox_operation_attachments WHERE operation_key IN '
+          '(SELECT operation_key FROM outbox_operations WHERE draft_key = ?)',
+          [draft.value],
+        );
+        for (final table in [
+          'outbox_attachments',
+          'outbox_operations',
+          'outbox_drafts',
+        ]) {
+          await t.delete(
+            table,
+            where: 'draft_key = ?',
+            whereArgs: [draft.value],
+          );
+        }
+      });
+      // Copies privées seulement : jamais le fichier choisi sur le téléphone.
+      await _attachmentFiles.removeDraft(draft);
+    }
+  }
 
   /// Sonde des étapes du pipeline (tests, diagnostic) ; jamais de contenu.
   final void Function(String step)? onStep;
@@ -852,6 +926,20 @@ class OutboxRepository implements OutboxGateway, SessionResumer, StopGateway {
       // Les saisies en vol sont écrites avant de figer le texte envoyé.
       await (_writes[key] ?? Future.value()).catchError((_) {});
       final found = await this.draft(key);
+      final stored = found?.storedSessionId;
+      if (stored != null &&
+          _reserved.contains(
+            TimelineKey(found!.connection, found.profile, stored),
+          )) {
+        _set(
+          key,
+          const SendStatus(
+            state: OperationState.failed,
+            errorCode: 'send.deleting',
+          ),
+        );
+        return;
+      }
       await (_attachmentWrites[key] ?? Future<void>.value()).catchError((_) {});
       pieces = (await attachments(key)).where((a) => !a.sent).toList();
       if (pieces.isNotEmpty) {

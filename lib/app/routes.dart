@@ -46,6 +46,8 @@ Future<String?> resolveLaunchTarget(
   String? requestedProfile,
   Future<NotificationTarget?>? notification,
   VoidCallback? onMissingTarget,
+  Future<bool> Function(TimelineKey key)? isDeleted,
+  VoidCallback? onDeletedTarget,
 }) async {
   if (notification != null) {
     NotificationTarget? target;
@@ -62,6 +64,12 @@ Future<String?> resolveLaunchTarget(
         session != null &&
         target.connection == connection.key &&
         snapshot.profiles.any((p) => p.key == target!.profile)) {
+      // Supprimée depuis ce téléphone (7.5) : l'accueil, sans recréer le fil.
+      final key = TimelineKey(connection.key, target.profile, session);
+      if (isDeleted != null && await isDeleted(key).catchError((_) => false)) {
+        onDeletedTarget?.call();
+        return '/';
+      }
       return conversationPath(connection.key, target.profile, session);
     }
     onMissingTarget?.call();
@@ -134,6 +142,7 @@ class AppRoutes {
     ApprovalModes? approvalModes,
   }) : _gateway = gateway,
        _outbox = outbox,
+       _conversation = conversation,
        _notifications = notifications,
        _results = conversation is ResultGateway
            ? conversation as ResultGateway
@@ -278,6 +287,11 @@ class AppRoutes {
                     conversationPath(connection.key, profile, session),
                   );
                 },
+                onOpenIn: (p, session) {
+                  final connection = gateway.snapshot.connection;
+                  if (connection == null) return;
+                  context.go(conversationPath(connection.key, p, session));
+                },
                 onNewConversation: (p) => context.go(_newConversation(p)),
                 onSettings: (p) => context.push(profileSettingsPath(p)),
               ),
@@ -344,6 +358,7 @@ class AppRoutes {
   final ConnectionGateway _gateway;
   final OutboxGateway _outbox;
   final NotificationRepository? _notifications;
+  final ConversationGateway _conversation;
   final ResultGateway? _results;
 
   /// Messages globaux (cible de notification absente), hors de toute page.
@@ -384,6 +399,8 @@ class AppRoutes {
       _outbox,
       notification: _notifications!.target(id),
       onMissingTarget: _explainMissingTarget,
+      isDeleted: _conversation.isDeleted,
+      onDeletedTarget: () => _explain(Content.conversationDeleted),
     );
     if (_disposed) return;
     if (path == null) {
@@ -394,14 +411,14 @@ class AppRoutes {
     router.go(path);
   }
 
-  void _explainMissingTarget() {
+  void _explainMissingTarget() => _explain(Content.notificationTargetMissing);
+
+  void _explain(String message) {
     if (_disposed) return;
     // SnackBar : région « live », annoncée par le lecteur d'écran.
     scaffoldMessengerKey.currentState
       ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text(Content.notificationTargetMissing)),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _disposed = false;

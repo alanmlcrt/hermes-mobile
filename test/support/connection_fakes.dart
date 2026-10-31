@@ -561,6 +561,82 @@ class MemoryConversation implements ConversationGateway {
   void viewing(TimelineKey key, bool open) =>
       open ? viewed.add(key) : viewed.remove(key);
 
+  /// Masquées par (connexion, profil) ; [hideGate]/[hideError] pour les cas
+  /// limites. Un masquage confirmé déplace la ligne entre les deux listes.
+  final hidden = <(ConnectionKey, ProfileKey), List<SessionSummary>>{};
+  final hideCalls = <(TimelineKey, bool)>[];
+  Completer<void>? hideGate;
+  Object? hideError;
+  final missingHide = <ConnectionKey>{};
+  @override
+  Future<List<SessionSummary>> hiddenSessions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    if (listError != null) throw listError!;
+    return hidden[(connection, profile)] ?? const [];
+  }
+
+  @override
+  Future<bool> setHidden(TimelineKey key, bool hide) async {
+    hideCalls.add((key, hide));
+    await hideGate?.future;
+    if (hideError != null) throw hideError!;
+    final from = hide ? lists : hidden;
+    final to = hide ? hidden : lists;
+    final id = (key.connection, key.profile);
+    final row = (from[id] ?? const <SessionSummary>[])
+        .where((s) => s.id == key.session)
+        .firstOrNull;
+    if (row != null) {
+      from[id] = [...from[id]!]..remove(row);
+      to[id] = [...?to[id], row];
+    }
+    return hide;
+  }
+
+  @override
+  bool hideMissing(ConnectionKey connection) =>
+      missingHide.contains(connection);
+
+  final deleteCalls = <TimelineKey>[];
+  Object? deleteError;
+  final uncertain = <TimelineKey>{};
+  final tombstones = <TimelineKey>{};
+  @override
+  Future<void> delete(TimelineKey key) async {
+    deleteCalls.add(key);
+    if (deleteError != null) throw deleteError!;
+    tombstones.add(key);
+    final id = (key.connection, key.profile);
+    lists[id] = [...?lists[id]]..removeWhere((s) => s.id == key.session);
+    markerRows.remove(key);
+  }
+
+  @override
+  Future<Set<String>> uncertainDeletions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async => {
+    for (final k in uncertain)
+      if (k.connection == connection && k.profile == profile) k.session,
+  };
+
+  @override
+  Future<bool> isDeleted(TimelineKey key) async => tombstones.contains(key);
+
+  /// Textes chargés par (connexion, profil, session).
+  final texts = <TimelineKey, List<String>>{};
+  @override
+  Future<Map<String, List<String>>> loadedTexts(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async => {
+    for (final e in texts.entries)
+      if (e.key.connection == connection && e.key.profile == profile)
+        e.key.session: e.value,
+  };
+
   @override
   Future<void> dispose() async {}
 }

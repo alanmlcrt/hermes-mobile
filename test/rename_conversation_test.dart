@@ -846,7 +846,7 @@ void main() {
               of: find.byType(ListView),
               matching: find.byType(Scrollable),
             )
-            .last,
+            .first,
       );
       await openDialog(tester);
       expect(field(), findsOne);

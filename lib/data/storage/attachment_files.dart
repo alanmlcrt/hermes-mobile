@@ -57,6 +57,12 @@ class AttachmentFiles {
     }
   }
 
+  /// Toutes les copies privées d'un brouillon (conversation supprimée).
+  Future<void> removeDraft(DraftKey draft) async {
+    final dir = (await file(draft, 'x')).parent;
+    if (await dir.exists()) await dir.delete(recursive: true);
+  }
+
   Future<void> remove(DraftKey draft, String key) async {
     final target = await file(draft, key);
     if (await target.exists()) await target.delete();

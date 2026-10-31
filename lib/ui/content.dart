@@ -8,6 +8,8 @@ abstract final class Content {
   static const notificationUnfollowed = 'Notification non suivie';
   static const notificationTargetMissing =
       'Conversation de cette notification introuvable sur ce téléphone. Retour à l’accueil.';
+  static const conversationDeleted =
+      'Cette conversation a été supprimée. Retour à l’accueil.';
   static const notifications = 'Notifications de fin de travail';
   static const notificationEnable = 'Autoriser les notifications';
   static const notificationPrerequisites =
@@ -383,6 +385,55 @@ abstract final class Content {
   static const untitledConversation = 'Conversation sans titre';
   static String conversationActions(String title) =>
       'Actions pour la conversation $title';
+  // 7.4 — masquer, 7.5 — supprimer, 7.6 — rechercher.
+  static const hide = 'Masquer';
+  static const restore = 'Rétablir';
+  static const delete = 'Supprimer';
+  static const sectionMain = 'Conversations';
+  static const sectionHidden = 'Masquées';
+  static const hiddenEmpty = 'Aucune conversation masquée.';
+  static const hideMissing =
+      'Indisponible : ce serveur Hermes ne permet pas de masquer.';
+  static const conversationHidden =
+      'Conversation masquée. Elle reste dans « Masquées ».';
+  static const undo = 'Annuler';
+  static const restored = 'Conversation rétablie.';
+  static const rowWorking = 'En cours…';
+  static const deleteTitle = 'Supprimer définitivement ?';
+  static const deleteBody =
+      'La conversation et son historique seront effacés dans Hermes, pour '
+      'tous ses clients. Le brouillon, les pièces jointes copiées et les '
+      'marqueurs de ce téléphone seront aussi effacés. Cette action est '
+      'irréversible.';
+  static const deleteConfirm = 'Supprimer définitivement';
+  static const deleteCancel = 'Annuler';
+  static String rowError(String code) => switch (code) {
+    'hide.missing' => hideMissing,
+    'hide.busy' => 'Une autre action est en cours sur cette conversation.',
+    'hide.refused' => 'Hermes a refusé. Rien n’a changé.',
+    'hide.uncertain' => 'Résultat inconnu : actualisez la liste pour vérifier. Rien n’a été renvoyé.',
+    'delete.busy' =>
+      'Un travail ou un envoi est en cours sur cette conversation : arrêtez-le '
+          'et attendez sa fin avant de la supprimer.',
+    'delete.missing' =>
+      'Indisponible : ce serveur Hermes ne permet pas de supprimer.',
+    'delete.refused' => 'Hermes a refusé la suppression. Rien n’a été effacé.',
+    'delete.uncertain' =>
+      'Suppression à vérifier : Hermes n’a pas répondu. Tout est conservé sur '
+          'ce téléphone ; actualisez ou réessayez.',
+    'transport.offline' => 'Hermes n’est pas joignable : rien n’a été envoyé.',
+    _ => 'L’action a échoué. Rien n’a changé.',
+  };
+  static const searchHint = 'Rechercher une conversation';
+  static const searchAllProfiles = 'Tous les profils';
+  static const searchCoverage =
+      'Recherche dans les titres et le contenu déjà chargé';
+  static const searchEmpty = 'Aucun résultat.';
+  static const searchRunning = 'Recherche…';
+  static String searchFailed(String profile) =>
+      '$profile : liste indisponible, résultats partiels.';
+  static String searchResult(String profile, String title, String excerpt) =>
+      '$title, profil $profile. Passage : $excerpt';
   static const pin = 'Épingler';
   static const unpin = 'Désépingler';
   static const markUnread = 'Marquer non lu';
@@ -538,6 +589,8 @@ abstract final class Content {
       'Hermes n’a pas pu terminer cette réponse. Votre brouillon reste intact.',
     'send.unavailable' =>
       'Hermes n’est pas joignable pour le moment. Votre texte est conservé.',
+    'send.deleting' =>
+      'Cette conversation est en cours de suppression : rien n’a été envoyé.',
     'transport.offline' =>
       'Hermes n’est pas joignable pour le moment. Votre texte est conservé.',
     'transport.unreachable' =>

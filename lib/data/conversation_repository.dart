@@ -60,6 +60,16 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
   /// Posé par l'outbox : seul appelant de `session.resume`.
   SessionResumer? resumer;
 
+  /// Posé par l'outbox : brouillons et pièces d'une conversation supprimée.
+  /// Reprend aussitôt les nettoyages interrompus (tombstones non purgés).
+  SessionPurger? get purger => _purger;
+  set purger(SessionPurger? value) {
+    _purger = value;
+    if (value != null) unawaited(_resumePurges());
+  }
+
+  SessionPurger? _purger;
+
   /// Posé par `InterventionRepository`.
   QuestionLedger? questions;
 
@@ -614,13 +624,252 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
     if (gateway.snapshot.connection?.key != connection) {
       throw const AppError('connection.mismatch');
     }
-    return HermesRpc.sessions(
+    return _withoutDeleted(
+      connection,
+      profile,
+      HermesRpc.sessions(
+        await gateway.call(
+          'session.list',
+          HermesRpc.listParams(profile),
+          timeout: timeout,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<List<SessionSummary>> hiddenSessions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    final visible = {for (final s in await sessions(connection, profile)) s.id};
+    final all = HermesRpc.sessions(
       await gateway.call(
         'session.list',
-        HermesRpc.listParams(profile),
+        HermesRpc.listParams(profile, includeHidden: true),
         timeout: timeout,
       ),
     );
+    return _withoutDeleted(connection, profile, [
+      for (final s in all)
+        if (!visible.contains(s.id)) s,
+    ]);
+  }
+
+  /// Un fil supprimé ici ne réapparaît pas, même listé avec retard.
+  Future<List<SessionSummary>> _withoutDeleted(
+    ConnectionKey connection,
+    ProfileKey profile,
+    List<SessionSummary> list,
+  ) async {
+    final rows = await database.query(
+      'conversation_deletions',
+      columns: ['stored_session_id'],
+      where: "connection_key = ? AND profile_key = ? AND state = 'deleted'",
+      whereArgs: [connection.value, profile.value],
+    );
+    if (rows.isEmpty) return list;
+    final gone = {for (final r in rows) r['stored_session_id'] as String};
+    return [
+      for (final s in list)
+        if (!gone.contains(s.id)) s,
+    ];
+  }
+
+  // ── Masquage (7.4) ──────────────────────────────────────────────────────
+
+  ({ConnectionKey connection, int generation})? _hideMissing;
+
+  @override
+  bool hideMissing(ConnectionKey connection) =>
+      _hideMissing?.connection == connection &&
+      _hideMissing?.generation == gateway.socketGeneration;
+
+  @override
+  Future<bool> setHidden(TimelineKey key, bool hidden) async {
+    if (gateway.snapshot.connection?.key != key.connection) {
+      throw const AppError('connection.mismatch');
+    }
+    if (hideMissing(key.connection)) throw const AppError('hide.missing');
+    if (!_mutations.add(key)) throw const AppError('hide.busy');
+    final generation = gateway.socketGeneration;
+    try {
+      final result = await gateway.call(
+        HermesRpc.sessionSetHidden,
+        HermesRpc.hiddenParams(key.session, key.profile, hidden),
+        timeout: timeout,
+      );
+      return HermesRpc.hiddenResult(result);
+    } on RpcError catch (e) {
+      if (e.code == HermesRpc.methodNotFound) {
+        _hideMissing = (connection: key.connection, generation: generation);
+        throw const AppError('hide.missing');
+      }
+      throw const AppError('hide.refused');
+    } finally {
+      _mutations.remove(key);
+    }
+  }
+
+  // ── Suppression (7.5) ───────────────────────────────────────────────────
+
+  Future<void> _setDeletion(TimelineKey key, String? state) async {
+    if (state == null) {
+      await database.delete(
+        'conversation_deletions',
+        where: _markerWhere,
+        whereArgs: _markerArgs(key),
+      );
+      return;
+    }
+    await database.insert('conversation_deletions', {
+      'connection_key': key.connection.value,
+      'profile_key': key.profile.value,
+      'stored_session_id': key.session,
+      'state': state,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<void> delete(TimelineKey key) async {
+    if (gateway.snapshot.connection?.key != key.connection) {
+      throw const AppError('connection.mismatch');
+    }
+    final purger = _purger;
+    if (purger == null) throw const AppError('storage.unavailable');
+    if (!_mutations.add(key)) throw const AppError('delete.busy');
+    var reserved = false;
+    try {
+      // Réévalué dans la commande : un travail suivi ou incertain bloque.
+      final p = _cache[key] ?? await _read(key);
+      if (p.working || p.inFlight || (_pendingBoundaries[key] ?? 0) > 0) {
+        throw const AppError('delete.busy');
+      }
+      await purger.reserve(key);
+      reserved = true;
+      await _setDeletion(key, 'pending');
+      final Map<String, dynamic> result;
+      try {
+        result = await gateway.call(
+          HermesRpc.sessionDelete,
+          HermesRpc.deleteParams(key.session, key.profile),
+          timeout: timeout,
+        );
+      } on RpcError catch (e) {
+        await _setDeletion(key, null);
+        throw AppError(
+          e.code == HermesRpc.methodNotFound
+              ? 'delete.missing'
+              : 'delete.refused',
+        );
+      } on AppError catch (e) {
+        // Envoyée sans réponse : « à vérifier », tout est conservé.
+        if (e.code != 'rpc.uncertain') await _setDeletion(key, null);
+        rethrow;
+      }
+      if (!HermesRpc.deleted(result, key.session)) {
+        throw const AppError('rpc.uncertain');
+      }
+      // Tombstone d'abord : une panne du nettoyage le reprend sans rappel.
+      await _setDeletion(key, 'deleted');
+      await _purgeLocal(key);
+    } finally {
+      if (reserved) purger.release(key);
+      _mutations.remove(key);
+    }
+  }
+
+  Future<void> _purgeLocal(TimelineKey key) async {
+    await _purger!.purge(key);
+    await database.transaction((t) async {
+      for (final table in ['conversation_markers', 'conversation_timelines']) {
+        await t.delete(table, where: _markerWhere, whereArgs: _markerArgs(key));
+      }
+      await t.update(
+        'conversation_deletions',
+        {'purged': 1},
+        where: _markerWhere,
+        whereArgs: _markerArgs(key),
+      );
+    });
+    _cache.remove(key);
+    _viewing.remove(key);
+    if (!_changes.isClosed) _changes.add(key);
+  }
+
+  Future<void> _resumePurges() async {
+    try {
+      final rows = await database.query(
+        'conversation_deletions',
+        where: "state = 'deleted' AND purged = 0",
+      );
+      for (final r in rows) {
+        await _purgeLocal(
+          TimelineKey(
+            ConnectionKey(r['connection_key'] as String),
+            ProfileKey(r['profile_key'] as String),
+            r['stored_session_id'] as String,
+          ),
+        );
+      }
+    } catch (_) {
+      _log('deletion.purge_failed');
+    }
+  }
+
+  @override
+  Future<Set<String>> uncertainDeletions(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async => {
+    for (final r in await database.query(
+      'conversation_deletions',
+      columns: ['stored_session_id'],
+      where: "connection_key = ? AND profile_key = ? AND state = 'pending'",
+      whereArgs: [connection.value, profile.value],
+    ))
+      r['stored_session_id'] as String,
+  };
+
+  @override
+  Future<bool> isDeleted(TimelineKey key) async => (await database.query(
+    'conversation_deletions',
+    where: "$_markerWhere AND state = 'deleted'",
+    whereArgs: _markerArgs(key),
+  )).isNotEmpty;
+
+  // ── Recherche locale (7.6) ──────────────────────────────────────────────
+
+  @override
+  Future<Map<String, List<String>>> loadedTexts(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    final rows = await database.query(
+      'conversation_timelines',
+      columns: ['stored_session_id', 'projection'],
+      where: 'connection_key = ? AND profile_key = ?',
+      whereArgs: [connection.value, profile.value],
+    );
+    final out = <String, List<String>>{};
+    for (final r in rows) {
+      final id = r['stored_session_id'] as String;
+      final p =
+          _cache[TimelineKey(connection, profile, id)] ??
+          TimelineProjection.fromJson(
+            Map<String, Object?>.from(
+              jsonDecode(r['projection'] as String) as Map,
+            ),
+          );
+      out[id] = [
+        for (final item in p.items)
+          if (item is UserItem)
+            item.text
+          else if (item is ResponseItem)
+            item.text,
+      ];
+    }
+    return out;
   }
 
   // ── Marqueurs locaux (7.3) ──────────────────────────────────────────────
