@@ -365,7 +365,11 @@ class _HistoryViewState extends State<HistoryView> {
       final children = <Widget>[
         Row(
           children: [
-            ProfileAvatar(label: vm.profileName, size: Layout.avatarSheet),
+            ProfileAvatar(
+              label: vm.profileName,
+              size: Layout.avatarSheet,
+              accent: widget.accents.of(vm.profile),
+            ),
             const SizedBox(width: Spacing.sm + Spacing.xs),
             Expanded(
               child: Column(
@@ -469,7 +473,21 @@ class _HistoryViewState extends State<HistoryView> {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.sizeOf(context).height * Layout.sheetMax,
             ),
-            child: _list(children),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Hors de la liste : toute la zone haute peut entraîner
+                // la feuille avec le geste natif de fermeture.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: children.take(4).toList(),
+                  ),
+                ),
+                Flexible(child: _list(children.skip(4).toList())),
+              ],
+            ),
           ),
         ),
       );

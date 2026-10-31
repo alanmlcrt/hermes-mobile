@@ -22,6 +22,7 @@ class HomeView extends StatelessWidget {
     required this.accents,
     required this.onOpen,
     required this.onSettings,
+    this.onProfileSettings,
     this.onRooms,
   });
   final ConnectionGateway gateway;
@@ -29,6 +30,7 @@ class HomeView extends StatelessWidget {
   final ProfileAccents accents;
   final void Function(ProfileKey profile, String? session) onOpen;
   final VoidCallback onSettings;
+  final ValueChanged<ProfileKey>? onProfileSettings;
   final VoidCallback? onRooms;
 
   @override
@@ -95,6 +97,7 @@ class HomeView extends StatelessWidget {
                     conversation: conversation,
                     accents: accents,
                     onOpen: onOpen,
+                    onProfileSettings: onProfileSettings,
                   ),
                 ),
         ),
@@ -111,12 +114,14 @@ class _ProfileRow extends StatefulWidget {
     required this.conversation,
     required this.accents,
     required this.onOpen,
+    this.onProfileSettings,
   });
   final Profile profile;
   final ConnectionGateway gateway;
   final ConversationGateway conversation;
   final ProfileAccents accents;
   final void Function(ProfileKey profile, String? session) onOpen;
+  final ValueChanged<ProfileKey>? onProfileSettings;
 
   @override
   State<_ProfileRow> createState() => _ProfileRowState();
@@ -189,8 +194,7 @@ class _ProfileRowState extends State<_ProfileRow> {
     final cacheKey = connection == null
         ? null
         : (connection.value, p.key.value);
-    final hasCached =
-        cacheKey != null && _cachedLatest.containsKey(cacheKey);
+    final hasCached = cacheKey != null && _cachedLatest.containsKey(cacheKey);
     return FutureBuilder<SessionSummary?>(
       future: _latest,
       initialData: cacheKey == null ? null : _cachedLatest[cacheKey],
@@ -203,10 +207,21 @@ class _ProfileRowState extends State<_ProfileRow> {
             horizontal: Spacing.lg - Spacing.xs,
             vertical: Spacing.xs,
           ),
-          leading: ProfileAvatar(
-            label: name,
-            size: Layout.avatar,
-            accent: widget.accents.of(p.key),
+          leading: IconButton(
+            tooltip: Content.profileSettings,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(
+              minWidth: Layout.touchTarget,
+              minHeight: Layout.touchTarget,
+            ),
+            onPressed: widget.onProfileSettings == null
+                ? null
+                : () => widget.onProfileSettings!(p.key),
+            icon: ProfileAvatar(
+              label: name,
+              size: Layout.avatar,
+              accent: widget.accents.of(p.key),
+            ),
           ),
           title: Text(
             name,

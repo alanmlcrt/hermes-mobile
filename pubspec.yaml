@@ -1,7 +1,7 @@
 name: hermes_mobile
 description: "Interface mobile personnelle pour l'installation Hermes d'Alanc."
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.1.0+34
 
 environment:
   sdk: ^3.13.5

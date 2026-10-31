@@ -14,6 +14,9 @@ import 'package:hermes_mobile/models/draft.dart';
 import 'package:hermes_mobile/ui/components/profile_companion_panel.dart';
 import 'package:hermes_mobile/ui/components/companion_background_editor.dart';
 import 'package:hermes_mobile/ui/content.dart';
+import 'package:hermes_mobile/features/profiles/profile_settings_view.dart';
+import 'package:hermes_mobile/features/history/history_view.dart';
+import 'package:hermes_mobile/ui/components/profile_avatar.dart';
 
 import 'support/connection_fakes.dart';
 import 'support/home_helper.dart';
@@ -23,6 +26,56 @@ import 'support/home_helper.dart';
 const otcRemoved = true;
 
 void main() {
+  testWidgets(
+    'avatar accueil : réglages directs ; en-tête de feuille glissable',
+    (tester) async {
+      tester.view.physicalSize = const Size(375, 700);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final previous = Harness();
+      await previous.connect();
+      final h = Harness();
+      h.store.value = previous.store.value;
+      h.secrets.values.addAll(previous.secrets.values);
+      await tester.runAsync(() => previous.repository.dispose());
+      await tester.pumpWidget(
+        MainApp(
+          gateway: h.repository,
+          outbox: MemoryOutbox(),
+          conversation: MemoryConversation(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(Content.profileSettings).first);
+      await tester.pumpAndSettle();
+      expect(find.byType(ProfileSettingsView), findsOneWidget);
+      expect(find.text(Content.nameFromHermes), findsNothing);
+      expect(find.text(Content.profileSection), findsNothing);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await enterHome(tester);
+      final avatar = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byType(ProfileAvatar),
+      );
+      expect(tester.widget<ProfileAvatar>(avatar).accent, isNotNull);
+      await tester.tap(avatar);
+      await tester.pumpAndSettle();
+      expect(find.byType(HistoryView), findsOneWidget);
+      // Le départ est l'avatar, bien en dessous de la petite poignée.
+      final sheetAvatar = find.descendant(
+        of: find.byType(HistoryView),
+        matching: find.byType(ProfileAvatar),
+      );
+      await tester.fling(sheetAvatar, const Offset(0, 400), 1500);
+      await tester.pumpAndSettle();
+      expect(find.byType(HistoryView), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+    },
+  );
+
   Future<(_BackgroundAppGateway, _AppBackgrounds)> openBackgroundApp(
     WidgetTester tester,
   ) async {

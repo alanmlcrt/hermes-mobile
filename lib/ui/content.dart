@@ -323,8 +323,8 @@ abstract final class Content {
       'Réglé sur Hermes pour ce profil. Le mode affiché est celui relu sur Hermes.';
   static String approvalModeName(String mode) => switch (mode) {
     'manual' => 'Toujours me demander',
-    'smart' => 'Hermes juge',
-    'off' => 'Ne jamais demander',
+    'smart' => 'Auto',
+    'off' => 'yolo',
     _ => mode,
   };
   static String approvalModeHint(String mode) => switch (mode) {

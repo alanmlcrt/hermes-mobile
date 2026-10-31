@@ -15,7 +15,6 @@ import '../../ui/components/message_bubble.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/components/question_card.dart';
 import '../../ui/components/result_card.dart';
-import '../../ui/components/status_label.dart';
 import '../../ui/components/work_state_label.dart';
 import '../../ui/content.dart';
 import '../../ui/theme.dart';
@@ -402,7 +401,10 @@ class _DraftViewState extends State<DraftView> {
     // Au premier affichage et pendant le chargement/resync initial, le fil déjà là ne s'anime pas.
     if (!_appearReady || vm.initialLoading || vm.resyncing) {
       _appeared.addAll(children.map((child) => child.key).nonNulls);
-      if (!_appearReady && draft != null && !vm.initialLoading && !vm.resyncing) {
+      if (!_appearReady &&
+          draft != null &&
+          !vm.initialLoading &&
+          !vm.resyncing) {
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => _appearReady = true,
         );
@@ -439,7 +441,11 @@ class _DraftViewState extends State<DraftView> {
     final row = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ProfileAvatar(label: name, size: Layout.avatarSmall),
+        ProfileAvatar(
+          label: name,
+          size: Layout.avatarSmall,
+          accent: widget.accents.of(draft.profile),
+        ),
         const SizedBox(width: Spacing.sm),
         Flexible(
           child: ExcludeSemantics(

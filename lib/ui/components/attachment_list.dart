@@ -188,41 +188,14 @@ class AttachmentSelectionSheet extends StatelessWidget {
   final List<AttachmentLimit> limits;
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(Spacing.lg),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              Content.attach,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: Spacing.xs),
-            Text(
-              Content.attachmentFormats,
-              style: theme.textTheme.bodySmall?.copyWith(color: scheme.muted),
-            ),
-            for (final limit in limits) ...[
-              if (limit.maxCount != null)
-                Text(
-                  '${switch (limit.category) {
-                    AttachmentCategory.text => Content.attachmentText,
-                    AttachmentCategory.image => Content.photos,
-                    AttachmentCategory.pdf => Content.attachmentPdf,
-                    AttachmentCategory.office => Content.attachmentOffice,
-                  }} : ${Content.attachmentCountLimit(limit.maxCount!)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.muted,
-                  ),
-                ),
-            ],
-            const SizedBox(height: Spacing.md),
             TextButton.icon(
               style: TextButton.styleFrom(
                 alignment: AlignmentDirectional.centerStart,

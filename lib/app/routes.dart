@@ -297,6 +297,8 @@ class AppRoutes {
                       );
                     },
                     onSettings: () => context.push('/profiles'),
+                    onProfileSettings: (profile) =>
+                        context.push(profileSettingsPath(profile)),
                     onRooms: () {
                       final s = gateway.snapshot;
                       final p =

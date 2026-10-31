@@ -75,33 +75,34 @@ class LimitedMemoryOutbox extends MemoryOutbox {
 }
 
 void main() {
-  testWidgets(
-    'sheet labels count limits by category without showing size thresholds',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildTheme(null, Brightness.light),
-          home: const Scaffold(
-            body: AttachmentSelectionSheet(
-              limits: [
-                AttachmentLimit(AttachmentCategory.image, 1024, [
-                  'image/png',
-                ], maxCount: 1),
-                AttachmentLimit(AttachmentCategory.pdf, 2048, [
-                  'application/pdf',
-                ], maxCount: 3),
-              ],
-            ),
+  testWidgets('sheet shows only photos and files', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(null, Brightness.light),
+        home: const Scaffold(
+          body: AttachmentSelectionSheet(
+            limits: [
+              AttachmentLimit(AttachmentCategory.image, 1024, [
+                'image/png',
+              ], maxCount: 1),
+              AttachmentLimit(AttachmentCategory.pdf, 2048, [
+                'application/pdf',
+              ], maxCount: 3),
+            ],
           ),
         ),
-      );
-      expect(find.text('Photos : 1 pièce maximum'), findsOneWidget);
-      expect(find.text('PDF : 3 pièces maximum'), findsOneWidget);
-      expect(find.textContaining(' Mo'), findsNothing);
-      expect(find.textContaining('octets'), findsNothing);
-      expect(find.textContaining('maximum par fichier'), findsNothing);
-    },
-  );
+      ),
+    );
+    expect(find.text(Content.photos), findsOneWidget);
+    expect(find.text(Content.files), findsOneWidget);
+    expect(find.text(Content.attach), findsNothing);
+    expect(find.text(Content.attachmentFormats), findsNothing);
+    expect(find.text('Photos : 1 pièce maximum'), findsNothing);
+    expect(find.text('PDF : 3 pièces maximum'), findsNothing);
+    expect(find.textContaining(' Mo'), findsNothing);
+    expect(find.textContaining('octets'), findsNothing);
+    expect(find.textContaining('maximum par fichier'), findsNothing);
+  });
   testWidgets(
     'real SQLite reopen keeps each sent attachment in its owning message',
     (tester) async {
@@ -215,10 +216,7 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 5));
         }
         expect(vm.draft, isNotNull);
-        expect(
-          vm.attachments.map((a) => a.name),
-          ['photo-existante.jpg'],
-        );
+        expect(vm.attachments.map((a) => a.name), ['photo-existante.jpg']);
       });
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1;
@@ -440,7 +438,7 @@ void main() {
       await tester.tap(join);
       await tester.pumpAndSettle();
       expect(find.byType(AttachmentSelectionSheet), findsOneWidget);
-      expect(find.text(Content.attachmentFormats), findsOneWidget);
+      expect(find.text(Content.attachmentFormats), findsNothing);
       expect(find.textContaining('maximum par fichier'), findsNothing);
       expect(find.textContaining(' Mo'), findsNothing);
       expect(find.textContaining('pièces maximum'), findsNothing);

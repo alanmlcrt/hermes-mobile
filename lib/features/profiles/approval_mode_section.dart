@@ -123,7 +123,6 @@ class _ApprovalModeSectionState extends State<ApprovalModeSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final muted = theme.textTheme.bodySmall?.copyWith(color: scheme.muted);
     final enabled = !_loading && !_busy && !_unreadable;
     return Card(
       child: Padding(
@@ -138,8 +137,6 @@ class _ApprovalModeSectionState extends State<ApprovalModeSection> {
                 style: theme.textTheme.titleMedium,
               ),
             ),
-            const SizedBox(height: Spacing.xs),
-            Text(Content.approvalModesHint, style: muted),
             if (_loading || _busy) ...[
               const SizedBox(height: Spacing.sm),
               const LinearProgressIndicator(),
@@ -194,7 +191,7 @@ class _ApprovalModeSectionState extends State<ApprovalModeSection> {
 }
 
 /// Option de mode : choix exclusif, état dit par l'icône et la sémantique ;
-/// l'avertissement de `off` reste visible sous l'option.
+/// la confirmation de `off` est présentée au moment du choix.
 class _ModeTile extends StatelessWidget {
   const _ModeTile({
     required this.mode,
@@ -209,7 +206,6 @@ class _ModeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final warning = mode == ApprovalMode.off;
     // Un seul nœud : l'option, son nom et son état coché.
     return MergeSemantics(
       child: Semantics(
@@ -228,12 +224,6 @@ class _ModeTile extends StatelessWidget {
             color: selected ? scheme.accent : null,
           ),
           title: Text(Content.approvalModeName(mode)),
-          subtitle: Text(
-            Content.approvalModeHint(mode),
-            style: warning
-                ? theme.textTheme.bodySmall?.copyWith(color: scheme.error)
-                : null,
-          ),
           onTap: onTap,
         ),
       ),

@@ -145,8 +145,11 @@ void main() {
       expect(selected(tester, 'smart'), isTrue);
       expect(selected(tester, 'manual'), isFalse);
       expect(modes.writes, isEmpty);
-      // L'avertissement de `off` est visible sous l'option.
-      expect(find.text(Content.approvalModeOffWarning), findsOne);
+      // Les options restent courtes ; l'avertissement vient au choix de yolo.
+      expect(find.text(Content.approvalModeOffWarning), findsNothing);
+      expect(find.text(Content.approvalModesHint), findsNothing);
+      expect(find.text('Auto'), findsOne);
+      expect(find.text('yolo'), findsOne);
       expect(tester.getSize(tile('manual')).height, greaterThanOrEqualTo(48));
     });
 

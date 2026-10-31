@@ -5,7 +5,6 @@ import '../../models/profile.dart';
 import '../../ui/content.dart';
 import '../../ui/tokens.dart';
 import '../../ui/components/status_label.dart';
-import '../../ui/components/section_card.dart';
 import '../../ui/components/profile_choice.dart';
 import 'profiles_view_model.dart';
 
@@ -164,28 +163,6 @@ class _ProfilesViewState extends State<ProfilesView> {
                   const SizedBox(height: Spacing.sm),
                   Text(Content.localSelection, style: note),
                 ]),
-                const SizedBox(height: Spacing.lg),
-                SectionCard(
-                  title: Content.capabilitiesTitle,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final capability in state.capabilities)
-                        if (capability.state != CapabilityState.present)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: Spacing.xs,
-                            ),
-                            child: Text(
-                              '${Content.capability(capability.name)} : '
-                              '${capability.state == CapabilityState.absent ? Content.missing : Content.unverified}',
-                            ),
-                          ),
-                      if (state.acceptanceOpen)
-                        const Text(Content.acceptanceOpen),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

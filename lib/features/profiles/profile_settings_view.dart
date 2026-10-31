@@ -80,7 +80,11 @@ class ProfileSettingsView extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        ProfileAvatar(label: name, size: Layout.avatarLarge),
+                        ProfileAvatar(
+                          label: name,
+                          size: Layout.avatarLarge,
+                          accent: selected,
+                        ),
                         const SizedBox(height: Spacing.md),
                         Semantics(
                           header: true,
@@ -92,8 +96,6 @@ class ProfileSettingsView extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: Spacing.xs),
-                        Text(Content.nameFromHermes, style: muted),
                       ],
                     ),
                   ),
@@ -145,33 +147,6 @@ class ProfileSettingsView extends StatelessWidget {
                             ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: Spacing.md),
-                _Section(
-                  icon: Icons.person_outline,
-                  title: Content.profileSection,
-                  children: [
-                    ListTile(
-                      title: const Text(Content.connectionRow),
-                      subtitle: Text(
-                        snapshot.connection?.origin.toString() ?? '',
-                      ),
-                      trailing: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: scheme.chip,
-                          minimumSize: const Size.square(Layout.headerButton),
-                        ),
-                        onPressed: snapshot.busy ? null : onChangeServer,
-                        child: const Text(Content.change),
-                      ),
-                    ),
-                    const Divider(indent: Spacing.md, endIndent: Spacing.md),
-                    ListTile(
-                      title: const Text(Content.allProfiles),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: onAllProfiles,
                     ),
                   ],
                 ),
