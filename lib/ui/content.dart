@@ -6,6 +6,17 @@ import '../models/attachment.dart';
 
 abstract final class Content {
   static const rooms = 'Salons';
+  static const roomRefresh = 'Actualiser le salon';
+  static const roomNeedsUser = 'A besoin de toi';
+  static const roomWaiting = 'Le salon attend votre réponse.';
+  static const roomMentionHelp =
+      'Sans mention, tous peuvent répondre. Utilisez @ pour choisir un agent.';
+  static const roomSendUnavailable = 'Envoi indisponible sur ce Hermes.';
+  static String roomSendStatus(String state) => switch (state) {
+    'unknown' => 'Envoi à vérifier. Aucun renvoi automatique.',
+    'refused' => 'Envoi refusé. Le brouillon est conservé.',
+    _ => 'Envoi en cours…',
+  };
   static const newRoom = 'Nouveau salon';
   static const roomCancel = 'Annuler';
   static const roomName = 'Nom du salon';
@@ -21,6 +32,9 @@ abstract final class Content {
   static const roomPreparation =
       'Le salon est prêt. Le fil arrive dans la prochaine étape.';
   static String roomError(String code) => switch (code) {
+    'room.history' => 'Historique incomplet : actualisez le salon. Le fil précédent est conservé.',
+    'storage.unavailable' =>
+      'Enregistrement local impossible. Votre saisie reste affichée.',
     'room.bot_mode' =>
       'Salons indisponibles : activez Bot Mode sur vos profils de test.',
     'room.missing' =>

@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:sqflite/sqflite.dart';
+
 import '../models/app_error.dart';
 import '../models/connection.dart';
 import '../models/connection_gateway.dart';
@@ -7,11 +11,74 @@ import 'hermes_adapter.dart';
 
 /// Un seul accès aux salons ; le dialecte reste dans HermesRpc.
 class RoomRepository implements RoomGateway {
-  RoomRepository({required this.gateway, this.timeout = rpcTimeout});
+  RoomRepository({
+    required this.gateway,
+    this.database,
+    this.timeout = rpcTimeout,
+  });
+  final Database? database;
   final ConnectionGateway gateway;
   final Duration timeout;
   final _busy = <RoomKey>{};
   final _missing = <(ConnectionKey, ProfileKey, int, String)>{};
+  static const whereRoom =
+      'connection_key = ? AND profile_key = ? AND room_id = ?';
+
+  @override
+  Future<RoomSnapshot> load(RoomKey key) async {
+    final state = await call(key, HermesRpc.groupsState);
+    final events = <Map<String, dynamic>>[];
+    var cursor = 0;
+    while (true) {
+      final page = HermesRpc.roomLogPage(
+        await call(key, HermesRpc.groupsLog, {'since_seq': cursor}),
+      );
+      events.addAll(page.events);
+      if (page.cursor < cursor || (page.more && page.cursor <= cursor)) {
+        throw const AppError('room.history');
+      }
+      cursor = page.cursor;
+      if (!page.more) break;
+    }
+    final snapshot = HermesRpc.roomSnapshot(state, events);
+    check(key);
+    final db = database;
+    if (db != null) {
+      await db.transaction((tx) async {
+        final old = await tx.query(
+          'room_snapshots',
+          columns: ['seen_seq'],
+          where: whereRoom,
+          whereArgs: key.args,
+        );
+        await tx.insert('room_snapshots', {
+          'connection_key': key.connection.value,
+          'profile_key': key.profile.value,
+          'room_id': key.room,
+          'state_json': jsonEncode(state),
+          'events_json': jsonEncode(events),
+          'seen_seq': old.isEmpty ? 0 : old.single['seen_seq'],
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      });
+    }
+    return snapshot;
+  }
+
+  @override
+  Future<RoomSnapshot?> cached(RoomKey key) async {
+    final rows = await database?.query(
+      'room_snapshots',
+      where: whereRoom,
+      whereArgs: key.args,
+    );
+    if (rows == null || rows.isEmpty) return null;
+    return HermesRpc.roomSnapshot(
+      jsonDecode(rows.single['state_json'] as String) as Map,
+      (jsonDecode(rows.single['events_json'] as String) as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+    );
+  }
 
   @override
   String newId() => randomUuid();
@@ -41,9 +108,13 @@ class RoomRepository implements RoomGateway {
       HermesRpc.groupsCreate,
       HermesRpc.roomCreate(name.trim(), members),
     );
-    final room = HermesRpc.room(result['room'] as Map);
-    if (room.id != key.room) throw const AppError('rpc.uncertain');
-    return room;
+    try {
+      final room = HermesRpc.room(result['room'] as Map);
+      if (room.id != key.room) throw const AppError('rpc.uncertain');
+      return room;
+    } catch (_) {
+      throw const AppError('rpc.uncertain');
+    }
   });
 
   void check(RoomKey key) {
@@ -133,6 +204,22 @@ class RoomRepository implements RoomGateway {
     RoomSummary room,
     RoomCapabilities caps,
   ) async {
+    if (database != null &&
+        caps.methods.contains(HermesRpc.groupsState) &&
+        caps.methods.contains(HermesRpc.groupsLog)) {
+      final snapshot = await load(key);
+      return RoomSummary(
+        id: room.id,
+        name: room.name,
+        members: room.members,
+        updatedAt: room.updatedAt,
+        preview: snapshot.entries
+            .where((e) => e.text.isNotEmpty)
+            .lastOrNull
+            ?.text,
+        working: snapshot.working,
+      );
+    }
     final state = caps.methods.contains(HermesRpc.groupsState)
         ? await call(key, HermesRpc.groupsState)
         : <String, dynamic>{};

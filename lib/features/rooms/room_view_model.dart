@@ -1,0 +1,128 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+import '../../models/app_error.dart';
+import '../../models/room.dart';
+
+class RoomViewModel extends ChangeNotifier {
+  RoomViewModel(this.rooms, this.outbox, this.key);
+  final RoomGateway rooms;
+  final RoomOutbox outbox;
+  final RoomKey key;
+  RoomSnapshot? snapshot;
+  Set<RoomFeature> available = const {};
+  List<RoomSend> sends = const [];
+  String text = '';
+  String? error;
+  bool busy = false;
+  bool loading = false;
+  bool _disposed = false;
+  bool _foreground = true;
+  Timer? _timer;
+  Future<void> _writes = Future.value();
+  bool get canSend =>
+      !busy &&
+      text.trim().isNotEmpty &&
+      available.contains(RoomFeature.send) &&
+      !sends.any((s) => s.state == 'unknown' || s.state == 'sending');
+  List<String> get mentions => [
+    'all',
+    'hermes',
+    ...?snapshot?.room.members.map((m) => m.handle),
+  ];
+
+  Future<void> open() async {
+    try {
+      text = await outbox.roomText(key);
+      sends = await outbox.roomSends(key);
+      snapshot = await rooms.cached(key);
+    } catch (_) {
+      error = 'storage.unavailable';
+    }
+    await refresh();
+  }
+
+  void foreground(bool value) {
+    _foreground = value;
+    _timer?.cancel();
+    if (value) unawaited(refresh());
+  }
+
+  Future<void> refresh() async {
+    if (loading || _disposed) return;
+    loading = true;
+    _timer?.cancel();
+    _notify();
+    try {
+      final caps = await rooms.capabilities(key.connection, key.profile);
+      if (!caps.driver) throw const AppError('room.bot_mode');
+      final result = await rooms.load(key);
+      await outbox.reconcileRoom(key, {
+        for (final e in result.entries)
+          if (e.fromUser) e.id,
+      });
+      final operations = await outbox.roomSends(key);
+      if (_disposed) return;
+      available = caps.available;
+      snapshot = result;
+      sends = operations;
+      error = null;
+    } catch (e) {
+      error = e is AppError ? e.code : 'room.failed';
+    } finally {
+      loading = false;
+      _notify();
+      if (!_disposed &&
+          _foreground &&
+          error != 'room.missing' &&
+          error != 'room.bot_mode') {
+        _timer = Timer(roomPollInterval, refresh);
+      }
+    }
+  }
+
+  void edit(String value) {
+    text = value;
+    _writes = _writes.then((_) => outbox.saveRoomText(key, value)).catchError((
+      Object _,
+    ) {
+      error = 'storage.unavailable';
+      _notify();
+    });
+    _notify();
+  }
+
+  Future<void> send() async {
+    if (!canSend) return;
+    busy = true;
+    final sending = text;
+    _notify();
+    try {
+      await _writes;
+      await outbox.sendRoom(key, sending);
+      if (text == sending) text = '';
+      await refresh();
+    } catch (e) {
+      error = e is AppError ? e.code : 'room.failed';
+      sends = await outbox.roomSends(key);
+      if (error == 'room.missing') {
+        available = {...available}..remove(RoomFeature.send);
+      }
+    } finally {
+      busy = false;
+      _notify();
+    }
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _timer?.cancel();
+    super.dispose();
+  }
+}

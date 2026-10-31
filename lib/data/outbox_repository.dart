@@ -8,6 +8,8 @@ import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/draft.dart';
 import '../models/profile.dart';
+import '../models/room.dart';
+import 'room_repository.dart';
 import '../models/timeline.dart';
 import 'conversation_repository.dart';
 import 'hermes_adapter.dart';
@@ -19,7 +21,12 @@ import 'notification_repository.dart';
 /// Seul auteur des brouillons et des opérations (`outbox_*`). Ne ferme pas la
 /// base partagée.
 class OutboxRepository
-    implements OutboxGateway, SessionResumer, StopGateway, SessionPurger {
+    implements
+        OutboxGateway,
+        SessionResumer,
+        StopGateway,
+        SessionPurger,
+        RoomOutbox {
   OutboxRepository(
     this.database, {
     required this.gateway,
@@ -42,6 +49,131 @@ class OutboxRepository
   final ConnectionGateway gateway;
   final DateTime Function() _now;
   final Duration timeout;
+  RoomRepository? rooms;
+  Future<void>? _roomRecovery;
+  Future<void> _recoverRooms() => _roomRecovery ??= database
+      .update(
+        'outbox_room_operations',
+        {'state': 'unknown'},
+        where: 'state = ?',
+        whereArgs: ['sending'],
+      )
+      .then((_) {});
+
+  @override
+  Future<String> roomText(RoomKey key) async {
+    final rows = await database.query(
+      'outbox_room_drafts',
+      where: RoomRepository.whereRoom,
+      whereArgs: key.args,
+    );
+    return rows.isEmpty ? '' : rows.single['text'] as String;
+  }
+
+  @override
+  Future<void> saveRoomText(RoomKey key, String text) async {
+    await database.insert('outbox_room_drafts', {
+      'connection_key': key.connection.value,
+      'profile_key': key.profile.value,
+      'room_id': key.room,
+      'text': text,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<List<RoomSend>> roomSends(RoomKey key) async {
+    await _recoverRooms();
+    final rows = await database.query(
+      'outbox_room_operations',
+      where: RoomRepository.whereRoom,
+      whereArgs: key.args,
+      orderBy: 'rowid',
+    );
+    return [
+      for (final row in rows)
+        RoomSend(
+          row['event_id'] as String,
+          row['text'] as String,
+          row['state'] as String,
+        ),
+    ];
+  }
+
+  @override
+  Future<void> sendRoom(RoomKey key, String text) async {
+    final repo = rooms;
+    if (repo == null) throw const AppError('room.missing');
+    await _recoverRooms();
+    await repo.mutate(key, () async {
+      if (text.trim().isEmpty) throw const AppError('room.invalid');
+      if ((await roomSends(key))
+          .any((s) => s.state == 'unknown' || s.state == 'sending')) {
+        throw const AppError('rpc.uncertain');
+      }
+      final eventId = randomUuid();
+      await database.insert('outbox_room_operations', {
+        'connection_key': key.connection.value,
+        'profile_key': key.profile.value,
+        'room_id': key.room,
+        'event_id': eventId,
+        'text': text,
+        'state': 'sending',
+      });
+      Future<void> status(String state) async {
+        await database.update(
+          'outbox_room_operations',
+          {'state': state},
+          where: '${RoomRepository.whereRoom} AND event_id = ?',
+          whereArgs: [...key.args, eventId],
+        );
+      }
+
+      try {
+        final result = await repo.call(
+          key,
+          HermesRpc.groupsSend,
+          HermesRpc.roomSend(eventId, text),
+        );
+        if (!HermesRpc.roomAccepted(result, key, eventId)) {
+          throw const AppError('rpc.uncertain');
+        }
+        await status('confirmed');
+        // Une saisie plus récente que l'envoi ne doit pas disparaître.
+        await database.update(
+          'outbox_room_drafts',
+          {'text': ''},
+          where: '${RoomRepository.whereRoom} AND text = ?',
+          whereArgs: [...key.args, text],
+        );
+      } on AppError catch (e) {
+        await status(
+          e.code == 'room.refused' ||
+                  e.code == 'room.missing' ||
+                  e.code == 'transport.offline'
+              ? 'refused'
+              : 'unknown',
+        );
+        rethrow;
+      } catch (_) {
+        await status('unknown');
+        throw const AppError('rpc.uncertain');
+      }
+    });
+  }
+
+  /// Réconciliation par la preuve du journal serveur, jamais par le texte.
+  @override
+  Future<void> reconcileRoom(RoomKey key, Set<String> eventIds) async {
+    for (final id in eventIds) {
+      await database.update(
+        'outbox_room_operations',
+        {'state': 'confirmed'},
+        where: '${RoomRepository.whereRoom} AND event_id = ?',
+        whereArgs: [...key.args, id],
+      );
+    }
+  }
+
   late final AttachmentFiles _attachmentFiles;
   late final Future<FileLimits> Function() _loadFileLimits;
   final _attachmentWrites = <DraftKey, Future<void>>{};

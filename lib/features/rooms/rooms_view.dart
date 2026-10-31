@@ -90,7 +90,7 @@ class _RoomsViewState extends State<RoomsView> {
               onPressed: vm.creating
                   ? null
                   : () => Navigator.pop(dialogContext),
-                  child: const Text(Content.roomCancel),
+              child: const Text(Content.roomCancel),
             ),
             if (vm.creationUncertain)
               TextButton(
@@ -119,6 +119,9 @@ class _RoomsViewState extends State<RoomsView> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     if (result != null && mounted) {
+      vm.name = '';
+      vm.selected.clear();
+      vm.creationId = vm.repository.newId();
       widget.onOpen(result);
       unawaited(vm.refresh());
     }

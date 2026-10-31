@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../data/attachment_picker.dart';
 import '../data/room_repository.dart';
+import '../data/outbox_repository.dart';
+import '../features/rooms/room_view.dart';
+import '../features/rooms/room_view_model.dart';
 import '../features/rooms/rooms_view.dart';
 import '../features/rooms/rooms_view_model.dart';
 import '../models/room.dart';
@@ -171,7 +174,11 @@ class AppRoutes {
     connection = ConnectionViewModel(gateway);
     this.accents = ProfileAccents(gateway, accents);
     profiles = ProfilesViewModel(gateway, backgrounds: backgrounds);
-    rooms = RoomRepository(gateway: gateway);
+    rooms = RoomRepository(
+      gateway: gateway,
+      database: outbox is OutboxRepository ? outbox.database : null,
+    );
+    if (outbox is OutboxRepository) outbox.rooms = rooms;
     router = GoRouter(
       refreshListenable: _refresh,
       redirect: (context, state) {
@@ -238,10 +245,27 @@ class AppRoutes {
         ),
         GoRoute(
           path: '/room/:connection/:room',
-          builder: (context, state) => Scaffold(
-            appBar: AppBar(title: const Text(Content.rooms)),
-            body: const SafeArea(child: Text(Content.roomPreparation)),
-          ),
+          builder: (context, state) {
+            final profile = state.uri.queryParameters['profile'];
+            if (profile == null || outbox is! RoomOutbox) {
+              return const Scaffold(
+                body: SafeArea(child: Text(Content.roomSendUnavailable)),
+              );
+            }
+            return RoomView(
+              key: ValueKey(state.uri.toString()),
+              accents: this.accents,
+              create: () => RoomViewModel(
+                rooms,
+                outbox as RoomOutbox,
+                RoomKey(
+                  ConnectionKey(state.pathParameters['connection']!),
+                  ProfileKey(profile),
+                  state.pathParameters['room']!,
+                ),
+              ),
+            );
+          },
         ),
         GoRoute(
           path: '/',

@@ -33,7 +33,12 @@ class RoomsViewModel extends ChangeNotifier {
     try {
       final caps = await repository.capabilities(connection, profile);
       eligible = caps.driver ? caps.profiles : const {};
-      createError = caps.driver ? null : 'room.bot_mode';
+      createError = !caps.driver
+          ? 'room.bot_mode'
+          : !caps.available.contains(RoomFeature.create)
+          ? 'room.missing'
+          : null;
+      if (createError != null) eligible = const {};
     } catch (e) {
       createError = e is AppError ? e.code : 'room.failed';
     }

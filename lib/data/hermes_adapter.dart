@@ -471,6 +471,87 @@ abstract final class HermesRpc {
   static const groupsRetry = 'groups.retry';
   static const groupsDiscard = 'groups.discard';
   static const groupsApprove = 'groups.approve';
+  static Map<String, dynamic> roomSend(String eventId, String text) => {
+    'event_id': eventId,
+    'payload': {'text': text},
+  };
+  static bool roomAccepted(Map result, RoomKey key, String eventId) {
+    final event = result['event'];
+    return result['accepted'] != false &&
+        event is Map &&
+        event['room_id'] == key.room &&
+        (result['client_event_id'] == eventId || event['event_id'] == eventId);
+  }
+
+  static ({List<Map<String, dynamic>> events, int cursor, bool more})
+  roomLogPage(Map r) {
+    if (r['events'] is! List || r['cursor'] is! int || r['has_more'] is! bool) {
+      throw const AppError('contract.invalid_response');
+    }
+    return (
+      events: [
+        for (final e in r['events'] as List)
+          Map<String, dynamic>.from(e as Map),
+      ],
+      cursor: r['cursor'] as int,
+      more: r['has_more'] == true,
+    );
+  }
+
+  static RoomSnapshot roomSnapshot(
+    Map state,
+    List<Map<String, dynamic>> events,
+  ) {
+    final summary = room(state['room'] as Map);
+    final status = roomStatus(state);
+    final entries = <RoomEntry>[];
+    final ids = <String>{};
+    var seq = 0;
+    for (final e in events) {
+      if (e['room_id'] != summary.id ||
+          e['seq'] != seq + 1 ||
+          e['event_id'] is! String ||
+          !ids.add(e['event_id'] as String)) {
+        throw const AppError('room.history');
+      }
+      seq++;
+      final kind = e['kind'];
+      final payload = e['payload'];
+      final actor = e['actor'];
+      if (kind is! String || payload is! Map || actor is! Map) {
+        throw const AppError('contract.invalid_response');
+      }
+      final text = payload['text'];
+      final tool = kind == 'tool.start' || kind == 'tool.complete';
+      if ((!kind.startsWith('message.') || text is! String || text.isEmpty) &&
+          !tool) {
+        continue;
+      }
+      entries.add(
+        RoomEntry(
+          id: e['event_id'] as String,
+          seq: seq,
+          member: actor['id'] as String? ?? '',
+          text: text is String ? text : '',
+          fromUser: kind == 'message.user',
+          needsUser:
+              kind != 'message.user' &&
+              text is String &&
+              RegExp(r'(^|\s)@user\b').hasMatch(text),
+          activity: tool ? ActivityKind.forTool(payload['name']) : null,
+          completed: kind == 'tool.complete',
+          details: tool ? Map<String, Object?>.from(payload) : const {},
+        ),
+      );
+    }
+    return RoomSnapshot(
+      summary,
+      entries,
+      working: status.working,
+      waiting: status.blocked,
+    );
+  }
+
   static Map<String, dynamic> roomCreate(
     String name,
     Set<ProfileKey> members,
@@ -523,6 +604,17 @@ abstract final class HermesRpc {
       {
         for (final p in (r['seatable_profiles'] as List? ?? const []))
           ProfileKey(p as String),
+      },
+      {
+        for (final entry in {
+          RoomFeature.create: groupsCreate,
+          RoomFeature.send: groupsSend,
+          RoomFeature.stop: groupsStop,
+          RoomFeature.retry: groupsRetry,
+          RoomFeature.discard: groupsDiscard,
+          RoomFeature.approve: groupsApprove,
+        }.entries)
+          if ((r['methods'] as List).contains(entry.value)) entry.key,
       },
     );
   }

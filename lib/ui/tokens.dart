@@ -488,6 +488,8 @@ abstract final class CodeStyle {
 /// Échelles de texte de référence (galerie : texte agrandi 200 %).
 /// Proportions de mise en page.
 abstract final class Layout {
+  static const int roomComposerFlex = 1;
+
   /// Largeur max d'une bulle, en fraction de l'écran.
   static const double bubbleMaxWidth = .85;
 

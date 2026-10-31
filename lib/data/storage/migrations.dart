@@ -288,4 +288,26 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'PRIMARY KEY (connection_key, profile_key, stored_session_id))',
     );
   },
+  (db) async {
+    // 8.4 : chaque clé conserve connexion, profil et salon en collation BINARY.
+    await db.execute(
+      'CREATE TABLE room_snapshots ('
+      'connection_key TEXT NOT NULL COLLATE BINARY, profile_key TEXT NOT NULL COLLATE BINARY, '
+      'room_id TEXT NOT NULL COLLATE BINARY, state_json TEXT NOT NULL, events_json TEXT NOT NULL, '
+      'seen_seq INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(connection_key, profile_key, room_id))',
+    );
+    await db.execute(
+      'CREATE TABLE outbox_room_drafts ('
+      'connection_key TEXT NOT NULL COLLATE BINARY, profile_key TEXT NOT NULL COLLATE BINARY, '
+      'room_id TEXT NOT NULL COLLATE BINARY, text TEXT NOT NULL, '
+      'PRIMARY KEY(connection_key, profile_key, room_id))',
+    );
+    await db.execute(
+      'CREATE TABLE outbox_room_operations ('
+      'connection_key TEXT NOT NULL COLLATE BINARY, profile_key TEXT NOT NULL COLLATE BINARY, '
+      'room_id TEXT NOT NULL COLLATE BINARY, event_id TEXT NOT NULL COLLATE BINARY, '
+      'text TEXT NOT NULL, state TEXT NOT NULL, '
+      'PRIMARY KEY(connection_key, profile_key, room_id, event_id))',
+    );
+  },
 ];
