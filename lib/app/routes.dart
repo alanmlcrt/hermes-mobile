@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../data/attachment_picker.dart';
 import '../data/room_repository.dart';
 import '../data/outbox_repository.dart';
+import '../data/intervention_repository.dart';
 import '../features/rooms/room_view.dart';
 import '../features/rooms/room_view_model.dart';
 import '../features/rooms/rooms_view.dart';
@@ -179,6 +180,7 @@ class AppRoutes {
       database: outbox is OutboxRepository ? outbox.database : null,
     );
     if (outbox is OutboxRepository) outbox.rooms = rooms;
+    if (interventions is InterventionRepository) interventions.rooms = rooms;
     router = GoRouter(
       refreshListenable: _refresh,
       redirect: (context, state) {
@@ -263,6 +265,9 @@ class AppRoutes {
                   ProfileKey(profile),
                   state.pathParameters['room']!,
                 ),
+                interventions: interventions is RoomInterventions
+                    ? interventions as RoomInterventions
+                    : null,
               ),
             );
           },

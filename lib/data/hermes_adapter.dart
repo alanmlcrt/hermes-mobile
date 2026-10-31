@@ -471,6 +471,14 @@ abstract final class HermesRpc {
   static const groupsRetry = 'groups.retry';
   static const groupsDiscard = 'groups.discard';
   static const groupsApprove = 'groups.approve';
+  static Map<String, dynamic> roomListParams(int? offset) => {
+    'offset': ?offset,
+  };
+  static int? roomNextOffset(Map result) => result['next_offset'] as int?;
+  static Map<String, dynamic> roomLogParams(int cursor) => {
+    'since_seq': cursor,
+  };
+  static RoomSummary roomFromResult(Map result) => room(result['room'] as Map);
   static Map<String, dynamic> roomSend(String eventId, String text) => {
     'event_id': eventId,
     'payload': {'text': text},
@@ -483,9 +491,17 @@ abstract final class HermesRpc {
         (result['client_event_id'] == eventId || event['event_id'] == eventId);
   }
 
-  static ({List<Map<String, dynamic>> events, int cursor, bool more})
+  static ({
+    List<Map<String, dynamic>> events,
+    int cursor,
+    int latest,
+    bool more,
+  })
   roomLogPage(Map r) {
-    if (r['events'] is! List || r['cursor'] is! int || r['has_more'] is! bool) {
+    if (r['events'] is! List ||
+        r['cursor'] is! int ||
+        r['has_more'] is! bool ||
+        r['latest_seq'] is! int) {
       throw const AppError('contract.invalid_response');
     }
     return (
@@ -494,6 +510,7 @@ abstract final class HermesRpc {
           Map<String, dynamic>.from(e as Map),
       ],
       cursor: r['cursor'] as int,
+      latest: r['latest_seq'] as int,
       more: r['has_more'] == true,
     );
   }
@@ -551,6 +568,7 @@ abstract final class HermesRpc {
       waiting: status.blocked,
       tasks: roomTasks(state),
       latestSeq: seq,
+      approvals: roomApprovals(state),
     );
   }
 
@@ -569,6 +587,38 @@ abstract final class HermesRpc {
             retryable: a['status'] == 'failed',
           ),
     ];
+  }
+
+  static List<RoomApproval> roomApprovals(Map state) {
+    final status = state['driver_status'];
+    final actions = status is Map ? status['pending_actions'] : null;
+    return [
+      for (final a in actions is List ? actions : const [])
+        if (a is Map && a['kind'] == 'approval')
+          RoomApproval(
+            request: a['request_id'] as String? ?? '',
+            task: a['task_id'] as String? ?? '',
+            member: a['member_id'] as String? ?? '',
+            generation: a['execution_generation'] as int?,
+            description: a['description'] as String? ?? '',
+            command: a['command'] as String? ?? '',
+          ),
+    ];
+  }
+
+  static Map<String, dynamic> roomApprovalParams(
+    RoomApproval a,
+    String choice,
+  ) => {
+    'request_id': a.request,
+    'task_id': a.task,
+    'member_id': a.member,
+    'execution_generation': a.generation,
+    'choice': choice,
+  };
+  static bool roomApprovalReceipt(Map result) {
+    if (result['approved'] == false) throw const AppError('room.refused');
+    return result['result'] is Map;
   }
 
   static Map<String, dynamic> roomAttempt(
@@ -633,13 +683,16 @@ abstract final class HermesRpc {
     ...params,
   };
 
-  static RoomCapabilities roomCapabilities(Map<String, dynamic> r) {
+  static RoomCapabilities roomCapabilities(
+    Map<String, dynamic> r, {
+    Set<String> unavailable = const {},
+  }) {
     if (r['driver'] is! bool || r['methods'] is! List) {
       throw const AppError('contract.invalid_response');
     }
     return RoomCapabilities(
       r['driver'] == true,
-      (r['methods'] as List).cast<String>().toSet(),
+      (r['methods'] as List).cast<String>().toSet().difference(unavailable),
       {
         for (final p in (r['seatable_profiles'] as List? ?? const []))
           ProfileKey(p as String),
@@ -653,7 +706,9 @@ abstract final class HermesRpc {
           RoomFeature.discard: groupsDiscard,
           RoomFeature.approve: groupsApprove,
         }.entries)
-          if ((r['methods'] as List).contains(entry.value)) entry.key,
+          if ((r['methods'] as List).contains(entry.value) &&
+              !unavailable.contains(entry.value))
+            entry.key,
       },
     );
   }

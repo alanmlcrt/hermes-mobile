@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'connection.dart';
 import 'profile.dart';
 import 'timeline.dart';
@@ -5,7 +7,11 @@ import 'timeline.dart';
 const roomPollInterval = Duration(seconds: 3);
 
 abstract interface class RoomGateway {
-  Future<void> markSeen(RoomKey key, int seq);
+  Future<void> markSeen(
+    RoomKey key,
+    int seq, {
+    Set<String> approvals = const {},
+  });
   Future<void> stop(RoomKey key);
   Future<void> retry(RoomKey key, RoomTask task);
   Future<void> discard(RoomKey key, RoomTask task);
@@ -112,6 +118,7 @@ class RoomSnapshot {
     this.waiting = false,
     this.tasks = const [],
     this.latestSeq = 0,
+    this.approvals = const [],
   });
   final RoomSummary room;
   final List<RoomEntry> entries;
@@ -119,6 +126,7 @@ class RoomSnapshot {
   final bool waiting;
   final List<RoomTask> tasks;
   final int latestSeq;
+  final List<RoomApproval> approvals;
 }
 
 class RoomTask {
@@ -141,6 +149,39 @@ class RoomTask {
       id == other.id &&
       member == other.member &&
       generation == other.generation;
+}
+
+class RoomApproval {
+  const RoomApproval({
+    required this.request,
+    required this.task,
+    required this.member,
+    required this.generation,
+    required this.description,
+    required this.command,
+  });
+  final String request;
+  final String task;
+  final String member;
+  final int? generation;
+  final String description;
+  final String command;
+  bool get actionable =>
+      request.isNotEmpty &&
+      task.isNotEmpty &&
+      member.isNotEmpty &&
+      generation != null &&
+      (description.isNotEmpty || command.isNotEmpty);
+  String get commandKey =>
+      jsonEncode(['approval', member, task, generation, request]);
+  bool sameRequest(RoomApproval other) => commandKey == other.commandKey;
+}
+
+typedef RoomDecision = ({QuestionState state, bool? blocked});
+
+abstract interface class RoomInterventions {
+  Future<RoomDecision> roomDecision(RoomKey key, RoomApproval approval);
+  Future<void> approveRoom(RoomKey key, RoomApproval approval, String choice);
 }
 
 class RoomSend {

@@ -13,6 +13,8 @@ abstract final class Content {
       'Abandonner cette tentative au résultat inconnu ? Cela ne peut pas annuler les effets déjà produits.';
   static const roomTaskContextMissing =
       'Résultat inconnu. Hermes ne fournit pas le contexte nécessaire pour abandonner cette tentative.';
+  static const roomApprovalContextMissing =
+      'Hermes ne fournit pas l’identité ou le contenu complet de cette demande. La décision est indisponible.';
   static String roomStopStatus(String state) => switch (state) {
     'confirmed' => 'Arrêt confirmé par Hermes',
     'unknown' =>

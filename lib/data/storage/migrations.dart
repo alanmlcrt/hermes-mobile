@@ -319,4 +319,10 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'state TEXT NOT NULL, PRIMARY KEY(connection_key, profile_key, room_id, command_key))',
     );
   },
+  (db) async {
+    // 8.7 : acquittement des autorisations, même sans nouvel événement du journal.
+    await db.execute(
+      "ALTER TABLE room_snapshots ADD COLUMN seen_approvals TEXT NOT NULL DEFAULT '[]'",
+    );
+  },
 ];

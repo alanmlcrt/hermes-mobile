@@ -21,10 +21,14 @@ class RoomRepository implements RoomGateway {
   final Duration timeout;
   final _busy = <RoomKey>{};
   @override
-  Future<void> markSeen(RoomKey key, int seq) async {
+  Future<void> markSeen(
+    RoomKey key,
+    int seq, {
+    Set<String> approvals = const {},
+  }) async {
     await database?.rawUpdate(
-      'UPDATE room_snapshots SET seen_seq = MAX(seen_seq, ?) WHERE $whereRoom',
-      [seq, ...key.args],
+      'UPDATE room_snapshots SET seen_seq = MAX(seen_seq, ?), seen_approvals = ? WHERE $whereRoom',
+      [seq, jsonEncode(approvals.toList()), ...key.args],
     );
   }
 
@@ -143,14 +147,19 @@ class RoomRepository implements RoomGateway {
     var cursor = 0;
     while (true) {
       final page = HermesRpc.roomLogPage(
-        await call(key, HermesRpc.groupsLog, {'since_seq': cursor}),
+        await call(key, HermesRpc.groupsLog, HermesRpc.roomLogParams(cursor)),
       );
       events.addAll(page.events);
       if (page.cursor < cursor || (page.more && page.cursor <= cursor)) {
         throw const AppError('room.history');
       }
       cursor = page.cursor;
-      if (!page.more) break;
+      if (!page.more) {
+        if (cursor != page.latest || cursor != events.length) {
+          throw const AppError('room.history');
+        }
+        break;
+      }
     }
     final snapshot = HermesRpc.roomSnapshot(state, events);
     check(key);
@@ -165,7 +174,7 @@ class RoomRepository implements RoomGateway {
       await db.transaction((tx) async {
         final old = await tx.query(
           'room_snapshots',
-          columns: ['seen_seq'],
+          columns: ['seen_seq', 'seen_approvals'],
           where: whereRoom,
           whereArgs: key.args,
         );
@@ -176,6 +185,7 @@ class RoomRepository implements RoomGateway {
           'state_json': jsonEncode(state),
           'events_json': jsonEncode(events),
           'seen_seq': old.isEmpty ? 0 : old.single['seen_seq'],
+          'seen_approvals': old.isEmpty ? '[]' : old.single['seen_approvals'],
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       });
     }
@@ -203,7 +213,7 @@ class RoomRepository implements RoomGateway {
 
   @override
   Future<RoomSummary> find(RoomKey key) async =>
-      HermesRpc.room((await call(key, HermesRpc.groupsState))['room'] as Map);
+      HermesRpc.roomFromResult(await call(key, HermesRpc.groupsState));
 
   @override
   Future<RoomSummary> create(
@@ -227,7 +237,7 @@ class RoomRepository implements RoomGateway {
       HermesRpc.roomCreate(name.trim(), members),
     );
     try {
-      final room = HermesRpc.room(result['room'] as Map);
+      final room = HermesRpc.roomFromResult(result);
       if (room.id != key.room) throw const AppError('rpc.uncertain');
       return room;
     } catch (_) {
@@ -287,6 +297,13 @@ class RoomRepository implements RoomGateway {
     ProfileKey profile,
   ) async => HermesRpc.roomCapabilities(
     await call(RoomKey(connection, profile, ''), HermesRpc.groupsCapabilities),
+    unavailable: {
+      for (final missing in _missing)
+        if (missing.$1 == connection &&
+            missing.$2 == profile &&
+            missing.$3 == gateway.socketGeneration)
+          missing.$4,
+    },
   );
 
   @override
@@ -295,7 +312,9 @@ class RoomRepository implements RoomGateway {
     ProfileKey profile,
   ) async {
     final caps = await capabilities(connection, profile);
-    if (!caps.driver) throw const AppError('room.bot_mode');
+    if (!caps.driver || caps.profiles.isEmpty) {
+      throw const AppError('room.bot_mode');
+    }
     if (!caps.methods.contains(HermesRpc.groupsList)) {
       throw const AppError('room.missing');
     }
@@ -304,9 +323,13 @@ class RoomRepository implements RoomGateway {
     int? offset;
     final seen = <int>{};
     do {
-      final page = await call(key, HermesRpc.groupsList, {'offset': ?offset});
+      final page = await call(
+        key,
+        HermesRpc.groupsList,
+        HermesRpc.roomListParams(offset),
+      );
       rooms.addAll(HermesRpc.rooms(page));
-      offset = page['next_offset'] as int?;
+      offset = HermesRpc.roomNextOffset(page);
       if (offset != null && !seen.add(offset)) {
         throw const AppError('contract.invalid_response');
       }
@@ -328,11 +351,14 @@ class RoomRepository implements RoomGateway {
       final snapshot = await load(key);
       final rows = await database!.query(
         'room_snapshots',
-        columns: ['seen_seq'],
+        columns: ['seen_seq', 'seen_approvals'],
         where: whereRoom,
         whereArgs: key.args,
       );
       final seen = rows.isEmpty ? 0 : rows.single['seen_seq'] as int;
+      final seenApprovals = rows.isEmpty
+          ? const []
+          : jsonDecode(rows.single['seen_approvals'] as String) as List;
       return RoomSummary(
         id: room.id,
         name: room.name,
@@ -343,7 +369,11 @@ class RoomRepository implements RoomGateway {
             .lastOrNull
             ?.text,
         working: snapshot.working,
-        needsUser: snapshot.entries.any((e) => e.needsUser && e.seq > seen),
+        needsUser:
+            snapshot.entries.any((e) => e.needsUser && e.seq > seen) ||
+            snapshot.approvals.any(
+              (a) => !seenApprovals.contains(a.commandKey),
+            ),
       );
     }
     final state = caps.methods.contains(HermesRpc.groupsState)
@@ -352,7 +382,7 @@ class RoomRepository implements RoomGateway {
     final status = HermesRpc.roomStatus(state);
     final messages = caps.methods.contains(HermesRpc.groupsLog)
         ? HermesRpc.roomMessages(
-            await call(key, HermesRpc.groupsLog, {'since_seq': 0}),
+            await call(key, HermesRpc.groupsLog, HermesRpc.roomLogParams(0)),
           )
         : <String>[];
     return RoomSummary(

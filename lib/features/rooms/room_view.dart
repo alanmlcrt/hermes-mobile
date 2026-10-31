@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../models/room.dart';
+import '../../models/timeline.dart';
+import '../../ui/components/approval_card.dart';
 import '../../ui/components/activity_line.dart';
 import '../../ui/components/composer.dart';
 import '../../ui/components/message_bubble.dart';
@@ -35,7 +37,8 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
 
   void _changed() {
     if (!_focusedAttention &&
-        vm.snapshot?.entries.any((e) => e.needsUser) == true) {
+        (vm.snapshot?.entries.any((e) => e.needsUser) == true ||
+            vm.approvals.isNotEmpty)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final target = _attention.currentContext;
         if (!mounted || target == null) return;
@@ -171,6 +174,39 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
     );
   }
 
+  Widget _approval(RoomApproval a) {
+    final member = vm.snapshot?.room.members
+        .where((m) => m.id == a.member)
+        .firstOrNull;
+    final decision = vm.decisions[a.commandKey];
+    final hasMessageAttention =
+        vm.snapshot?.entries.any((e) => e.needsUser) == true;
+    return Column(
+      key:
+          !hasMessageAttention &&
+              a.commandKey == vm.approvals.lastOrNull?.commandKey
+          ? _attention
+          : null,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(member?.name ?? a.member),
+        if (!a.actionable) const Text(Content.roomApprovalContextMissing),
+        ApprovalCard(
+          description: a.description,
+          command: a.command,
+          state: decision?.state ?? QuestionState.open,
+          blocked: decision?.blocked,
+          canDecide:
+              a.actionable &&
+              !vm.busy &&
+              vm.interventions != null &&
+              vm.available.contains(RoomFeature.approve),
+          onDecide: (choice) => vm.decide(a, choice),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: vm,
@@ -222,6 +258,7 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
                       const Text(Content.roomWaiting),
                     for (final entry in vm.snapshot?.entries ?? <RoomEntry>[])
                       _entry(entry),
+                    for (final a in vm.approvals) _approval(a),
                     for (final send in vm.sends)
                       if (send.state != 'confirmed')
                         Text(Content.roomSendStatus(send.state)),

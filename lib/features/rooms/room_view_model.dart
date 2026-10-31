@@ -4,9 +4,14 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/app_error.dart';
 import '../../models/room.dart';
+import '../../models/timeline.dart';
 
 class RoomViewModel extends ChangeNotifier {
-  RoomViewModel(this.rooms, this.outbox, this.key);
+  RoomViewModel(this.rooms, this.outbox, this.key, {this.interventions});
+  final RoomInterventions? interventions;
+  final decisions = <String, RoomDecision>{};
+  final _knownApprovals = <String, RoomApproval>{};
+  Iterable<RoomApproval> get approvals => _knownApprovals.values;
   final RoomGateway rooms;
   final RoomOutbox outbox;
   final RoomKey key;
@@ -59,7 +64,24 @@ class RoomViewModel extends ChangeNotifier {
       final caps = await rooms.capabilities(key.connection, key.profile);
       if (!caps.driver) throw const AppError('room.bot_mode');
       final result = await rooms.load(key);
-      await rooms.markSeen(key, result.latestSeq);
+      await rooms.markSeen(
+        key,
+        result.latestSeq,
+        approvals: {for (final a in result.approvals) a.commandKey},
+      );
+      for (final a in result.approvals) {
+        _knownApprovals[a.commandKey] = a;
+      }
+      for (final a in approvals) {
+        var decision =
+            await interventions?.roomDecision(key, a) ??
+            (state: QuestionState.open, blocked: null);
+        if (decision.state == QuestionState.open &&
+            !result.approvals.any(a.sameRequest)) {
+          decision = (state: QuestionState.closed, blocked: null);
+        }
+        decisions[a.commandKey] = decision;
+      }
       await outbox.reconcileRoom(key, {
         for (final e in result.entries)
           if (e.fromUser) e.id,
@@ -101,6 +123,39 @@ class RoomViewModel extends ChangeNotifier {
       _notify();
     });
     _notify();
+  }
+
+  Future<void> decide(RoomApproval approval, String choice) async {
+    if (busy ||
+        interventions == null ||
+        !available.contains(RoomFeature.approve)) {
+      return;
+    }
+    busy = true;
+    decisions[approval.commandKey] = (
+      state: QuestionState.sending,
+      blocked: null,
+    );
+    _notify();
+    try {
+      await interventions!.approveRoom(key, approval, choice);
+      decisions[approval.commandKey] = await interventions!.roomDecision(
+        key,
+        approval,
+      );
+      await refresh();
+    } catch (e) {
+      error = e is AppError ? e.code : 'room.failed';
+      decisions[approval.commandKey] = error == 'room.stale'
+          ? (state: QuestionState.closed, blocked: null)
+          : await interventions!.roomDecision(key, approval);
+      if (error == 'room.missing') {
+        available = {...available}..remove(RoomFeature.approve);
+      }
+    } finally {
+      busy = false;
+      _notify();
+    }
   }
 
   Future<void> stop() async {

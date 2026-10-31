@@ -8,9 +8,11 @@ import '../models/app_error.dart';
 import '../models/connection.dart';
 import '../models/connection_gateway.dart';
 import '../models/profile.dart';
+import '../models/room.dart';
 import '../models/timeline.dart';
 import 'conversation_repository.dart';
 import 'hermes_adapter.dart';
+import 'room_repository.dart';
 
 /// État persisté d'une réponse (`intervention_answers.state`).
 enum AnswerState { sending, sent, confirmed, unknown, closed }
@@ -20,7 +22,8 @@ enum AnswerState { sending, sent, confirmed, unknown, closed }
 /// enregistrée avant la trame, puis envoyée une seule fois. Une issue
 /// incertaine reste `unknown` ; rien n'est jamais renvoyé automatiquement.
 /// Ne ferme pas la base partagée.
-class InterventionRepository implements InterventionGateway, QuestionLedger {
+class InterventionRepository
+    implements InterventionGateway, QuestionLedger, RoomInterventions {
   InterventionRepository(
     this.database, {
     required this.gateway,
@@ -32,6 +35,67 @@ class InterventionRepository implements InterventionGateway, QuestionLedger {
   }
   final Database database;
   final ConnectionGateway gateway;
+  RoomRepository? rooms;
+
+  @override
+  Future<RoomDecision> roomDecision(RoomKey key, RoomApproval approval) async {
+    final state = await rooms?.commandState(key, approval.commandKey);
+    return (
+      state: state == 'unknown' || state == 'sending'
+          ? QuestionState.unknown
+          : state != null && state.startsWith('confirmed')
+          ? QuestionState.confirmed
+          : QuestionState.open,
+      blocked: state == 'confirmed:deny'
+          ? true
+          : state == 'confirmed:once'
+          ? false
+          : null,
+    );
+  }
+
+  @override
+  Future<void> approveRoom(
+    RoomKey key,
+    RoomApproval approval,
+    String choice,
+  ) async {
+    final repo = rooms;
+    if (repo == null) throw const AppError('room.missing');
+    if (!approval.actionable || !ApprovalChoice.offered.contains(choice)) {
+      throw const AppError('room.stale');
+    }
+    await repo.mutate(key, () async {
+      final previous = await roomDecision(key, approval);
+      if (previous.state == QuestionState.unknown) {
+        throw const AppError('rpc.uncertain');
+      }
+      if (previous.state != QuestionState.open) {
+        throw const AppError('room.stale');
+      }
+      final fresh = await repo.load(key);
+      if (!fresh.approvals.any(approval.sameRequest)) {
+        throw const AppError('room.stale');
+      }
+      final caps = await repo.capabilities(key.connection, key.profile);
+      if (!caps.available.contains(RoomFeature.approve)) {
+        throw const AppError('room.missing');
+      }
+      await repo.command(
+        key,
+        approval.commandKey,
+        () async => HermesRpc.roomApprovalReceipt(
+          await repo.call(
+            key,
+            HermesRpc.groupsApprove,
+            HermesRpc.roomApprovalParams(approval, choice),
+          ),
+        ),
+      );
+      await repo.recordCommand(key, approval.commandKey, 'confirmed:$choice');
+    });
+  }
+
   final ConversationRepository conversation;
   final DateTime Function() _now;
   final _inFlight = <String>{};

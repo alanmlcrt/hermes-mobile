@@ -123,3 +123,27 @@
   summary: Normalisation Unicode complète et recherche serveur.
   evidence: Le repliement couvre les lettres latines accentuées et les marques combinantes U+0300–036F ; une décomposition NFD complète demanderait une dépendance. Aucune recherche serveur n'est qualifiée : seule la couverture locale est proposée.
 
+- source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Qualifier Bot Mode et G5 sur les deux profils de test, sans sonde authentifiée dans cette livraison.
+  evidence: Contrat OpenRPC extrait dans contracts/epic-8/methods.json (documentary). Procédure Samba réversible fournie ; valeur agent.bot_mode_protocol et activation réelle à confirmer par Alan. Aucun fichier Hermes ni profil n'a été modifié.
+
+- source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Vérifier les payloads ouverts de messages, activités, tâches et autorisations sur Hermes réel.
+  evidence: OpenRPC décrit RoomEvent.payload et pending_actions comme objets ouverts ; les conventions payload.text, tool.start/complete et champs directs des actions sont préparées mais non observées. Contexte incomplet = décision indisponible. État blocked utilisé pour l'attente ; seuils 10 messages / 3 tours et attribution de l'agent actif sans événement d'outil non qualifiés.
+
+- source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Activer et vérifier le relais de notifications de salon app fermée.
+  evidence: Aucun hook de salon documenté dans le contrat fourni ; aucun déploiement Hermes effectué. L'app accepte le payload minimal roomId/outcome (needs_user ou approval), ouvre une cible locale non ambiguë et groupe les notifications Android reçues au premier plan. La livraison app fermée dépend d'un relais externe non qualifié ; elle n'est pas démontrée ni simulée comme disponible.
+
+- source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Qualifier l'idempotence réelle de groups.send avant toute nouvelle tentative d'un envoi incertain.
+  evidence: event_id persisté avant la trame, aucun rejeu automatique, même après redémarrage. Tant que l'idempotence n'est pas constatée sur installation, les envois inconnus bloquent un nouvel envoi dans ce salon et ne sont réconciliés que par un event_id identique dans le journal. Si Hermes emploie un autre identifiant serveur, un adaptateur de preuve sera nécessaire ; aucune correspondance par texte.
+
+- source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Mesurer les grands journaux et confirmer les traces historiques des autorisations.
+  evidence: Relecture complète paginée, contrôle de continuité et cache conservé en cas d'échec ; actualisation au premier plan. Fil construit intégralement pour ouvrir le message d'escalade exact. Aucune mesure sur grand salon. Les cartes d'autorisation résolues restent pendant l'ouverture ; leur conservation après redémarrage dépend des événements effectivement exposés.
+
+- source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Gérer les salons et partager les fichiers dans les stories 8.8 et 8.9, hors périmètre demandé.
+  evidence: Méthodes rename/disband/attachment documentées, aucune route ou pipeline de pièces jointes parallèle ajouté. Aucune méthode de changement des membres documentée. Tests téléphone, validation réelle, fusion master et CI master restent conditionnés au retour d'Alan.
+
