@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/connection_gateway.dart';
@@ -114,6 +116,24 @@ class _ProfileRowState extends State<_ProfileRow> {
   // de profils grandit.
   late final Future<SessionSummary?> _latest = _load();
 
+  /// La dernière conversation est non lue (7.3) ; relu à chaque fin de tour.
+  bool _unread = false;
+  StreamSubscription<TimelineKey>? _changes;
+
+  @override
+  void initState() {
+    super.initState();
+    _changes = widget.conversation.changes.listen((key) {
+      if (key.profile == widget.profile.key) unawaited(_readMarker());
+    });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_changes?.cancel());
+    super.dispose();
+  }
+
   Future<SessionSummary?> _load() async {
     final connection = widget.gateway.snapshot.connection?.key;
     if (connection == null) return null;
@@ -121,7 +141,27 @@ class _ProfileRowState extends State<_ProfileRow> {
       connection,
       widget.profile.key,
     );
+    _session = list.firstOrNull?.id;
+    await _readMarker();
     return list.firstOrNull;
+  }
+
+  String? _session;
+
+  Future<void> _readMarker() async {
+    final connection = widget.gateway.snapshot.connection?.key;
+    final session = _session;
+    if (connection == null || session == null) return;
+    try {
+      final marks = await widget.conversation.markers(
+        connection,
+        widget.profile.key,
+      );
+      final unread = marks[session]?.unread ?? false;
+      if (mounted && unread != _unread) setState(() => _unread = unread);
+    } catch (_) {
+      /* Marqueur illisible : la ligne reste sans repère. */
+    }
   }
 
   @override
@@ -162,15 +202,34 @@ class _ProfileRowState extends State<_ProfileRow> {
             },
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(color: scheme.muted),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: _unread ? scheme.content : scheme.muted,
+              fontWeight: _unread ? FontWeight.w700 : null,
+            ),
           ),
-          trailing: date == null
+          // Texte « Non lu » en plus du gras : jamais la couleur seule.
+          trailing: date == null && !_unread
               ? null
-              : Text(
-                  Content.homeTime(date, DateTime.now()),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: scheme.muted,
-                  ),
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (date != null)
+                      Text(
+                        Content.homeTime(date, DateTime.now()),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.muted,
+                        ),
+                      ),
+                    if (_unread)
+                      Text(
+                        Content.unread,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.accent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                  ],
                 ),
           onTap: () => widget.onOpen(p.key, latest?.id),
         );

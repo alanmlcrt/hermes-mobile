@@ -1,12 +1,16 @@
 // Story 7.3 — épingler et marquer non lu (marqueurs locaux au téléphone).
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hermes_mobile/data/conversation_repository.dart';
 import 'package:hermes_mobile/data/event_mapping.dart';
 import 'package:hermes_mobile/data/outbox_repository.dart';
 import 'package:hermes_mobile/data/storage/database.dart';
 import 'package:hermes_mobile/features/history/history_view_model.dart';
+import 'package:hermes_mobile/features/home/home_view.dart';
+import 'package:hermes_mobile/features/profiles/profile_accents.dart';
+import 'package:hermes_mobile/ui/content.dart';
 import 'package:hermes_mobile/models/connection.dart';
 import 'package:hermes_mobile/models/history.dart';
 import 'package:hermes_mobile/models/profile.dart';
@@ -180,5 +184,32 @@ void main() {
     expect(vm.markerFailed, isTrue);
     expect(vm.markerOf('C').pinned, isFalse);
     vm.dispose();
+  });
+
+  testWidgets('accueil : « Non lu » sur la dernière conversation du profil', (
+    tester,
+  ) async {
+    final memory = MemoryConversation();
+    final connection = h.repository.snapshot.connection!.key;
+    final profile = h.repository.snapshot.profiles.first.key;
+    memory.lists[(connection, profile)] = const [
+      SessionSummary(id: 'last', title: 'Dernière'),
+    ];
+    memory.markerRows[TimelineKey(connection, profile, 'last')] =
+        const ConversationMarker(unread: true);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeView(
+          gateway: h.repository,
+          conversation: memory,
+          accents: ProfileAccents(h.repository),
+          onOpen: (_, _) {},
+          onSettings: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Dernière'), findsOne);
+    expect(find.text(Content.unread), findsOne);
   });
 }
