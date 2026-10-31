@@ -4,6 +4,7 @@ import '../../models/result.dart';
 import '../../models/timeline.dart';
 import '../content.dart';
 import '../tokens.dart';
+import 'appear.dart';
 import 'status_label.dart';
 
 /// Fichier produit par Hermes : nom, type et taille connus, état dit par un
@@ -198,14 +199,18 @@ class _ResultAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(Layout.touchTarget, Layout.touchTarget),
-      ),
-      onPressed: onPressed,
-      child: Semantics(
-        label: semantics,
-        child: ExcludeSemantics(child: Text(label)),
+    return PressScale(
+      enabled: onPressed != null,
+      haptic: true,
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(Layout.touchTarget, Layout.touchTarget),
+        ),
+        onPressed: onPressed,
+        child: Semantics(
+          label: semantics,
+          child: ExcludeSemantics(child: Text(label)),
+        ),
       ),
     );
   }

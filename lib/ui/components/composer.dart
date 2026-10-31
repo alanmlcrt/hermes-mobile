@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../content.dart';
+import '../theme.dart';
 import '../tokens.dart';
+import 'appear.dart';
 
 /// Composant `PromptInput` (style AI SDK Elements / shadcn) : bloc encadré
 /// unifié comprenant éventuellement un en-tête de pièces jointes (`header`),
 /// une zone de texte multiligne (`PromptInputTextarea`) et une barre d'outils
 /// inférieure (`PromptInputToolbar`) avec bouton d'ajout à gauche et bouton
 /// d'envoi/arrêt monochrome à droite.
-class Composer extends StatelessWidget {
+class Composer extends StatefulWidget {
   const Composer({
     super.key,
     this.controller,
@@ -40,20 +42,34 @@ class Composer extends StatelessWidget {
   final int maxLines;
 
   @override
+  State<Composer> createState() => _ComposerState();
+}
+
+class _ComposerState extends State<Composer> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final duration = motionDuration(context, Motion.short);
+    final actionCallback = widget.stopping ? widget.onStop : widget.onSend;
+    final dimension = widget.stopping ? Layout.stopButton : Layout.sendButton;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
+        AnimatedContainer(
+          duration: duration,
+          curve: Curves.easeOutCubic,
           constraints: const BoxConstraints(
             minHeight: Layout.composerMinHeight,
           ),
           decoration: BoxDecoration(
             color: scheme.card,
             borderRadius: BorderRadius.circular(Radii.pill),
-            border: Border.all(color: scheme.line),
+            border: Border.all(
+              color: _focused ? scheme.outline : scheme.line,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(Spacing.sm),
@@ -61,27 +77,32 @@ class Composer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (header != null) ...[
-                  header!,
+                if (widget.header != null) ...[
+                  widget.header!,
                   const SizedBox(height: Spacing.xs),
                 ],
-                TextField(
-                  controller: controller,
-                  onChanged: onChanged,
-                  keyboardType: TextInputType.multiline,
-                  textCapitalization: TextCapitalization.sentences,
-                  minLines: ComposerLines.min,
-                  maxLines: maxLines,
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    isDense: true,
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.sm,
-                      vertical: Spacing.xs,
+                Focus(
+                  onFocusChange: (value) {
+                    if (_focused != value) setState(() => _focused = value);
+                  },
+                  child: TextField(
+                    controller: widget.controller,
+                    onChanged: widget.onChanged,
+                    keyboardType: TextInputType.multiline,
+                    textCapitalization: TextCapitalization.sentences,
+                    minLines: ComposerLines.min,
+                    maxLines: widget.maxLines,
+                    decoration: InputDecoration(
+                      hintText: widget.hint,
+                      isDense: true,
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.sm,
+                        vertical: Spacing.xs,
+                      ),
                     ),
                   ),
                 ),
@@ -90,21 +111,23 @@ class Composer extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    if (onAttach != null)
-                      SizedBox.square(
-                        dimension: Layout.stopButton,
-                        child: IconButton(
-                          tooltip: Content.attach,
-                          onPressed: onAttach,
-                          style: IconButton.styleFrom(
-                            foregroundColor: scheme.muted,
-                            shape: CircleBorder(
-                              side: BorderSide(color: scheme.line),
+                    if (widget.onAttach != null)
+                      PressScale(
+                        child: SizedBox.square(
+                          dimension: Layout.stopButton,
+                          child: IconButton(
+                            tooltip: Content.attach,
+                            onPressed: widget.onAttach,
+                            style: IconButton.styleFrom(
+                              foregroundColor: scheme.muted,
+                              shape: CircleBorder(
+                                side: BorderSide(color: scheme.line),
+                              ),
                             ),
-                          ),
-                          icon: const Icon(
-                            Icons.add,
-                            size: IconSizes.sm,
+                            icon: const Icon(
+                              Icons.add,
+                              size: IconSizes.sm,
+                            ),
                           ),
                         ),
                       )
@@ -112,32 +135,41 @@ class Composer extends StatelessWidget {
                       const SizedBox.shrink(),
                     MergeSemantics(
                       child: Semantics(
-                        label: stopping ? Content.stop : Content.send,
-                        excludeSemantics: stopping,
-                        button: stopping ? true : null,
-                        enabled: stopping ? onStop != null : null,
-                        onTap: stopping ? onStop : null,
-                        hint: !stopping && onSend == null
-                            ? disabledReason
+                        label: widget.stopping ? Content.stop : Content.send,
+                        excludeSemantics: widget.stopping,
+                        button: widget.stopping ? true : null,
+                        enabled: widget.stopping ? widget.onStop != null : null,
+                        onTap: widget.stopping ? widget.onStop : null,
+                        hint: !widget.stopping && widget.onSend == null
+                            ? widget.disabledReason
                             : null,
-                        child: SizedBox.square(
-                          dimension: stopping
-                              ? Layout.stopButton
-                              : Layout.sendButton,
-                          child: IconButton.filled(
-                            tooltip: stopping ? Content.stop : Content.send,
-                            onPressed: stopping ? onStop : onSend,
-                            padding: EdgeInsets.zero,
-                            style: IconButton.styleFrom(
-                              backgroundColor: scheme.emphasis,
-                              foregroundColor: scheme.emphasisContent,
-                              disabledBackgroundColor: scheme.chip,
-                              disabledForegroundColor: scheme.muted,
-                              shape: const CircleBorder(),
-                            ),
-                            icon: Icon(
-                              stopping ? Icons.stop : Icons.arrow_upward,
-                              size: IconSizes.sm,
+                        child: PressScale(
+                          enabled: actionCallback != null,
+                          haptic: true,
+                          child: AnimatedContainer(
+                            duration: duration,
+                            curve: Curves.easeOutCubic,
+                            width: dimension,
+                            height: dimension,
+                            child: IconButton.filled(
+                              tooltip: widget.stopping
+                                  ? Content.stop
+                                  : Content.send,
+                              onPressed: actionCallback,
+                              padding: EdgeInsets.zero,
+                              style: IconButton.styleFrom(
+                                backgroundColor: scheme.emphasis,
+                                foregroundColor: scheme.emphasisContent,
+                                disabledBackgroundColor: scheme.chip,
+                                disabledForegroundColor: scheme.muted,
+                                shape: const CircleBorder(),
+                              ),
+                              icon: Icon(
+                                widget.stopping
+                                    ? Icons.stop
+                                    : Icons.arrow_upward,
+                                size: IconSizes.sm,
+                              ),
                             ),
                           ),
                         ),
@@ -150,11 +182,11 @@ class Composer extends StatelessWidget {
           ),
         ),
         // Annoncés (région live, indication du bouton) sans texte affiché.
-        if (status != null)
+        if (widget.status != null)
           Semantics(
             container: true,
             liveRegion: true,
-            label: status,
+            label: widget.status,
             child: const SizedBox.shrink(),
           ),
       ],

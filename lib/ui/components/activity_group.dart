@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../content.dart';
 import '../tokens.dart';
+import 'appear.dart';
 
 /// En-tête de raisonnement / groupe d'étapes (style AI SDK Elements
 /// `<ChainOfThought>` / `<Reasoning>`) : bouton encadré repliable listant le
@@ -28,7 +29,8 @@ class ActivityGroup extends StatelessWidget {
       hint: expanded ? Content.collapseActivities : Content.expandActivities,
       child: Align(
         alignment: AlignmentDirectional.centerStart,
-        child: TextButton(
+        child: PressScale(
+          child: TextButton(
           style: TextButton.styleFrom(
             minimumSize: const Size(
               ActivityTokens.command,
@@ -74,6 +76,7 @@ class ActivityGroup extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -536,6 +536,12 @@ abstract final class Layout {
   /// Glissement d'arrivée d'un élément du fil, en fraction de sa hauteur.
   static const double appearShift = .15;
 
+  /// Échelles des micro-interactions (arrivée, pression tactile, pastille).
+  static const double appearScale = .97;
+  static const double pressScale = .96;
+  static const double normalScale = 1;
+  static const double swatchSelectedScale = 1.1;
+
   /// Saisie : hauteur minimale de la pilule.
   static const double composerMinHeight = 52;
 }

@@ -6,6 +6,7 @@ import '../content.dart';
 import '../tokens.dart';
 import 'activity_catalog.dart';
 import 'activity_details.dart';
+import 'appear.dart';
 
 /// Ligne d'activité générique : jamais de détail inventé sur ce que fait Hermes.
 class ActivityLine extends StatelessWidget {
@@ -259,21 +260,23 @@ class ActivityLine extends StatelessWidget {
                 ? Content.collapseDetails
                 : Content.expandDetails,
             child: expandable
-                ? TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      foregroundColor: scheme.content,
-                      alignment: AlignmentDirectional.centerStart,
-                      minimumSize: const Size(
-                        ActivityTokens.command,
-                        ActivityTokens.command,
+                ? PressScale(
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        foregroundColor: scheme.content,
+                        alignment: AlignmentDirectional.centerStart,
+                        minimumSize: const Size(
+                          ActivityTokens.command,
+                          ActivityTokens.command,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(Radii.lg),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(Radii.lg),
-                      ),
+                      onPressed: () => onChanged!(!expanded),
+                      child: card,
                     ),
-                    onPressed: () => onChanged!(!expanded),
-                    child: card,
                   )
                 : card,
           ),

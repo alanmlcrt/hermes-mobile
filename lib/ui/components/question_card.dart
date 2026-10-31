@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/timeline.dart';
 import '../content.dart';
 import '../tokens.dart';
+import 'appear.dart';
 import 'status_label.dart';
 
 /// Question de Hermes dans le fil : texte et choix tels qu'émis (suffixe
@@ -174,16 +175,20 @@ class _QuestionCardState extends State<QuestionCard> {
                 ),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: Layout.touchTarget,
-                    minWidth: Layout.touchTarget,
-                  ),
-                  child: FilledButton(
-                    onPressed: reason == null && widget.onSubmit != null
-                        ? () => widget.onSubmit!(_answers)
-                        : null,
-                    child: const Text(Content.questionSend),
+                child: PressScale(
+                  enabled: reason == null && widget.onSubmit != null,
+                  haptic: true,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: Layout.touchTarget,
+                      minWidth: Layout.touchTarget,
+                    ),
+                    child: FilledButton(
+                      onPressed: reason == null && widget.onSubmit != null
+                          ? () => widget.onSubmit!(_answers)
+                          : null,
+                      child: const Text(Content.questionSend),
+                    ),
                   ),
                 ),
               ),
@@ -212,23 +217,26 @@ class _QuestionCardState extends State<QuestionCard> {
           runSpacing: Spacing.sm,
           children: [
             for (final choice in q.choices)
-              ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: Layout.touchTarget,
+              PressScale(
+                haptic: true,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: Layout.touchTarget,
+                  ),
+                  child: q.multiSelect
+                      ? FilterChip(
+                          label: Text(choice),
+                          selected: selected.contains(choice),
+                          materialTapTargetSize: MaterialTapTargetSize.padded,
+                          onSelected: (on) => _toggle(q, choice, on),
+                        )
+                      : ChoiceChip(
+                          label: Text(choice),
+                          selected: selected.contains(choice),
+                          materialTapTargetSize: MaterialTapTargetSize.padded,
+                          onSelected: (on) => _toggle(q, choice, on),
+                        ),
                 ),
-                child: q.multiSelect
-                    ? FilterChip(
-                        label: Text(choice),
-                        selected: selected.contains(choice),
-                        materialTapTargetSize: MaterialTapTargetSize.padded,
-                        onSelected: (on) => _toggle(q, choice, on),
-                      )
-                    : ChoiceChip(
-                        label: Text(choice),
-                        selected: selected.contains(choice),
-                        materialTapTargetSize: MaterialTapTargetSize.padded,
-                        onSelected: (on) => _toggle(q, choice, on),
-                      ),
               ),
           ],
         ),

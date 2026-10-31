@@ -4,8 +4,10 @@ import '../../models/connection_gateway.dart';
 import '../../models/profile.dart';
 import '../../models/profile_accent.dart';
 import '../../models/timeline.dart';
+import '../../ui/components/appear.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
+import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import 'approval_mode_section.dart';
 import 'profile_accents.dart';
@@ -250,46 +252,59 @@ class _Swatch extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = AccentTokens.of(accent);
+    final duration = motionDuration(context, Motion.short);
     return Semantics(
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: true,
       label: Content.accentName(accent.id),
       excludeSemantics: true,
-      child: InkResponse(
-        onTap: onTap,
-        radius: Layout.swatch / 2,
-        child: SizedBox.square(
-          dimension: Layout.swatch,
-          child: Center(
-            child: Container(
-              width: Layout.swatchDot,
-              height: Layout.swatchDot,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color,
-                boxShadow: selected
-                    // Anneau de la couleur, séparé du disque par la carte.
-                    ? [
-                        BoxShadow(
-                          color: color,
-                          spreadRadius:
-                              Layout.swatchSelected + Layout.swatchSelected,
-                        ),
-                        BoxShadow(
-                          color: scheme.card,
-                          spreadRadius: Layout.swatchSelected,
-                        ),
-                      ]
-                    : null,
+      child: PressScale(
+        haptic: true,
+        child: InkResponse(
+          onTap: onTap,
+          radius: Layout.swatch / 2,
+          child: SizedBox.square(
+            dimension: Layout.swatch,
+            child: Center(
+              child: AnimatedScale(
+                scale: selected
+                    ? Layout.swatchSelectedScale
+                    : Layout.normalScale,
+                duration: duration,
+                curve: Curves.easeOutBack,
+                child: AnimatedContainer(
+                  duration: duration,
+                  curve: Curves.easeOutCubic,
+                  width: Layout.swatchDot,
+                  height: Layout.swatchDot,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color,
+                    boxShadow: selected
+                        // Anneau de la couleur, séparé du disque par la carte.
+                        ? [
+                            BoxShadow(
+                              color: color,
+                              spreadRadius:
+                                  Layout.swatchSelected + Layout.swatchSelected,
+                            ),
+                            BoxShadow(
+                              color: scheme.card,
+                              spreadRadius: Layout.swatchSelected,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: selected
+                      ? const Icon(
+                          Icons.check,
+                          size: IconSizes.sm,
+                          color: AccentTokens.onAccent,
+                        )
+                      : null,
+                ),
               ),
-              child: selected
-                  ? Icon(
-                      Icons.check,
-                      size: IconSizes.sm,
-                      color: AccentTokens.onAccent,
-                    )
-                  : null,
             ),
           ),
         ),

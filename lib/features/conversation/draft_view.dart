@@ -104,18 +104,20 @@ class _DraftViewState extends State<DraftView> {
           leading: widget.onHome == null
               ? null
               : Center(
-                  child: IconButton(
-                    tooltip: Content.home,
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.card,
-                      shape: CircleBorder(
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.line,
+                  child: PressScale(
+                    child: IconButton(
+                      tooltip: Content.home,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.card,
+                        shape: CircleBorder(
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.line,
+                          ),
                         ),
                       ),
+                      onPressed: widget.onHome,
+                      icon: const Icon(Icons.arrow_back, size: IconSizes.sm),
                     ),
-                    onPressed: widget.onHome,
-                    icon: const Icon(Icons.arrow_back, size: IconSizes.sm),
                   ),
                 ),
           title: draft == null
@@ -129,16 +131,20 @@ class _DraftViewState extends State<DraftView> {
             if (draft != null &&
                 widget.continuation &&
                 widget.onNewConversation != null)
-              IconButton(
-                tooltip: Content.newConversation,
-                style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.card,
-                  shape: CircleBorder(
-                    side: BorderSide(color: Theme.of(context).colorScheme.line),
+              PressScale(
+                child: IconButton(
+                  tooltip: Content.newConversation,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.card,
+                    shape: CircleBorder(
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.line,
+                      ),
+                    ),
                   ),
+                  onPressed: () => widget.onNewConversation!(draft.profile),
+                  icon: const Icon(Icons.add, size: IconSizes.sm),
                 ),
-                onPressed: () => widget.onNewConversation!(draft.profile),
-                icon: const Icon(Icons.add, size: IconSizes.sm),
               ),
             const SizedBox(width: Spacing.sm),
           ],
@@ -468,19 +474,22 @@ class _DraftViewState extends State<DraftView> {
           liveRegion: true,
           label: Content.draftProfile(name),
           hint: open == null ? null : Content.openConversationsHint,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: scheme.card,
-              foregroundColor: scheme.content,
-              disabledForegroundColor: scheme.content,
-              shape: StadiumBorder(side: BorderSide(color: scheme.line)),
-              padding: const EdgeInsetsDirectional.only(
-                start: Spacing.xs,
-                end: Spacing.sm + Spacing.xs,
+          child: PressScale(
+            enabled: open != null,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: scheme.card,
+                foregroundColor: scheme.content,
+                disabledForegroundColor: scheme.content,
+                shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+                padding: const EdgeInsetsDirectional.only(
+                  start: Spacing.xs,
+                  end: Spacing.sm + Spacing.xs,
+                ),
               ),
+              onPressed: open,
+              child: row,
             ),
-            onPressed: open,
-            child: row,
           ),
         ),
       ),
@@ -518,12 +527,15 @@ class _DraftViewState extends State<DraftView> {
             runSpacing: Spacing.sm,
             children: [
               for (final text in Content.suggestions)
-                ActionChip(
-                  label: Text(text),
-                  onPressed: () {
-                    _controller.text = text;
-                    vm.update(text);
-                  },
+                PressScale(
+                  haptic: true,
+                  child: ActionChip(
+                    label: Text(text),
+                    onPressed: () {
+                      _controller.text = text;
+                      vm.update(text);
+                    },
+                  ),
                 ),
             ],
           ),

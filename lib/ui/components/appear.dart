@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme.dart';
 import '../tokens.dart';
 
-/// Arrivée d'un élément du fil : fondu et léger glissement vers le haut,
-/// une seule fois. Immobile si [animate] est faux ou sous mouvement réduit.
+/// Arrivée d'un élément du fil : fondu, léger glissement vers le haut et
+/// mise à l'échelle subtile, une seule fois. Immobile si [animate] est faux
+/// ou sous mouvement réduit.
 class Appear extends StatefulWidget {
   const Appear({super.key, required this.animate, required this.child});
   final bool animate;
@@ -51,7 +53,63 @@ class _AppearState extends State<Appear> with SingleTickerProviderStateMixin {
       position: _curve.drive(
         Tween(begin: const Offset(0, Layout.appearShift), end: Offset.zero),
       ),
-      child: widget.child,
+      child: ScaleTransition(
+        scale: _curve.drive(
+          Tween(begin: Layout.appearScale, end: Layout.normalScale),
+        ),
+        child: widget.child,
+      ),
     ),
   );
+}
+
+/// Micro-interaction tactile : léger retrait d'échelle (`Layout.pressScale`)
+/// sous le doigt et rebond doux au relâchement, sans capturer l'arène de
+/// gestes ni perturber la sémantique. Respecte le mouvement réduit.
+class PressScale extends StatefulWidget {
+  const PressScale({
+    super.key,
+    required this.child,
+    this.enabled = true,
+    this.haptic = false,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final bool haptic;
+
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = motionDuration(context, Motion.short);
+    if (!widget.enabled || duration == Duration.zero) {
+      return widget.child;
+    }
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) {
+        _setPressed(true);
+        if (widget.haptic) HapticFeedback.selectionClick();
+      },
+      onPointerUp: (_) => _setPressed(false),
+      onPointerCancel: (_) => _setPressed(false),
+      child: AnimatedScale(
+        scale: _pressed ? Layout.pressScale : Layout.normalScale,
+        duration: duration,
+        curve: _pressed ? Curves.easeOutCubic : Curves.easeOutBack,
+        child: widget.child,
+      ),
+    );
+  }
 }

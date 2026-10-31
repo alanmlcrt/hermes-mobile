@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/timeline.dart';
 import '../content.dart';
 import '../tokens.dart';
+import 'appear.dart';
 import 'status_label.dart';
 
 /// Autorisation demandée par Hermes dans le fil : description et commande
@@ -189,7 +190,7 @@ class _Decision extends StatelessWidget {
       label: semantics,
       child: ExcludeSemantics(child: Text(label)),
     );
-    return filled
+    final button = filled
         ? FilledButton(
             style: FilledButton.styleFrom(minimumSize: size),
             onPressed: onPressed,
@@ -200,5 +201,10 @@ class _Decision extends StatelessWidget {
             onPressed: onPressed,
             child: child,
           );
+    return PressScale(
+      enabled: onPressed != null,
+      haptic: true,
+      child: button,
+    );
   }
 }
