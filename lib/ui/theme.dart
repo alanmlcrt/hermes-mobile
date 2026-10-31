@@ -45,7 +45,7 @@ ColorScheme fallbackColorScheme(Brightness brightness) {
 ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
   final scheme = dynamicScheme ?? fallbackColorScheme(brightness);
   final rounded = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(Radii.md),
+    borderRadius: BorderRadius.circular(Radii.lg),
   );
   final base = ThemeData(
     colorScheme: scheme,
@@ -75,7 +75,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       margin: EdgeInsets.zero,
       color: scheme.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(Radii.xl),
         side: BorderSide(color: scheme.line),
       ),
     ),
@@ -88,7 +88,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
           horizontal: Spacing.md,
           vertical: Spacing.sm,
         ),
-        shape: rounded,
+        shape: const StadiumBorder(),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -100,7 +100,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
           horizontal: Spacing.md,
           vertical: Spacing.sm,
         ),
-        shape: rounded,
+        shape: const StadiumBorder(),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -110,7 +110,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
           horizontal: Spacing.sm + Spacing.xs,
           vertical: Spacing.sm,
         ),
-        shape: rounded,
+        shape: const StadiumBorder(),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -118,20 +118,20 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       fillColor: scheme.card,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sm + Spacing.xs,
+        horizontal: Spacing.md,
         vertical: Spacing.sm + Spacing.xs,
       ),
       hintStyle: TextStyle(color: scheme.onSurfaceVariant),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Radii.md),
+        borderRadius: BorderRadius.circular(Radii.lg),
         borderSide: BorderSide(color: scheme.outlineVariant),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Radii.md),
+        borderRadius: BorderRadius.circular(Radii.lg),
         borderSide: BorderSide(color: scheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Radii.md),
+        borderRadius: BorderRadius.circular(Radii.lg),
         borderSide: BorderSide(color: scheme.outline),
       ),
     ),
@@ -156,7 +156,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       modalBarrierColor: scheme.scrim,
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(Radii.xl),
+          top: Radius.circular(Radii.pill),
         ),
         side: BorderSide(color: scheme.line),
       ),
@@ -172,14 +172,14 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         minimumSize: const Size.square(Layout.headerButton),
-        shape: rounded,
+        shape: const StadiumBorder(),
       ),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: scheme.card,
       selectedColor: scheme.surfaceContainerHigh,
       side: BorderSide(color: scheme.line),
-      shape: rounded,
+      shape: const StadiumBorder(),
     ),
     dividerTheme: DividerThemeData(color: scheme.line, space: 1),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.emphasis),

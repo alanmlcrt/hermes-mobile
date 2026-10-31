@@ -115,13 +115,13 @@ class MessageBubble extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: scheme.emphasis,
-              borderRadius: BorderRadius.circular(Radii.lg),
+              borderRadius: BorderRadius.circular(Radii.bubble),
               border: Border.all(color: scheme.line),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: Spacing.md,
-                vertical: Spacing.sm + Spacing.xxs,
+                vertical: Spacing.sm + Spacing.xs,
               ),
               child: content,
             ),

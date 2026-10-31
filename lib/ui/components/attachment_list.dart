@@ -228,10 +228,7 @@ class AttachmentSelectionSheet extends StatelessWidget {
                 alignment: AlignmentDirectional.centerStart,
                 backgroundColor: scheme.bubbleSurface,
                 minimumSize: const Size.fromHeight(Layout.touchTarget),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  side: BorderSide(color: scheme.line),
-                ),
+                shape: StadiumBorder(side: BorderSide(color: scheme.line)),
               ),
               onPressed: () => Navigator.pop(context, AttachmentSource.photos),
               icon: const Icon(Icons.photo_outlined, size: IconSizes.sm),
@@ -243,10 +240,7 @@ class AttachmentSelectionSheet extends StatelessWidget {
                 alignment: AlignmentDirectional.centerStart,
                 backgroundColor: scheme.bubbleSurface,
                 minimumSize: const Size.fromHeight(Layout.touchTarget),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  side: BorderSide(color: scheme.line),
-                ),
+                shape: StadiumBorder(side: BorderSide(color: scheme.line)),
               ),
               onPressed: () => Navigator.pop(context, AttachmentSource.files),
               icon: const Icon(Icons.attach_file, size: IconSizes.sm),

@@ -52,7 +52,7 @@ class Composer extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: scheme.card,
-            borderRadius: BorderRadius.circular(Radii.xl),
+            borderRadius: BorderRadius.circular(Radii.pill),
             border: Border.all(color: scheme.line),
           ),
           child: Padding(
@@ -80,7 +80,7 @@ class Composer extends StatelessWidget {
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.xs,
+                      horizontal: Spacing.sm,
                       vertical: Spacing.xs,
                     ),
                   ),
@@ -98,8 +98,7 @@ class Composer extends StatelessWidget {
                           onPressed: onAttach,
                           style: IconButton.styleFrom(
                             foregroundColor: scheme.muted,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(Radii.md),
+                            shape: CircleBorder(
                               side: BorderSide(color: scheme.line),
                             ),
                           ),
@@ -134,9 +133,7 @@ class Composer extends StatelessWidget {
                               foregroundColor: scheme.emphasisContent,
                               disabledBackgroundColor: scheme.chip,
                               disabledForegroundColor: scheme.muted,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(Radii.md),
-                              ),
+                              shape: const CircleBorder(),
                             ),
                             icon: Icon(
                               stopping ? Icons.stop : Icons.arrow_upward,

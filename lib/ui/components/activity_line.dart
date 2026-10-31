@@ -39,7 +39,7 @@ class ActivityLine extends StatelessWidget {
   final bool resultProduced;
 
   /// Capsule d'activité (style AI SDK Elements `<Tool>` compact) : bordure fine
-  /// 1px, coins modérés (Radii.md), libellé et badge d'état.
+  /// 1px, forme pilule, libellé et badge d'état.
   Widget _pill(BuildContext context, String label) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -47,10 +47,9 @@ class ActivityLine extends StatelessWidget {
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: scheme.bubbleSurface,
-          borderRadius: BorderRadius.circular(Radii.md),
-          border: Border.all(color: scheme.line),
+          shape: StadiumBorder(side: BorderSide(color: scheme.line)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -122,10 +121,11 @@ class ActivityLine extends StatelessWidget {
                   ),
                   if (completed)
                     DecoratedBox(
-                      decoration: BoxDecoration(
+                      decoration: ShapeDecoration(
                         color: scheme.chip,
-                        borderRadius: BorderRadius.circular(Radii.xs),
-                        border: Border.all(color: scheme.line),
+                        shape: StadiumBorder(
+                          side: BorderSide(color: scheme.line),
+                        ),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(

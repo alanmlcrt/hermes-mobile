@@ -108,8 +108,10 @@ class _DraftViewState extends State<DraftView> {
                     tooltip: Content.home,
                     style: IconButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.card,
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.line,
+                      shape: CircleBorder(
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.line,
+                        ),
                       ),
                     ),
                     onPressed: widget.onHome,
@@ -131,7 +133,9 @@ class _DraftViewState extends State<DraftView> {
                 tooltip: Content.newConversation,
                 style: IconButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.card,
-                  side: BorderSide(color: Theme.of(context).colorScheme.line),
+                  shape: CircleBorder(
+                    side: BorderSide(color: Theme.of(context).colorScheme.line),
+                  ),
                 ),
                 onPressed: () => widget.onNewConversation!(draft.profile),
                 icon: const Icon(Icons.add, size: IconSizes.sm),
@@ -469,10 +473,7 @@ class _DraftViewState extends State<DraftView> {
               backgroundColor: scheme.card,
               foregroundColor: scheme.content,
               disabledForegroundColor: scheme.content,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Radii.md),
-                side: BorderSide(color: scheme.line),
-              ),
+              shape: StadiumBorder(side: BorderSide(color: scheme.line)),
               padding: const EdgeInsetsDirectional.only(
                 start: Spacing.xs,
                 end: Spacing.sm + Spacing.xs,

@@ -53,7 +53,7 @@ class WorkStateLabel extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.bubbleSurface,
-          borderRadius: BorderRadius.circular(Radii.md),
+          borderRadius: BorderRadius.circular(Radii.bubble),
           border: Border.all(color: scheme.line),
         ),
         child: Padding(

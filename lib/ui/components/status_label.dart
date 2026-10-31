@@ -18,10 +18,9 @@ class StatusLabel extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       child: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: scheme.bubbleSurface,
-          borderRadius: BorderRadius.circular(Radii.sm),
-          border: Border.all(color: scheme.line),
+          shape: StadiumBorder(side: BorderSide(color: scheme.line)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(

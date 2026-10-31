@@ -30,7 +30,7 @@ class ProfileAvatar extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(Radii.md),
+          shape: BoxShape.circle,
           border: Border.all(color: scheme.line),
           color: bg,
         ),

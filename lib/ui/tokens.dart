@@ -74,17 +74,17 @@ abstract final class AttachmentTokens {
   static const double composerHeightFraction = .28;
 }
 
-/// Rayons d'arrondi modérés (style shadcn/ui & AI SDK Elements : 6–12 px).
+/// Rayons d'arrondi généreux combinés au style AI SDK Elements / shadcn.
 abstract final class Radii {
-  static const double xs = 4;
-  static const double sm = 6;
-  static const double md = 8;
-  static const double lg = 10;
-  static const double xl = 12;
-  static const double pill = 12;
+  static const double xs = 8;
+  static const double sm = 10;
+  static const double md = 14;
+  static const double lg = 18;
+  static const double xl = 24;
+  static const double pill = 28;
 
   /// Conteneurs de message utilisateur.
-  static const double bubble = 12;
+  static const double bubble = 22;
 }
 
 /// Élévations.

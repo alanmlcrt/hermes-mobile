@@ -36,10 +36,7 @@ class ActivityGroup extends StatelessWidget {
             ),
             foregroundColor: scheme.content,
             backgroundColor: scheme.bubbleSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Radii.md),
-              side: BorderSide(color: scheme.line),
-            ),
+            shape: StadiumBorder(side: BorderSide(color: scheme.line)),
             padding: const EdgeInsetsDirectional.only(
               start: Spacing.sm + Spacing.xs,
               end: Spacing.sm + Spacing.xs,
