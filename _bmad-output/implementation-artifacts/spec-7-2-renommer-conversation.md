@@ -4,8 +4,10 @@ type: 'feature'
 created: '2026-10-30'
 updated: '2026-10-31'
 status: 'done'
-delivery: 'preparation-only'
-story_validated: false
+delivery: 'validated'
+story_validated: true
+validated: '2026-10-31'
+validation: 'essai Alanc sur téléphone (APK release 25/26) contre Hermes installé'
 route: 'dispatch'
 baseline_commit: '6da4606b33526e41ce984b6b1208d0be52c27481'
 review_loop_iteration: 0

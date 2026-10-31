@@ -1,4 +1,17 @@
-# Bilan 7.1 — non validée
+# Bilan 7.1 — validée partiellement par les essais de l'app
+
+**Mise à jour 2026-10-31.** La sonde n'a pas été jouée, mais Alanc a essayé les
+stories 7.2 à 7.6 sur son téléphone (APK release versionCode 25 puis 26) contre
+son Hermes installé, sur des conversations jetables : renommer, masquer puis
+annuler/rétablir, et supprimer ont produit l'effet attendu dans l'app et dans un
+autre client Hermes. `session.title`, `session.set_hidden` (ID stocké),
+`session.list` (`include_hidden`) et `session.delete` (ID stocké) sont donc
+considérées vérifiées pour ce build. Restent non vérifiés : `session.archive`
+(non utilisé), la recherche serveur, la portée exacte du masquage sur une lignée
+compressée, et les cas limites (coupure pendant une suppression, notification
+d'un fil supprimé).
+
+## Bilan initial — 2026-10-30
 
 Date : 2026-10-30. Aucun accès Hermes authentifié configuré dans l'environnement,
 aucun profil/corpus dédié fourni. Aucun appel de mutation réel effectué.
@@ -11,10 +24,10 @@ aucun profil/corpus dédié fourni. Aucun appel de mutation réel effectué.
 | Build installé / provenance | Non vérifié | À relever par une surface officielle |
 | Authentification / profil dédié | Non vérifié | Variables et corpus indisponibles |
 | GET origine port 9119 | Observation antérieure rapportée dans la spec | HTML 200 puis reprise 302 ; aucun contrat authentifié prouvé |
-| session.title | Non vérifié | Runtime ; lecture sans titre ; écriture et propagation à essayer |
-| session.set_hidden | Non vérifié | Lignée entière ; réversibilité à constater |
+| session.title | Vérifié (essai app 2026-10-31) | Renommage visible dans un autre client ; cas `pending` non observé |
+| session.set_hidden | Vérifié (essai app 2026-10-31) | ID stocké ; masquer puis rétablir réversible ; portée lignée non mesurée |
 | session.archive | Non vérifié | Lignée entière ; ne pas assimiler à hidden sans essai |
-| session.delete | Non vérifié | ID stocké ; refus durant travail distant à constater |
+| session.delete | Vérifié (essai app 2026-10-31) | ID stocké ; fil disparu de l'autre client ; refus pendant un travail non essayé |
 | Recherche serveur | Non vérifié | Le filtre `session.list.title` ne prouve pas une recherche plein texte |
 | Tests de sonde | Synthétique | Protection de l'outil uniquement, aucune validation serveur |
 

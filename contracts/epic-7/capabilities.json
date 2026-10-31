@@ -1,5 +1,5 @@
 {
-  "story_validated": false,
+  "story_validated": "partial",
   "provenance": {
     "classification": "documentary",
     "upstream_revision": "5eee5d02e85eaad32dfade3030d27fcfad204e72",
@@ -17,18 +17,22 @@
       "other_client": "unverified"
     },
     "session.title": {
-      "status": "unverified",
-      "build": null,
-      "evidence": [],
-      "before_after": "unverified",
-      "other_client": "unverified"
+      "status": "verified",
+      "build": "observed-health 0.22.2+1690 (non relevé pendant l'essai)",
+      "evidence": [
+        "2026-10-31 : essai manuel d'Alanc depuis Hermes Mobile (APK release versionCode 25/26), conversations jetables ; effet constaté dans l'app et dans un autre client Hermes"
+      ],
+      "before_after": "verified-app-trial",
+      "other_client": "verified"
     },
     "session.set_hidden": {
-      "status": "unverified",
-      "build": null,
-      "evidence": [],
-      "before_after": "unverified",
-      "other_client": "unverified"
+      "status": "verified",
+      "build": "observed-health 0.22.2+1690 (non relevé pendant l'essai)",
+      "evidence": [
+        "2026-10-31 : essai manuel d'Alanc depuis Hermes Mobile (APK release versionCode 25/26), conversations jetables ; effet constaté dans l'app et dans un autre client Hermes"
+      ],
+      "before_after": "verified-app-trial",
+      "other_client": "verified"
     },
     "session.archive": {
       "status": "unverified",
@@ -38,17 +42,21 @@
       "other_client": "unverified"
     },
     "session.delete": {
-      "status": "unverified",
-      "build": null,
-      "evidence": [],
-      "before_after": "unverified",
-      "other_client": "unverified"
+      "status": "verified",
+      "build": "observed-health 0.22.2+1690 (non relevé pendant l'essai)",
+      "evidence": [
+        "2026-10-31 : essai manuel d'Alanc depuis Hermes Mobile (APK release versionCode 25/26), conversations jetables ; effet constaté dans l'app et dans un autre client Hermes"
+      ],
+      "before_after": "verified-app-trial",
+      "other_client": "verified"
     },
     "session.list": {
-      "status": "unverified",
-      "build": null,
-      "evidence": [],
-      "before_after": "unverified",
+      "status": "verified",
+      "build": "observed-health 0.22.2+1690 (non relevé pendant l'essai)",
+      "evidence": [
+        "2026-10-31 : listes normale et include_hidden utilisées par l'historique et la section « Masquées » sur téléphone"
+      ],
+      "before_after": "verified-app-trial",
       "other_client": "unverified"
     },
     "session.history": {
@@ -64,6 +72,6 @@
     "coverage": "unverified",
     "evidence": [],
     "documentary_note": "session.list title filtering does not establish full-text search",
-    "local_fallback": "Only titles and messages already loaded locally; not implemented in 7.1"
+    "local_fallback": "Implémenté en 7.6 : titres, aperçus et messages déjà chargés ; validé sur téléphone le 2026-10-31"
   }
 }

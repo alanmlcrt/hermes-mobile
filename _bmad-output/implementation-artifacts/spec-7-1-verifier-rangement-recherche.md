@@ -4,7 +4,8 @@ type: 'feature'
 created: '2026-10-30'
 status: 'done'
 delivery: 'preparation-only'
-story_validated: false
+story_validated: partial
+validation: '2026-10-31 — session.title, session.set_hidden, session.delete et session.list include_hidden confirmées par les essais 7.2–7.5 sur téléphone ; sonde non jouée ; session.archive et recherche serveur non vérifiées'
 installation_validation: 'pending'
 baseline_commit: 'd9a7920fbf71213b354f3e00a086f6167e690cc6'
 route: 'dispatch'

@@ -1,12 +1,14 @@
 ---
 id: SPEC-7-3-epingler-marquer-non-lu
 status: done
-delivery: preparation-only
-story_validated: false
+delivery: validated
+story_validated: true
+validated: 2026-10-31
+validation: essai Alanc sur téléphone (APK release 25/26) contre Hermes installé
 implemented_in: bb23229
 updated: 2026-10-31
 created: 2026-10-30
-implementation_readiness: implemented-unqualified
+implementation_readiness: implemented
 companions:
   - implementation.md
   - ../../implementation-artifacts/epic-7-context.md
