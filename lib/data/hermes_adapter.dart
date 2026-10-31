@@ -697,7 +697,7 @@ abstract final class HermesRpc {
         for (final p in (r['seatable_profiles'] as List? ?? const []))
           ProfileKey(p as String),
       },
-      {
+      available: {
         for (final entry in {
           RoomFeature.create: groupsCreate,
           RoomFeature.send: groupsSend,
@@ -710,6 +710,9 @@ abstract final class HermesRpc {
               !unavailable.contains(entry.value))
             entry.key,
       },
+      profilesAnnounced: r['seatable_profiles'] is List,
+      protocolVersion: r['protocol_version'] as int?,
+      persistentProcess: r['persistent_process'] as bool?,
     );
   }
 

@@ -128,6 +128,10 @@
   evidence: Contrat OpenRPC extrait dans contracts/epic-8/methods.json (documentary). Procédure Samba réversible fournie ; valeur agent.bot_mode_protocol et activation réelle à confirmer par Alan. Aucun fichier Hermes ni profil n'a été modifié.
 
 - source_spec: `_bmad-output/specs/epic-8-index.md`
+  summary: Identifier le blocage réel des salons après activation manuelle du marqueur Bot Mode.
+  evidence: Alan signale le même message après modification de profile.yaml et redémarrage. Les releases 27-29 confondaient driver false et seatable_profiles absent ou vide ; ce diagnostic est corrigé en release 30. Les valeurs de capacités sont affichées sans noms de profils, contenu ou secrets. Aucun appel authentifié direct ni changement serveur effectué ; statut réel du pilote encore à relever dans l'app.
+
+- source_spec: `_bmad-output/specs/epic-8-index.md`
   summary: Vérifier les payloads ouverts de messages, activités, tâches et autorisations sur Hermes réel.
   evidence: OpenRPC décrit RoomEvent.payload et pending_actions comme objets ouverts ; les conventions payload.text, tool.start/complete et champs directs des actions sont préparées mais non observées. Contexte incomplet = décision indisponible. État blocked utilisé pour l'attente ; seuils 10 messages / 3 tours et attribution de l'agent actif sans événement d'outil non qualifiés.
 

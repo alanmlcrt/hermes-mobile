@@ -15,6 +15,7 @@ class RoomsViewModel extends ChangeNotifier {
   List<RoomSummary> rooms = const [];
   bool loading = false;
   String? error;
+  RoomCapabilities? diagnostic;
   bool _disposed = false;
   int _request = 0;
   Timer? _timer;
@@ -43,11 +44,11 @@ class RoomsViewModel extends ChangeNotifier {
     try {
       final caps = await repository.capabilities(connection, profile);
       eligible = caps.driver ? caps.profiles : const {};
-      createError = !caps.driver
-          ? 'room.bot_mode'
-          : !caps.available.contains(RoomFeature.create)
-          ? 'room.missing'
-          : null;
+      createError =
+          caps.unavailableReason ??
+          (!caps.available.contains(RoomFeature.create)
+              ? 'room.missing'
+              : null);
       if (createError != null) eligible = const {};
     } catch (e) {
       createError = e is AppError ? e.code : 'room.failed';
@@ -106,6 +107,7 @@ class RoomsViewModel extends ChangeNotifier {
     final request = ++_request;
     loading = true;
     error = null;
+    diagnostic = null;
     _notify();
     try {
       final result = await repository.list(connection, profile);
@@ -116,11 +118,9 @@ class RoomsViewModel extends ChangeNotifier {
       error = e is AppError ? e.code : 'room.failed';
     }
     loading = false;
+    diagnostic = repository.knownCapabilities(connection, profile);
     _notify();
-    if (!_disposed &&
-        _foreground &&
-        error != 'room.missing' &&
-        error != 'room.bot_mode') {
+    if (!_disposed && _foreground && !roomUnavailable(error)) {
       _timer = Timer(roomPollInterval, refresh);
     }
   }

@@ -62,7 +62,7 @@ class RoomViewModel extends ChangeNotifier {
     _notify();
     try {
       final caps = await rooms.capabilities(key.connection, key.profile);
-      if (!caps.driver) throw const AppError('room.bot_mode');
+      if (!caps.driver) throw const AppError('room.driver_missing');
       final result = await rooms.load(key);
       await rooms.markSeen(
         key,
@@ -105,10 +105,7 @@ class RoomViewModel extends ChangeNotifier {
     } finally {
       loading = false;
       _notify();
-      if (!_disposed &&
-          _foreground &&
-          error != 'room.missing' &&
-          error != 'room.bot_mode') {
+      if (!_disposed && _foreground && !roomUnavailable(error)) {
         _timer = Timer(roomPollInterval, refresh);
       }
     }

@@ -3,6 +3,7 @@
 import '../models/result.dart';
 import '../models/timeline.dart';
 import '../models/attachment.dart';
+import '../models/room.dart';
 
 abstract final class Content {
   static const rooms = 'Salons';
@@ -39,10 +40,8 @@ abstract final class Content {
   static const newRoom = 'Nouveau salon';
   static const roomCancel = 'Annuler';
   static const roomName = 'Nom du salon';
-  static const roomMemberLimit =
-      'Choisissez entre 2 et 6 profils avec Bot Mode actif.';
-  static const roomIneligible =
-      'Bot Mode inactif ou éligibilité non annoncée par Hermes';
+  static const roomMemberLimit = 'Choisissez entre 2 et 6 profils éligibles.';
+  static const roomIneligible = 'Profil non annoncé comme éligible par Hermes';
   static const roomCreate = 'Créer le salon';
   static const roomVerify = 'Vérifier le résultat';
   static const roomsLoading = 'Chargement des salons…';
@@ -55,8 +54,9 @@ abstract final class Content {
     'room.history' => 'Historique incomplet : actualisez le salon. Le fil précédent est conservé.',
     'storage.unavailable' =>
       'Enregistrement local impossible. Votre saisie reste affichée.',
-    'room.bot_mode' =>
-      'Salons indisponibles : activez Bot Mode sur vos profils de test.',
+    'room.driver_missing' => 'Le serveur Hermes annonce que le pilote des salons est indisponible. Modifier Bot Mode ne suffit pas à confirmer sa disponibilité.',
+    'room.eligibility_unknown' => 'Hermes ne fournit pas la liste des profils utilisables en salon. L’app ne peut pas vérifier leur éligibilité.',
+    'room.no_eligible' => 'Hermes annonce zéro profil utilisable en salon. La cause n’est pas précisée par le serveur.',
     'room.missing' =>
       'Cette fonction de salon n’est pas disponible sur ce Hermes.',
     'room.refused' =>
@@ -68,6 +68,18 @@ abstract final class Content {
       'Ce salon appartient à une autre connexion ou à un autre profil.',
     _ => 'Impossible de charger ou de modifier le salon. Réessayez.',
   };
+  static String _roomFlag(bool? value) => value == null
+      ? 'non annoncé'
+      : value
+      ? 'oui'
+      : 'non';
+  static String roomCapabilityDetails(RoomCapabilities caps) =>
+      'Détails annoncés par Hermes\n'
+      'Pilote salons : ${_roomFlag(caps.driver)}\n'
+      'Processus persistant : ${_roomFlag(caps.persistentProcess)}\n'
+      'Version du protocole : ${caps.protocolVersion ?? 'non annoncée'}\n'
+      'Profils éligibles : ${caps.profilesAnnounced ? caps.profiles.length.toString() : 'liste non fournie'}\n'
+      'Méthodes disponibles : ${caps.methods.length}';
   static const notificationUnfollowed = 'Notification non suivie';
   static const notificationTargetMissing =
       'Conversation de cette notification introuvable sur ce téléphone. Retour à l’accueil.';

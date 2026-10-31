@@ -18,8 +18,13 @@ Contrat : [contracts/epic-8](../../contracts/epic-8/README.md).
 Essais Alan : [huit points téléphone](../../contracts/epic-8/essais-telephone.md).
 Les stories 8.8 et 8.9 figurant dans `epics.md` ne font pas partie de cette livraison.
 
-Vérification locale : `flutter analyze` sans alerte ; `flutter test` : 722 réussis,
+Vérification locale : `flutter analyze` sans alerte ; `flutter test` : 724 réussis,
 17 ignorés. Une suite complète verte avant chaque commit de story. Les tests de
 salon utilisent une socket simulée et SQLite ; ils ne prouvent pas Hermes réel.
 Le contrat reste `documentary`, toutes les stories restent non validées jusqu'au
 retour d'Alan. Fusion fast-forward dans master et validation réelle à faire ensuite.
+
+Premier retour téléphone : le message invitant à activer Bot Mode persiste après
+ajout du marqueur et redémarrage d'Hermes. Correctif release 30 : distinguer pilote
+indisponible, éligibilité non annoncée et zéro profil éligible, sans inférer la
+cause. Diagnostic de capacités visible dans l'app ; réponse réelle encore attendue.

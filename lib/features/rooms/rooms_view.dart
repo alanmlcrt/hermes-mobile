@@ -142,7 +142,7 @@ class _RoomsViewState extends State<RoomsView> with WidgetsBindingObserver {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(Spacing.md),
           children: [
-            if (vm.error != 'room.missing' && vm.error != 'room.bot_mode')
+            if (!vm.loading && !roomUnavailable(vm.error))
               TextButton.icon(
                 onPressed: _create,
                 icon: const Icon(Icons.add),
@@ -154,6 +154,13 @@ class _RoomsViewState extends State<RoomsView> with WidgetsBindingObserver {
                 liveRegion: true,
                 child: Text(Content.roomError(vm.error!)),
               ),
+              if (vm.diagnostic != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                  child: SelectableText(
+                    Content.roomCapabilityDetails(vm.diagnostic!),
+                  ),
+                ),
               TextButton(
                 onPressed: vm.refresh,
                 child: const Text(Content.retryList),

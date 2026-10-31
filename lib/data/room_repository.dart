@@ -20,6 +20,16 @@ class RoomRepository implements RoomGateway {
   final ConnectionGateway gateway;
   final Duration timeout;
   final _busy = <RoomKey>{};
+  final _capabilities = <(ConnectionKey, ProfileKey, int), RoomCapabilities>{};
+  @override
+  RoomCapabilities? knownCapabilities(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) {
+    if (gateway.snapshot.connection?.key != connection) return null;
+    return _capabilities[(connection, profile, gateway.socketGeneration)];
+  }
+
   @override
   Future<void> markSeen(
     RoomKey key,
@@ -225,8 +235,10 @@ class RoomRepository implements RoomGateway {
       throw const AppError('room.invalid');
     }
     final caps = await capabilities(key.connection, key.profile);
-    if (!caps.driver || !members.every(caps.profiles.contains)) {
-      throw const AppError('room.bot_mode');
+    final reason = caps.unavailableReason;
+    if (reason != null) throw AppError(reason);
+    if (!members.every(caps.profiles.contains)) {
+      throw const AppError('room.no_eligible');
     }
     if (!caps.methods.contains(HermesRpc.groupsCreate)) {
       throw const AppError('room.missing');
@@ -295,16 +307,27 @@ class RoomRepository implements RoomGateway {
   Future<RoomCapabilities> capabilities(
     ConnectionKey connection,
     ProfileKey profile,
-  ) async => HermesRpc.roomCapabilities(
-    await call(RoomKey(connection, profile, ''), HermesRpc.groupsCapabilities),
-    unavailable: {
-      for (final missing in _missing)
-        if (missing.$1 == connection &&
-            missing.$2 == profile &&
-            missing.$3 == gateway.socketGeneration)
-          missing.$4,
-    },
-  );
+  ) async {
+    final generation = gateway.socketGeneration;
+    _capabilities.removeWhere(
+      (key, _) => key.$1 == connection && key.$2 == profile,
+    );
+    final caps = HermesRpc.roomCapabilities(
+      await call(
+        RoomKey(connection, profile, ''),
+        HermesRpc.groupsCapabilities,
+      ),
+      unavailable: {
+        for (final missing in _missing)
+          if (missing.$1 == connection &&
+              missing.$2 == profile &&
+              missing.$3 == generation)
+            missing.$4,
+      },
+    );
+    _capabilities[(connection, profile, generation)] = caps;
+    return caps;
+  }
 
   @override
   Future<List<RoomSummary>> list(
@@ -312,9 +335,8 @@ class RoomRepository implements RoomGateway {
     ProfileKey profile,
   ) async {
     final caps = await capabilities(connection, profile);
-    if (!caps.driver || caps.profiles.isEmpty) {
-      throw const AppError('room.bot_mode');
-    }
+    final reason = caps.unavailableReason;
+    if (reason != null) throw AppError(reason);
     if (!caps.methods.contains(HermesRpc.groupsList)) {
       throw const AppError('room.missing');
     }

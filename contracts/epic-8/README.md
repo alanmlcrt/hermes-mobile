@@ -46,10 +46,12 @@ Correction vérifiée sur les sources publiques le 2026-10-31, sans accès à
 l'installation ni modification de Hermes :
 [documentation Bot Mode](https://hermes-agent.nousresearch.com/docs/user-guide/bot-mode#what-actually-makes-a-chat-a-bot-chat),
 [`_bots_meta`, vérification du type objet](https://github.com/NousResearch/hermes-agent/blob/main/tools/bot_mode_probe.py).
-Le message actuel de l'app regroupe aussi un pilote `groups` indisponible et
-l'absence de profils éligibles ; il ne prouve donc pas à lui seul que le marqueur
-Bot Mode manque. Si le message persiste, relever les capacités côté app avant
-toute autre modification de profils. La création d'un « Bot Chat » est une
+Les versions 27 à 29 de l'app regroupaient un pilote `groups` indisponible et
+l'absence de profils éligibles dans un message prescrivant Bot Mode, sans preuve.
+À partir de la release 30, l'app distingue `driver: false`, une liste de profils
+absente et une liste vide ; l'écran affiche les valeurs de capacités annoncées
+par Hermes. Relever ce bloc avant toute autre modification de profils.
+La création d'un « Bot Chat » est une
 condition distincte pour les messages directs `message_agent`, pas une preuve
 que le pilote des salons `groups.*` est disponible.
 

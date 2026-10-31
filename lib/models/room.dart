@@ -25,6 +25,10 @@ abstract interface class RoomGateway {
     ConnectionKey connection,
     ProfileKey profile,
   );
+  RoomCapabilities? knownCapabilities(
+    ConnectionKey connection,
+    ProfileKey profile,
+  );
   Future<List<RoomSummary>> list(ConnectionKey connection, ProfileKey profile);
 }
 
@@ -78,14 +82,33 @@ class RoomCapabilities {
   const RoomCapabilities(
     this.driver,
     this.methods,
-    this.profiles, [
+    this.profiles, {
     this.available = const {},
-  ]);
+    this.profilesAnnounced = true,
+    this.protocolVersion,
+    this.persistentProcess,
+  });
   final bool driver;
   final Set<String> methods;
   final Set<ProfileKey> profiles;
   final Set<RoomFeature> available;
+  final bool profilesAnnounced;
+  final int? protocolVersion;
+  final bool? persistentProcess;
+  String? get unavailableReason {
+    if (!driver) return 'room.driver_missing';
+    if (!profilesAnnounced) return 'room.eligibility_unknown';
+    if (profiles.isEmpty) return 'room.no_eligible';
+    return null;
+  }
 }
+
+bool roomUnavailable(String? code) => const {
+  'room.missing',
+  'room.driver_missing',
+  'room.eligibility_unknown',
+  'room.no_eligible',
+}.contains(code);
 
 class RoomEntry {
   const RoomEntry({
