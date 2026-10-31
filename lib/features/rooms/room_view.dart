@@ -23,6 +23,8 @@ class RoomView extends StatefulWidget {
 class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
   late final vm = widget.create();
   final _text = TextEditingController();
+  final _attention = GlobalKey();
+  bool _focusedAttention = false;
   @override
   void initState() {
     super.initState();
@@ -32,6 +34,15 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
   }
 
   void _changed() {
+    if (!_focusedAttention &&
+        vm.snapshot?.entries.any((e) => e.needsUser) == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final target = _attention.currentContext;
+        if (!mounted || target == null) return;
+        _focusedAttention = true;
+        unawaited(Scrollable.ensureVisible(target));
+      });
+    }
     if (_text.text != vm.text) {
       _text.value = TextEditingValue(
         text: vm.text,
@@ -57,6 +68,11 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
         .where((m) => m.id == entry.member || m.profile.value == entry.member)
         .firstOrNull;
     return Padding(
+      key:
+          entry.id ==
+              vm.snapshot?.entries.where((e) => e.needsUser).lastOrNull?.id
+          ? _attention
+          : null,
       padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -173,40 +189,44 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
         child: Column(
           children: [
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(Spacing.md),
-                children: [
-                  if (vm.snapshot == null && vm.loading)
-                    const Text(Content.roomsLoading),
-                  if (vm.error != null)
-                    Semantics(
-                      liveRegion: true,
-                      child: Text(Content.roomError(vm.error!)),
-                    ),
-                  if (vm.snapshot?.working == true)
-                    const Text(Content.roomWorking),
-                  if (vm.stopState != null)
-                    Semantics(
-                      liveRegion: true,
-                      child: Text(Content.roomStopStatus(vm.stopState!)),
-                    ),
-                  if (vm.snapshot?.working == true &&
-                      vm.available.contains(RoomFeature.stop))
-                    TextButton.icon(
-                      onPressed: vm.busy ? null : vm.stop,
-                      icon: const Icon(Icons.stop_circle_outlined),
-                      label: const Text(Content.roomStop),
-                    ),
-                  for (final task in vm.snapshot?.tasks ?? <RoomTask>[])
-                    _task(task),
-                  if (vm.snapshot?.waiting == true)
-                    const Text(Content.roomWaiting),
-                  for (final entry in vm.snapshot?.entries ?? <RoomEntry>[])
-                    _entry(entry),
-                  for (final send in vm.sends)
-                    if (send.state != 'confirmed')
-                      Text(Content.roomSendStatus(send.state)),
-                ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (vm.snapshot == null && vm.loading)
+                      const Text(Content.roomsLoading),
+                    const Text(Content.roomNotificationsPending),
+                    if (vm.error != null)
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(Content.roomError(vm.error!)),
+                      ),
+                    if (vm.snapshot?.working == true)
+                      const Text(Content.roomWorking),
+                    if (vm.stopState != null)
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(Content.roomStopStatus(vm.stopState!)),
+                      ),
+                    if (vm.snapshot?.working == true &&
+                        vm.available.contains(RoomFeature.stop))
+                      TextButton.icon(
+                        onPressed: vm.busy ? null : vm.stop,
+                        icon: const Icon(Icons.stop_circle_outlined),
+                        label: const Text(Content.roomStop),
+                      ),
+                    for (final task in vm.snapshot?.tasks ?? <RoomTask>[])
+                      _task(task),
+                    if (vm.snapshot?.waiting == true)
+                      const Text(Content.roomWaiting),
+                    for (final entry in vm.snapshot?.entries ?? <RoomEntry>[])
+                      _entry(entry),
+                    for (final send in vm.sends)
+                      if (send.state != 'confirmed')
+                        Text(Content.roomSendStatus(send.state)),
+                  ],
+                ),
               ),
             ),
             Flexible(

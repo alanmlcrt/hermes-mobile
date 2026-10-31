@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/connection.dart';
 import '../models/notifications.dart';
 import '../models/profile.dart';
+import '../models/room.dart';
 
 /// Résolution locale d'une notification du plugin vers sa conversation (5.4,
 /// 5.7). Le plugin décide d'envoyer ; l'app ne garde aucun abonnement.
@@ -10,6 +11,21 @@ class NotificationRepository {
   NotificationRepository(this.database, this.device);
   final Database database;
   final NotificationClient device;
+  Future<RoomKey?> roomTarget(String roomId) async {
+    if (!isRoomId(roomId)) return null;
+    final rows = await database.query(
+      'room_snapshots',
+      columns: ['connection_key', 'profile_key'],
+      where: 'room_id = ?',
+      whereArgs: [roomId],
+    );
+    if (rows.length != 1) return null;
+    return RoomKey(
+      ConnectionKey(rows.single['connection_key'] as String),
+      ProfileKey(rows.single['profile_key'] as String),
+      roomId,
+    );
+  }
 
   /// Connexion et profil de la conversation dont l'id stocké est
   /// [sessionId] ; `null` si l'id est invalide, inconnu ou ambigu.

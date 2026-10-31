@@ -41,6 +41,7 @@ class RoomHarness {
 
   Object? rpc(String method, Map<String, dynamic> params) => switch (method) {
     'groups.capabilities' => roomCaps(),
+    'groups.list' => {'rooms': [roomData()]},
     'groups.state' => {'room': roomData(), 'driver_status': driver},
     'groups.log' => {
       'events': events

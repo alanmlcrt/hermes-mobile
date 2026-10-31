@@ -22,6 +22,9 @@ abstract final class Content {
   static String roomTaskStatus(String member, bool failed, String reason) =>
       '$member — ${failed ? 'Échec' : 'Résultat inconnu'}${reason.isEmpty ? '' : ' : $reason'}';
   static const roomNeedsUser = 'A besoin de toi';
+  static const roomNotificationBody = 'Un agent a besoin de vous dans un salon';
+  static const roomNotificationsPending =
+      'Notifications app fermée : le relais Hermes reste à vérifier sur cette installation.';
   static const roomWaiting = 'Le salon attend votre réponse.';
   static const roomMentionHelp =
       'Sans mention, tous peuvent répondre. Utilisez @ pour choisir un agent.';

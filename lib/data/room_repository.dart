@@ -20,6 +20,14 @@ class RoomRepository implements RoomGateway {
   final ConnectionGateway gateway;
   final Duration timeout;
   final _busy = <RoomKey>{};
+  @override
+  Future<void> markSeen(RoomKey key, int seq) async {
+    await database?.rawUpdate(
+      'UPDATE room_snapshots SET seen_seq = MAX(seen_seq, ?) WHERE $whereRoom',
+      [seq, ...key.args],
+    );
+  }
+
   final _missing = <(ConnectionKey, ProfileKey, int, String)>{};
   Future<void>? _commandsRecovered;
   Future<void> recoverCommands() => _commandsRecovered ??= (database == null
@@ -318,6 +326,13 @@ class RoomRepository implements RoomGateway {
         caps.methods.contains(HermesRpc.groupsState) &&
         caps.methods.contains(HermesRpc.groupsLog)) {
       final snapshot = await load(key);
+      final rows = await database!.query(
+        'room_snapshots',
+        columns: ['seen_seq'],
+        where: whereRoom,
+        whereArgs: key.args,
+      );
+      final seen = rows.isEmpty ? 0 : rows.single['seen_seq'] as int;
       return RoomSummary(
         id: room.id,
         name: room.name,
@@ -328,6 +343,7 @@ class RoomRepository implements RoomGateway {
             .lastOrNull
             ?.text,
         working: snapshot.working,
+        needsUser: snapshot.entries.any((e) => e.needsUser && e.seq > seen),
       );
     }
     final state = caps.methods.contains(HermesRpc.groupsState)

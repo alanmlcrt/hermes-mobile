@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../models/app_error.dart';
@@ -15,6 +17,14 @@ class RoomsViewModel extends ChangeNotifier {
   String? error;
   bool _disposed = false;
   int _request = 0;
+  Timer? _timer;
+  bool _foreground = true;
+  void foreground(bool value) {
+    _foreground = value;
+    _timer?.cancel();
+    if (value) unawaited(refresh());
+  }
+
   String name = '';
   final selected = <ProfileKey>{};
   Set<ProfileKey> eligible = const {};
@@ -91,6 +101,8 @@ class RoomsViewModel extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
+    if (loading || _disposed) return;
+    _timer?.cancel();
     final request = ++_request;
     loading = true;
     error = null;
@@ -105,6 +117,12 @@ class RoomsViewModel extends ChangeNotifier {
     }
     loading = false;
     _notify();
+    if (!_disposed &&
+        _foreground &&
+        error != 'room.missing' &&
+        error != 'room.bot_mode') {
+      _timer = Timer(roomPollInterval, refresh);
+    }
   }
 
   void _notify() {
@@ -113,6 +131,7 @@ class RoomsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _disposed = true;
     super.dispose();
   }

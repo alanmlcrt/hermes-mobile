@@ -59,6 +59,7 @@ class RoomViewModel extends ChangeNotifier {
       final caps = await rooms.capabilities(key.connection, key.profile);
       if (!caps.driver) throw const AppError('room.bot_mode');
       final result = await rooms.load(key);
+      await rooms.markSeen(key, result.latestSeq);
       await outbox.reconcileRoom(key, {
         for (final e in result.entries)
           if (e.fromUser) e.id,

@@ -550,6 +550,7 @@ abstract final class HermesRpc {
       working: status.working,
       waiting: status.blocked,
       tasks: roomTasks(state),
+      latestSeq: seq,
     );
   }
 

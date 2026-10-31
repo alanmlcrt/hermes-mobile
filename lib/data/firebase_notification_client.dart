@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 
 import '../models/notifications.dart';
+import '../ui/content.dart';
 
 const notificationSetupTimeout = Duration(seconds: 4);
 
@@ -15,7 +16,7 @@ class FirebaseNotificationClient implements NotificationClient {
   FirebaseNotificationClient() {
     _channel.setMethodCallHandler((call) async {
       if (call.method != 'opened') throw MissingPluginException();
-      if (isSessionId(call.arguments) && !_opened.isClosed) {
+      if (isNotificationTarget(call.arguments) && !_opened.isClosed) {
         _opened.add(call.arguments as String);
       }
       return null;
@@ -53,6 +54,19 @@ class FirebaseNotificationClient implements NotificationClient {
         // Reconstruire le libellé générique, sans afficher du texte reçu.
         final data = message.data;
         if (data.length == 2 &&
+            isRoomId(data['roomId']) &&
+            const {'needs_user', 'approval'}.contains(data['outcome'])) {
+          unawaited(
+            _channel
+                .invokeMethod<void>('showRoom', {
+                  ...data,
+                  'body': Content.roomNotificationBody,
+                })
+                .catchError((_) {}),
+          );
+          return;
+        }
+        if (data.length == 2 &&
             data.keys.toSet().containsAll({'sessionId', 'outcome'}) &&
             isSessionId(data['sessionId']) &&
             {'succeeded', 'failed', 'stopped'}.contains(data['outcome'])) {
@@ -75,7 +89,7 @@ class FirebaseNotificationClient implements NotificationClient {
   Future<String?> takeOpened() async {
     try {
       final id = await _channel.invokeMethod<Object?>('takeOpened');
-      return isSessionId(id) ? id as String : null;
+      return isNotificationTarget(id) ? id as String : null;
     } catch (_) {
       return null;
     }

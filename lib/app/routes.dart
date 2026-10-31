@@ -454,7 +454,7 @@ class AppRoutes {
   /// Ouvre la conversation d'une notification touchée (froid ou chaud). La
   /// cible attend l'authentification, puis n'est consommée qu'une fois.
   void openNotification(String sessionId) {
-    if (!isSessionId(sessionId) || _notifications == null) return;
+    if (!isNotificationTarget(sessionId) || _notifications == null) return;
     _pendingNotification = sessionId;
     _openPending();
   }
@@ -478,6 +478,28 @@ class AppRoutes {
   }
 
   Future<void> _resolveNotification(String id) async {
+    final roomId = notificationRoom(id);
+    if (roomId != null) {
+      final target = await _notifications!.roomTarget(roomId);
+      if (_disposed) return;
+      if (!_gateway.snapshot.authenticated) {
+        _pendingNotification ??= id;
+        return;
+      }
+      if (target == null) {
+        _explainMissingTarget();
+        router.go('/');
+        return;
+      }
+      final path = await resolveLaunchTarget(
+        _gateway,
+        _outbox,
+        room: target,
+        onMissingTarget: _explainMissingTarget,
+      );
+      if (!_disposed && path != null) router.go(path);
+      return;
+    }
     final path = await resolveLaunchTarget(
       _gateway,
       _outbox,

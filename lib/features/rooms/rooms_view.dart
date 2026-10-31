@@ -28,19 +28,25 @@ class RoomsView extends StatefulWidget {
   State<RoomsView> createState() => _RoomsViewState();
 }
 
-class _RoomsViewState extends State<RoomsView> {
+class _RoomsViewState extends State<RoomsView> with WidgetsBindingObserver {
   late final vm = widget.create();
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(vm.refresh());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     vm.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) =>
+      vm.foreground(state == AppLifecycleState.resumed);
 
   Future<void> _create() async {
     await vm.prepareCreate();
@@ -163,7 +169,11 @@ class _RoomsViewState extends State<RoomsView> {
                   startedAt: room.updatedAt,
                 ),
                 onTap: () => widget.onOpen(room),
-                notice: room.working ? Content.roomWorking : null,
+                notice: room.needsUser
+                    ? Content.roomNeedsUser
+                    : room.working
+                    ? Content.roomWorking
+                    : null,
               ),
               Wrap(
                 spacing: Spacing.sm,

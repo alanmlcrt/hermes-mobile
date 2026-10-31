@@ -5,6 +5,7 @@ import 'timeline.dart';
 const roomPollInterval = Duration(seconds: 3);
 
 abstract interface class RoomGateway {
+  Future<void> markSeen(RoomKey key, int seq);
   Future<void> stop(RoomKey key);
   Future<void> retry(RoomKey key, RoomTask task);
   Future<void> discard(RoomKey key, RoomTask task);
@@ -54,6 +55,7 @@ class RoomSummary {
     this.updatedAt,
     this.preview,
     this.working = false,
+    this.needsUser = false,
   });
   final String id;
   final String name;
@@ -61,6 +63,7 @@ class RoomSummary {
   final DateTime? updatedAt;
   final String? preview;
   final bool working;
+  final bool needsUser;
 }
 
 enum RoomFeature { create, send, stop, retry, discard, approve }
@@ -108,12 +111,14 @@ class RoomSnapshot {
     this.working = false,
     this.waiting = false,
     this.tasks = const [],
+    this.latestSeq = 0,
   });
   final RoomSummary room;
   final List<RoomEntry> entries;
   final bool working;
   final bool waiting;
   final List<RoomTask> tasks;
+  final int latestSeq;
 }
 
 class RoomTask {
