@@ -142,10 +142,13 @@ class ActivityLine extends StatelessWidget {
                               color: scheme.content,
                             ),
                             const SizedBox(width: Spacing.xxs),
-                            Text(
-                              Content.activityEnd,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: scheme.muted,
+                            // Texte agrandi : passe à la ligne, ne déborde pas.
+                            Flexible(
+                              child: Text(
+                                Content.activityEnd,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: scheme.muted,
+                                ),
                               ),
                             ),
                           ],
