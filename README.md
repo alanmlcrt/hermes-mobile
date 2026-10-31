@@ -1,18 +1,63 @@
 # Hermes Mobile
 
-Les notifications de fin de travail sont envoyées par le plugin Hermes
-`hermes-mobile-notify`, installé sur chaque profil (voir
-[le plugin Hermes](server/hermes-plugin/README.md)). L’app transmet son jeton FCM
-au plugin à chaque envoi, sans rien à configurer par profil. Si le plugin est
-absent du profil, la demande part quand même et son tour est marqué
-« Notification non suivie ».
-
-Firebase est facultatif au démarrage. Le fichier `android/app/google-services.json`
-n’est pas versionné : le plugin Gradle Google Services n’est appliqué que s’il
-existe. Sans lui, le même APK démarre avec l’état « Firebase non configuré » ;
-aucun faux jeton n’est utilisé.
-
 Application Android personnelle (iPhone anticipé) servant d'interface distante à l'installation Hermes d'Alanc. Identifiant d'application : `fr.hermes_mobile`.
+
+## Notifications
+
+Les notifications de fin de tour passent par le plugin Hermes `hermes-mobile-notify`. Aucun fichier Hermes n'est à copier ni à modifier à la main.
+
+1. Depuis le terminal Hermes du profil à notifier :
+
+   ```sh
+   hermes plugins install alanmlcrt/hermes-mobile/server/hermes-plugin/hermes-mobile-notify --enable
+   ```
+
+   Autre profil : `hermes -p <profil> plugins install alanmlcrt/hermes-mobile/server/hermes-plugin/hermes-mobile-notify --enable`.
+
+   Si une copie manuelle du plugin existe déjà dans `HERMES_HOME/plugins/`, ajouter `--force` à la commande (ou lancer d'abord `hermes plugins remove hermes-mobile-notify`).
+
+2. Hermes Desktop → **Settings → Plugins** → engrenage de la ligne **hermes-mobile-notify** (Hermes Mobile) → champ **Compte de service Firebase** → coller le JSON du compte de service (ou le même JSON en base64) → **Save**.
+
+   Si `HERMES_HOME/hermes-mobile/service-account.json` existe déjà (installation antérieure), cette étape est facultative : le plugin utilise ce fichier.
+
+3. Redémarrer Hermes (add-on Home Assistant : **Redémarrer**).
+
+4. Envoyer un message depuis l'app, quitter l'app, puis attendre la fin d'un tour : la notification arrive.
+
+L'app demande la permission Android au premier lancement ; sans elle, le système masque les notifications même si le plugin les envoie.
+
+Détails, vérification, mise à jour et désinstallation : [plugin Hermes](server/hermes-plugin/README.md).
+
+L'app transmet son jeton FCM au plugin à chaque envoi, sans configuration par profil. Si le plugin est absent du profil, la demande part quand même et son tour est marqué « Notification non suivie ». Dans l'app, chaque profil garde son interrupteur de notifications ; il est grisé tant que le plugin n'est pas actif sur ce profil.
+
+Firebase est facultatif au démarrage. Le fichier `android/app/google-services.json` n’est pas versionné : le plugin Gradle Google Services n’est appliqué que s’il existe. Sans lui, le même APK démarre avec l’état « Firebase non configuré » ; aucun faux jeton n’est utilisé.
+
+## Salons (Bot Mode)
+
+Un salon Hermes réunit 2 à 6 bots et vous. Avec Hermes Desktop, le marqueur Bot Mode est écrit automatiquement : aucun fichier Hermes à éditer.
+
+1. Se connecter au backend dans Hermes Desktop (**Settings → Gateways**, ou **Connections** selon la version).
+2. Onglet **Bots** → **+** → **New Agent** : créer les participants (nom, titre, description). Refaire pour chaque bot. Pour un profil existant, le sélectionner dans **Bots** → **Edit Profile** ; Hermes le marque comme bot.
+3. Onglet **Bots** → **+** → **New Group Chat** : nommer le salon, cocher 2 à 6 bots, puis **Create**.
+4. Ouvrir le salon et écrire. `@nom` cible un bot, `@all` / `@everyone` tout le monde, `@user` vous alerte.
+
+Une fois les profils marqués, un salon peut aussi se créer depuis l'app : onglet **Salons** → **Nouveau salon**, mêmes règles (2 à 6 profils).
+
+Hermes écrit le marqueur `ui_meta: {hermes-bots: {}}` dans le `profile.yaml` du bot. Il n'existe pas d'éditeur YAML de `profile.yaml` dans l'interface : **Bots** est le chemin officiel. Le YAML ne sert qu'aux installations sans Desktop :
+
+```yaml
+# HERMES_HOME/profiles/<bot>/profile.yaml (ou profile.yaml du profil par défaut)
+ui_meta:
+  hermes-bots: {}
+```
+
+Fusionner avec le bloc `ui_meta` existant (un seul bloc), redémarrer Hermes, puis créer le Bot Chat canonique si l'installation est purement headless :
+
+```sh
+hermes -p <bot> chat -c "Bot Chat" --create-if-missing
+```
+
+Les profils non marqués restent utilisables normalement ; seuls les profils marqués sont proposés à la création d'un salon. Documentation officielle : [Bot Mode](https://hermes-agent.nousresearch.com/docs/user-guide/bot-mode).
 
 ## Prérequis
 

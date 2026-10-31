@@ -9,71 +9,105 @@ Seuls les tours `platform: tui` (l'app) notifient ; les autres (sous-agents
 `subagent`, `cron`…) sont journalisés `skipped`, `reason: platform`.
 
 - Commande `/hermes-mobile-token <jeton>` : mémorise le jeton FCM dans
-  `HERMES_HOME\hermes-mobile\fcm-token`. L'app l'appelle elle-même
+  `HERMES_HOME/hermes-mobile/fcm-token`. L'app l'appelle elle-même
   (`command.dispatch`) avant chaque envoi de message, sans jamais bloquer
   l'envoi. Un seul jeton par profil : le dernier téléphone qui l'envoie reçoit
   les notifications du profil.
 - Erreurs FCM : un seul nouvel essai, environ 2 s plus tard, sur erreur réseau
   ou HTTP 5xx ; tout refus 4xx échoue sans nouvel essai. Un jeton refusé
-  (`UNREGISTERED`) est oublié (fichier `fcm-token` supprimé) jusqu'au prochain message envoyé depuis l'app. Pas de
-  file durable : si Hermes s'arrête en plein tour, la notification est perdue.
+  (`UNREGISTERED`) est oublié (fichier `fcm-token` supprimé) jusqu'au prochain
+  message envoyé depuis l'app. Pas de file durable : si Hermes s'arrête en plein
+  tour, la notification est perdue.
 
 Auto-vérification (lancée aussi par la CI) :
 `python server/hermes-plugin/hermes-mobile-notify/__init__.py`.
 
-## Profils et `HERMES_HOME`
+## Installation
 
-Le plugin s'installe **par profil**. Chaque profil a son propre `HERMES_HOME`,
-avec son dossier `plugins\` et son `config.yaml` :
+Dans le terminal Hermes du profil à notifier :
 
-- profil par défaut (affiché « default ») : `.hermes\` ;
-- autre profil : `.hermes\profiles\<nom>\`.
+```sh
+hermes plugins install alanmlcrt/hermes-mobile/server/hermes-plugin/hermes-mobile-notify --enable
+```
 
-Partage Samba : `\\homeassistant.local\addon_configs\0a6523c6_hermes_agent\`.
-Ainsi, pour le profil par défaut,
-`HERMES_HOME` = `\\homeassistant.local\addon_configs\0a6523c6_hermes_agent\.hermes\`.
+Le plugin vit dans un sous-dossier du dépôt : tout ce qui suit
+`hermes-mobile/` est le chemin du plugin, il n'y a pas de dépôt séparé.
 
-## Installation sur un profil (Alanc)
+- `--enable` active le hook sans question. Sans cette option, répondre `y` à
+  `Enable 'hermes-mobile-notify' now?`, ou lancer ensuite
+  `hermes plugins enable hermes-mobile-notify`.
+- Le plugin s'installe **par profil**. Lister les profils avec `hermes profile list`,
+  puis pour chacun : `hermes -p <profil> plugins install alanmlcrt/hermes-mobile/server/hermes-plugin/hermes-mobile-notify --enable`.
+- Si une copie manuelle existe déjà dans `HERMES_HOME/plugins/`, ajouter
+  `--force` (ou lancer `hermes plugins remove hermes-mobile-notify` avant).
+- Aucun fichier de Hermes n'est à copier ni à modifier à la main.
 
-1. **Copier le plugin** — copier `plugin.yaml` et `__init__.py` de
-   `server/hermes-plugin/hermes-mobile-notify/` vers
-   `HERMES_HOME\plugins\hermes-mobile-notify\`.
-2. **Copier la clé** — copier le fichier du compte de service Firebase vers
-   `HERMES_HOME\hermes-mobile\service-account.json` (créer le dossier
-   `hermes-mobile\` si besoin). Source : `.hermes\hermes-mobile\service-account.json`
-   (déjà installée). Jamais dans le dossier du plugin ni dans le dépôt.
-   La clé est celle d'un compte de service du projet Firebase personnel, avec le
-   rôle `roles/firebasecloudmessaging.admin` : clé JSON générée depuis la console
-   Firebase (Paramètres du projet → Comptes de service), à garder hors dépôt.
-3. **Activer** — ajouter **seulement** la ligne `- hermes-mobile-notify` à la
-   liste `plugins.enabled` de `HERMES_HOME\config.yaml`, sans retirer les autres
-   entrées ; pour le profil par défaut, `hermes plugins enable hermes-mobile-notify`
-   dans le terminal de l'add-on fait de même.
-4. **Redémarrer** — redémarrer l'add-on Hermes depuis Home Assistant.
+## Clé Firebase
 
-Mise à jour : recopier `plugin.yaml` et `__init__.py` (étape 1) puis redémarrer.
-Version minimale : **1.0.2** (avant 1.0.1, quitter l'app après un tour envoie un faux « arrêté »).
-Le profil `.hermes` porte encore la version des essais (qui notifie aussi les
-sous-agents) : y recopier la version actuelle.
+Le plugin lit d'abord le réglage secret du plugin, puis, en secours,
+`HERMES_HOME/hermes-mobile/service-account.json`. Si ce fichier existe déjà
+(installation antérieure), aucun autre réglage n'est nécessaire.
 
-Si `hermes-mobile-spike` (plugin de l'étude 1, retiré du dépôt) est encore actif
-sur un profil, le désactiver (`hermes plugins disable hermes-mobile-spike` ou
-retirer sa ligne de `plugins.enabled`) et supprimer
-`HERMES_HOME\plugins\hermes-mobile-spike\`.
+### Avec Hermes Desktop (recommandé)
 
-## Vérification
+1. Ouvrir Hermes Desktop connecté au backend du profil.
+2. **Settings → Plugins**, puis l'engrenage de la ligne
+   **hermes-mobile-notify** (Hermes Mobile).
+3. Champ **Compte de service Firebase** : coller le JSON complet du compte de
+   service, ou le même JSON encodé en base64, puis **Save**.
 
-- `hermes plugins list` (ou `/plugins` dans une conversation) montre
-  `hermes-mobile-notify` chargé ; `/hermes-mobile-token` sans argument répond
-  par l'usage ; `logs/agent.log` ne contient aucune erreur de chargement du plugin.
-- Après un premier message envoyé depuis l'app (permission de notification
-  accordée), `HERMES_HOME\hermes-mobile\fcm-token` existe et le journal porte
-  une ligne `event: token`.
-- Un tour depuis l'app, app quittée → notification reçue, ligne `action: sent`.
+Le secret est rangé dans le `.env` du profil ; il n'apparaît ni dans
+`config.yaml`, ni dans le dossier du plugin, ni dans le dépôt.
+
+### Sans Desktop (installation headless)
+
+Déposer le JSON dans `HERMES_HOME/hermes-mobile/service-account.json` (créer le
+dossier `hermes-mobile/` si besoin). Ne jamais mettre cette clé dans le dossier
+du plugin ni dans le dépôt.
+
+La clé est celle d'un compte de service du projet Firebase personnel, avec le
+rôle `roles/firebasecloudmessaging.admin` : JSON généré depuis la console
+Firebase (Paramètres du projet → Comptes de service).
+
+## Redémarrer
+
+Le gateway découvre les plugins à son démarrage : redémarrer Hermes après
+l'installation. Un changement de clé est relu au tour suivant ; redémarrer
+seulement s'il n'est pas pris en compte :
+
+- add-on Home Assistant : **Redémarrer** l'add-on ;
+- sinon : quitter puis relancer le gateway/Desktop.
+
+## Vérifier
+
+1. `hermes plugins list` montre `hermes-mobile-notify` **enabled**.
+2. Dans une conversation, `/hermes-mobile-token` sans argument répond par
+   l'usage ; `logs/agent.log` ne contient aucune erreur de chargement.
+3. Envoyer un message depuis l'app (la permission de notification doit être
+   accordée) : `HERMES_HOME/hermes-mobile/fcm-token` existe et le journal porte
+   une ligne `event: token`.
+4. Quitter l'app, puis attendre la fin d'un tour : la notification arrive et le
+   journal porte `action: sent`.
+
+## Mise à jour
+
+```sh
+hermes plugins update hermes-mobile-notify
+```
+
+Sur un Hermes antérieur à la prise en charge des mises à jour de plugin en
+sous-dossier, réinstaller :
+
+```sh
+hermes plugins install alanmlcrt/hermes-mobile/server/hermes-plugin/hermes-mobile-notify --force --enable
+```
+
+Puis redémarrer Hermes. Version actuelle : **1.0.3** (le réglage secret et la
+lecture du JSON en base64 datent de cette version).
 
 ## Journal
 
-`HERMES_HOME\plugins\hermes-mobile-notify\session-end.jsonl`, une ligne par fin
+`HERMES_HOME/plugins/hermes-mobile-notify/session-end.jsonl`, une ligne par fin
 de tour (`action: sent | skipped | failed`, `status` HTTP, `reason`,
 `attempts`, `duration_ms`, `outcome`, métadonnées du tour) et une ligne
 `event: token` par enregistrement du jeton. Du jeton, seuls les 8 derniers
@@ -90,8 +124,10 @@ code), ou le nom de l'erreur réseau.
 
 ## Désinstallation
 
-1. `hermes plugins disable hermes-mobile-notify`, ou retirer la ligne de
-   `plugins.enabled`.
-2. Supprimer `HERMES_HOME\plugins\hermes-mobile-notify\` (journal compris) et
-   `HERMES_HOME\hermes-mobile\` (jeton et clé).
-3. Redémarrer l'add-on.
+```sh
+hermes plugins remove hermes-mobile-notify
+```
+
+Le retrait enlève aussi le plugin de `plugins.enabled`/`plugins.disabled` et de
+ses réglages. Supprimer ensuite, si souhaité, `HERMES_HOME/hermes-mobile/`
+(jeton et clé de secours), puis redémarrer Hermes.
