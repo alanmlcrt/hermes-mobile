@@ -5,6 +5,26 @@ import '../models/timeline.dart';
 import '../models/attachment.dart';
 
 abstract final class Content {
+  static const rooms = 'Salons';
+  static const roomsLoading = 'Chargement des salons…';
+  static const roomsEmpty = 'Aucun salon pour le moment.';
+  static const roomWorking = 'Des agents travaillent';
+  static const roomPreparation =
+      'Le salon est prêt. Le fil arrive dans la prochaine étape.';
+  static String roomError(String code) => switch (code) {
+    'room.bot_mode' =>
+      'Salons indisponibles : activez Bot Mode sur vos profils de test.',
+    'room.missing' =>
+      'Cette fonction de salon n’est pas disponible sur ce Hermes.',
+    'room.refused' =>
+      'Hermes a refusé cette action. Votre saisie est conservée.',
+    'room.busy' => 'Une action est déjà en cours dans ce salon.',
+    'rpc.uncertain' =>
+      'Résultat à vérifier : actualisez le salon. Aucun renvoi automatique.',
+    'connection.mismatch' =>
+      'Ce salon appartient à une autre connexion ou à un autre profil.',
+    _ => 'Impossible de charger ou de modifier le salon. Réessayez.',
+  };
   static const notificationUnfollowed = 'Notification non suivie';
   static const notificationTargetMissing =
       'Conversation de cette notification introuvable sur ce téléphone. Retour à l’accueil.';

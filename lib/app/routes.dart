@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/attachment_picker.dart';
+import '../data/room_repository.dart';
+import '../features/rooms/rooms_view.dart';
+import '../features/rooms/rooms_view_model.dart';
+import '../models/room.dart';
 
 import '../features/connection/connection_view.dart';
 import '../features/connection/connection_view_model.dart';
@@ -48,7 +52,18 @@ Future<String?> resolveLaunchTarget(
   VoidCallback? onMissingTarget,
   Future<bool> Function(TimelineKey key)? isDeleted,
   VoidCallback? onDeletedTarget,
+  RoomKey? room,
 }) async {
+  if (room != null) {
+    final snapshot = gateway.snapshot;
+    if (!snapshot.authenticated) return null;
+    if (snapshot.connection?.key == room.connection &&
+        snapshot.profiles.any((p) => p.key == room.profile)) {
+      return roomPath(room);
+    }
+    onMissingTarget?.call();
+    return '/';
+  }
   if (notification != null) {
     NotificationTarget? target;
     try {
@@ -109,6 +124,12 @@ String historyPath(ProfileKey profile, {String? current}) => Uri(
   queryParameters: current == null ? null : {'current': current},
 ).toString();
 
+String roomPath(RoomKey key) => Uri(
+  path:
+      '/room/${Uri.encodeComponent(key.connection.value)}/${Uri.encodeComponent(key.room)}',
+  queryParameters: {'profile': key.profile.value},
+).toString();
+
 String profileSettingsPath(ProfileKey profile) =>
     '/profile/${Uri.encodeComponent(profile.value)}';
 
@@ -150,6 +171,7 @@ class AppRoutes {
     connection = ConnectionViewModel(gateway);
     this.accents = ProfileAccents(gateway, accents);
     profiles = ProfilesViewModel(gateway, backgrounds: backgrounds);
+    rooms = RoomRepository(gateway: gateway);
     router = GoRouter(
       refreshListenable: _refresh,
       redirect: (context, state) {
@@ -175,6 +197,8 @@ class AppRoutes {
                 path.startsWith('/profile/') ||
                 path.startsWith('/draft/') ||
                 path.startsWith('/history/') ||
+                path.startsWith('/rooms/') ||
+                path.startsWith('/room/') ||
                 path.startsWith('/c/'))) {
           return '/';
         }
@@ -183,7 +207,9 @@ class AppRoutes {
           // `pathSegments` est déjà décodé.
           final segments = state.uri.pathSegments;
           if (segments.length > 1 &&
-              segments.first == 'c' &&
+              (segments.first == 'c' ||
+                  segments.first == 'room' ||
+                  segments.first == 'rooms') &&
               segments[1] != gateway.snapshot.connection?.key.value) {
             return '/';
           }
@@ -193,6 +219,29 @@ class AppRoutes {
         return null;
       },
       routes: [
+        GoRoute(
+          path: '/rooms/:connection/:profile',
+          builder: (context, state) {
+            final connection = ConnectionKey(
+              state.pathParameters['connection']!,
+            );
+            final profile = ProfileKey(state.pathParameters['profile']!);
+            return RoomsView(
+              key: ValueKey(state.uri.toString()),
+              create: () => RoomsViewModel(rooms, connection, profile),
+              accents: this.accents,
+              onOpen: (r) =>
+                  context.push(roomPath(RoomKey(connection, profile, r.id))),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/room/:connection/:room',
+          builder: (context, state) => Scaffold(
+            appBar: AppBar(title: const Text(Content.rooms)),
+            body: const SafeArea(child: Text(Content.roomPreparation)),
+          ),
+        ),
         GoRoute(
           path: '/',
           builder: (context, state) => ListenableBuilder(
@@ -218,6 +267,16 @@ class AppRoutes {
                       );
                     },
                     onSettings: () => context.push('/profiles'),
+                    onRooms: () {
+                      final s = gateway.snapshot;
+                      final p =
+                          s.selectedProfile ?? s.profiles.firstOrNull?.key;
+                      if (s.connection != null && p != null) {
+                        context.push(
+                          '/rooms/${Uri.encodeComponent(s.connection!.key.value)}/${Uri.encodeComponent(p.value)}',
+                        );
+                      }
+                    },
                   ),
           ),
         ),
@@ -425,6 +484,7 @@ class AppRoutes {
   late final ConnectionViewModel connection;
   late final ProfilesViewModel profiles;
   late final ProfileAccents accents;
+  late final RoomRepository rooms;
   final _refresh = _Refresh();
   late final VoidCallback _onProfiles;
   late final GoRouter router;

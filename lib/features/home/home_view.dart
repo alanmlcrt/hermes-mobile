@@ -22,18 +22,29 @@ class HomeView extends StatelessWidget {
     required this.accents,
     required this.onOpen,
     required this.onSettings,
+    this.onRooms,
   });
   final ConnectionGateway gateway;
   final ConversationGateway conversation;
   final ProfileAccents accents;
   final void Function(ProfileKey profile, String? session) onOpen;
   final VoidCallback onSettings;
+  final VoidCallback? onRooms;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final profiles = gateway.snapshot.profiles;
     return Scaffold(
+      bottomNavigationBar: onRooms == null
+          ? null
+          : SafeArea(
+              child: TextButton.icon(
+                onPressed: onRooms,
+                icon: const Icon(Icons.groups_outlined),
+                label: const Text(Content.rooms),
+              ),
+            ),
       appBar: AppBar(
         centerTitle: false,
         title: Semantics(

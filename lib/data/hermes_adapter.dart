@@ -10,6 +10,7 @@ import '../models/connection_gateway.dart';
 import '../models/history.dart';
 import '../models/profile.dart';
 import '../models/result.dart';
+import '../models/room.dart';
 import '../models/timeline.dart';
 
 const networkTimeout = Duration(seconds: 15);
@@ -460,6 +461,90 @@ class HermesAdapter {
 
 /// Dialecte legacy du contrat 9e01b44 : seul endroit qui connaît ces formats.
 abstract final class HermesRpc {
+  static const groupsCapabilities = 'groups.capabilities';
+  static const groupsList = 'groups.list';
+  static const groupsCreate = 'groups.create';
+  static const groupsSend = 'groups.send';
+  static const groupsState = 'groups.state';
+  static const groupsLog = 'groups.log';
+  static const groupsStop = 'groups.stop';
+  static const groupsRetry = 'groups.retry';
+  static const groupsDiscard = 'groups.discard';
+  static const groupsApprove = 'groups.approve';
+  static ({bool working, bool blocked}) roomStatus(Map r) {
+    final status = r['driver_status'];
+    return (
+      working: status is Map && status['working'] == true,
+      blocked: status is Map && status['blocked'] == true,
+    );
+  }
+
+  static List<String> roomMessages(Map r) => [
+    for (final event in r['events'] as List? ?? const [])
+      if (event is Map &&
+          event['kind'] is String &&
+          (event['kind'] as String).startsWith('message.') &&
+          event['payload'] is Map)
+        if ((event['payload'] as Map)['text'] is String)
+          (event['payload'] as Map)['text'] as String,
+  ];
+
+  static Map<String, dynamic> roomParams(
+    RoomKey key,
+    Map<String, dynamic> params,
+  ) => {
+    'profile': key.profile.value,
+    if (key.room.isNotEmpty) 'room_id': key.room,
+    ...params,
+  };
+
+  static RoomCapabilities roomCapabilities(Map<String, dynamic> r) {
+    if (r['driver'] is! bool || r['methods'] is! List) {
+      throw const AppError('contract.invalid_response');
+    }
+    return RoomCapabilities(
+      r['driver'] == true,
+      (r['methods'] as List).cast<String>().toSet(),
+      {
+        for (final p in (r['seatable_profiles'] as List? ?? const []))
+          ProfileKey(p as String),
+      },
+    );
+  }
+
+  static RoomSummary room(Map r) {
+    if (r['room_id'] is! String ||
+        r['name'] is! String ||
+        r['members'] is! List) {
+      throw const AppError('contract.invalid_response');
+    }
+    return RoomSummary(
+      id: r['room_id'] as String,
+      name: r['name'] as String,
+      members: [
+        for (final raw in r['members'] as List)
+          if (raw is Map)
+            RoomMember(
+              raw['member_id'] as String? ?? raw['profile'] as String? ?? '',
+              ProfileKey(raw['profile'] as String? ?? ''),
+              raw['display_name'] as String? ?? raw['profile'] as String? ?? '',
+              raw['handle'] as String? ?? raw['profile'] as String? ?? '',
+            ),
+      ],
+      updatedAt: r['updated_at'] is num
+          ? DateTime.fromMillisecondsSinceEpoch(
+              ((r['updated_at'] as num) * 1000).round(),
+              isUtc: true,
+            )
+          : null,
+    );
+  }
+
+  static List<RoomSummary> rooms(Map<String, dynamic> r) {
+    if (r['rooms'] is! List) throw const AppError('contract.invalid_response');
+    return [for (final value in r['rooms'] as List) room(value as Map)];
+  }
+
   static Map<String, dynamic> interruptParams(
     String runtime,
     ProfileKey profile,
