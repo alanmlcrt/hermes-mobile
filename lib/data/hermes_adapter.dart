@@ -471,6 +471,8 @@ abstract final class HermesRpc {
   static const groupsRetry = 'groups.retry';
   static const groupsDiscard = 'groups.discard';
   static const groupsApprove = 'groups.approve';
+  static const roomProfiles = 'profiles.list';
+  static const roomProfilesParams = {'include_sessions': false};
   static Map<String, dynamic> roomListParams(int? offset) => {
     'offset': ?offset,
   };
@@ -481,7 +483,7 @@ abstract final class HermesRpc {
   static RoomSummary roomFromResult(Map result) => room(result['room'] as Map);
   static Map<String, dynamic> roomSend(String eventId, String text) => {
     'event_id': eventId,
-    'payload': {'text': text},
+    'payload': {'text': text, 'thread_id': eventId},
   };
   static bool roomAccepted(Map result, RoomKey key, String eventId) {
     final event = result['event'];
@@ -713,6 +715,43 @@ abstract final class HermesRpc {
       profilesAnnounced: r['seatable_profiles'] is List,
       protocolVersion: r['protocol_version'] as int?,
       persistentProcess: r['persistent_process'] as bool?,
+    );
+  }
+
+  /// Seuls les profils locaux portant réellement le marqueur objet Bot Mode
+  /// sont candidats quand la liste optionnelle du pilote legacy est absente.
+  static RoomCapabilities roomRosterCapabilities(
+    RoomCapabilities caps,
+    Map result,
+    Set<ProfileKey> local,
+  ) {
+    final rows = result['profiles'];
+    if (rows is! List) throw const AppError('contract.invalid_response');
+    final seen = <String>{};
+    final managed = <ProfileKey>{};
+    var checked = false;
+    for (final row in rows) {
+      if (row is! Map ||
+          row['name'] is! String ||
+          !seen.add(row['name'] as String)) {
+        throw const AppError('contract.invalid_response');
+      }
+      final key = ProfileKey(row['name'] as String);
+      if (!local.contains(key)) continue;
+      final meta = row['ui_meta'];
+      if (meta is! Map) continue;
+      checked = true;
+      if (meta['hermes-bots'] is Map) managed.add(key);
+    }
+    return RoomCapabilities(
+      caps.driver,
+      caps.methods,
+      managed,
+      available: caps.available,
+      profilesAnnounced: false,
+      rosterChecked: checked,
+      protocolVersion: caps.protocolVersion,
+      persistentProcess: caps.persistentProcess,
     );
   }
 

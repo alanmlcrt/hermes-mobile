@@ -235,7 +235,7 @@ class RoomRepository implements RoomGateway {
       throw const AppError('room.invalid');
     }
     final caps = await capabilities(key.connection, key.profile);
-    final reason = caps.unavailableReason;
+    final reason = caps.creationUnavailableReason;
     if (reason != null) throw AppError(reason);
     if (!members.every(caps.profiles.contains)) {
       throw const AppError('room.no_eligible');
@@ -312,7 +312,7 @@ class RoomRepository implements RoomGateway {
     _capabilities.removeWhere(
       (key, _) => key.$1 == connection && key.$2 == profile,
     );
-    final caps = HermesRpc.roomCapabilities(
+    var caps = HermesRpc.roomCapabilities(
       await call(
         RoomKey(connection, profile, ''),
         HermesRpc.groupsCapabilities,
@@ -325,6 +325,27 @@ class RoomRepository implements RoomGateway {
             missing.$4,
       },
     );
+    if (caps.driver &&
+        !caps.profilesAnnounced &&
+        caps.available.contains(RoomFeature.create)) {
+      try {
+        caps = HermesRpc.roomRosterCapabilities(
+          caps,
+          await call(
+            RoomKey(connection, profile, ''),
+            HermesRpc.roomProfiles,
+            HermesRpc.roomProfilesParams,
+          ),
+          {for (final p in gateway.snapshot.profiles) p.key},
+        );
+      } on AppError {
+        // Ce complément concerne la création, jamais la disponibilité de groups.list.
+      }
+    }
+    check(RoomKey(connection, profile, ''));
+    if (generation != gateway.socketGeneration) {
+      throw const AppError('rpc.uncertain');
+    }
     _capabilities[(connection, profile, generation)] = caps;
     return caps;
   }

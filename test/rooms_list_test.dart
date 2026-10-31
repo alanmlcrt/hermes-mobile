@@ -52,6 +52,141 @@ Matcher roomCode(String code) =>
     isA<AppError>().having((e) => e.code, 'code', code);
 
 void main() {
+  test('8.2 liste optionnelle absente : lire les salons et vérifier les marqueurs des seuls profils locaux', () async {
+    final h = Harness();
+    h.transport.profiles = {
+      'profiles': [
+        {'name': 'default', 'is_default': true},
+        {'name': 'Finance', 'is_default': false},
+        {'name': 'Other', 'is_default': false},
+      ],
+    };
+    await h.connect();
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    final connection = h.repository.snapshot.connection!.key;
+    final repo = RoomRepository(
+      gateway: h.repository,
+      timeout: const Duration(milliseconds: 50),
+    );
+    final vm = RoomsViewModel(repo, connection, roomProfile);
+    var caps = {...roomCaps()}..remove('seatable_profiles');
+    h.transport.rpc = (m, p) => switch (m) {
+      'groups.capabilities' => caps,
+      'profiles.list' => {
+        'profiles': [
+          {
+            'name': 'default',
+            'ui_meta': {'hermes-bots': <String, dynamic>{}},
+          },
+          {
+            'name': 'Finance',
+            'ui_meta': {
+              'hermes-bots': {'title': 'Finance'},
+            },
+          },
+          {
+            'name': 'Other',
+            'ui_meta': {'hermes-bots': true},
+          },
+          {
+            'name': 'finance',
+            'ui_meta': {'hermes-bots': <String, dynamic>{}},
+          },
+          {
+            'name': 'Foreign',
+            'ui_meta': {'hermes-bots': <String, dynamic>{}},
+          },
+        ],
+      },
+      'groups.list' => {'rooms': []},
+      'groups.create' => {
+        'room': {...roomData(p['room_id'] as String), 'members': p['members']},
+      },
+      _ => null,
+    };
+    await vm.refresh();
+    expect(vm.error, isNull);
+    expect(vm.canOfferCreate, isTrue);
+    expect(vm.diagnostic!.profilesAnnounced, isFalse);
+    expect(vm.diagnostic!.rosterChecked, isTrue);
+    expect(vm.diagnostic!.profiles, {roomProfile, const ProfileKey('Finance')});
+    expect(
+      h.transport.frames.lastWhere(
+        (f) => f['method'] == 'profiles.list',
+      )['params'],
+      {'profile': 'default', 'include_sessions': false},
+    );
+    await vm.prepareCreate();
+    vm.setName('Recherche');
+    vm.select(roomProfile, true);
+    vm.select(const ProfileKey('Finance'), true);
+    expect(await vm.create(), isNotNull);
+    final before = h.transport.frames
+        .where((f) => f['method'] == 'profiles.list')
+        .length;
+    caps = {...roomCaps(), 'seatable_profiles': <String>[]};
+    await vm.refresh();
+    expect(
+      vm.error,
+      isNull,
+      reason: 'L’éligibilité ne bloque jamais la lecture',
+    );
+    expect(vm.canOfferCreate, isFalse);
+    expect(
+      h.transport.frames.where((f) => f['method'] == 'profiles.list').length,
+      before,
+      reason: 'Ne jamais contourner une liste explicitement vide',
+    );
+    vm.dispose();
+    await h.repository.dispose();
+  });
+  test('8.2 métadonnées absentes ou méthode profiles.list absente : lecture seule, aucune création supposée', () async {
+    final h = Harness();
+    await h.connect();
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    final connection = h.repository.snapshot.connection!.key;
+    final repo = RoomRepository(
+      gateway: h.repository,
+      timeout: const Duration(milliseconds: 50),
+    );
+    final vm = RoomsViewModel(repo, connection, roomProfile);
+    var absent = false;
+    h.transport.rpc = (m, p) => switch (m) {
+      'groups.capabilities' => {...roomCaps()}..remove('seatable_profiles'),
+      'profiles.list' =>
+        absent
+            ? const RpcFail(-32601)
+            : {
+                'profiles': [
+                  {'name': 'default'},
+                ],
+              },
+      'groups.list' => {'rooms': []},
+      _ => null,
+    };
+    await vm.refresh();
+    expect(vm.error, isNull);
+    expect(vm.creationProblem, 'room.eligibility_unknown');
+    expect(vm.canOfferCreate, isFalse);
+    absent = true;
+    await vm.refresh();
+    expect(vm.error, isNull);
+    expect(vm.canOfferCreate, isFalse);
+    final before = h.transport.frames
+        .where((f) => f['method'] == 'profiles.list')
+        .length;
+    await vm.refresh();
+    expect(
+      h.transport.frames.where((f) => f['method'] == 'profiles.list').length,
+      before,
+    );
+    expect(
+      h.transport.frames.where((f) => f['method'] == 'groups.create'),
+      isEmpty,
+    );
+    vm.dispose();
+    await h.repository.dispose();
+  });
   test(
     '8.2 ne déduit pas Bot Mode de la disponibilité du pilote ou des profils',
     () async {
@@ -95,11 +230,13 @@ void main() {
       );
       reply = {...roomCaps()}..remove('seatable_profiles');
       await vm.refresh();
-      expect(vm.error, 'room.eligibility_unknown');
+      expect(vm.error, isNull);
+      expect(vm.creationProblem, 'room.eligibility_unknown');
       expect(vm.diagnostic!.profilesAnnounced, isFalse);
       reply = {...roomCaps(), 'seatable_profiles': <String>[]};
       await vm.refresh();
-      expect(vm.error, 'room.no_eligible');
+      expect(vm.error, isNull);
+      expect(vm.creationProblem, 'room.no_eligible');
       expect(vm.diagnostic!.profilesAnnounced, isTrue);
       reply = null;
       await vm.refresh();

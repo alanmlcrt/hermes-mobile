@@ -85,6 +85,7 @@ class RoomCapabilities {
     this.profiles, {
     this.available = const {},
     this.profilesAnnounced = true,
+    this.rosterChecked = false,
     this.protocolVersion,
     this.persistentProcess,
   });
@@ -93,11 +94,17 @@ class RoomCapabilities {
   final Set<ProfileKey> profiles;
   final Set<RoomFeature> available;
   final bool profilesAnnounced;
+  final bool rosterChecked;
   final int? protocolVersion;
   final bool? persistentProcess;
   String? get unavailableReason {
     if (!driver) return 'room.driver_missing';
-    if (!profilesAnnounced) return 'room.eligibility_unknown';
+    return null;
+  }
+
+  String? get creationUnavailableReason {
+    if (!driver) return 'room.driver_missing';
+    if (!profilesAnnounced && !rosterChecked) return 'room.eligibility_unknown';
     if (profiles.isEmpty) return 'room.no_eligible';
     return null;
   }

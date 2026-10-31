@@ -65,6 +65,20 @@ preuve de notification app fermée. Les fichiers restent hors périmètre 8.1–
 
 ## Conventions préparées dans l'app, à confirmer au téléphone
 
+- Release 31 : `seatable_profiles` est optionnel. Son absence ne bloque plus
+  `groups.list`. Pour créer, l'app lit `profiles.list` avec `include_sessions: false`
+  et le même profil RPC ; elle retient uniquement les profils de la connexion
+  courante portant `ui_meta.hermes-bots` comme objet. Une liste explicite de
+  `seatable_profiles`, même vide, reste prioritaire et n'est jamais remplacée.
+  Métadonnées absentes ou méthode de lecture indisponible = création masquée,
+  lecture des salons conservée. La création reste validée par Hermes.
+- Envoi : `payload.thread_id` est égal à l'`event_id` enregistré dans l'outbox,
+  comme dans le client officiel ; les deux identifiants survivent donc ensemble.
+  Sources publiques figées au commit `c419cf7c864ac0ee511dbd9f7091a8bba0b567ee` :
+  [capacités legacy sans liste de profils](https://github.com/NousResearch/hermes-agent/blob/c419cf7c864ac0ee511dbd9f7091a8bba0b567ee/tui_gateway/methods_groups.py),
+  [métadonnées de profiles.list](https://github.com/NousResearch/hermes-agent/blob/c419cf7c864ac0ee511dbd9f7091a8bba0b567ee/tui_gateway/methods_profiles.py),
+  [envoi et thread_id](https://github.com/NousResearch/hermes-agent/blob/c419cf7c864ac0ee511dbd9f7091a8bba0b567ee/apps/desktop/src/plugins/hermes-bots/canonical-group-send.ts).
+
 - Messages : `message.*`, texte dans `payload.text`, attribution par `actor.id`
   rapproché du `member_id` ou du profil ; activités `tool.start` / `tool.complete`.
 - Escalade dans le fil : mention `@user` d'un message d'agent ; attente globale

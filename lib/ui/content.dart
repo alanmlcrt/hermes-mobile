@@ -55,8 +55,8 @@ abstract final class Content {
     'storage.unavailable' =>
       'Enregistrement local impossible. Votre saisie reste affichée.',
     'room.driver_missing' => 'Le serveur Hermes annonce que le pilote des salons est indisponible. Modifier Bot Mode ne suffit pas à confirmer sa disponibilité.',
-    'room.eligibility_unknown' => 'Hermes ne fournit pas la liste des profils utilisables en salon. L’app ne peut pas vérifier leur éligibilité.',
-    'room.no_eligible' => 'Hermes annonce zéro profil utilisable en salon. La cause n’est pas précisée par le serveur.',
+    'room.eligibility_unknown' => 'Les salons sont disponibles. La création attend des profils dont l’éligibilité peut être confirmée par Hermes.',
+    'room.no_eligible' => 'Aucun profil éligible à un nouveau salon n’est confirmé par les informations reçues de Hermes.',
     'room.missing' =>
       'Cette fonction de salon n’est pas disponible sur ce Hermes.',
     'room.refused' =>
@@ -78,7 +78,11 @@ abstract final class Content {
       'Pilote salons : ${_roomFlag(caps.driver)}\n'
       'Processus persistant : ${_roomFlag(caps.persistentProcess)}\n'
       'Version du protocole : ${caps.protocolVersion ?? 'non annoncée'}\n'
-      'Profils éligibles : ${caps.profilesAnnounced ? caps.profiles.length.toString() : 'liste non fournie'}\n'
+      'Profils éligibles : ${caps.profilesAnnounced
+          ? caps.profiles.length.toString()
+          : caps.rosterChecked
+          ? '${caps.profiles.length} confirmés par les métadonnées Bot Mode'
+          : 'liste non fournie'}\n'
       'Méthodes disponibles : ${caps.methods.length}';
   static const notificationUnfollowed = 'Notification non suivie';
   static const notificationTargetMissing =

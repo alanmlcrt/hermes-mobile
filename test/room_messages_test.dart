@@ -31,6 +31,7 @@ void main() {
       r.h.transport.rpc = (m, p) {
         if (m != 'groups.send') return r.rpc(m, p);
         expect(p['profile'], 'default');
+        expect((p['payload'] as Map)['thread_id'], p['event_id']);
         final e = r.event(
           1,
           text: 'Bonjour @agent1',

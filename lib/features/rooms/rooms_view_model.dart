@@ -16,6 +16,13 @@ class RoomsViewModel extends ChangeNotifier {
   bool loading = false;
   String? error;
   RoomCapabilities? diagnostic;
+  String? get creationProblem => diagnostic?.creationUnavailableReason;
+  bool get canOfferCreate =>
+      !loading &&
+      !roomUnavailable(error) &&
+      diagnostic != null &&
+      creationProblem == null &&
+      diagnostic!.available.contains(RoomFeature.create);
   bool _disposed = false;
   int _request = 0;
   Timer? _timer;
@@ -45,7 +52,7 @@ class RoomsViewModel extends ChangeNotifier {
       final caps = await repository.capabilities(connection, profile);
       eligible = caps.driver ? caps.profiles : const {};
       createError =
-          caps.unavailableReason ??
+          caps.creationUnavailableReason ??
           (!caps.available.contains(RoomFeature.create)
               ? 'room.missing'
               : null);
