@@ -27,18 +27,31 @@ La modification des membres n'a pas de méthode documentée.
 
    ```yaml
    ui_meta:
-     hermes-bots: true
+     hermes-bots: {}
    ```
 
-4. Conserver la configuration `agent.bot_mode_protocol` existante. Le contrat
-   fourni ne documente ni sa valeur ni son éventuelle nécessité : si Hermes
-   refuse l'activation, relever le message et la version avant toute autre
-   modification ; ne pas inventer une valeur de protocole.
+4. Conserver les autres champs de `ui_meta` et de `hermes-bots` s'ils existent.
+   `hermes-bots` doit être un objet YAML : le booléen `true` indiqué dans la
+   première version de cette procédure était incorrect. La documentation
+   officielle confirme qu'un objet vide suffit comme marqueur Bot Mode.
+   `agent.bot_mode_protocol` se configure dans `config.yaml` et vaut `true`
+   par défaut ; ne pas modifier les autres réglages pour cet essai.
 5. Recharger/redémarrer l'add-on Hermes si nécessaire, puis ouvrir Salons dans
    l'app. Les deux profils doivent être proposés comme éligibles ; sinon relever
    le message. Cette procédure est documentaire, pas encore vérifiée sur l'add-on.
 6. Pour annuler : restaurer uniquement ces deux sauvegardes, puis recharger
    l'add-on. Garder les sauvegardes jusqu'à la fin des essais.
+
+Correction vérifiée sur les sources publiques le 2026-10-31, sans accès à
+l'installation ni modification de Hermes :
+[documentation Bot Mode](https://hermes-agent.nousresearch.com/docs/user-guide/bot-mode#what-actually-makes-a-chat-a-bot-chat),
+[`_bots_meta`, vérification du type objet](https://github.com/NousResearch/hermes-agent/blob/main/tools/bot_mode_probe.py).
+Le message actuel de l'app regroupe aussi un pilote `groups` indisponible et
+l'absence de profils éligibles ; il ne prouve donc pas à lui seul que le marqueur
+Bot Mode manque. Si le message persiste, relever les capacités côté app avant
+toute autre modification de profils. La création d'un « Bot Chat » est une
+condition distincte pour les messages directs `message_agent`, pas une preuve
+que le pilote des salons `groups.*` est disponible.
 
 ## Points encore non vérifiés
 
