@@ -6,17 +6,20 @@
 - ``on_session_end`` journalise le tour (métadonnées seulement) et lance l'envoi
   FCM dans un fil démon : le hook rend la main sans attendre le réseau.
 
-Le compte de service est lu dans ``HERMES_HOME/hermes-mobile/service-account.json``
-(hors dossier du plugin). Notification au titre et au corps fixes ; ``data`` ne
-porte que ``outcome`` et ``sessionId``. Le journal ``session-end.jsonl`` (dossier
-du plugin) et ``agent.log`` ne gardent du jeton que ses 8 derniers caractères.
-Aucune erreur ne remonte au tour.
+Le compte de service vient de la variable ``HERMES_MOBILE_SERVICE_ACCOUNT_JSON``
+(réglage « secret » du plugin, JSON brut ou base64) si elle est définie, sinon de
+``HERMES_HOME/hermes-mobile/service-account.json`` (hors dossier du plugin).
+Notification au titre et au corps fixes ; ``data`` ne porte que ``outcome`` et
+``sessionId``. Le journal ``session-end.jsonl`` (dossier du plugin) et ``agent.log``
+ne gardent du jeton que ses 8 derniers caractères. Aucune erreur ne remonte au tour.
 
 Erreurs FCM : un seul nouvel essai (après ``_RETRY_DELAY``) sur erreur de
 transport ou HTTP 5xx ; ``UNREGISTERED`` supprime ``fcm-token`` s'il porte
 encore ce jeton (l'app le renverra au prochain message). Pas de file durable.
 """
 
+import base64
+import hashlib
 import json
 import logging
 import os
@@ -32,6 +35,7 @@ _LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "session-en
 _STATE_DIR = "hermes-mobile"
 _TOKEN_FILE = "fcm-token"
 _KEY_FILE = "service-account.json"
+_KEY_ENV = "HERMES_MOBILE_SERVICE_ACCOUNT_JSON"
 _TIMEOUT = 8.0
 _RETRY_DELAY = 2.0  # secondes avant l'unique nouvel essai (patché par l'auto-vérification)
 _MAX_ATTEMPTS = 2
@@ -94,6 +98,36 @@ def _hermes_home():
 
 def _state_dir():
     return _hermes_home() / _STATE_DIR
+
+
+def _read_secret():
+    """Valeur du réglage secret, ou ``""``.
+
+    ``get_secret`` est résolu dans le fil du hook : un fil d'envoi neuf n'hérite
+    pas du contexte de secrets du tour. Si l'API existe mais refuse faute de
+    scope (multiplex), on ne lit jamais l'environnement global : le fichier du
+    profil reste la seule autre source. L'environnement n'est lu qu'avec un
+    Hermes qui ne fournit pas ``agent.secret_scope`` (tests, versions antérieures).
+    """
+    try:
+        from agent.secret_scope import get_secret
+    except Exception:
+        return (os.environ.get(_KEY_ENV) or "").strip()
+    try:
+        return (get_secret(_KEY_ENV) or "").strip()
+    except Exception:
+        return ""
+
+
+def _service_account(state):
+    """Source du compte de service : réglage secret, sinon fichier du profil."""
+    raw = _read_secret()
+    if raw:
+        return ("env", raw)
+    path = state / _KEY_FILE
+    if path.is_file():
+        return ("file", str(path))
+    return None
 
 
 def _tail(token):
@@ -194,7 +228,8 @@ def _on_session_end(**kwargs):
             return
         # Résolu ici : un fil neuf ne voit pas la surcharge de HERMES_HOME du tour.
         state = _state_dir()
-        _spawn(_deliver, (record, state, started))
+        key = _service_account(state)
+        _spawn(_deliver, (record, state, key, started))
     except Exception as exc:  # jamais fatal pour le tour
         try:
             logger.warning("hermes-mobile-notify: hook en échec: %s", type(exc).__name__)
@@ -202,10 +237,10 @@ def _on_session_end(**kwargs):
             pass
 
 
-def _deliver(record, state, started):
+def _deliver(record, state, key, started):
     try:
         try:
-            action, status, reason = _send(record, state)
+            action, status, reason = _send(record, state, key)
         except Exception as exc:
             action, status, reason = "failed", None, type(exc).__name__
         _finish(record, action, status, reason, started)
@@ -238,7 +273,7 @@ def _finish(record, action, status, reason, started):
         pass
 
 
-def _send(record, state):
+def _send(record, state, key):
     session_id = record.get("session_id")
     if not isinstance(session_id, str) or not session_id or len(session_id) > 256:
         return "skipped", None, "no_session_id"
@@ -249,11 +284,10 @@ def _send(record, state):
     if not token:
         return "skipped", None, "no_token"
     record["token_tail"] = _tail(token)
-    key = state / _KEY_FILE
-    if not key.is_file():
+    if key is None:
         return "skipped", None, "no_key"
     try:
-        credentials, project_id = _load_credentials(str(key))
+        credentials, project_id = _load_credentials(key)
     except Exception:
         return "failed", None, "key_invalid"
     body = _payload(token, session_id, record["outcome"])
@@ -317,24 +351,46 @@ def _payload(token, session_id, outcome):
 # --- transport FCM HTTP v1 (remplacé par l'auto-vérification) ---------------
 
 
-def _google_credentials(path):
-    mtime = os.stat(path).st_mtime
+def _service_account_info(source):
+    """JSON du compte de service, depuis le fichier ou la variable (brut/base64)."""
+    kind, value = source
+    if kind == "file":
+        with open(value, encoding="utf-8") as fh:
+            raw = json.load(fh)
+    else:
+        text = value.strip()
+        if not text.startswith("{"):
+            # Base64 collé depuis un outil qui coupe les lignes : ignorer les blancs.
+            text = base64.b64decode(re.sub(r"\s+", "", text), validate=True).decode("utf-8")
+        raw = json.loads(text)
+    if not isinstance(raw, dict):
+        raise ValueError("service_account")
+    return raw
+
+
+def _google_credentials(source):
+    kind, value = source
+    if kind == "file":
+        stamp = os.stat(value).st_mtime
+        cache_key = value
+    else:
+        stamp = None
+        cache_key = "env:" + hashlib.sha256(value.encode("utf-8")).hexdigest()
     with _credentials_lock:
-        cached = _credentials_cache.get(path)
-        if cached and cached[0] == mtime:
+        cached = _credentials_cache.get(cache_key)
+        if cached and cached[0] == stamp:
             return cached[1], cached[2]
         from google.oauth2 import service_account
 
-        with open(path, encoding="utf-8") as fh:
-            raw = json.load(fh)
-        # Refuser un endpoint OAuth arbitraire dans le fichier fourni.
+        raw = _service_account_info(source)
+        # Refuser un endpoint OAuth arbitraire dans la source fournie.
         if raw.get("token_uri") != _TOKEN_URI:
             raise ValueError("token_uri")
         credentials = service_account.Credentials.from_service_account_info(raw, scopes=[_SCOPE])
         project_id = credentials.project_id
         if not isinstance(project_id, str) or not re.fullmatch(r"[a-z][a-z0-9-]{4,61}[a-z0-9]", project_id):
             raise ValueError("project_id")
-        _credentials_cache[path] = (mtime, credentials, project_id)
+        _credentials_cache[cache_key] = (stamp, credentials, project_id)
         return credentials, project_id
 
 
@@ -382,8 +438,9 @@ _post = _http_post
 def _self_check():
     import tempfile
 
-    global _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY
-    saved = (_LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY)
+    global _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY, _read_secret
+    saved = (_LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY, _read_secret)
+    saved_key_env = os.environ.pop(_KEY_ENV, None)
     token = "synthetic-fcm-token-0123456789-ABCDEFGH"
     hooks, commands, sent, threads, records, spawned = {}, {}, [], [], [], []
 
@@ -429,6 +486,8 @@ def _self_check():
             _hermes_home = lambda: home
             _spawn = spawn
             _RETRY_DELAY = 0.05
+            # Le test ne dépend pas d'un Hermes installé (agent.secret_scope).
+            _read_secret = lambda: (os.environ.get(_KEY_ENV) or "").strip()
 
             def post(url, body, credentials):
                 sent.append((url, body))
@@ -454,8 +513,21 @@ def _self_check():
             assert line["token_tail"] == token[-8:]
             assert not sent
 
+            # Réglage secret : JSON brut ou base64, prioritaire sur le fichier.
+            info = {"type": "service_account", "project_id": "hermes-mobile-test", "token_uri": _TOKEN_URI}
+            raw_info = json.dumps(info, separators=(",", ":"))
+            assert _service_account_info(("env", raw_info)) == info
+            encoded = base64.b64encode(raw_info.encode("utf-8")).decode("ascii")
+            folded = f"  {encoded[:16]}\n{encoded[16:]}  \n"
+            assert _service_account_info(("env", folded)) == info
+            os.environ[_KEY_ENV] = raw_info
+            assert _service_account(state) == ("env", raw_info)
+            del os.environ[_KEY_ENV]
+            assert _service_account(state) is None
+
             # Jeton + clé : envoi, sans attendre le réseau.
             (state / _KEY_FILE).write_text("{}", encoding="utf-8")
+            assert _service_account(state) == ("file", str(state / _KEY_FILE))
 
             def slow_post(url, body, credentials):
                 time.sleep(0.5)
@@ -614,7 +686,10 @@ def _self_check():
             _Resp.json = lambda self: {"error": {"status": "free text"}}
             assert _fcm_error(_Resp()) is None
         finally:
-            _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY = saved
+            _LOG_PATH, _hermes_home, _load_credentials, _post, _spawn, _RETRY_DELAY, _read_secret = saved
+            os.environ.pop(_KEY_ENV, None)
+            if saved_key_env is not None:
+                os.environ[_KEY_ENV] = saved_key_env
             logger.removeHandler(capture)
     print("hermes-mobile-notify: auto-vérification réussie")
 

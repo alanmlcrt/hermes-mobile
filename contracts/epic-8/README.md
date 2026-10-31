@@ -18,29 +18,37 @@ La modification des membres n'a pas de méthode documentée.
 
 ## Activer Bot Mode sur deux profils (Alan uniquement)
 
-1. Ouvrir `\\homeassistant.local\addon_configs\0a6523c6_hermes_agent\.hermes\`.
-   Repérer les `profile.yaml` de **deux profils de test existants** en vérifiant
-   leur nom ; ne pas modifier les autres profils ni le profil global par défaut.
-2. Copier chacun de ces deux fichiers en `profile.yaml.before-epic-8`.
-3. Dans chacun, fusionner la clé ci-dessous avec le bloc `ui_meta` existant
-   (ne pas créer deux blocs YAML du même nom) :
+Avec Hermes Desktop, aucune sauvegarde ni édition de fichier n'est nécessaire :
 
-   ```yaml
-   ui_meta:
-     hermes-bots: {}
-   ```
+1. Se connecter au backend de l'add-on dans Desktop.
+2. Onglet **Bots** → **+** → **New Agent** pour les deux profils de test. Pour
+   deux profils existants, les sélectionner dans **Bots** → **Edit Profile**.
+   Hermes écrit alors le marqueur Bot Mode du profil.
+3. Onglet **Bots** → **+** → **New Group Chat**, nommer le salon, cocher les
+   deux profils de test, puis **Create**. Le salon s'ouvre.
+4. Ouvrir Salons dans l'app. Les deux profils doivent être proposés comme
+   éligibles ; sinon relever le message et le bloc de capacités affiché.
+5. Pour annuler : supprimer le salon et, si les deux profils ont été créés pour
+   l'essai, les supprimer via **Bots** → clic droit → **Delete Profile**. Ne pas
+   toucher aux autres profils.
 
-4. Conserver les autres champs de `ui_meta` et de `hermes-bots` s'ils existent.
-   `hermes-bots` doit être un objet YAML : le booléen `true` indiqué dans la
-   première version de cette procédure était incorrect. La documentation
-   officielle confirme qu'un objet vide suffit comme marqueur Bot Mode.
-   `agent.bot_mode_protocol` se configure dans `config.yaml` et vaut `true`
-   par défaut ; ne pas modifier les autres réglages pour cet essai.
-5. Recharger/redémarrer l'add-on Hermes si nécessaire, puis ouvrir Salons dans
-   l'app. Les deux profils doivent être proposés comme éligibles ; sinon relever
-   le message. Cette procédure est documentaire, pas encore vérifiée sur l'add-on.
-6. Pour annuler : restaurer uniquement ces deux sauvegardes, puis recharger
-   l'add-on. Garder les sauvegardes jusqu'à la fin des essais.
+Desktop écrit `ui_meta: {hermes-bots: {}}` dans le `profile.yaml` du bot ; c'est
+ce marqueur que `profiles.list` expose et que l'app lit. `agent.bot_mode_protocol`
+se configure dans `config.yaml`, vaut `true` par défaut et n'a pas à être modifié
+pour cet essai.
+
+**Sans Desktop (headless)** : l'interface Hermes n'a pas d'éditeur YAML de
+`profile.yaml`. Sauvegarder le fichier du profil, fusionner le bloc ci-dessous
+avec le `ui_meta` existant (un seul bloc, ne pas écraser les autres champs),
+puis redémarrer l'add-on :
+
+```yaml
+ui_meta:
+  hermes-bots: {}
+```
+
+`hermes-bots` doit être un objet YAML vide, pas le booléen `true`. Cette variante
+reste documentaire et n'a pas encore été vérifiée sur l'add-on.
 
 Correction vérifiée sur les sources publiques le 2026-10-31, sans accès à
 l'installation ni modification de Hermes :

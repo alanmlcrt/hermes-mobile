@@ -125,7 +125,7 @@
 
 - source_spec: `_bmad-output/specs/epic-8-index.md`
   summary: Qualifier Bot Mode et G5 sur les deux profils de test, sans sonde authentifiée dans cette livraison.
-  evidence: Contrat OpenRPC extrait dans contracts/epic-8/methods.json (documentary). Procédure Samba réversible fournie ; valeur agent.bot_mode_protocol et activation réelle à confirmer par Alan. Aucun fichier Hermes ni profil n'a été modifié.
+  evidence: Contrat OpenRPC extrait dans contracts/epic-8/methods.json (documentary). Procédure Desktop Bots fournie (YAML réservé aux installations headless) ; valeur agent.bot_mode_protocol et activation réelle à confirmer par Alan. Aucun fichier Hermes ni profil n'a été modifié.
 
 - source_spec: `_bmad-output/specs/epic-8-index.md`
   summary: Identifier le blocage réel des salons après activation manuelle du marqueur Bot Mode.
