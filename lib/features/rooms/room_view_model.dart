@@ -16,6 +16,7 @@ class RoomViewModel extends ChangeNotifier {
   String text = '';
   String? error;
   bool busy = false;
+  String? stopState;
   bool loading = false;
   bool _disposed = false;
   bool _foreground = true;
@@ -63,9 +64,17 @@ class RoomViewModel extends ChangeNotifier {
           if (e.fromUser) e.id,
       });
       final operations = await outbox.roomSends(key);
+      final stopped = await rooms.commandState(key, 'stop');
       if (_disposed) return;
       available = caps.available;
       snapshot = result;
+      stopState = stopped == 'unknown'
+          ? 'unknown'
+          : stopped == 'confirmed'
+          ? 'requested'
+          : stopped == 'settled' && !result.working
+          ? 'confirmed'
+          : null;
       sends = operations;
       error = null;
     } catch (e) {
@@ -91,6 +100,41 @@ class RoomViewModel extends ChangeNotifier {
       _notify();
     });
     _notify();
+  }
+
+  Future<void> stop() async {
+    if (busy || !available.contains(RoomFeature.stop)) return;
+    busy = true;
+    stopState = 'requested';
+    _notify();
+    try {
+      await rooms.stop(key);
+      await refresh();
+    } catch (e) {
+      error = e is AppError ? e.code : 'room.failed';
+      stopState = error == 'rpc.uncertain' ? 'unknown' : null;
+      if (error == 'room.missing') {
+        available = {...available}..remove(RoomFeature.stop);
+      }
+    } finally {
+      busy = false;
+      _notify();
+    }
+  }
+
+  Future<void> taskAction(RoomTask task, {required bool discard}) async {
+    if (busy) return;
+    busy = true;
+    _notify();
+    try {
+      discard ? await rooms.discard(key, task) : await rooms.retry(key, task);
+      await refresh();
+    } catch (e) {
+      error = e is AppError ? e.code : 'room.failed';
+    } finally {
+      busy = false;
+      _notify();
+    }
   }
 
   Future<void> send() async {

@@ -310,4 +310,13 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'PRIMARY KEY(connection_key, profile_key, room_id, event_id))',
     );
   },
+  (db) async {
+    // 8.5 : registre des commandes, partagé avec les autorisations de salon.
+    await db.execute(
+      'CREATE TABLE room_commands ('
+      'connection_key TEXT NOT NULL COLLATE BINARY, profile_key TEXT NOT NULL COLLATE BINARY, '
+      'room_id TEXT NOT NULL COLLATE BINARY, command_key TEXT NOT NULL COLLATE BINARY, '
+      'state TEXT NOT NULL, PRIMARY KEY(connection_key, profile_key, room_id, command_key))',
+    );
+  },
 ];

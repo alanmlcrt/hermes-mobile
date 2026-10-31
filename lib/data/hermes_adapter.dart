@@ -549,7 +549,45 @@ abstract final class HermesRpc {
       entries,
       working: status.working,
       waiting: status.blocked,
+      tasks: roomTasks(state),
     );
+  }
+
+  static List<RoomTask> roomTasks(Map state) {
+    final status = state['driver_status'];
+    final actions = status is Map ? status['pending_actions'] : null;
+    return [
+      for (final a in actions is List ? actions : const [])
+        if (a is Map && a['kind'] == 'retry' && a['task_id'] is String)
+          RoomTask(
+            id: a['task_id'] as String,
+            member: a['member_id'] as String? ?? '',
+            generation: a['execution_generation'] as int?,
+            reason: a['reason'] as String? ?? '',
+            failed: a['status'] == 'failed',
+            retryable: a['status'] == 'failed',
+          ),
+    ];
+  }
+
+  static Map<String, dynamic> roomAttempt(
+    RoomTask task, {
+    required bool discard,
+  }) => {
+    'task_id': task.id,
+    if (discard) 'member_id': task.member,
+    if (discard) 'execution_generation': task.generation,
+  };
+  static bool roomStopReceipt(Map result) => result['cancelled'] is int;
+  static bool roomTaskReceipt(
+    Map result,
+    RoomTask task, {
+    required bool discard,
+  }) {
+    final r = result['task'];
+    return r is Map &&
+        r['task_id'] == task.id &&
+        result[discard ? 'discarded' : 'retried'] != false;
   }
 
   static Map<String, dynamic> roomCreate(

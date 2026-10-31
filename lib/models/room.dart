@@ -5,6 +5,10 @@ import 'timeline.dart';
 const roomPollInterval = Duration(seconds: 3);
 
 abstract interface class RoomGateway {
+  Future<void> stop(RoomKey key);
+  Future<void> retry(RoomKey key, RoomTask task);
+  Future<void> discard(RoomKey key, RoomTask task);
+  Future<String?> commandState(RoomKey key, String command);
   String newId();
   Future<RoomSummary> create(RoomKey key, String name, Set<ProfileKey> members);
   Future<RoomSummary> find(RoomKey key);
@@ -103,11 +107,35 @@ class RoomSnapshot {
     this.entries, {
     this.working = false,
     this.waiting = false,
+    this.tasks = const [],
   });
   final RoomSummary room;
   final List<RoomEntry> entries;
   final bool working;
   final bool waiting;
+  final List<RoomTask> tasks;
+}
+
+class RoomTask {
+  const RoomTask({
+    required this.id,
+    required this.member,
+    required this.generation,
+    required this.reason,
+    required this.failed,
+    required this.retryable,
+  });
+  final String id;
+  final String member;
+  final int? generation;
+  final String reason;
+  final bool failed;
+  final bool retryable;
+  bool get canDiscard => !failed && member.isNotEmpty && generation != null;
+  bool sameAttempt(RoomTask other) =>
+      id == other.id &&
+      member == other.member &&
+      generation == other.generation;
 }
 
 class RoomSend {

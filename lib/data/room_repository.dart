@@ -21,6 +21,110 @@ class RoomRepository implements RoomGateway {
   final Duration timeout;
   final _busy = <RoomKey>{};
   final _missing = <(ConnectionKey, ProfileKey, int, String)>{};
+  Future<void>? _commandsRecovered;
+  Future<void> recoverCommands() => _commandsRecovered ??= (database == null
+      ? Future.value()
+      : database!
+            .update(
+              'room_commands',
+              {'state': 'unknown'},
+              where: 'state = ?',
+              whereArgs: ['sending'],
+            )
+            .then((_) {}));
+
+  @override
+  Future<String?> commandState(RoomKey key, String command) async {
+    await recoverCommands();
+    final rows = await database?.query(
+      'room_commands',
+      columns: ['state'],
+      where: '$whereRoom AND command_key = ?',
+      whereArgs: [...key.args, command],
+    );
+    return rows == null || rows.isEmpty ? null : rows.single['state'] as String;
+  }
+
+  Future<void> recordCommand(RoomKey key, String command, String state) async {
+    await database?.insert('room_commands', {
+      'connection_key': key.connection.value,
+      'profile_key': key.profile.value,
+      'room_id': key.room,
+      'command_key': command,
+      'state': state,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Appelé sous la garde commune du salon, après vérification du contexte.
+  Future<void> command(
+    RoomKey key,
+    String id,
+    Future<bool> Function() send,
+  ) async {
+    final previous = await commandState(key, id);
+    if (previous == 'unknown' || previous == 'sending') {
+      throw const AppError('rpc.uncertain');
+    }
+    await recordCommand(key, id, 'sending');
+    try {
+      if (!await send()) throw const AppError('rpc.uncertain');
+      await recordCommand(key, id, 'confirmed');
+    } on AppError catch (e) {
+      await recordCommand(
+        key,
+        id,
+        {'room.refused', 'room.missing', 'transport.offline'}.contains(e.code)
+            ? 'refused'
+            : 'unknown',
+      );
+      rethrow;
+    } catch (_) {
+      await recordCommand(key, id, 'unknown');
+      throw const AppError('rpc.uncertain');
+    }
+  }
+
+  @override
+  Future<void> stop(RoomKey key) => mutate(
+    key,
+    () => command(
+      key,
+      'stop',
+      () async =>
+          HermesRpc.roomStopReceipt(await call(key, HermesRpc.groupsStop)),
+    ),
+  );
+
+  Future<void> _attempt(
+    RoomKey key,
+    RoomTask task, {
+    required bool discard,
+  }) => mutate(key, () async {
+    final snapshot = await load(key);
+    final fresh = snapshot.tasks.where(task.sameAttempt).firstOrNull;
+    if (fresh == null ||
+        (discard ? !fresh.canDiscard : !fresh.retryable || !fresh.failed)) {
+      throw const AppError('room.stale');
+    }
+    final caps = await capabilities(key.connection, key.profile);
+    final method = discard ? HermesRpc.groupsDiscard : HermesRpc.groupsRetry;
+    if (!caps.methods.contains(method)) throw const AppError('room.missing');
+    await command(
+      key,
+      jsonEncode([method, task.id, task.member, task.generation]),
+      () async => HermesRpc.roomTaskReceipt(
+        await call(key, method, HermesRpc.roomAttempt(task, discard: discard)),
+        task,
+        discard: discard,
+      ),
+    );
+  });
+  @override
+  Future<void> retry(RoomKey key, RoomTask task) =>
+      _attempt(key, task, discard: false);
+  @override
+  Future<void> discard(RoomKey key, RoomTask task) =>
+      _attempt(key, task, discard: true);
   static const whereRoom =
       'connection_key = ? AND profile_key = ? AND room_id = ?';
 
@@ -42,6 +146,12 @@ class RoomRepository implements RoomGateway {
     }
     final snapshot = HermesRpc.roomSnapshot(state, events);
     check(key);
+    if (!snapshot.working) {
+      final pending = await commandState(key, 'stop');
+      if (pending == 'confirmed' || pending == 'unknown') {
+        await recordCommand(key, 'stop', 'settled');
+      }
+    }
     final db = database;
     if (db != null) {
       await db.transaction((tx) async {

@@ -89,6 +89,72 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _discard(RoomTask task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(Content.roomDiscard),
+        content: const Text(Content.roomDiscardConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(Content.roomCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(Content.roomDiscard),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) await vm.taskAction(task, discard: true);
+  }
+
+  Widget _task(RoomTask task) {
+    final member = vm.snapshot?.room.members
+        .where((m) => m.id == task.member)
+        .firstOrNull;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              Content.roomTaskStatus(
+                member?.name ?? task.member,
+                task.failed,
+                task.reason,
+              ),
+            ),
+            Wrap(
+              spacing: Spacing.sm,
+              children: [
+                if (task.failed &&
+                    task.retryable &&
+                    vm.available.contains(RoomFeature.retry))
+                  TextButton(
+                    onPressed: vm.busy
+                        ? null
+                        : () => vm.taskAction(task, discard: false),
+                    child: const Text(Content.retryList),
+                  ),
+                if (task.canDiscard &&
+                    vm.available.contains(RoomFeature.discard))
+                  TextButton(
+                    onPressed: vm.busy ? null : () => _discard(task),
+                    child: const Text(Content.roomDiscard),
+                  ),
+              ],
+            ),
+            if (!task.failed && !task.canDiscard)
+              const Text(Content.roomTaskContextMissing),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: vm,
@@ -119,6 +185,20 @@ class _RoomViewState extends State<RoomView> with WidgetsBindingObserver {
                     ),
                   if (vm.snapshot?.working == true)
                     const Text(Content.roomWorking),
+                  if (vm.stopState != null)
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(Content.roomStopStatus(vm.stopState!)),
+                    ),
+                  if (vm.snapshot?.working == true &&
+                      vm.available.contains(RoomFeature.stop))
+                    TextButton.icon(
+                      onPressed: vm.busy ? null : vm.stop,
+                      icon: const Icon(Icons.stop_circle_outlined),
+                      label: const Text(Content.roomStop),
+                    ),
+                  for (final task in vm.snapshot?.tasks ?? <RoomTask>[])
+                    _task(task),
                   if (vm.snapshot?.waiting == true)
                     const Text(Content.roomWaiting),
                   for (final entry in vm.snapshot?.entries ?? <RoomEntry>[])

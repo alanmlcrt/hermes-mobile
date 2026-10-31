@@ -7,6 +7,20 @@ import '../models/attachment.dart';
 abstract final class Content {
   static const rooms = 'Salons';
   static const roomRefresh = 'Actualiser le salon';
+  static const roomStop = 'Arrêter le salon';
+  static const roomDiscard = 'Abandonner';
+  static const roomDiscardConfirm =
+      'Abandonner cette tentative au résultat inconnu ? Cela ne peut pas annuler les effets déjà produits.';
+  static const roomTaskContextMissing =
+      'Résultat inconnu. Hermes ne fournit pas le contexte nécessaire pour abandonner cette tentative.';
+  static String roomStopStatus(String state) => switch (state) {
+    'confirmed' => 'Arrêt confirmé par Hermes',
+    'unknown' =>
+      'Arrêt à vérifier : la coupure réseau ne confirme pas l’arrêt.',
+    _ => 'Arrêt demandé — en attente de confirmation de Hermes',
+  };
+  static String roomTaskStatus(String member, bool failed, String reason) =>
+      '$member — ${failed ? 'Échec' : 'Résultat inconnu'}${reason.isEmpty ? '' : ' : $reason'}';
   static const roomNeedsUser = 'A besoin de toi';
   static const roomWaiting = 'Le salon attend votre réponse.';
   static const roomMentionHelp =
@@ -32,6 +46,7 @@ abstract final class Content {
   static const roomPreparation =
       'Le salon est prêt. Le fil arrive dans la prochaine étape.';
   static String roomError(String code) => switch (code) {
+    'room.stale' => 'Cette demande est devenue obsolète. Actualisez le salon avant de continuer.',
     'room.history' => 'Historique incomplet : actualisez le salon. Le fil précédent est conservé.',
     'storage.unavailable' =>
       'Enregistrement local impossible. Votre saisie reste affichée.',
