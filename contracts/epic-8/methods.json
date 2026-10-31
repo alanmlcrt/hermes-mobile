@@ -1,0 +1,2992 @@
+{
+  "status": "documentary",
+  "source": "_bmad-output/planning-artifacts/architecture/architecture-Hermes Mobile-2026-10-20/.working/gateway-contract.openrpc.json",
+  "methods": [
+    {
+      "name": "groups.approve",
+      "summary": "Resolve one exact pending approval raised by a local or peer room member.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsApproveParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsApproveResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.capabilities",
+      "summary": "Describe the hosted-room protocol implemented by this gateway.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsCapabilitiesParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsCapabilitiesResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.create",
+      "summary": "Create a hosted room idempotently; authority is this gateway's stable install identity.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsCreateParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsCreateResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.demote",
+      "summary": "Fence this gateway's stale room authority against a proven newer epoch.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsDemoteParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsDemoteResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.disband",
+      "summary": "Permanently tombstone a hosted room id after stopping its work and revoking peer routes.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsDisbandParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsDisbandResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.list",
+      "summary": "List rooms hosted by this gateway, most recently changed first.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsListParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsListResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.log",
+      "summary": "A monotonic room-log delta after since_seq, bounded by count and page bytes.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsLogParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsLogResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.peer.invite",
+      "summary": "Mint one target-issued room/profile grant for a prospective room home.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsPeerInviteParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsPeerInviteResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.peer.register",
+      "summary": "Register and probe one scoped peer route on the room home.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsPeerRegisterParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsPeerRegisterResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.peer.revoke",
+      "summary": "Revoke one target-issued grant using its exact profile scope.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsPeerRevokeParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsPeerRevokeResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.promote",
+      "summary": "Continue a replicated room on this gateway at epoch + 1; requires confirm=true.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsPromoteParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsPromoteResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.rename",
+      "summary": "Rename one hosted room atomically with its replay event.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsRenameParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsRenameResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.replica_state",
+      "summary": "The local replica's coverage and authority lineage for one room.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsReplicaStateParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsReplicaStateResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.replicate",
+      "summary": "Persist one authority-stamped replay page into the local replica store; idempotent.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsReplicateParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsReplicateResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.retry",
+      "summary": "Retry one indeterminate room task after explicit user confirmation.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsRetryParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsRetryResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.send",
+      "summary": "Append one inert message.user event idempotently; the actor is server-owned.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsSendParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsSendResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.state",
+      "summary": "One hosted room's replay cursor and fenced authority state, plus live driver status.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsStateParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsStateResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.stop",
+      "summary": "Durably cancel queued or running work for one hosted room.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsStopParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsStopResult"
+        }
+      },
+      "dialect": "legacy"
+    },
+    {
+      "name": "groups.approve",
+      "summary": "",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/CanonicalRoomApproveParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsApproveResult"
+        }
+      },
+      "dialect": "canonical"
+    },
+    {
+      "name": "groups.attachment.download",
+      "summary": "Read one committed attachment for a live room viewer.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsAttachmentDownloadParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/RoomAttachmentBytes"
+        }
+      },
+      "dialect": "canonical"
+    },
+    {
+      "name": "groups.attachment.upload",
+      "summary": "Store one attachment for a later groups.send manifest (idempotent per upload_id).",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsAttachmentUploadParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/RoomAttachment"
+        }
+      },
+      "dialect": "canonical"
+    },
+    {
+      "name": "groups.create",
+      "summary": "",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/CanonicalRoomCreateParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsCreateResult"
+        }
+      },
+      "dialect": "canonical"
+    },
+    {
+      "name": "groups.discard",
+      "summary": "Discard one indeterminate room task after explicit user confirmation.",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/GroupsDiscardParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsDiscardResult"
+        }
+      },
+      "dialect": "canonical"
+    },
+    {
+      "name": "groups.retry",
+      "summary": "",
+      "params": [
+        {
+          "name": "params",
+          "schema": {
+            "$ref": "#/components/schemas/CanonicalRoomAttemptParams"
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/GroupsRetryResult"
+        }
+      },
+      "dialect": "canonical"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "GroupsRetryResult": {
+        "additionalProperties": false,
+        "properties": {
+          "retried": {
+            "default": true,
+            "title": "Retried",
+            "type": "boolean"
+          },
+          "task": {
+            "$ref": "#/components/schemas/RoomTaskReceipt"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "title": "GroupsRetryResult",
+        "type": "object"
+      },
+      "RoomTaskReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "thread_id": {
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "turn_id": {
+            "title": "Turn Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "execution_generation": {
+            "title": "Execution Generation",
+            "type": "integer"
+          },
+          "cancel_generation": {
+            "title": "Cancel Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "room_id",
+          "task_id",
+          "thread_id",
+          "turn_id",
+          "status",
+          "execution_generation",
+          "cancel_generation"
+        ],
+        "title": "RoomTaskReceipt",
+        "type": "object"
+      },
+      "CanonicalRoomAttemptParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "member_id": {
+            "title": "Member Id",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "execution_generation": {
+            "title": "Execution Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "room_id",
+          "member_id",
+          "task_id",
+          "execution_generation"
+        ],
+        "title": "CanonicalRoomAttemptParams",
+        "type": "object"
+      },
+      "GroupsDiscardResult": {
+        "additionalProperties": false,
+        "properties": {
+          "discarded": {
+            "default": true,
+            "title": "Discarded",
+            "type": "boolean"
+          },
+          "task": {
+            "$ref": "#/components/schemas/RoomTaskReceipt"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "title": "GroupsDiscardResult",
+        "type": "object"
+      },
+      "GroupsDiscardParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "member_id": {
+            "title": "Member Id",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "execution_generation": {
+            "title": "Execution Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "room_id",
+          "member_id",
+          "task_id",
+          "execution_generation"
+        ],
+        "title": "GroupsDiscardParams",
+        "type": "object"
+      },
+      "GroupsCreateResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room": {
+            "$ref": "#/components/schemas/Room"
+          }
+        },
+        "required": [
+          "room"
+        ],
+        "title": "GroupsCreateResult",
+        "type": "object"
+      },
+      "Room": {
+        "additionalProperties": false,
+        "description": "``gateway/hosted_rooms.py::_room_from_row`` plus the branch-only keys ``create`` (legacy\nadoption), ``state`` (``authority_claim``) and ``rename`` (``event``) add.",
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/RoomMember"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "authority_gateway_id": {
+            "title": "Authority Gateway Id",
+            "type": "string"
+          },
+          "authority_epoch": {
+            "title": "Authority Epoch",
+            "type": "integer"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          },
+          "idempotent": {
+            "default": false,
+            "title": "Idempotent",
+            "type": "boolean"
+          },
+          "disbanded_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Disbanded At"
+          },
+          "latest_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Latest Seq"
+          },
+          "adopted": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Adopted"
+          },
+          "claim_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomEvent"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "authority_claim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomEvent"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomEvent"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "room_id",
+          "name",
+          "members",
+          "authority_gateway_id",
+          "authority_epoch",
+          "revision",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Room",
+        "type": "object"
+      },
+      "RoomEvent": {
+        "additionalProperties": false,
+        "description": "``gateway/hosted_rooms.py::_event_from_row``.",
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/RoomActor"
+          },
+          "authority_epoch": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authority Epoch"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "idempotent": {
+            "default": false,
+            "title": "Idempotent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "seq",
+          "event_id",
+          "kind",
+          "actor",
+          "payload",
+          "created_at"
+        ],
+        "title": "RoomEvent",
+        "type": "object"
+      },
+      "RoomActor": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ],
+        "title": "RoomActor",
+        "type": "object"
+      },
+      "RoomMember": {
+        "additionalProperties": true,
+        "description": "One roster row (``hosted_room_discussion.validate_roster``); legacy rooms may carry\npre-normalisation rows, so the set stays open.",
+        "properties": {
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Member Id"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Handle"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Name"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Target"
+          }
+        },
+        "title": "RoomMember",
+        "type": "object"
+      },
+      "CanonicalRoomCreateParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/RoomMemberInput"
+            },
+            "title": "Members",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "name",
+          "members"
+        ],
+        "title": "CanonicalRoomCreateParams",
+        "type": "object"
+      },
+      "RoomMemberInput": {
+        "additionalProperties": true,
+        "description": "A roster row as the client proposes it; ``validate_roster`` owns the exact rules.",
+        "properties": {
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Member Id"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Handle"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Name"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Target"
+          }
+        },
+        "title": "RoomMemberInput",
+        "type": "object"
+      },
+      "RoomAttachment": {
+        "additionalProperties": true,
+        "properties": {
+          "attachment_id": {
+            "title": "Attachment Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "mime": {
+            "title": "Mime",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "idempotent": {
+            "title": "Idempotent",
+            "type": "boolean"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Event Id"
+          }
+        },
+        "required": [
+          "attachment_id",
+          "kind",
+          "name",
+          "size",
+          "mime",
+          "sha256",
+          "state",
+          "created_at",
+          "idempotent"
+        ],
+        "title": "RoomAttachment",
+        "type": "object"
+      },
+      "GroupsAttachmentUploadParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "upload_id": {
+            "title": "Upload Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "mime": {
+            "title": "Mime",
+            "type": "string"
+          },
+          "data_base64": {
+            "title": "Data Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "upload_id",
+          "kind",
+          "name",
+          "mime",
+          "data_base64"
+        ],
+        "title": "GroupsAttachmentUploadParams",
+        "type": "object"
+      },
+      "RoomAttachmentBytes": {
+        "additionalProperties": true,
+        "properties": {
+          "attachment_id": {
+            "title": "Attachment Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "mime": {
+            "title": "Mime",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "idempotent": {
+            "title": "Idempotent",
+            "type": "boolean"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Event Id"
+          },
+          "data_base64": {
+            "title": "Data Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attachment_id",
+          "kind",
+          "name",
+          "size",
+          "mime",
+          "sha256",
+          "state",
+          "created_at",
+          "idempotent",
+          "data_base64"
+        ],
+        "title": "RoomAttachmentBytes",
+        "type": "object"
+      },
+      "GroupsAttachmentDownloadParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "attachment_id": {
+            "title": "Attachment Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "event_id",
+          "attachment_id"
+        ],
+        "title": "GroupsAttachmentDownloadParams",
+        "type": "object"
+      },
+      "GroupsApproveResult": {
+        "additionalProperties": false,
+        "description": "``result`` is the local ``approval.respond`` answer or the peer's run-action receipt.",
+        "properties": {
+          "approved": {
+            "default": true,
+            "title": "Approved",
+            "type": "boolean"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "GroupsApproveResult",
+        "type": "object"
+      },
+      "CanonicalRoomApproveParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "member_id": {
+            "title": "Member Id",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "execution_generation": {
+            "title": "Execution Generation",
+            "type": "integer"
+          },
+          "choice": {
+            "enum": [
+              "once",
+              "deny"
+            ],
+            "title": "Choice",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "member_id",
+          "task_id",
+          "execution_generation",
+          "choice",
+          "request_id"
+        ],
+        "title": "CanonicalRoomApproveParams",
+        "type": "object"
+      },
+      "GroupsStopResult": {
+        "additionalProperties": false,
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cancelled"
+        ],
+        "title": "GroupsStopResult",
+        "type": "object"
+      },
+      "GroupsStopParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "cancel_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cancel Id"
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "title": "GroupsStopParams",
+        "type": "object"
+      },
+      "GroupsStateResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room": {
+            "$ref": "#/components/schemas/Room"
+          },
+          "driver_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomDriverStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "room"
+        ],
+        "title": "GroupsStateResult",
+        "type": "object"
+      },
+      "RoomDriverStatus": {
+        "additionalProperties": false,
+        "description": "``HostedRoomService.status(room_id)``; ``pending_actions`` rows are ``{kind: retry, task_id}``\nor the driver's approval action (``kind: approval`` + run/session/approval context).",
+        "properties": {
+          "running": {
+            "title": "Running",
+            "type": "boolean"
+          },
+          "working": {
+            "title": "Working",
+            "type": "boolean"
+          },
+          "blocked": {
+            "title": "Blocked",
+            "type": "boolean"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "pending_actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Pending Actions",
+            "type": "array"
+          },
+          "peer_routes": {
+            "items": {
+              "$ref": "#/components/schemas/PeerRouteStatus"
+            },
+            "title": "Peer Routes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "running",
+          "working",
+          "blocked",
+          "counts",
+          "pending_actions",
+          "peer_routes"
+        ],
+        "title": "RoomDriverStatus",
+        "type": "object"
+      },
+      "PeerRouteStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "member_id": {
+            "title": "Member Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "member_id",
+          "status"
+        ],
+        "title": "PeerRouteStatus",
+        "type": "object"
+      },
+      "GroupsStateParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "include_disbanded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Include Disbanded"
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "title": "GroupsStateParams",
+        "type": "object"
+      },
+      "GroupsSendResult": {
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/RoomEvent"
+          },
+          "client_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Client Event Id"
+          },
+          "accepted": {
+            "default": true,
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "driver_started": {
+            "default": true,
+            "title": "Driver Started",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "title": "GroupsSendResult",
+        "type": "object"
+      },
+      "GroupsSendParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Event Id"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "room_id",
+          "payload"
+        ],
+        "title": "GroupsSendParams",
+        "type": "object"
+      },
+      "GroupsRetryParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "task_id"
+        ],
+        "title": "GroupsRetryParams",
+        "type": "object"
+      },
+      "GroupsReplicateResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "stored_seq": {
+            "title": "Stored Seq",
+            "type": "integer"
+          },
+          "ingested": {
+            "title": "Ingested",
+            "type": "integer"
+          },
+          "authority": {
+            "$ref": "#/components/schemas/RoomAuthority"
+          },
+          "caught_up": {
+            "title": "Caught Up",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "stored_seq",
+          "ingested",
+          "authority",
+          "caught_up"
+        ],
+        "title": "GroupsReplicateResult",
+        "type": "object"
+      },
+      "RoomAuthority": {
+        "additionalProperties": false,
+        "properties": {
+          "gateway_id": {
+            "title": "Gateway Id",
+            "type": "string"
+          },
+          "epoch": {
+            "title": "Epoch",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gateway_id",
+          "epoch"
+        ],
+        "title": "RoomAuthority",
+        "type": "object"
+      },
+      "GroupsReplicateParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "room_name": {
+            "title": "Room Name",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/RoomMemberInput"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "page": {
+            "additionalProperties": true,
+            "title": "Page",
+            "type": "object"
+          }
+        },
+        "required": [
+          "room_id",
+          "room_name",
+          "members",
+          "page"
+        ],
+        "title": "GroupsReplicateParams",
+        "type": "object"
+      },
+      "GroupsReplicaStateResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/RoomMember"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "authority": {
+            "$ref": "#/components/schemas/RoomAuthority"
+          },
+          "last_seq": {
+            "title": "Last Seq",
+            "type": "integer"
+          },
+          "latest_seq": {
+            "title": "Latest Seq",
+            "type": "integer"
+          },
+          "event_bytes": {
+            "title": "Event Bytes",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          }
+        },
+        "required": [
+          "room_id",
+          "name",
+          "members",
+          "authority",
+          "last_seq",
+          "latest_seq",
+          "event_bytes",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "GroupsReplicaStateResult",
+        "type": "object"
+      },
+      "GroupsReplicaStateParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "title": "GroupsReplicaStateParams",
+        "type": "object"
+      },
+      "GroupsRenameResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room": {
+            "$ref": "#/components/schemas/Room"
+          }
+        },
+        "required": [
+          "room"
+        ],
+        "title": "GroupsRenameResult",
+        "type": "object"
+      },
+      "GroupsRenameParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "event_id",
+          "name"
+        ],
+        "title": "GroupsRenameParams",
+        "type": "object"
+      },
+      "GroupsPromoteResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "authority_gateway_id": {
+            "title": "Authority Gateway Id",
+            "type": "string"
+          },
+          "authority_epoch": {
+            "title": "Authority Epoch",
+            "type": "integer"
+          },
+          "previous_gateway_id": {
+            "title": "Previous Gateway Id",
+            "type": "string"
+          },
+          "previous_epoch": {
+            "title": "Previous Epoch",
+            "type": "integer"
+          },
+          "claim_seq": {
+            "title": "Claim Seq",
+            "type": "integer"
+          },
+          "latest_seq": {
+            "title": "Latest Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "room_id",
+          "authority_gateway_id",
+          "authority_epoch",
+          "previous_gateway_id",
+          "previous_epoch",
+          "claim_seq",
+          "latest_seq"
+        ],
+        "title": "GroupsPromoteResult",
+        "type": "object"
+      },
+      "GroupsPromoteParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "confirm": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confirm"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "title": "GroupsPromoteParams",
+        "type": "object"
+      },
+      "GroupsPeerRevokeResult": {
+        "additionalProperties": false,
+        "properties": {
+          "revoked": {
+            "default": true,
+            "title": "Revoked",
+            "type": "boolean"
+          }
+        },
+        "title": "GroupsPeerRevokeResult",
+        "type": "object"
+      },
+      "GroupsPeerRevokeParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "grant": {
+            "title": "Grant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "grant"
+        ],
+        "title": "GroupsPeerRevokeParams",
+        "type": "object"
+      },
+      "GroupsPeerRegisterResult": {
+        "additionalProperties": false,
+        "properties": {
+          "registered": {
+            "default": true,
+            "title": "Registered",
+            "type": "boolean"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "transport_security": {
+            "title": "Transport Security",
+            "type": "string"
+          },
+          "target_install_id": {
+            "title": "Target Install Id",
+            "type": "string"
+          },
+          "target_profile": {
+            "title": "Target Profile",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "transport_security",
+          "target_install_id",
+          "target_profile"
+        ],
+        "title": "GroupsPeerRegisterResult",
+        "type": "object"
+      },
+      "GroupsPeerRegisterParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "member_id": {
+            "title": "Member Id",
+            "type": "string"
+          },
+          "target_url": {
+            "title": "Target Url",
+            "type": "string"
+          },
+          "target_profile": {
+            "title": "Target Profile",
+            "type": "string"
+          },
+          "grant": {
+            "title": "Grant",
+            "type": "string"
+          },
+          "catalog": {
+            "additionalProperties": true,
+            "title": "Catalog",
+            "type": "object"
+          },
+          "cancellation_scope_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cancellation Scope Id"
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trace Id"
+          }
+        },
+        "required": [
+          "room_id",
+          "member_id",
+          "target_url",
+          "target_profile",
+          "grant",
+          "catalog"
+        ],
+        "title": "GroupsPeerRegisterParams",
+        "type": "object"
+      },
+      "GroupsPeerInviteResult": {
+        "additionalProperties": false,
+        "properties": {
+          "grant": {
+            "title": "Grant",
+            "type": "string"
+          },
+          "target_profile": {
+            "title": "Target Profile",
+            "type": "string"
+          },
+          "catalog": {
+            "$ref": "#/components/schemas/RoomLinkCatalog"
+          },
+          "endpoint": {
+            "$ref": "#/components/schemas/RoomLinkEndpoint"
+          }
+        },
+        "required": [
+          "grant",
+          "target_profile",
+          "catalog",
+          "endpoint"
+        ],
+        "title": "GroupsPeerInviteResult",
+        "type": "object"
+      },
+      "RoomLinkEndpoint": {
+        "additionalProperties": false,
+        "description": "``GatewayRoomCatalog.endpoint_mapping``: ``url``/``transport_security`` when available,\n``reason`` when not.",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Url"
+          },
+          "transport_security": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transport Security"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "RoomLinkEndpoint",
+        "type": "object"
+      },
+      "RoomLinkCatalog": {
+        "additionalProperties": false,
+        "description": "``gateway/hosted_room_peer.py::GatewayRoomCatalog.as_mapping``.",
+        "properties": {
+          "installation_id": {
+            "title": "Installation Id",
+            "type": "string"
+          },
+          "protocol_versions": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Protocol Versions",
+            "type": "array"
+          },
+          "link_modes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Link Modes",
+            "type": "array"
+          },
+          "persistent_process": {
+            "title": "Persistent Process",
+            "type": "boolean"
+          },
+          "text": {
+            "title": "Text",
+            "type": "boolean"
+          },
+          "attachments": {
+            "title": "Attachments",
+            "type": "boolean"
+          },
+          "execution_policy": {
+            "$ref": "#/components/schemas/RoomExecutionPolicy"
+          },
+          "catalog_digest": {
+            "title": "Catalog Digest",
+            "type": "string"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomLinkEndpoint"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "installation_id",
+          "protocol_versions",
+          "link_modes",
+          "persistent_process",
+          "text",
+          "attachments",
+          "execution_policy",
+          "catalog_digest"
+        ],
+        "title": "RoomLinkCatalog",
+        "type": "object"
+      },
+      "RoomExecutionPolicy": {
+        "additionalProperties": false,
+        "description": "``gateway/hosted_room_execution_policy.py::execution_policy_mapping``.",
+        "properties": {
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "target_profile": {
+            "title": "Target Profile",
+            "type": "string"
+          },
+          "enabled_toolsets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Enabled Toolsets",
+            "type": "array"
+          },
+          "approval_mode": {
+            "title": "Approval Mode",
+            "type": "string"
+          },
+          "max_iterations": {
+            "title": "Max Iterations",
+            "type": "integer"
+          },
+          "policy_digest": {
+            "title": "Policy Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "target_profile",
+          "enabled_toolsets",
+          "approval_mode",
+          "max_iterations",
+          "policy_digest"
+        ],
+        "title": "RoomExecutionPolicy",
+        "type": "object"
+      },
+      "GroupsPeerInviteParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Room Id"
+          },
+          "home_install_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Home Install Id"
+          },
+          "authority_gateway_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authority Gateway Id"
+          },
+          "authority_epoch": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authority Epoch"
+          },
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Member Id"
+          },
+          "grant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Grant Id"
+          },
+          "ttl_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ttl Seconds"
+          }
+        },
+        "title": "GroupsPeerInviteParams",
+        "type": "object"
+      },
+      "GroupsLogResult": {
+        "additionalProperties": false,
+        "description": "``gateway/hosted_rooms.py::read_events`` page — also the ``page`` ``groups.replicate`` ingests.",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RoomEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "cursor": {
+            "title": "Cursor",
+            "type": "integer"
+          },
+          "latest_seq": {
+            "title": "Latest Seq",
+            "type": "integer"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "authority": {
+            "$ref": "#/components/schemas/RoomAuthority"
+          }
+        },
+        "required": [
+          "events",
+          "cursor",
+          "latest_seq",
+          "has_more",
+          "authority"
+        ],
+        "title": "GroupsLogResult",
+        "type": "object"
+      },
+      "GroupsLogParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "since_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Since Seq"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "include_disbanded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Include Disbanded"
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "title": "GroupsLogParams",
+        "type": "object"
+      },
+      "GroupsListResult": {
+        "additionalProperties": false,
+        "properties": {
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Next Offset"
+          }
+        },
+        "required": [
+          "rooms"
+        ],
+        "title": "GroupsListResult",
+        "type": "object"
+      },
+      "GroupsListParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "include_disbanded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Include Disbanded"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Offset"
+          }
+        },
+        "title": "GroupsListParams",
+        "type": "object"
+      },
+      "GroupsDisbandResult": {
+        "additionalProperties": false,
+        "properties": {
+          "tombstone": {
+            "$ref": "#/components/schemas/RoomTombstone"
+          }
+        },
+        "required": [
+          "tombstone"
+        ],
+        "title": "GroupsDisbandResult",
+        "type": "object"
+      },
+      "RoomTombstone": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "disbanded_at": {
+            "title": "Disbanded At",
+            "type": "number"
+          },
+          "idempotent": {
+            "title": "Idempotent",
+            "type": "boolean"
+          },
+          "history_expired": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "History Expired"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomEvent"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "room_id",
+          "disbanded_at",
+          "idempotent"
+        ],
+        "title": "RoomTombstone",
+        "type": "object"
+      },
+      "GroupsDisbandParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "cancel_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cancel Id"
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "title": "GroupsDisbandParams",
+        "type": "object"
+      },
+      "GroupsDemoteResult": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "authority_gateway_id": {
+            "title": "Authority Gateway Id",
+            "type": "string"
+          },
+          "authority_epoch": {
+            "title": "Authority Epoch",
+            "type": "integer"
+          },
+          "idempotent": {
+            "title": "Idempotent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "authority_gateway_id",
+          "authority_epoch",
+          "idempotent"
+        ],
+        "title": "GroupsDemoteResult",
+        "type": "object"
+      },
+      "GroupsDemoteParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "observed_gateway_id": {
+            "title": "Observed Gateway Id",
+            "type": "string"
+          },
+          "observed_epoch": {
+            "title": "Observed Epoch",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "room_id",
+          "observed_gateway_id",
+          "observed_epoch"
+        ],
+        "title": "GroupsDemoteParams",
+        "type": "object"
+      },
+      "GroupsCreateParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/RoomMemberInput"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "authority_gateway_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authority Gateway Id"
+          }
+        },
+        "required": [
+          "room_id",
+          "name",
+          "members"
+        ],
+        "title": "GroupsCreateParams",
+        "type": "object"
+      },
+      "GroupsCapabilitiesResult": {
+        "additionalProperties": false,
+        "properties": {
+          "protocol_version": {
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "driver": {
+            "title": "Driver",
+            "type": "boolean"
+          },
+          "persistent_process": {
+            "title": "Persistent Process",
+            "type": "boolean"
+          },
+          "authority_gateway_id": {
+            "title": "Authority Gateway Id",
+            "type": "string"
+          },
+          "room_link": {
+            "$ref": "#/components/schemas/RoomLinkStatus"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "methods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Methods",
+            "type": "array"
+          },
+          "max_log_limit": {
+            "title": "Max Log Limit",
+            "type": "integer"
+          },
+          "seatable_profiles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Seatable Profiles"
+          }
+        },
+        "required": [
+          "protocol_version",
+          "driver",
+          "persistent_process",
+          "authority_gateway_id",
+          "room_link",
+          "features",
+          "methods",
+          "max_log_limit"
+        ],
+        "title": "GroupsCapabilitiesResult",
+        "type": "object"
+      },
+      "RoomLinkStatus": {
+        "additionalProperties": false,
+        "description": "``enabled`` with ``profile``/``catalog``/``endpoint``, or disabled with a ``reason``.",
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "catalog": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomLinkCatalog"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomLinkEndpoint"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "RoomLinkStatus",
+        "type": "object"
+      },
+      "GroupsCapabilitiesParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          }
+        },
+        "title": "GroupsCapabilitiesParams",
+        "type": "object"
+      },
+      "GroupsApproveParams": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "member_id": {
+            "title": "Member Id",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "execution_generation": {
+            "title": "Execution Generation",
+            "type": "integer"
+          },
+          "choice": {
+            "$ref": "#/components/schemas/ApprovalChoice"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "room_id",
+          "member_id",
+          "task_id",
+          "execution_generation",
+          "choice",
+          "request_id"
+        ],
+        "title": "GroupsApproveParams",
+        "type": "object"
+      },
+      "ApprovalChoice": {
+        "enum": [
+          "once",
+          "session",
+          "always",
+          "deny"
+        ],
+        "title": "ApprovalChoice",
+        "type": "string"
+      }
+    }
+  },
+  "events": [],
+  "events_note": "Aucun événement poussé de salon déclaré dans x-notifications ; RoomEvent décrit les entrées du journal."
+}
