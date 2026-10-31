@@ -324,6 +324,7 @@ class _DraftViewState extends State<DraftView> {
     final source = await showModalBottomSheet<AttachmentSource>(
       context: context,
       isScrollControlled: true,
+      sheetAnimationStyle: sheetAnimation,
       builder: (_) =>
           AttachmentSelectionSheet(limits: _viewModel.attachmentLimits),
     );
@@ -421,6 +422,12 @@ class _DraftViewState extends State<DraftView> {
         return Appear(
           key: key,
           animate: _appearReady && _appeared.add(key),
+          // La bulle envoyée naît du coin de la saisie ; la réponse, du bas.
+          alignment: switch (key) {
+            ValueKey<Object?>(value: ('user', _, _)) =>
+              AlignmentDirectional.bottomEnd,
+            _ => Alignment.bottomCenter,
+          },
           child: child,
         );
       },
@@ -445,6 +452,7 @@ class _DraftViewState extends State<DraftView> {
           label: name,
           size: Layout.avatarSmall,
           accent: widget.accents.of(draft.profile),
+          heroTag: ('avatar', draft.profile),
         ),
         const SizedBox(width: Spacing.sm),
         Flexible(
@@ -512,15 +520,22 @@ class _DraftViewState extends State<DraftView> {
       padding: EdgeInsets.only(top: viewport.height * Layout.welcomeTop),
       child: Column(
         children: [
-          ProfileAvatar(label: name, size: Layout.avatarWelcome),
+          Appear(
+            animate: true,
+            child: ProfileAvatar(label: name, size: Layout.avatarWelcome),
+          ),
           const SizedBox(height: Spacing.md),
-          Semantics(
-            header: true,
-            child: Text(
-              Content.greeting,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+          Appear(
+            animate: true,
+            index: 1,
+            child: Semantics(
+              header: true,
+              child: Text(
+                Content.greeting,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -530,15 +545,19 @@ class _DraftViewState extends State<DraftView> {
             spacing: Spacing.sm,
             runSpacing: Spacing.sm,
             children: [
-              for (final text in Content.suggestions)
-                PressScale(
-                  haptic: true,
-                  child: ActionChip(
-                    label: Text(text),
-                    onPressed: () {
-                      _controller.text = text;
-                      vm.update(text);
-                    },
+              for (final (i, text) in Content.suggestions.indexed)
+                Appear(
+                  animate: true,
+                  index: i + 2,
+                  child: PressScale(
+                    haptic: true,
+                    child: ActionChip(
+                      label: Text(text),
+                      onPressed: () {
+                        _controller.text = text;
+                        vm.update(text);
+                      },
+                    ),
                   ),
                 ),
             ],

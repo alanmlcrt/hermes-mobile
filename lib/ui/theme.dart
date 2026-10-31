@@ -2,6 +2,7 @@
 // accent du profil en `secondary` (AccentScope). Dynamic Color seulement si
 // un schéma est fourni.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PredictiveBackEvent;
 
 import '../models/profile_accent.dart';
 import 'tokens.dart';
@@ -54,9 +55,15 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
   );
   return base.copyWith(
     scaffoldBackgroundColor: scheme.canvas,
-    // Transitions de page homogènes : fondu glissé (Android).
+    // Transitions de page homogènes sur toutes les plateformes : axe Z.
     pageTransitionsTheme: const PageTransitionsTheme(
-      builders: {TargetPlatform.android: FadeForwardsPageTransitionsBuilder()},
+      builders: {
+        TargetPlatform.android: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.iOS: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.windows: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.linux: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.macOS: ZoomFadePageTransitionsBuilder(),
+      },
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.canvas,
@@ -191,6 +198,145 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
     iconTheme: IconThemeData(color: scheme.content, size: IconSizes.md),
   );
 }
+
+/// Transition de page « axe Z » (Material shared axis) : la page sortante
+/// s'efface en grossissant à peine, l'entrante émerge d'un zoom léger. Sans
+/// direction, elle convient aussi aux remplacements (`go`). Immobile sous
+/// mouvement réduit.
+class ZoomFadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const ZoomFadePageTransitionsBuilder();
+
+  @override
+  Duration get transitionDuration => Motion.page;
+
+  @override
+  Duration get reverseTransitionDuration => Motion.pageReverse;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.disableAnimationsOf(context)) return child;
+    // Une seule arborescence (paramètres variables) : basculer en geste ne
+    // reconstruit jamais la page.
+    final gesture = route.navigator?.userGestureInProgress ?? false;
+    final shrinking = gesture && animation.value < 1;
+    const split = Layout.pageFadeSplit;
+    const opaque = AlwaysStoppedAnimation<double>(1);
+    return _BackGesture(
+      route: route,
+      child: FadeTransition(
+        // Geste : la page du dessous reste visible derrière le doigt.
+        opacity: gesture
+            ? opaque
+            : secondaryAnimation.drive(
+                Tween<double>(
+                  begin: 1,
+                  end: 0,
+                ).chain(CurveTween(curve: const Interval(0, split))),
+              ),
+        child: ScaleTransition(
+          scale: secondaryAnimation.drive(
+            Tween(begin: Layout.normalScale, end: Layout.pageExitScale).chain(
+              CurveTween(curve: gesture ? Curves.linear : Motion.emphasized),
+            ),
+          ),
+          child: FadeTransition(
+            opacity: gesture
+                ? opaque
+                : animation.drive(
+                    CurveTween(
+                      curve: const Interval(split, 1, curve: Motion.enter),
+                    ),
+                  ),
+            child: ScaleTransition(
+              // Geste : la page suit le doigt en rétrécissant, coins arrondis.
+              scale: animation.drive(
+                gesture
+                    ? Tween(
+                        begin: Layout.backGestureScale,
+                        end: Layout.normalScale,
+                      )
+                    : Tween(
+                        begin: Layout.pageEnterScale,
+                        end: Layout.normalScale,
+                      ).chain(CurveTween(curve: Motion.emphasized)),
+              ),
+              child: ClipRRect(
+                clipBehavior: shrinking ? Clip.antiAlias : Clip.none,
+                borderRadius: BorderRadius.circular(shrinking ? Radii.xl : 0),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Relie le geste de retour prédictif d'Android (14+) à la route courante :
+/// sa progression pilote l'animation de la page.
+class _BackGesture extends StatefulWidget {
+  const _BackGesture({required this.route, required this.child});
+  final PageRoute<Object?> route;
+  final Widget child;
+
+  @override
+  State<_BackGesture> createState() => _BackGestureState();
+}
+
+class _BackGestureState extends State<_BackGesture>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) {
+    final route = widget.route;
+    if (backEvent.isButtonEvent ||
+        !route.isCurrent ||
+        !route.popGestureEnabled) {
+      return false;
+    }
+    route.handleStartBackGesture(progress: 1 - backEvent.progress);
+    return true;
+  }
+
+  @override
+  void handleUpdateBackGestureProgress(PredictiveBackEvent backEvent) => widget
+      .route
+      .handleUpdateBackGestureProgress(progress: 1 - backEvent.progress);
+
+  @override
+  void handleCancelBackGesture() => widget.route.handleCancelBackGesture();
+
+  @override
+  void handleCommitBackGesture() => widget.route.handleCommitBackGesture();
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Feuille du bas : montée amortie, descente plus vive.
+const sheetAnimation = AnimationStyle(
+  duration: Motion.sheet,
+  reverseDuration: Motion.sheetReverse,
+  curve: Motion.emphasized,
+);
 
 /// Durée de mouvement effective : nulle si le système demande de réduire
 /// les animations.

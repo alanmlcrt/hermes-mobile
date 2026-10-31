@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../models/history.dart';
 import '../../models/profile.dart';
 import '../../models/room.dart';
+import '../../ui/components/appear.dart';
 import '../../ui/components/history_row.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
@@ -176,44 +177,53 @@ class _RoomsViewState extends State<RoomsView> with WidgetsBindingObserver {
               ),
             ] else if (!vm.loading && vm.rooms.isEmpty)
               const Text(Content.roomsEmpty),
-            for (final room in vm.rooms) ...[
-              HistoryRow(
-                session: SessionSummary(
-                  id: room.id,
-                  title: room.name,
-                  preview: room.preview,
-                  startedAt: room.updatedAt,
-                ),
-                onTap: () => widget.onOpen(room),
-                notice: room.needsUser
-                    ? Content.roomNeedsUser
-                    : room.working
-                    ? Content.roomWorking
-                    : null,
-              ),
-              Wrap(
-                spacing: Spacing.sm,
-                runSpacing: Spacing.xs,
-                children: [
-                  for (final member in room.members)
-                    Semantics(
-                      label: member.name,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ProfileAvatar(
-                            label: member.name,
-                            size: IconSizes.lg,
-                            accent: widget.accents.of(member.profile),
-                          ),
-                          const SizedBox(width: Spacing.xs),
-                          Flexible(child: Text(member.name)),
-                        ],
+            for (final (i, room) in vm.rooms.indexed)
+              Appear(
+                key: ValueKey(room.id),
+                animate: true,
+                index: i,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HistoryRow(
+                      session: SessionSummary(
+                        id: room.id,
+                        title: room.name,
+                        preview: room.preview,
+                        startedAt: room.updatedAt,
                       ),
+                      onTap: () => widget.onOpen(room),
+                      notice: room.needsUser
+                          ? Content.roomNeedsUser
+                          : room.working
+                          ? Content.roomWorking
+                          : null,
                     ),
-                ],
+                    Wrap(
+                      spacing: Spacing.sm,
+                      runSpacing: Spacing.xs,
+                      children: [
+                        for (final member in room.members)
+                          Semantics(
+                            label: member.name,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ProfileAvatar(
+                                  label: member.name,
+                                  size: IconSizes.lg,
+                                  accent: widget.accents.of(member.profile),
+                                ),
+                                const SizedBox(width: Spacing.xs),
+                                Flexible(child: Text(member.name)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
           ],
         ),
       ),

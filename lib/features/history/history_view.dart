@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../models/conversation_search.dart';
 import '../../models/history.dart';
 import '../../models/profile.dart';
+import '../../ui/components/appear.dart';
 import '../../ui/components/history_row.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
@@ -57,6 +58,21 @@ class _HistoryViewState extends State<HistoryView> {
     super.dispose();
   }
 
+  /// Liste affichée (état, section, filtre, recherche) : à chaque changement,
+  /// une nouvelle génération de lignes entre en cascade.
+  Object? _shownList;
+  int _generation = 0;
+  bool _stagger = false;
+
+  void _trackList(HistoryViewModel vm) {
+    final list = (vm.state, vm.section, vm.allProfiles, vm.searching);
+    if (list == _shownList) return;
+    _shownList = list;
+    _generation++;
+    _stagger = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _stagger = false);
+  }
+
   Widget _list(List<Widget> children) => ListView.builder(
     shrinkWrap: true,
     padding: const EdgeInsetsDirectional.only(
@@ -65,7 +81,12 @@ class _HistoryViewState extends State<HistoryView> {
       bottom: Spacing.lg,
     ),
     itemCount: children.length,
-    itemBuilder: (context, i) => children[i],
+    itemBuilder: (context, i) => Appear(
+      key: ValueKey((_generation, i)),
+      animate: _stagger,
+      index: i,
+      child: children[i],
+    ),
   );
 
   /// Ordre serveur conservé ; un intertitre à chaque changement de tranche
@@ -362,6 +383,7 @@ class _HistoryViewState extends State<HistoryView> {
       final theme = Theme.of(context);
       final scheme = theme.colorScheme;
       final loading = vm.state == HistoryState.loading;
+      _trackList(vm);
       final children = <Widget>[
         Row(
           children: [

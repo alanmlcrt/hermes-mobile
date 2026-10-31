@@ -474,6 +474,24 @@ abstract final class Motion {
   static const Duration short = Duration(milliseconds: 150);
   static const Duration medium = Duration(milliseconds: 300);
 
+  /// Transition de page (axe Z : fondu croisé et zoom léger).
+  static const Duration page = Duration(milliseconds: 450);
+  static const Duration pageReverse = Duration(milliseconds: 350);
+
+  /// Feuille du bas : montée amortie, descente plus vive.
+  static const Duration sheet = Duration(milliseconds: 420);
+  static const Duration sheetReverse = Duration(milliseconds: 260);
+
+  /// Décalage entre deux éléments d'une liste qui entre en cascade ; au-delà
+  /// de [staggerMax] éléments, tous partent ensemble.
+  static const Duration stagger = Duration(milliseconds: 40);
+  static const int staggerMax = 8;
+
+  /// Courbes : décélération marquée à l'entrée, sortie « expressive ».
+  static const Curve enter = Curves.easeOutQuart;
+  static const Curve emphasized = Curves.easeInOutCubicEmphasized;
+  static const Curve spring = Curves.easeOutBack;
+
   /// Cycle des points « Hermes travaille ».
   static const Duration typing = Duration(milliseconds: 1200);
 }
@@ -508,6 +526,9 @@ abstract final class Layout {
 
   /// Cible tactile minimale (choix et bouton d'une carte question).
   static const double touchTarget = 48;
+
+  /// Pastille « non lu » de l'accueil.
+  static const double unreadDot = 8;
   static const double threadMinHeight = 96;
 
   /// Marge haute de l'accueil d'un brouillon vide, en fraction du fil.
@@ -549,6 +570,23 @@ abstract final class Layout {
 
   /// Échelles des micro-interactions (arrivée, pression tactile, pastille).
   static const double appearScale = .97;
+
+  /// Transition de page : zoom de la page entrante / sortante.
+  static const double pageEnterScale = .94;
+  static const double pageExitScale = 1.04;
+
+  /// Retour prédictif : taille de la page au bout du geste.
+  static const double backGestureScale = .88;
+
+  /// Fraction de la transition où la page sortante a fini de s'effacer.
+  static const double pageFadeSplit = .35;
+
+  /// Bouton d'envoi désactivé : légèrement réduit.
+  static const double sendIdleScale = .86;
+
+  /// Bascule d'icône (envoi ↔ arrêt) : quart de tour en arrivant.
+  static const double iconMorphTurns = -.25;
+  static const double noTurns = 0;
   static const double pressScale = .96;
   static const double normalScale = 1;
   static const double swatchSelectedScale = 1.1;

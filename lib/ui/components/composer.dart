@@ -93,25 +93,45 @@ class _ComposerState extends State<Composer> {
         child: PressScale(
           enabled: actionCallback != null,
           haptic: true,
-          child: AnimatedContainer(
-            duration: motionDuration(context, Motion.short),
-            curve: Curves.easeOutCubic,
-            width: dimension,
-            height: dimension,
-            child: IconButton.filled(
-              tooltip: widget.stopping ? Content.stop : Content.send,
-              onPressed: actionCallback,
-              padding: EdgeInsets.zero,
-              style: IconButton.styleFrom(
-                backgroundColor: scheme.emphasis,
-                foregroundColor: scheme.emphasisContent,
-                disabledBackgroundColor: scheme.chip,
-                disabledForegroundColor: scheme.muted,
-                shape: const CircleBorder(),
-              ),
-              icon: Icon(
-                widget.stopping ? Icons.stop : Icons.arrow_upward,
-                size: IconSizes.sm,
+          // Prêt à envoyer : le bouton se gonfle d'un rebond.
+          child: AnimatedScale(
+            scale: actionCallback == null
+                ? Layout.sendIdleScale
+                : Layout.normalScale,
+            duration: motionDuration(context, Motion.medium),
+            curve: Motion.spring,
+            child: AnimatedContainer(
+              duration: motionDuration(context, Motion.short),
+              curve: Curves.easeOutCubic,
+              width: dimension,
+              height: dimension,
+              child: IconButton.filled(
+                tooltip: widget.stopping ? Content.stop : Content.send,
+                onPressed: actionCallback,
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  backgroundColor: scheme.emphasis,
+                  foregroundColor: scheme.emphasisContent,
+                  disabledBackgroundColor: scheme.chip,
+                  disabledForegroundColor: scheme.muted,
+                  shape: const CircleBorder(),
+                ),
+                icon: AnimatedSwitcher(
+                  duration: motionDuration(context, Motion.medium),
+                  switchInCurve: Motion.spring,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) => RotationTransition(
+                    turns: animation.drive(
+                      Tween(begin: Layout.iconMorphTurns, end: Layout.noTurns),
+                    ),
+                    child: ScaleTransition(scale: animation, child: child),
+                  ),
+                  child: Icon(
+                    widget.stopping ? Icons.stop : Icons.arrow_upward,
+                    key: ValueKey(widget.stopping),
+                    size: IconSizes.sm,
+                  ),
+                ),
               ),
             ),
           ),

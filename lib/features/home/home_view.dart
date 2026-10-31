@@ -6,8 +6,10 @@ import '../../models/connection_gateway.dart';
 import '../../models/history.dart';
 import '../../models/profile.dart';
 import '../../models/timeline.dart';
+import '../../ui/components/appear.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
+import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../profiles/profile_accents.dart';
 
@@ -41,10 +43,25 @@ class HomeView extends StatelessWidget {
       bottomNavigationBar: onRooms == null
           ? null
           : SafeArea(
-              child: TextButton.icon(
-                onPressed: onRooms,
-                icon: const Icon(Icons.groups_outlined),
-                label: const Text(Content.rooms),
+              minimum: const EdgeInsets.fromLTRB(
+                Spacing.md,
+                0,
+                Spacing.md,
+                Spacing.sm,
+              ),
+              child: Appear(
+                animate: true,
+                index: profiles.length + 1,
+                child: PressScale(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(Layout.touchTarget),
+                    ),
+                    onPressed: onRooms,
+                    icon: const Icon(Icons.groups_outlined),
+                    label: const Text(Content.rooms),
+                  ),
+                ),
               ),
             ),
       appBar: AppBar(
@@ -90,14 +107,19 @@ class HomeView extends StatelessWidget {
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
                   itemCount: profiles.length,
-                  itemBuilder: (context, i) => _ProfileRow(
+                  // Entrée en cascade à chaque arrivée sur l'accueil.
+                  itemBuilder: (context, i) => Appear(
                     key: ValueKey(profiles[i].key),
-                    profile: profiles[i],
-                    gateway: gateway,
-                    conversation: conversation,
-                    accents: accents,
-                    onOpen: onOpen,
-                    onProfileSettings: onProfileSettings,
+                    animate: true,
+                    index: i,
+                    child: _ProfileRow(
+                      profile: profiles[i],
+                      gateway: gateway,
+                      conversation: conversation,
+                      accents: accents,
+                      onOpen: onOpen,
+                      onProfileSettings: onProfileSettings,
+                    ),
                   ),
                 ),
         ),
@@ -108,7 +130,6 @@ class HomeView extends StatelessWidget {
 
 class _ProfileRow extends StatefulWidget {
   const _ProfileRow({
-    super.key,
     required this.profile,
     required this.gateway,
     required this.conversation,
@@ -132,7 +153,19 @@ class _ProfileRowState extends State<_ProfileRow> {
 
   // ponytail: une requête de liste par profil ; un résumé serveur si la liste
   // de profils grandit.
-  late final Future<SessionSummary?> _latest = _load();
+  Future<SessionSummary?>? _latest;
+
+  /// L'accueil reste monté sous une conversation empilée : chaque retour au
+  /// premier plan relit la dernière conversation ; caché, rien n'est chargé.
+  bool _current = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = ModalRoute.isCurrentOf(context) ?? true;
+    if (current && !_current) _latest = _load();
+    _current = current;
+  }
 
   /// La dernière conversation est non lue (7.3) ; relu à chaque fin de tour.
   bool _unread = false;
@@ -202,75 +235,108 @@ class _ProfileRowState extends State<_ProfileRow> {
         final latest = snap.data;
         final done = snap.connectionState == ConnectionState.done || hasCached;
         final date = latest?.startedAt;
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: Spacing.lg - Spacing.xs,
-            vertical: Spacing.xs,
-          ),
-          leading: IconButton(
-            tooltip: Content.profileSettings,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(
-              minWidth: Layout.touchTarget,
-              minHeight: Layout.touchTarget,
+        return PressScale(
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg - Spacing.xs,
+              vertical: Spacing.xs,
             ),
-            onPressed: widget.onProfileSettings == null
-                ? null
-                : () => widget.onProfileSettings!(p.key),
-            icon: ProfileAvatar(
-              label: name,
-              size: Layout.avatar,
-              accent: widget.accents.of(p.key),
+            leading: IconButton(
+              tooltip: Content.profileSettings,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(
+                minWidth: Layout.touchTarget,
+                minHeight: Layout.touchTarget,
+              ),
+              onPressed: widget.onProfileSettings == null
+                  ? null
+                  : () => widget.onProfileSettings!(p.key),
+              icon: ProfileAvatar(
+                label: name,
+                size: Layout.avatar,
+                accent: widget.accents.of(p.key),
+                heroTag: ('avatar', p.key),
+              ),
             ),
-          ),
-          title: Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+            title: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          subtitle: Text(
-            done
-                ? (latest != null
-                      ? (latest.title ??
-                            latest.preview ??
-                            Content.untitledConversation)
-                      : Content.homeNoConversation)
-                : Content.historyLoading,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: _unread ? scheme.content : scheme.muted,
-              fontWeight: _unread ? FontWeight.w700 : null,
-            ),
-          ),
-          // Texte « Non lu » en plus du gras : jamais la couleur seule.
-          trailing: date == null && !_unread
-              ? null
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (date != null)
-                      Text(
-                        Content.homeTime(date, DateTime.now()),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.muted,
-                        ),
-                      ),
-                    if (_unread)
-                      Text(
-                        Content.unread,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: scheme.accent,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                  ],
+            // Fondu croisé du « chargement » vers le dernier message.
+            subtitle: AnimatedSwitcher(
+              duration: motionDuration(context, Motion.medium),
+              switchInCurve: Motion.enter,
+              layoutBuilder: (current, previous) => Stack(
+                alignment: AlignmentDirectional.centerStart,
+                children: [...previous, ?current],
+              ),
+              child: Text(
+                key: ValueKey((done, latest?.id, _unread)),
+                done
+                    ? (latest != null
+                          ? (latest.title ??
+                                latest.preview ??
+                                Content.untitledConversation)
+                          : Content.homeNoConversation)
+                    : Content.historyLoading,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: _unread ? scheme.content : scheme.muted,
+                  fontWeight: _unread ? FontWeight.w700 : null,
                 ),
-          onTap: () => widget.onOpen(p.key, latest?.id),
+              ),
+            ),
+            // Texte « Non lu » en plus du gras : jamais la couleur seule.
+            trailing: date == null && !_unread
+                ? null
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (date != null)
+                        Text(
+                          Content.homeTime(date, DateTime.now()),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: scheme.muted,
+                          ),
+                        ),
+                      if (_unread)
+                        Appear(
+                          animate: true,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ExcludeSemantics(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: scheme.accent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const SizedBox.square(
+                                    dimension: Layout.unreadDot,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: Spacing.xs),
+                              Text(
+                                Content.unread,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: scheme.accent,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+            onTap: () => widget.onOpen(p.key, latest?.id),
+          ),
         );
       },
     );

@@ -463,6 +463,11 @@ void main() {
         await tester.tap(find.text('Principal (default)'));
         await tester.pumpAndSettle();
         expect(location(tester), conversationPath(connection, _default, 'b'));
+        // Empilée sur l'accueil : le retour y ramène.
+        router(tester).pop();
+        await tester.pumpAndSettle();
+        expect(location(tester), '/');
+        expect(find.text('Deuxième'), findsOne);
       },
     );
 

@@ -4,13 +4,22 @@ import 'package:flutter/services.dart';
 import '../theme.dart';
 import '../tokens.dart';
 
-/// Arrivée d'un élément du fil : fondu, léger glissement vers le haut et
-/// mise à l'échelle subtile, une seule fois. Immobile si [animate] est faux
-/// ou sous mouvement réduit.
+/// Arrivée d'un élément : fondu, léger glissement vers le haut et mise à
+/// l'échelle subtile depuis [alignment], une seule fois. [index] décale le
+/// départ pour une entrée en cascade (sans minuteur : un intervalle de la
+/// même animation). Immobile si [animate] est faux ou sous mouvement réduit.
 class Appear extends StatefulWidget {
-  const Appear({super.key, required this.animate, required this.child});
+  const Appear({
+    super.key,
+    required this.animate,
+    required this.child,
+    this.index = 0,
+    this.alignment = Alignment.center,
+  });
   final bool animate;
   final Widget child;
+  final int index;
+  final AlignmentGeometry alignment;
 
   @override
   State<Appear> createState() => _AppearState();
@@ -21,27 +30,40 @@ class _AppearState extends State<Appear> with SingleTickerProviderStateMixin {
     vsync: this,
     value: widget.animate ? 0 : 1,
   );
-  late final _curve = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeOutCubic,
-  );
+  late final Animation<double> _curve;
+
+  @override
+  void initState() {
+    super.initState();
+    final steps = widget.index.clamp(0, Motion.staggerMax);
+    final delay = Motion.stagger * steps;
+    final total = Motion.medium + delay;
+    _controller.duration = total;
+    _curve = _controller.drive(
+      CurveTween(
+        curve: Interval(
+          delay.inMicroseconds / total.inMicroseconds,
+          1,
+          curve: Motion.enter,
+        ),
+      ),
+    );
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final duration = motionDuration(context, Motion.medium);
     if (_controller.value < 1) {
-      if (duration == Duration.zero) {
+      if (motionDuration(context, Motion.medium) == Duration.zero) {
         _controller.value = 1;
-      } else {
-        _controller.animateTo(1, duration: duration);
+      } else if (!_controller.isAnimating) {
+        _controller.forward();
       }
     }
   }
 
   @override
   void dispose() {
-    _curve.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -54,6 +76,7 @@ class _AppearState extends State<Appear> with SingleTickerProviderStateMixin {
         Tween(begin: const Offset(0, Layout.appearShift), end: Offset.zero),
       ),
       child: ScaleTransition(
+        alignment: widget.alignment.resolve(Directionality.of(context)),
         scale: _curve.drive(
           Tween(begin: Layout.appearScale, end: Layout.normalScale),
         ),

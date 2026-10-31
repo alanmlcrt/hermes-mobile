@@ -35,6 +35,7 @@ import '../models/profile.dart';
 import '../models/profile_accent.dart';
 import '../models/timeline.dart';
 import '../ui/content.dart';
+import '../ui/theme.dart';
 
 /// Seul décideur de l'écran d'ouverture : notification (Epic 5), puis
 /// restauration (story 2.4), puis accueil. Aucune route n'est restaurée
@@ -147,6 +148,7 @@ class _SheetPage<T> extends Page<T> {
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
+    sheetAnimationStyle: sheetAnimation,
     builder: (_) => child,
   );
 }
@@ -311,6 +313,59 @@ class AppRoutes {
                     },
                   ),
           ),
+          // Conversations empilées sur l'accueil : le retour (bouton, geste
+          // prédictif) y ramène avec la transition inverse.
+          routes: [
+            GoRoute(
+              path: 'draft/:draftKey',
+              builder: (context, state) => DraftView(
+                // Clé par brouillon : un autre brouillon ne réutilise pas l'état de la page.
+                key: ValueKey(state.pathParameters['draftKey']),
+                create: () => DraftViewModel(
+                  picker: const DeviceAttachmentPicker(),
+                  outbox: outbox,
+                  gateway: gateway,
+                  conversation: conversation,
+                  interventions: interventions,
+                  results: _results,
+                  key: DraftKey(state.pathParameters['draftKey']!),
+                ),
+                accents: this.accents,
+                onHome: () => context.go('/'),
+                onHistory: (p) => context.push(historyPath(p)),
+              ),
+            ),
+            GoRoute(
+              path: 'c/:connection/:profile/:session',
+              builder: (context, state) {
+                final profile = ProfileKey(state.pathParameters['profile']!);
+                final session = state.pathParameters['session']!;
+                return ContinuationView(
+                  key: ValueKey(state.uri.path),
+                  outbox: outbox,
+                  connection: ConnectionKey(
+                    state.pathParameters['connection']!,
+                  ),
+                  profile: profile,
+                  session: session,
+                  createViewModel: (key) => DraftViewModel(
+                    picker: const DeviceAttachmentPicker(),
+                    outbox: outbox,
+                    gateway: gateway,
+                    conversation: conversation,
+                    interventions: interventions,
+                    results: _results,
+                    key: key,
+                  ),
+                  accents: this.accents,
+                  onHome: () => context.go('/'),
+                  onHistory: (p) =>
+                      context.push(historyPath(p, current: session)),
+                  onNewConversation: (p) => context.go(_newConversation(p)),
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/profiles',
@@ -330,25 +385,6 @@ class AppRoutes {
               context.go('/pair');
             },
             onAllProfiles: () => context.push('/profiles'),
-          ),
-        ),
-        GoRoute(
-          path: '/draft/:draftKey',
-          builder: (context, state) => DraftView(
-            // Clé par brouillon : un autre brouillon ne réutilise pas l'état de la page.
-            key: ValueKey(state.pathParameters['draftKey']),
-            create: () => DraftViewModel(
-              picker: const DeviceAttachmentPicker(),
-              outbox: outbox,
-              gateway: gateway,
-              conversation: conversation,
-              interventions: interventions,
-              results: _results,
-              key: DraftKey(state.pathParameters['draftKey']!),
-            ),
-            accents: this.accents,
-            onHome: () => context.go('/'),
-            onHistory: (p) => context.push(historyPath(p)),
           ),
         ),
         GoRoute(
@@ -386,33 +422,6 @@ class AppRoutes {
                 onNewConversation: (p) => context.go(_newConversation(p)),
                 onSettings: (p) => context.push(profileSettingsPath(p)),
               ),
-            );
-          },
-        ),
-        GoRoute(
-          path: '/c/:connection/:profile/:session',
-          builder: (context, state) {
-            final profile = ProfileKey(state.pathParameters['profile']!);
-            final session = state.pathParameters['session']!;
-            return ContinuationView(
-              key: ValueKey(state.uri.path),
-              outbox: outbox,
-              connection: ConnectionKey(state.pathParameters['connection']!),
-              profile: profile,
-              session: session,
-              createViewModel: (key) => DraftViewModel(
-                picker: const DeviceAttachmentPicker(),
-                outbox: outbox,
-                gateway: gateway,
-                conversation: conversation,
-                interventions: interventions,
-                results: _results,
-                key: key,
-              ),
-              accents: this.accents,
-              onHome: () => context.go('/'),
-              onHistory: (p) => context.push(historyPath(p, current: session)),
-              onNewConversation: (p) => context.go(_newConversation(p)),
             );
           },
         ),

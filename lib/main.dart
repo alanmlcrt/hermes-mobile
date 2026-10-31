@@ -175,6 +175,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       themeMode: ThemeMode.system,
       routerConfig: _routes.router,
       scaffoldMessengerKey: _routes.scaffoldMessengerKey,
+      // Fond sous le navigateur : le fondu croisé des pages ne laisse jamais
+      // voir de noir.
+      builder: (context, child) => ColoredBox(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: child,
+      ),
     );
   }
 }

@@ -11,9 +11,14 @@ class ProfileAvatar extends StatelessWidget {
     required this.label,
     required this.size,
     this.accent,
+    this.heroTag,
   });
   final String label;
   final double size;
+
+  /// Avatar partagé entre deux pages (accueil → conversation) : il vole de
+  /// l'une à l'autre. Un seul porteur du même tag par page.
+  final Object? heroTag;
 
   /// Nul : l'accent monochrome du thème (AccentScope).
   final ProfileAccent? accent;
@@ -24,7 +29,7 @@ class ProfileAvatar extends StatelessWidget {
     final trimmed = label.trim();
     final bg = accent == null ? scheme.bubbleSurface : AccentTokens.of(accent!);
     final fg = accent == null ? scheme.content : AccentTokens.onAccent;
-    return ExcludeSemantics(
+    final avatar = ExcludeSemantics(
       child: Container(
         width: size,
         height: size,
@@ -45,6 +50,22 @@ class ProfileAvatar extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (heroTag == null) return avatar;
+    return Hero(
+      tag: heroTag!,
+      // En vol : mis à l'échelle d'un bloc (initiale comprise), sur un
+      // Material pour garder le style du texte.
+      flightShuttleBuilder: (_, _, direction, from, to) => Material(
+        type: MaterialType.transparency,
+        child: FittedBox(
+          child:
+              ((direction == HeroFlightDirection.push ? to : from).widget
+                      as Hero)
+                  .child,
+        ),
+      ),
+      child: avatar,
     );
   }
 }
