@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../models/history.dart';
+import '../../models/profile.dart';
 import '../../models/room.dart';
 import '../../ui/components/history_row.dart';
 import '../../ui/components/profile_avatar.dart';
@@ -17,10 +18,12 @@ class RoomsView extends StatefulWidget {
     required this.create,
     required this.accents,
     required this.onOpen,
+    this.profiles = const [],
   });
   final RoomsViewModel Function() create;
   final ProfileAccents accents;
   final ValueChanged<RoomSummary> onOpen;
+  final List<Profile> profiles;
   @override
   State<RoomsView> createState() => _RoomsViewState();
 }
@@ -39,6 +42,88 @@ class _RoomsViewState extends State<RoomsView> {
     super.dispose();
   }
 
+  Future<void> _create() async {
+    await vm.prepareCreate();
+    if (!mounted) return;
+    final controller = TextEditingController(text: vm.name);
+    final result = await showDialog<RoomSummary>(
+      context: context,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: vm,
+        builder: (context, _) => AlertDialog(
+          scrollable: true,
+          title: const Text(Content.newRoom),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: controller,
+                enabled: !vm.creating && !vm.creationUncertain,
+                decoration: const InputDecoration(labelText: Content.roomName),
+                onChanged: vm.setName,
+              ),
+              const Text(Content.roomMemberLimit),
+              for (final p in widget.profiles)
+                CheckboxListTile(
+                  title: Text(Content.profileName(p.label, p.key.value)),
+                  subtitle: vm.eligible.contains(p.key)
+                      ? null
+                      : const Text(Content.roomIneligible),
+                  value: vm.selected.contains(p.key),
+                  onChanged:
+                      vm.eligible.contains(p.key) &&
+                          !vm.creating &&
+                          !vm.creationUncertain
+                      ? (v) => vm.select(p.key, v == true)
+                      : null,
+                ),
+              if (vm.createError != null)
+                Semantics(
+                  liveRegion: true,
+                  child: Text(Content.roomError(vm.createError!)),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: vm.creating
+                  ? null
+                  : () => Navigator.pop(dialogContext),
+                  child: const Text(Content.roomCancel),
+            ),
+            if (vm.creationUncertain)
+              TextButton(
+                onPressed: () async {
+                  final room = await vm.verifyCreation();
+                  if (dialogContext.mounted && room != null) {
+                    Navigator.pop(dialogContext, room);
+                  }
+                },
+                child: const Text(Content.roomVerify),
+              ),
+            FilledButton(
+              onPressed: vm.canCreate
+                  ? () async {
+                      final room = await vm.create();
+                      if (dialogContext.mounted && room != null) {
+                        Navigator.pop(dialogContext, room);
+                      }
+                    }
+                  : null,
+              child: const Text(Content.roomCreate),
+            ),
+          ],
+        ),
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+    if (result != null && mounted) {
+      widget.onOpen(result);
+      unawaited(vm.refresh());
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text(Content.rooms)),
@@ -48,6 +133,12 @@ class _RoomsViewState extends State<RoomsView> {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(Spacing.md),
           children: [
+            if (vm.error != 'room.missing' && vm.error != 'room.bot_mode')
+              TextButton.icon(
+                onPressed: _create,
+                icon: const Icon(Icons.add),
+                label: const Text(Content.newRoom),
+              ),
             if (vm.loading) const Text(Content.roomsLoading),
             if (vm.error != null) ...[
               Semantics(

@@ -229,6 +229,7 @@ class AppRoutes {
             return RoomsView(
               key: ValueKey(state.uri.toString()),
               create: () => RoomsViewModel(rooms, connection, profile),
+              profiles: gateway.snapshot.profiles,
               accents: this.accents,
               onOpen: (r) =>
                   context.push(roomPath(RoomKey(connection, profile, r.id))),

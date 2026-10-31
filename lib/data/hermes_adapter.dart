@@ -471,6 +471,21 @@ abstract final class HermesRpc {
   static const groupsRetry = 'groups.retry';
   static const groupsDiscard = 'groups.discard';
   static const groupsApprove = 'groups.approve';
+  static Map<String, dynamic> roomCreate(
+    String name,
+    Set<ProfileKey> members,
+  ) => {
+    'name': name,
+    'members': [
+      for (final p in members)
+        {
+          'member_id': p.value,
+          'profile': p.value,
+          'handle': 'agent${members.toList().indexOf(p) + 1}',
+          'display_name': p.value,
+        },
+    ],
+  };
   static ({bool working, bool blocked}) roomStatus(Map r) {
     final status = r['driver_status'];
     return (

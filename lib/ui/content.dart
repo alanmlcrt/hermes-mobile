@@ -6,6 +6,15 @@ import '../models/attachment.dart';
 
 abstract final class Content {
   static const rooms = 'Salons';
+  static const newRoom = 'Nouveau salon';
+  static const roomCancel = 'Annuler';
+  static const roomName = 'Nom du salon';
+  static const roomMemberLimit =
+      'Choisissez entre 2 et 6 profils avec Bot Mode actif.';
+  static const roomIneligible =
+      'Bot Mode inactif ou éligibilité non annoncée par Hermes';
+  static const roomCreate = 'Créer le salon';
+  static const roomVerify = 'Vérifier le résultat';
   static const roomsLoading = 'Chargement des salons…';
   static const roomsEmpty = 'Aucun salon pour le moment.';
   static const roomWorking = 'Des agents travaillent';

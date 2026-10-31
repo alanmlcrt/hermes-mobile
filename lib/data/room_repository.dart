@@ -13,6 +13,39 @@ class RoomRepository implements RoomGateway {
   final _busy = <RoomKey>{};
   final _missing = <(ConnectionKey, ProfileKey, int, String)>{};
 
+  @override
+  String newId() => randomUuid();
+
+  @override
+  Future<RoomSummary> find(RoomKey key) async =>
+      HermesRpc.room((await call(key, HermesRpc.groupsState))['room'] as Map);
+
+  @override
+  Future<RoomSummary> create(
+    RoomKey key,
+    String name,
+    Set<ProfileKey> members,
+  ) => mutate(key, () async {
+    if (name.trim().isEmpty || members.length < 2 || members.length > 6) {
+      throw const AppError('room.invalid');
+    }
+    final caps = await capabilities(key.connection, key.profile);
+    if (!caps.driver || !members.every(caps.profiles.contains)) {
+      throw const AppError('room.bot_mode');
+    }
+    if (!caps.methods.contains(HermesRpc.groupsCreate)) {
+      throw const AppError('room.missing');
+    }
+    final result = await call(
+      key,
+      HermesRpc.groupsCreate,
+      HermesRpc.roomCreate(name.trim(), members),
+    );
+    final room = HermesRpc.room(result['room'] as Map);
+    if (room.id != key.room) throw const AppError('rpc.uncertain');
+    return room;
+  });
+
   void check(RoomKey key) {
     if (gateway.snapshot.connection?.key != key.connection ||
         !gateway.snapshot.profiles.any((p) => p.key == key.profile)) {

@@ -2,6 +2,9 @@ import 'connection.dart';
 import 'profile.dart';
 
 abstract interface class RoomGateway {
+  String newId();
+  Future<RoomSummary> create(RoomKey key, String name, Set<ProfileKey> members);
+  Future<RoomSummary> find(RoomKey key);
   Future<RoomCapabilities> capabilities(
     ConnectionKey connection,
     ProfileKey profile,
