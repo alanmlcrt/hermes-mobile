@@ -1,8 +1,12 @@
 ---
 id: SPEC-7-4-masquer-retrouver-conversations
-status: draft
+status: done
+delivery: preparation-only
+story_validated: false
+implemented_in: 3f3e694
+updated: 2026-10-31
 created: 2026-10-30
-implementation_readiness: blocked-by-dependencies
+implementation_readiness: implemented-unqualified
 companions:
   - implementation.md
   - ../../implementation-artifacts/epic-7-context.md

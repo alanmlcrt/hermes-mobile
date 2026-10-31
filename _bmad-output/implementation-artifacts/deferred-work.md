@@ -102,3 +102,24 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-2-renommer-conversation.md`
   summary: Sérialiser les `session.resume` concurrents d'une même session (risque moyen non vérifié).
   evidence: `OutboxRepository.resume` n'a pas de verrou par clé ; un renommage et une ouverture peuvent reprendre la même session en parallèle. Effet serveur à observer sur installation.
+
+- source_spec: `_bmad-output/specs/spec-7-3-epingler-marquer-non-lu/SPEC.md`
+  summary: Purger les marqueurs d'un fil disparu côté serveur (AC-7/8 non implémentés).
+  evidence: Aucune preuve distante de disparition n'est qualifiée (7.1) ; les marqueurs d'un fil supprimé depuis un autre client restent en base. Seule la suppression depuis le téléphone (7.5) les efface.
+
+- source_spec: `_bmad-output/specs/spec-7-3-epingler-marquer-non-lu/SPEC.md`
+  summary: Tenir compte du cycle de vie de l'app pour le non-lu.
+  evidence: Un fil laissé ouvert avec l'app en arrière-plan compte comme consulté ; une fin de tour reçue alors ne le rend pas non lu. Une fin connue seulement par resynchronisation ne marque pas non plus le fil.
+
+- source_spec: `_bmad-output/specs/spec-7-4-masquer-retrouver-conversations/SPEC.md`
+  summary: Portée de `session.set_hidden` sur la lignée et choix hidden/archive à qualifier.
+  evidence: Implémentation sur `session.set_hidden` (ID stocké) d'après le contrat documentaire ; `session.archive` non utilisé. La sonde 7.1 doit confirmer réversibilité, `include_hidden` et effet sur la lignée.
+
+- source_spec: `_bmad-output/specs/spec-7-5-supprimer-conversation/SPEC.md`
+  summary: Trancher une suppression « à vérifier » par une preuve distante.
+  evidence: Après un résultat inconnu, l'état `pending` persiste et tout est conservé ; seule une nouvelle tentative explicite est possible. Une réponse d'erreur à cette tentative (fil déjà supprimé) rétablit le fil localement sans preuve. À revoir après qualification de `session.delete` et de ses erreurs.
+
+- source_spec: `_bmad-output/specs/spec-7-6-rechercher-conversation/SPEC.md`
+  summary: Normalisation Unicode complète et recherche serveur.
+  evidence: Le repliement couvre les lettres latines accentuées et les marques combinantes U+0300–036F ; une décomposition NFD complète demanderait une dépendance. Aucune recherche serveur n'est qualifiée : seule la couverture locale est proposée.
+
