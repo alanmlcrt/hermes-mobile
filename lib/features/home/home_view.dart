@@ -44,13 +44,18 @@ class HomeView extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton.filledTonal(
+          IconButton(
             tooltip: Content.settings,
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.card,
+              side: BorderSide(color: theme.colorScheme.line),
+            ),
             onPressed: onSettings,
-            icon: const Icon(Icons.tune),
+            icon: const Icon(Icons.tune, size: IconSizes.sm),
           ),
           const SizedBox(width: Spacing.sm),
         ],
+        shape: Border(bottom: BorderSide(color: theme.colorScheme.line)),
       ),
       body: SafeArea(
         child: ListenableBuilder(

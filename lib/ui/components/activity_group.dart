@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../content.dart';
 import '../tokens.dart';
 
-/// Commande seule : les lignes restent des blocs paresseux du fil.
+/// En-tête de raisonnement / groupe d'étapes (style AI SDK Elements
+/// `<ChainOfThought>` / `<Reasoning>`) : bouton encadré repliable listant le
+/// nombre d'étapes d'outil exécutées ou en cours.
 class ActivityGroup extends StatelessWidget {
   const ActivityGroup({
     super.key,
@@ -33,11 +35,14 @@ class ActivityGroup extends StatelessWidget {
               ActivityTokens.command,
             ),
             foregroundColor: scheme.content,
-            backgroundColor: scheme.card,
-            shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+            backgroundColor: scheme.bubbleSurface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.md),
+              side: BorderSide(color: scheme.line),
+            ),
             padding: const EdgeInsetsDirectional.only(
               start: Spacing.sm + Spacing.xs,
-              end: Spacing.md,
+              end: Spacing.sm + Spacing.xs,
             ),
           ),
           onPressed: () => onChanged(!expanded),
@@ -46,9 +51,9 @@ class ActivityGroup extends StatelessWidget {
             children: [
               ExcludeSemantics(
                 child: Icon(
-                  pending == 0 ? Icons.check : Icons.more_horiz,
+                  pending == 0 ? Icons.check : Icons.auto_awesome_outlined,
                   size: IconSizes.sm,
-                  color: scheme.accent,
+                  color: scheme.muted,
                 ),
               ),
               const SizedBox(width: Spacing.sm),
@@ -56,7 +61,8 @@ class ActivityGroup extends StatelessWidget {
                 child: Text(
                   Content.activitySummary(count, pending),
                   style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
+                    color: scheme.content,
                   ),
                 ),
               ),

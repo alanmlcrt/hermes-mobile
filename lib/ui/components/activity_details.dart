@@ -128,7 +128,8 @@ class _DetailSectionState extends State<_DetailSection> {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.codeSurface,
-            borderRadius: BorderRadius.circular(Radii.md),
+            borderRadius: BorderRadius.circular(Radii.sm),
+            border: Border.all(color: Theme.of(context).colorScheme.line),
           ),
           padding: const EdgeInsets.only(left: Spacing.sm, top: Spacing.sm),
           child: ConstrainedBox(

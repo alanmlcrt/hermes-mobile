@@ -38,8 +38,8 @@ class ActivityLine extends StatelessWidget {
   /// ne s'applique alors pas.
   final bool resultProduced;
 
-  /// Capsule d'activité : dessin de la famille et libellé ; une fois
-  /// terminée, coche à la couleur du profil doublée du texte.
+  /// Capsule d'activité (style AI SDK Elements `<Tool>` compact) : bordure fine
+  /// 1px, coins modérés (Radii.md), libellé et badge d'état.
   Widget _pill(BuildContext context, String label) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -47,14 +47,15 @@ class ActivityLine extends StatelessWidget {
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: scheme.card,
-          shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+        decoration: BoxDecoration(
+          color: scheme.bubbleSurface,
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(color: scheme.line),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Spacing.sm + Spacing.xs,
-            vertical: Spacing.xs,
+            vertical: Spacing.xs + Spacing.xxs,
           ),
           child: Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -67,9 +68,9 @@ class ActivityLine extends StatelessWidget {
                   paused: paused,
                   catalog: catalog,
                 ),
-              Text(label, style: style?.copyWith(fontWeight: FontWeight.w600)),
+              Text(label, style: style?.copyWith(fontWeight: FontWeight.w500)),
               if (completed) ...[
-                Icon(Icons.check, size: IconSizes.sm, color: scheme.accent),
+                Icon(Icons.check, size: IconSizes.sm, color: scheme.content),
                 Text(
                   Content.activityEnd,
                   style: style?.copyWith(color: scheme.muted),
@@ -82,9 +83,9 @@ class ActivityLine extends StatelessWidget {
     );
   }
 
-  /// Carte d'outil : dessin, libellé et état sur une ligne, l'appel lui-même
-  /// (commande, fichier, requête) en dessous, en chasse fixe ; les détails
-  /// se déplient dans la même carte.
+  /// Carte d'outil (style AI SDK Elements `<ToolHeader>` + `<ToolContent>`) :
+  /// en-tête structuré avec nom de l'outil, résumé en chasse fixe, badge d'état
+  /// et chevron de repli.
   Widget _card(
     BuildContext context,
     String label,
@@ -119,26 +120,61 @@ class ActivityLine extends StatelessWidget {
                     label,
                     style: style?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                  if (completed) ...[
-                    Icon(Icons.check, size: IconSizes.sm, color: scheme.accent),
-                    Text(
-                      Content.activityEnd,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: scheme.muted,
+                  if (completed)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: scheme.chip,
+                        borderRadius: BorderRadius.circular(Radii.xs),
+                        border: Border.all(color: scheme.line),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Spacing.xs,
+                          vertical: Spacing.xxs,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check,
+                              size: IconSizes.sm,
+                              color: scheme.content,
+                            ),
+                            const SizedBox(width: Spacing.xxs),
+                            Text(
+                              Content.activityEnd,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.muted,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
                 ],
               ),
               if (summary != null) ...[
                 const SizedBox(height: Spacing.xs),
-                Text(
-                  kind == ActivityKind.command ? '\$ $summary' : summary,
-                  maxLines: expanded ? null : 1,
-                  overflow: expanded ? null : TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontFamily: ActivityTokens.detailFont,
-                    color: scheme.muted,
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.codeSurface,
+                    borderRadius: BorderRadius.circular(Radii.xs),
+                    border: Border.all(color: scheme.line),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.xs + Spacing.xxs,
+                      vertical: Spacing.xxs,
+                    ),
+                    child: Text(
+                      kind == ActivityKind.command ? '\$ $summary' : summary,
+                      maxLines: expanded ? null : 1,
+                      overflow: expanded ? null : TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: ActivityTokens.detailFont,
+                        color: scheme.muted,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -157,13 +193,16 @@ class ActivityLine extends StatelessWidget {
         if (expandable)
           Icon(
             expanded ? Icons.expand_less : Icons.expand_more,
-            size: IconSizes.md,
+            size: IconSizes.sm,
             color: scheme.muted,
           ),
       ],
     );
     return Padding(
-      padding: const EdgeInsets.all(Spacing.sm + Spacing.xs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sm + Spacing.xs,
+        vertical: Spacing.sm,
+      ),
       child: header,
     );
   }

@@ -104,10 +104,16 @@ class _DraftViewState extends State<DraftView> {
           leading: widget.onHome == null
               ? null
               : Center(
-                  child: IconButton.filledTonal(
+                  child: IconButton(
                     tooltip: Content.home,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.card,
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.line,
+                      ),
+                    ),
                     onPressed: widget.onHome,
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.arrow_back, size: IconSizes.sm),
                   ),
                 ),
           title: draft == null
@@ -121,10 +127,14 @@ class _DraftViewState extends State<DraftView> {
             if (draft != null &&
                 widget.continuation &&
                 widget.onNewConversation != null)
-              IconButton.filledTonal(
+              IconButton(
                 tooltip: Content.newConversation,
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.card,
+                  side: BorderSide(color: Theme.of(context).colorScheme.line),
+                ),
                 onPressed: () => widget.onNewConversation!(draft.profile),
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, size: IconSizes.sm),
               ),
             const SizedBox(width: Spacing.sm),
           ],
@@ -196,46 +206,64 @@ class _DraftViewState extends State<DraftView> {
                               null => const SizedBox.shrink(),
                             },
                           ),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  viewport.maxHeight *
-                                  AttachmentTokens.composerHeightFraction,
-                            ),
-                            child: Scrollbar(
-                              controller: _attachmentScroll,
-                              thumbVisibility: true,
-                              child: SingleChildScrollView(
-                                controller: _attachmentScroll,
-                                primary: false,
-                                child: AttachmentList(
-                                  attachments: vm.attachments,
-                                  onRemove:
-                                      vm.attachmentBusy || vm.sendStatus.busy
-                                      ? null
-                                      : vm.removeAttachment,
-                                  onRetry:
-                                      vm.attachmentBusy || vm.sendStatus.busy
-                                      ? null
-                                      : vm.retryAttachment,
+                          if (vm.attachmentError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: Spacing.xs,
+                              ),
+                              child: Semantics(
+                                liveRegion: true,
+                                child: Text(
+                                  vm.attachmentError!,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          if (vm.attachments.isNotEmpty)
-                            const SizedBox(height: Spacing.sm),
-                          if (vm.attachmentError != null)
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(vm.attachmentError!),
-                            ),
                           if (vm.attachmentBusy)
-                            Semantics(
-                              liveRegion: true,
-                              child: const Text(Content.attachmentLoading),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: Spacing.xs,
+                              ),
+                              child: Semantics(
+                                liveRegion: true,
+                                child: const Text(Content.attachmentLoading),
+                              ),
                             ),
                           if (draft != null)
                             Composer(
+                              header: vm.attachments.isEmpty
+                                  ? null
+                                  : ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxHeight:
+                                            viewport.maxHeight *
+                                            AttachmentTokens
+                                                .composerHeightFraction,
+                                      ),
+                                      child: Scrollbar(
+                                        controller: _attachmentScroll,
+                                        thumbVisibility: true,
+                                        child: SingleChildScrollView(
+                                          controller: _attachmentScroll,
+                                          primary: false,
+                                          child: AttachmentList(
+                                            attachments: vm.attachments,
+                                            onRemove:
+                                                vm.attachmentBusy ||
+                                                    vm.sendStatus.busy
+                                                ? null
+                                                : vm.removeAttachment,
+                                            onRetry:
+                                                vm.attachmentBusy ||
+                                                    vm.sendStatus.busy
+                                                ? null
+                                                : vm.retryAttachment,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                               maxLines: vm.attachments.isEmpty
                                   ? ComposerLines.max
                                   : ComposerLines.withAttachments,
@@ -441,7 +469,10 @@ class _DraftViewState extends State<DraftView> {
               backgroundColor: scheme.card,
               foregroundColor: scheme.content,
               disabledForegroundColor: scheme.content,
-              shape: StadiumBorder(side: BorderSide(color: scheme.line)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Radii.md),
+                side: BorderSide(color: scheme.line),
+              ),
               padding: const EdgeInsetsDirectional.only(
                 start: Spacing.xs,
                 end: Spacing.sm + Spacing.xs,

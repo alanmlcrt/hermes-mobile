@@ -5,50 +5,49 @@ import 'package:flutter/material.dart';
 
 import '../models/profile_accent.dart';
 
-/// Neutres de l'app (refonte 2026-10-23, DESIGN.md) : fond gris-bleu très
-/// clair, cartes blanches, encre quasi noire ; inversés en sombre. La seule
-/// couleur vive est l'accent du profil ([AccentTokens]). Validée par Alanc le
-/// 2026-10-30 (G4, clair et sombre) : texte ≥ 4,5:1, contours décoratifs.
+/// Palette monochrome Zinc (style shadcn/ui & AI SDK Elements) : fond blanc
+/// pur en clair, Zinc 950 en sombre, bordures fines 1px (#E4E4E7 / #27272A),
+/// surfaces secondaires subtiles (#F4F4F5 / #18181B).
 abstract final class Palette {
-  static const Color bgLight = Color(0xFFF7F8FA);
-  static const Color bgDark = Color(0xFF0E1013);
+  static const Color bgLight = Color(0xFFFFFFFF);
+  static const Color bgDark = Color(0xFF09090B);
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color cardDark = Color(0xFF171A1F);
-  static const Color bubbleLight = Color(0xFFEDEFF2);
-  static const Color bubbleDark = Color(0xFF1C2026);
-  static const Color chipLight = Color(0xFFEDEFF2);
-  static const Color chipDark = Color(0xFF22262C);
-  static const Color codeLight = Color(0xFFE3E6EA);
-  static const Color codeDark = Color(0xFF2A2F36);
-  static const Color lineLight = Color(0xFFE3E6EA);
-  static const Color lineDark = Color(0xFF2A2F36);
-  static const Color outlineLight = Color(0xFFC9CED6);
-  static const Color outlineDark = Color(0xFF3A4049);
-  static const Color inkLight = Color(0xFF111418);
-  static const Color inkDark = Color(0xFFEEF0F3);
-  static const Color mutedLight = Color(0xFF5B6470);
-  static const Color mutedDark = Color(0xFF9AA3AE);
-  static const Color errorLight = Color(0xFFC62828);
-  static const Color errorDark = Color(0xFFFF8A80);
+  static const Color cardDark = Color(0xFF09090B);
+  static const Color bubbleLight = Color(0xFFF4F4F5);
+  static const Color bubbleDark = Color(0xFF18181B);
+  static const Color chipLight = Color(0xFFF4F4F5);
+  static const Color chipDark = Color(0xFF27272A);
+  static const Color codeLight = Color(0xFFFAFAFA);
+  static const Color codeDark = Color(0xFF121215);
+  static const Color lineLight = Color(0xFFE4E4E7);
+  static const Color lineDark = Color(0xFF27272A);
+  static const Color outlineLight = Color(0xFFD4D4D8);
+  static const Color outlineDark = Color(0xFF3F3F46);
+  static const Color inkLight = Color(0xFF09090B);
+  static const Color inkDark = Color(0xFFFAFAFA);
+  static const Color mutedLight = Color(0xFF71717A);
+  static const Color mutedDark = Color(0xFFA1A1AA);
+  static const Color errorLight = Color(0xFFDC2626);
+  static const Color errorDark = Color(0xFFF87171);
 
   /// Voile derrière une feuille du bas.
-  static const Color scrim = Color(0x73080A0E);
+  static const Color scrim = Color(0x8009090B);
 
-  /// Opacité de la teinte d'accent (ligne surlignée).
-  static const double accentTint = .14;
+  /// Opacité de la teinte de sélection (ligne surlignée style shadcn).
+  static const double accentTint = .08;
 }
 
-/// Couleur d'un profil : avatar, bouton d'envoi, repères. Texte blanc
-/// lisible dessus (contraste ≥ 4,5:1) dans les deux thèmes.
+/// Nuances sobres de profil (palette Zinc / Slate shadcn), contraste ≥ 4,5:1
+/// avec [onAccent].
 abstract final class AccentTokens {
   static const Color onAccent = Color(0xFFFFFFFF);
   static Color of(ProfileAccent accent) => switch (accent) {
-    ProfileAccent.indigo => const Color(0xFF4F57E8),
-    ProfileAccent.blue => const Color(0xFF1D6FD1),
-    ProfileAccent.violet => const Color(0xFF7152E8),
-    ProfileAccent.teal => const Color(0xFF00796B),
-    ProfileAccent.orange => const Color(0xFFC2410C),
-    ProfileAccent.raspberry => const Color(0xFFC2306A),
+    ProfileAccent.indigo => const Color(0xFF18181B),
+    ProfileAccent.blue => const Color(0xFF27272A),
+    ProfileAccent.violet => const Color(0xFF3F3F46),
+    ProfileAccent.teal => const Color(0xFF334155),
+    ProfileAccent.orange => const Color(0xFF44403C),
+    ProfileAccent.raspberry => const Color(0xFF374151),
   };
 }
 
@@ -59,6 +58,7 @@ abstract final class Fonts {
 
 /// Espacements (marges, écarts entre éléments).
 abstract final class Spacing {
+  static const double xxs = 2;
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 16;
@@ -67,23 +67,24 @@ abstract final class Spacing {
 }
 
 abstract final class AttachmentTokens {
-  static const double preview = 48;
-  static const int cacheWidth = 192;
+  static const double preview = 40;
+  static const int cacheWidth = 160;
 
   /// Part de la zone visible réservée aux pièces, clavier déjà déduit.
-  static const double composerHeightFraction = .3;
+  static const double composerHeightFraction = .28;
 }
 
-/// Rayons d'arrondi.
+/// Rayons d'arrondi modérés (style shadcn/ui & AI SDK Elements : 6–12 px).
 abstract final class Radii {
-  static const double sm = 8;
-  static const double md = 12;
-  static const double lg = 16;
-  static const double xl = 24;
-  static const double pill = 28;
+  static const double xs = 4;
+  static const double sm = 6;
+  static const double md = 8;
+  static const double lg = 10;
+  static const double xl = 12;
+  static const double pill = 12;
 
-  /// Bulles de message.
-  static const double bubble = 22;
+  /// Conteneurs de message utilisateur.
+  static const double bubble = 12;
 }
 
 /// Élévations.

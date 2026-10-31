@@ -6,9 +6,11 @@ import '../tokens.dart';
 import '../../models/attachment.dart';
 import 'attachment_list.dart';
 
-/// Message du fil, en bulle : la demande d'Alanc en texte brut, la réponse de
-/// Hermes en Markdown (emojis, listes, blocs de code défilant horizontalement). Aucune
-/// animation d'apparition.
+/// Message du fil (style AI SDK Elements `<Message>` / `<MessageContent>`) :
+/// - Message utilisateur (`fromUser: true`) : aligné à droite dans un conteneur
+///   sobre aux coins modérés (`Radii.lg`).
+/// - Réponse de l'assistant (`fromUser: false`) : pleine largeur directement sur
+///   la toile, sans bulle grise, avec blocs de code bordés (`<CodeBlock>`).
 class MessageBubble extends StatelessWidget {
   const MessageBubble({
     super.key,
@@ -28,31 +30,81 @@ class MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final body = fromUser
-        ? Text(text, style: TextStyle(color: scheme.emphasisContent))
+        ? Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.emphasisContent,
+            ),
+          )
         : MarkdownBody(
             data: text,
             // Aucune image distante : une URL de modèle ne déclenche pas de requête.
             imageBuilder: (uri, title, alt) =>
                 Text(alt == null || alt.isEmpty ? uri.toString() : alt),
             styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+              p: theme.textTheme.bodyMedium?.copyWith(color: scheme.content),
               code: TextStyle(
                 fontFamily: CodeStyle.family,
                 color: scheme.content,
                 backgroundColor: scheme.codeSurface,
               ),
-              codeblockPadding: const EdgeInsets.all(Spacing.sm),
+              codeblockPadding: const EdgeInsets.all(Spacing.sm + Spacing.xs),
               codeblockDecoration: BoxDecoration(
                 color: scheme.codeSurface,
-                borderRadius: BorderRadius.circular(Radii.sm),
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(color: scheme.line),
+              ),
+              blockquoteDecoration: BoxDecoration(
+                color: scheme.bubbleSurface,
+                borderRadius: BorderRadius.circular(Radii.xs),
+                border: Border(
+                  left: BorderSide(
+                    color: scheme.outline,
+                    width: Layout.swatchSelected,
+                  ),
+                ),
               ),
             ),
           );
     final label = fromUser ? Content.yourRequest : Content.hermesReply;
-    // Deux bulles pleines : grise pour Hermes, encre pour Alanc.
+    final content = attachments.isEmpty && !notificationUnfollowed
+        ? body
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (text.isNotEmpty) body,
+              if (notificationUnfollowed)
+                Text(
+                  Content.notificationUnfollowed,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.emphasisContent,
+                  ),
+                ),
+              if (attachments.isNotEmpty) ...[
+                if (text.isNotEmpty || notificationUnfollowed)
+                  const SizedBox(height: Spacing.sm),
+                DefaultTextStyle(
+                  style: theme.textTheme.bodyMedium!.copyWith(
+                    color: scheme.content,
+                  ),
+                  child: AttachmentList(attachments: attachments),
+                ),
+              ],
+            ],
+          );
+    if (!fromUser) {
+      return Semantics(
+        container: true,
+        label: label,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+          child: content,
+        ),
+      );
+    }
     return Align(
-      alignment: fromUser
-          ? AlignmentDirectional.centerEnd
-          : AlignmentDirectional.centerStart,
+      alignment: AlignmentDirectional.centerEnd,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.sizeOf(context).width * Layout.bubbleMaxWidth,
@@ -62,39 +114,16 @@ class MessageBubble extends StatelessWidget {
           label: label,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: fromUser ? scheme.emphasis : scheme.bubbleSurface,
-              borderRadius: BorderRadius.circular(Radii.bubble),
+              color: scheme.emphasis,
+              borderRadius: BorderRadius.circular(Radii.lg),
+              border: Border.all(color: scheme.line),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: Spacing.md,
-                vertical: Spacing.sm + Spacing.xs,
+                vertical: Spacing.sm + Spacing.xxs,
               ),
-              child: attachments.isEmpty && !notificationUnfollowed
-                  ? body
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (text.isNotEmpty) body,
-                        if (notificationUnfollowed)
-                          Text(
-                            Content.notificationUnfollowed,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.emphasisContent,
-                            ),
-                          ),
-                        if (attachments.isNotEmpty) ...[
-                          const SizedBox(height: Spacing.sm),
-                          DefaultTextStyle(
-                            style: theme.textTheme.bodyMedium!.copyWith(
-                              color: scheme.content,
-                            ),
-                            child: AttachmentList(attachments: attachments),
-                          ),
-                        ],
-                      ],
-                    ),
+              child: content,
             ),
           ),
         ),

@@ -323,10 +323,14 @@ class _HistoryViewState extends State<HistoryView> {
               icon: const Icon(Icons.refresh),
             ),
             if (widget.onSettings != null)
-              IconButton.filledTonal(
+              IconButton(
                 tooltip: Content.profileSettings,
+                style: IconButton.styleFrom(
+                  backgroundColor: scheme.card,
+                  side: BorderSide(color: scheme.line),
+                ),
                 onPressed: () => widget.onSettings!(vm.profile),
-                icon: const Icon(Icons.tune),
+                icon: const Icon(Icons.tune, size: IconSizes.sm),
               ),
           ],
         ),

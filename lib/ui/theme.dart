@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/profile_accent.dart';
 import 'tokens.dart';
 
-/// Palette de l'app, claire/sombre (DESIGN.md, ux-Hermes Mobile-2026-10-23).
+/// Palette de l'app, claire/sombre (style monochrome shadcn/ui & AI Elements).
 ColorScheme fallbackColorScheme(Brightness brightness) {
   final dark = brightness == Brightness.dark;
   final ink = dark ? Palette.inkDark : Palette.inkLight;
@@ -18,8 +18,8 @@ ColorScheme fallbackColorScheme(Brightness brightness) {
   ).copyWith(
     primary: ink,
     onPrimary: bg,
-    secondary: AccentTokens.of(ProfileAccent.indigo),
-    onSecondary: AccentTokens.onAccent,
+    secondary: ink,
+    onSecondary: bg,
     secondaryContainer: chip,
     onSecondaryContainer: ink,
     surface: bg,
@@ -45,7 +45,7 @@ ColorScheme fallbackColorScheme(Brightness brightness) {
 ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
   final scheme = dynamicScheme ?? fallbackColorScheme(brightness);
   final rounded = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(Radii.lg),
+    borderRadius: BorderRadius.circular(Radii.md),
   );
   final base = ThemeData(
     colorScheme: scheme,
@@ -64,7 +64,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       surfaceTintColor: Colors.transparent,
       elevation: Elevations.flat,
       scrolledUnderElevation: Elevations.flat,
-      centerTitle: true,
+      centerTitle: false,
       titleTextStyle: base.textTheme.titleMedium?.copyWith(
         color: scheme.content,
         fontWeight: FontWeight.w600,
@@ -75,7 +75,7 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       margin: EdgeInsets.zero,
       color: scheme.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Radii.xl),
+        borderRadius: BorderRadius.circular(Radii.lg),
         side: BorderSide(color: scheme.line),
       ),
     ),
@@ -83,36 +83,55 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       style: FilledButton.styleFrom(
         backgroundColor: scheme.emphasis,
         foregroundColor: scheme.emphasisContent,
-        shape: const StadiumBorder(),
+        elevation: Elevations.flat,
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.md,
+          vertical: Spacing.sm,
+        ),
+        shape: rounded,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: scheme.content,
-        side: BorderSide(color: scheme.outline),
-        shape: const StadiumBorder(),
+        backgroundColor: scheme.card,
+        side: BorderSide(color: scheme.line),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.md,
+          vertical: Spacing.sm,
+        ),
+        shape: rounded,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: scheme.content,
-        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sm + Spacing.xs,
+          vertical: Spacing.sm,
+        ),
+        shape: rounded,
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: scheme.card,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sm + Spacing.xs,
+        vertical: Spacing.sm + Spacing.xs,
+      ),
       hintStyle: TextStyle(color: scheme.onSurfaceVariant),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(color: scheme.outlineVariant),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(color: scheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(color: scheme.outline),
       ),
     ),
@@ -135,8 +154,11 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
         Layout.sheetHandleHeight,
       ),
       modalBarrierColor: scheme.scrim,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.pill)),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.xl),
+        ),
+        side: BorderSide(color: scheme.line),
       ),
     ),
     dialogTheme: DialogThemeData(
@@ -144,20 +166,23 @@ ThemeData buildTheme(ColorScheme? dynamicScheme, Brightness brightness) {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.xl),
+        side: BorderSide(color: scheme.line),
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         minimumSize: const Size.square(Layout.headerButton),
+        shape: rounded,
       ),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: scheme.card,
+      selectedColor: scheme.surfaceContainerHigh,
       side: BorderSide(color: scheme.line),
-      shape: const StadiumBorder(),
+      shape: rounded,
     ),
     dividerTheme: DividerThemeData(color: scheme.line, space: 1),
-    progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.accent),
+    progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.emphasis),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: scheme.inverseSurface,
       behavior: SnackBarBehavior.floating,

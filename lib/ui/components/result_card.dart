@@ -74,13 +74,22 @@ class ResultCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  switch (item.state) {
-                    ResultState.downloaded => Icons.description_outlined,
-                    _ => Icons.insert_drive_file_outlined,
-                  },
-                  size: IconSizes.md,
-                  color: scheme.muted,
+                Container(
+                  width: AttachmentTokens.preview,
+                  height: AttachmentTokens.preview,
+                  decoration: BoxDecoration(
+                    color: scheme.bubbleSurface,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    border: Border.all(color: scheme.line),
+                  ),
+                  child: Icon(
+                    switch (item.state) {
+                      ResultState.downloaded => Icons.description_outlined,
+                      _ => Icons.insert_drive_file_outlined,
+                    },
+                    size: IconSizes.sm,
+                    color: scheme.muted,
+                  ),
                 ),
                 const SizedBox(width: Spacing.sm),
                 Expanded(

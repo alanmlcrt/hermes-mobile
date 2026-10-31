@@ -107,17 +107,18 @@ class ApprovalCard extends StatelessWidget {
               style: theme.textTheme.labelMedium?.copyWith(color: scheme.muted),
             ),
             const SizedBox(height: Spacing.xs),
-            // Commande entière, retour à la ligne plutôt que troncature.
+            // Commande entière, dans un bloc terminal encadré style AI Elements.
             DecoratedBox(
               decoration: BoxDecoration(
-                color: scheme.chip,
-                borderRadius: BorderRadius.circular(Radii.bubble),
+                color: scheme.codeSurface,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(color: scheme.line),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(Spacing.sm),
+                padding: const EdgeInsets.all(Spacing.sm + Spacing.xs),
                 child: SelectableText(
                   command,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontFamily: CodeStyle.family,
                     color: scheme.content,
                   ),

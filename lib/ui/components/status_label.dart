@@ -17,19 +17,34 @@ class StatusLabel extends StatelessWidget {
       container: true,
       label: label,
       excludeSemantics: true,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: IconSizes.sm, color: scheme.emphasis),
-          const SizedBox(width: Spacing.xs),
-          Flexible(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: scheme.content),
-            ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.bubbleSurface,
+          borderRadius: BorderRadius.circular(Radii.sm),
+          border: Border.all(color: scheme.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sm,
+            vertical: Spacing.xxs,
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: IconSizes.sm, color: scheme.muted),
+              const SizedBox(width: Spacing.xs),
+              Flexible(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scheme.content,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

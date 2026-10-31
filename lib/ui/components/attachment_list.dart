@@ -17,183 +17,244 @@ class AttachmentList extends StatelessWidget {
   final ValueChanged<Attachment>? onRemove;
   final ValueChanged<Attachment>? onRetry;
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (final a in attachments)
-        Padding(
-          padding: const EdgeInsets.only(bottom: Spacing.sm),
-          child: Container(
-            padding: const EdgeInsets.all(Spacing.sm),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.card,
-              borderRadius: BorderRadius.circular(Radii.md),
-              border: Border.all(color: Theme.of(context).colorScheme.line),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (a.isImage && !a.missing && !a.cleaned) ...[
-                      Semantics(
-                        label: Content.attachmentPreview(a.name),
-                        image: true,
-                        child: Image.file(
-                          File(a.localPath),
-                          width: AttachmentTokens.preview,
-                          height: AttachmentTokens.preview,
-                          cacheWidth: AttachmentTokens.cacheWidth,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                        ),
-                      ),
-                      const SizedBox(width: Spacing.sm),
-                    ] else ...[
-                      ExcludeSemantics(
-                        child: SizedBox(
-                          width: AttachmentTokens.preview,
-                          height: AttachmentTokens.preview,
-                          child: Icon(
-                            a.isImage
-                                ? Icons.image_outlined
-                                : Icons.description_outlined,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: Spacing.sm),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Semantics(
-                            label: a.name,
-                            value:
-                                a.state == AttachmentState.selected &&
-                                    !a.missing
-                                ? Content.attachmentSelected
-                                : null,
-                            excludeSemantics: true,
-                            child: Tooltip(
-                              message: a.name,
-                              child: Text(
-                                a.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                          Text(Content.compactFileSize(a.bytes)),
-                        ],
-                      ),
-                    ),
-                    if (!a.sent)
-                      Semantics(
-                        label: Content.removeAttachment(a.name),
-                        button: true,
-                        enabled: onRemove != null,
-                        onTap: onRemove == null ? null : () => onRemove!(a),
-                        excludeSemantics: true,
-                        child: IconButton(
-                          tooltip: Content.removeAttachment(a.name),
-                          onPressed: onRemove == null
-                              ? null
-                              : () => onRemove!(a),
-                          constraints: const BoxConstraints.tightFor(
-                            width: Layout.touchTarget,
-                            height: Layout.touchTarget,
-                          ),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ),
-                  ],
-                ),
-                if (a.state != AttachmentState.selected ||
-                    (a.missing && !a.sent))
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      '${Content.attachmentStatus(a.state, a.sent, a.errorCode)}'
-                      '${a.missing && !a.sent ? ' ${Content.attachmentMissing}' : ''}',
-                    ),
-                  ),
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: Spacing.sm,
-                    runSpacing: Spacing.xs,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final a in attachments)
+          Padding(
+            padding: const EdgeInsets.only(bottom: Spacing.xs),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sm,
+                vertical: Spacing.xs + Spacing.xxs,
+              ),
+              decoration: BoxDecoration(
+                color: scheme.bubbleSurface,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(color: scheme.line),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      if (!a.sent &&
-                          (a.state == AttachmentState.failed ||
-                              a.state == AttachmentState.uncertain))
+                      if (a.isImage && !a.missing && !a.cleaned) ...[
                         Semantics(
-                          label: Content.retryAttachment(a.name),
-                          child: TextButton(
-                            onPressed: onRetry == null
-                                ? null
-                                : () => onRetry!(a),
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(
-                                Layout.stopButton,
-                                Layout.stopButton,
+                          label: Content.attachmentPreview(a.name),
+                          image: true,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(Radii.xs),
+                            child: Image.file(
+                              File(a.localPath),
+                              width: AttachmentTokens.preview,
+                              height: AttachmentTokens.preview,
+                              cacheWidth: AttachmentTokens.cacheWidth,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                      ] else ...[
+                        ExcludeSemantics(
+                          child: Container(
+                            width: AttachmentTokens.preview,
+                            height: AttachmentTokens.preview,
+                            decoration: BoxDecoration(
+                              color: scheme.card,
+                              borderRadius: BorderRadius.circular(Radii.xs),
+                              border: Border.all(color: scheme.line),
+                            ),
+                            child: Icon(
+                              a.isImage
+                                  ? Icons.image_outlined
+                                  : Icons.description_outlined,
+                              size: IconSizes.sm,
+                              color: scheme.muted,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Semantics(
+                              label: a.name,
+                              value:
+                                  a.state == AttachmentState.selected &&
+                                      !a.missing
+                                  ? Content.attachmentSelected
+                                  : null,
+                              excludeSemantics: true,
+                              child: Tooltip(
+                                message: a.name,
+                                child: Text(
+                                  a.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: scheme.content,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
                             ),
-                            child: const Text(Content.attachmentRetry),
+                            Text(
+                              Content.compactFileSize(a.bytes),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!a.sent)
+                        Semantics(
+                          label: Content.removeAttachment(a.name),
+                          button: true,
+                          enabled: onRemove != null,
+                          onTap: onRemove == null ? null : () => onRemove!(a),
+                          excludeSemantics: true,
+                          child: IconButton(
+                            tooltip: Content.removeAttachment(a.name),
+                            onPressed: onRemove == null
+                                ? null
+                                : () => onRemove!(a),
+                            constraints: const BoxConstraints.tightFor(
+                              width: Layout.touchTarget,
+                              height: Layout.touchTarget,
+                            ),
+                            icon: Icon(
+                              Icons.close,
+                              size: IconSizes.sm,
+                              color: scheme.muted,
+                            ),
                           ),
                         ),
                     ],
                   ),
-                ),
-              ],
+                  if (a.state != AttachmentState.selected ||
+                      (a.missing && !a.sent)) ...[
+                    const SizedBox(height: Spacing.xs),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        '${Content.attachmentStatus(a.state, a.sent, a.errorCode)}'
+                        '${a.missing && !a.sent ? ' ${Content.attachmentMissing}' : ''}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.muted,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (!a.sent &&
+                      (a.state == AttachmentState.failed ||
+                          a.state == AttachmentState.uncertain))
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Semantics(
+                        label: Content.retryAttachment(a.name),
+                        child: TextButton(
+                          onPressed: onRetry == null ? null : () => onRetry!(a),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(
+                              Layout.stopButton,
+                              Layout.stopButton,
+                            ),
+                          ),
+                          child: const Text(Content.attachmentRetry),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class AttachmentSelectionSheet extends StatelessWidget {
   const AttachmentSelectionSheet({super.key, required this.limits});
   final List<AttachmentLimit> limits;
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(Spacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(Content.attach, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: Spacing.md),
-          const Text(Content.attachmentFormats),
-          for (final limit in limits) ...[
-            if (limit.maxCount != null)
-              Text(
-                '${switch (limit.category) {
-                  AttachmentCategory.text => Content.attachmentText,
-                  AttachmentCategory.image => Content.photos,
-                  AttachmentCategory.pdf => Content.attachmentPdf,
-                  AttachmentCategory.office => Content.attachmentOffice,
-                }} : ${Content.attachmentCountLimit(limit.maxCount!)}',
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(Spacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              Content.attach,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              Content.attachmentFormats,
+              style: theme.textTheme.bodySmall?.copyWith(color: scheme.muted),
+            ),
+            for (final limit in limits) ...[
+              if (limit.maxCount != null)
+                Text(
+                  '${switch (limit.category) {
+                    AttachmentCategory.text => Content.attachmentText,
+                    AttachmentCategory.image => Content.photos,
+                    AttachmentCategory.pdf => Content.attachmentPdf,
+                    AttachmentCategory.office => Content.attachmentOffice,
+                  }} : ${Content.attachmentCountLimit(limit.maxCount!)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.muted,
+                  ),
+                ),
+            ],
+            const SizedBox(height: Spacing.md),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                alignment: AlignmentDirectional.centerStart,
+                backgroundColor: scheme.bubbleSurface,
+                minimumSize: const Size.fromHeight(Layout.touchTarget),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  side: BorderSide(color: scheme.line),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context, AttachmentSource.photos),
+              icon: const Icon(Icons.photo_outlined, size: IconSizes.sm),
+              label: const Text(Content.photos),
+            ),
+            const SizedBox(height: Spacing.sm),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                alignment: AlignmentDirectional.centerStart,
+                backgroundColor: scheme.bubbleSurface,
+                minimumSize: const Size.fromHeight(Layout.touchTarget),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  side: BorderSide(color: scheme.line),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context, AttachmentSource.files),
+              icon: const Icon(Icons.attach_file, size: IconSizes.sm),
+              label: const Text(Content.files),
+            ),
           ],
-          const SizedBox(height: Spacing.md),
-          TextButton.icon(
-            onPressed: () => Navigator.pop(context, AttachmentSource.photos),
-            icon: const Icon(Icons.photo_outlined),
-            label: const Text(Content.photos),
-          ),
-          TextButton.icon(
-            onPressed: () => Navigator.pop(context, AttachmentSource.files),
-            icon: const Icon(Icons.attach_file),
-            label: const Text(Content.files),
-          ),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

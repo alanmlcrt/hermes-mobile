@@ -53,12 +53,13 @@ class WorkStateLabel extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.bubbleSurface,
-          borderRadius: BorderRadius.circular(Radii.bubble),
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(color: scheme.line),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.md,
-            vertical: Spacing.sm,
+            horizontal: Spacing.sm + Spacing.xs,
+            vertical: Spacing.xs + Spacing.xxs,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
