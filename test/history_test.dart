@@ -595,7 +595,10 @@ void main() {
         await tester.tap(find.byTooltip(Content.conversations));
         await tester.pumpAndSettle();
         await tester.tap(
-          find.widgetWithText(FilledButton, Content.newConversation),
+          find.descendant(
+            of: find.byType(HistoryView),
+            matching: find.byTooltip(Content.newConversation),
+          ),
         );
         await tester.pumpAndSettle();
         expect(location(tester), '/draft/${fresh.key.value}');

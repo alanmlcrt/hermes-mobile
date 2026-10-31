@@ -233,17 +233,15 @@ void main() {
       'réglages du profil : carte des notifications et demande de permission',
       (tester) async {
         await launched();
+        device.value = null;
         await pumpApp(tester);
         router(tester).go(profileSettingsPath(_travail));
         await tester.pumpAndSettle();
         expect(find.text(Content.notifications), findsOneWidget);
-        final allow = find.widgetWithText(
-          FilledButton,
-          Content.notificationEnable,
-        );
-        expect(allow, findsOneWidget);
-        await tester.ensureVisible(allow);
-        await tester.tap(allow);
+        final toggle = find.byType(SwitchListTile);
+        expect(toggle, findsOneWidget);
+        await tester.ensureVisible(toggle);
+        await tester.tap(toggle);
         await tester.pumpAndSettle();
         expect(device.permissionRequests, 1);
       },

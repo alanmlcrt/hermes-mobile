@@ -47,6 +47,7 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
     _lastSelectedProfile = gateway.snapshot.selectedProfile;
     _events = gateway.events.listen(_onEvent);
     _snapshots = gateway.snapshots.listen(_onSnapshot);
+    unawaited(_warmCache());
   }
   final Database database;
   final ConnectionGateway gateway;
@@ -1186,21 +1187,19 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
         replayEpoch: epoch,
       );
       if (!currentScope()) return;
-      await _write(key, next);
-      _dirty.remove(key);
-      _timers.remove(key)?.cancel();
       _settle(current, next);
       _cache[key] = next;
-      if (!_changes.isClosed) _changes.add(key);
       _synced[key] = generation;
       _setFailed(key, false);
       if (userRows != null) await resumer.reconcile(key, info, userRows);
       if (!currentScope()) return;
       next = await _withAttachments(key, next);
       if (!currentScope()) return;
+      _cache[key] = next;
       await _write(key, next);
       if (!currentScope()) return;
-      _cache[key] = next;
+      _dirty.remove(key);
+      _timers.remove(key)?.cancel();
       if (!_changes.isClosed) _changes.add(key);
     } catch (_) {
       // Rien n'est renvoyé : la projection précédente et les opérations restent.
@@ -1970,6 +1969,39 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
         }
       }
     });
+  }
+
+  Future<void> _warmCache() async {
+    try {
+      final rows = await database.query('conversation_timelines');
+      if (_disposed) return;
+      for (final row in rows) {
+        final key = TimelineKey(
+          ConnectionKey(row['connection_key'] as String),
+          ProfileKey(row['profile_key'] as String),
+          row['stored_session_id'] as String,
+        );
+        if (_cache.containsKey(key)) continue;
+        final stored = TimelineProjection.fromJson(
+          Map<String, Object?>.from(
+            jsonDecode(row['projection'] as String) as Map,
+          ),
+          replayEpoch: row['replay_epoch'] as String?,
+          seq: row['seq'] as int?,
+        );
+        final live =
+            _bindings[key]?.generation == gateway.socketGeneration &&
+            gateway.snapshot.link == LinkState.connected;
+        final hydrated = await _withAttachments(
+          key,
+          live ? stored : _unsynced(stored) ?? stored,
+        );
+        if (_disposed) return;
+        _cache.putIfAbsent(key, () => hydrated);
+      }
+    } catch (_) {
+      /* Cache de confort : lecture à la demande en secours. */
+    }
   }
 
   Future<TimelineProjection> _read(TimelineKey key) async {

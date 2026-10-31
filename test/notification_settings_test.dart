@@ -7,8 +7,10 @@ import 'package:hermes_mobile/ui/theme.dart';
 import 'notification_repository_test.dart' show Device;
 
 void main() {
+  setUp(() => NotificationSettings.disabledProfiles.clear());
+
   testWidgets(
-    'sans champ d’observateur ; explications visibles ; permission relue au retour',
+    'toggle simple sans explication ; permission relue au retour système',
     (tester) async {
       final device = Device()..value = null;
       addTearDown(device.dispose);
@@ -21,11 +23,11 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(TextField), findsNothing);
-      expect(find.textContaining('observateur'), findsNothing);
-      expect(find.textContaining('Observateur'), findsNothing);
-      expect(find.text(Content.notificationPrerequisites), findsOneWidget);
-      expect(Content.notificationPrerequisites, contains('arrêt forcé'));
-      expect(find.text(Content.notificationDevice('denied')), findsOneWidget);
+      expect(find.text(Content.notificationPrerequisites), findsNothing);
+      expect(
+        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+        isFalse,
+      );
       device.value = 'permission-now-granted';
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
@@ -33,11 +35,14 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
       expect(device.reads, greaterThan(0));
-      expect(find.text(Content.notificationDevice('ready')), findsOneWidget);
+      expect(
+        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+        isTrue,
+      );
     },
   );
 
-  testWidgets('« Autoriser les notifications » demande la permission', (
+  testWidgets('activer le toggle demande la permission, profil sans plugin grisé', (
     tester,
   ) async {
     final device = _Asking();
@@ -50,11 +55,34 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text(Content.notificationDevice('denied')), findsOneWidget);
-    await tester.tap(find.text(Content.notificationEnable));
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isFalse,
+    );
+    await tester.tap(find.byType(SwitchListTile));
     await tester.pumpAndSettle();
     expect(device.requested, 1);
-    expect(find.text(Content.notificationDevice('ready')), findsOneWidget);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isTrue,
+    );
+
+    // Profil sans plugin : toggle grisé (onChanged == null).
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListView(
+            children: [NotificationSettings(device: device, hasPlugin: false)],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final disabledTile = tester.widget<SwitchListTile>(
+      find.byType(SwitchListTile),
+    );
+    expect(disabledTile.value, isFalse);
+    expect(disabledTile.onChanged, isNull);
   });
 
   for (final size in [const Size(375, 812), const Size(812, 375)]) {
@@ -89,24 +117,9 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        expect(find.text(Content.notificationDevice('denied')), findsOneWidget);
-        final allow = find.widgetWithText(
-          FilledButton,
-          Content.notificationEnable,
-        );
-        await tester.ensureVisible(allow);
-        expect(
-          tester.getSemantics(allow),
-          matchesSemantics(
-            isButton: true,
-            hasEnabledState: true,
-            isEnabled: true,
-            hasTapAction: true,
-            hasFocusAction: true,
-            isFocusable: true,
-            label: Content.notificationEnable,
-          ),
-        );
+        final toggle = find.byType(SwitchListTile);
+        await tester.ensureVisible(toggle);
+        expect(find.text(Content.notifications), findsOneWidget);
         expect(tester.takeException(), isNull);
         semantics.dispose();
       });

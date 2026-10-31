@@ -449,12 +449,18 @@ abstract final class Content {
   static const change = 'Changer';
   static const allProfiles = 'Tous les profils';
   static String accentName(String id) => switch (id) {
-    'indigo' => 'Indigo',
-    'blue' => 'Bleu',
-    'violet' => 'Violet',
-    'teal' => 'Sarcelle',
-    'orange' => 'Orange',
-    'raspberry' => 'Framboise',
+    'indigo' => 'Lavande',
+    'blue' => 'Bleu pastel',
+    'sky' => 'Azur',
+    'teal' => 'Turquoise',
+    'mint' => 'Menthe',
+    'emerald' => 'Sauge',
+    'amber' => 'Ambre',
+    'orange' => 'Abricot',
+    'peach' => 'Pêche',
+    'rose' => 'Rose poudré',
+    'raspberry' => 'Orchidée',
+    'violet' => 'Lilas',
     _ => id,
   };
   static const historyLoading = 'Chargement des conversations…';

@@ -5,10 +5,16 @@ import 'profile.dart';
 enum ProfileAccent {
   indigo('indigo'),
   blue('blue'),
-  violet('violet'),
+  sky('sky'),
   teal('teal'),
+  mint('mint'),
+  emerald('emerald'),
+  amber('amber'),
   orange('orange'),
-  raspberry('raspberry');
+  peach('peach'),
+  rose('rose'),
+  raspberry('raspberry'),
+  violet('violet');
 
   const ProfileAccent(this.id);
   final String id;

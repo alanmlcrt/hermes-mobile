@@ -384,10 +384,8 @@ class _DraftViewState extends State<DraftView> {
       if (vm.resyncing)
         Semantics(
           liveRegion: true,
-          child: const StatusLabel(
-            icon: Icons.sync,
-            label: ConnectionLabels.resyncing,
-          ),
+          label: ConnectionLabels.resyncing,
+          child: const SizedBox.shrink(),
         ),
       ..._timeline(context, vm),
       if (draft != null &&
@@ -401,10 +399,10 @@ class _DraftViewState extends State<DraftView> {
         if (c.hasClients) c.jumpTo(c.position.maxScrollExtent);
       });
     }
-    // Au premier affichage, le fil déjà là ne s'anime pas.
-    if (!_appearReady) {
+    // Au premier affichage et pendant le chargement/resync initial, le fil déjà là ne s'anime pas.
+    if (!_appearReady || vm.initialLoading || vm.resyncing) {
       _appeared.addAll(children.map((child) => child.key).nonNulls);
-      if (draft != null) {
+      if (!_appearReady && draft != null && !vm.initialLoading && !vm.resyncing) {
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => _appearReady = true,
         );

@@ -8,6 +8,7 @@ import '../../models/profile.dart';
 import '../../ui/components/history_row.dart';
 import '../../ui/components/profile_avatar.dart';
 import '../../ui/content.dart';
+import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../profiles/profile_accents.dart';
 import 'delete_conversation_dialog.dart';
@@ -46,9 +47,12 @@ class HistoryView extends StatefulWidget {
 
 class _HistoryViewState extends State<HistoryView> {
   late final _viewModel = widget.create();
+  final _searchController = TextEditingController();
+  bool _searchOpen = false;
 
   @override
   void dispose() {
+    _searchController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -157,45 +161,120 @@ class _HistoryViewState extends State<HistoryView> {
     }
   }
 
-  Widget _search(BuildContext context, HistoryViewModel vm) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      TextField(
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.search),
-          labelText: Content.searchHint,
-        ),
-        textInputAction: TextInputAction.search,
-        onChanged: vm.search,
-      ),
-      Wrap(
-        spacing: Spacing.sm,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          FilterChip(
-            label: const Text(Content.searchAllProfiles),
-            selected: vm.allProfiles,
-            onSelected: vm.setAllProfiles,
-          ),
-          SegmentedButton<HistorySection>(
-            segments: const [
-              ButtonSegment(
-                value: HistorySection.main,
-                label: Text(Content.sectionMain),
-              ),
-              ButtonSegment(
-                value: HistorySection.hidden,
-                label: Text(Content.sectionHidden),
-                icon: Icon(Icons.visibility_off_outlined),
-              ),
-            ],
-            selected: {vm.section},
-            onSelectionChanged: (s) => vm.showSection(s.single),
-          ),
-        ],
-      ),
-    ],
+  Widget _iconFilter(
+    ColorScheme scheme, {
+    required IconData icon,
+    required String tooltip,
+    required bool selected,
+    required VoidCallback onPressed,
+  }) => IconButton(
+    tooltip: tooltip,
+    style: IconButton.styleFrom(
+      backgroundColor: selected ? scheme.accent : scheme.chip,
+      foregroundColor: selected ? AccentTokens.onAccent : scheme.onSurface,
+      minimumSize: const Size.square(Layout.headerButton),
+    ),
+    onPressed: onPressed,
+    icon: Icon(icon, size: IconSizes.sm),
   );
+
+  Widget _toolbar(BuildContext context, HistoryViewModel vm) {
+    final scheme = Theme.of(context).colorScheme;
+    final duration = motionDuration(context, Motion.short);
+    final showSearch = _searchOpen || vm.searching;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            _iconFilter(
+              scheme,
+              icon: Icons.chat_bubble_outline,
+              tooltip: Content.sectionMain,
+              selected: !vm.allProfiles && vm.section == HistorySection.main,
+              onPressed: () {
+                if (vm.allProfiles) vm.setAllProfiles(false);
+                vm.showSection(HistorySection.main);
+              },
+            ),
+            const SizedBox(width: Spacing.xs),
+            _iconFilter(
+              scheme,
+              icon: Icons.visibility_off_outlined,
+              tooltip: Content.sectionHidden,
+              selected: !vm.allProfiles && vm.section == HistorySection.hidden,
+              onPressed: () {
+                if (vm.allProfiles) vm.setAllProfiles(false);
+                vm.showSection(HistorySection.hidden);
+              },
+            ),
+            const SizedBox(width: Spacing.xs),
+            _iconFilter(
+              scheme,
+              icon: Icons.people_outline,
+              tooltip: Content.searchAllProfiles,
+              selected: vm.allProfiles,
+              onPressed: () => vm.setAllProfiles(!vm.allProfiles),
+            ),
+            const SizedBox(width: Spacing.xs),
+            _iconFilter(
+              scheme,
+              icon: Icons.search,
+              tooltip: Content.searchHint,
+              selected: showSearch,
+              onPressed: () {
+                setState(() => _searchOpen = !showSearch);
+                if (showSearch) {
+                  _searchController.clear();
+                  vm.search('');
+                }
+              },
+            ),
+            const Spacer(),
+            IconButton.filled(
+              tooltip: Content.newConversation,
+              style: IconButton.styleFrom(
+                backgroundColor: scheme.accent,
+                foregroundColor: AccentTokens.onAccent,
+                minimumSize: const Size.square(Layout.headerButton),
+              ),
+              onPressed: () => widget.onNewConversation(vm.profile),
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        AnimatedSize(
+          duration: duration,
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: showSearch
+              ? Padding(
+                  padding: const EdgeInsets.only(top: Spacing.sm),
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: Content.searchHint,
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: IconSizes.sm),
+                              onPressed: () {
+                                _searchController.clear();
+                                vm.search('');
+                              },
+                            )
+                          : null,
+                    ),
+                    textInputAction: TextInputAction.search,
+                    onChanged: vm.search,
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
 
   List<Widget> _results(BuildContext context, HistoryViewModel vm) {
     final theme = Theme.of(context);
@@ -335,16 +414,7 @@ class _HistoryViewState extends State<HistoryView> {
           ],
         ),
         const SizedBox(height: Spacing.md),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(Layout.headerButton),
-          ),
-          onPressed: () => widget.onNewConversation(vm.profile),
-          icon: const Icon(Icons.add),
-          label: const Text(Content.newConversation),
-        ),
-        const SizedBox(height: Spacing.sm),
-        _search(context, vm),
+        _toolbar(context, vm),
         const SizedBox(height: Spacing.sm),
         if (vm.section == HistorySection.hidden && vm.hideMissing)
           const HistoryNotice(icon: Icons.block, message: Content.hideMissing),

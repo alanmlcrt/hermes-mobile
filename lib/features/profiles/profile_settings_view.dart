@@ -100,7 +100,11 @@ class ProfileSettingsView extends StatelessWidget {
                 ),
                 const SizedBox(height: Spacing.md),
                 if (notifications != null)
-                  NotificationSettings(device: notifications!),
+                  NotificationSettings(
+                    device: notifications!,
+                    gateway: gateway,
+                    profile: profile,
+                  ),
                 if (approvalModes != null) ...[
                   if (notifications != null) const SizedBox(height: Spacing.md),
                   ApprovalModeSection(modes: approvalModes!, profile: profile),
@@ -149,11 +153,6 @@ class ProfileSettingsView extends StatelessWidget {
                   icon: Icons.person_outline,
                   title: Content.profileSection,
                   children: [
-                    ListTile(
-                      title: const Text(Content.identifier),
-                      trailing: Text(profile.value, style: muted),
-                    ),
-                    const Divider(indent: Spacing.md, endIndent: Spacing.md),
                     ListTile(
                       title: const Text(Content.connectionRow),
                       subtitle: Text(

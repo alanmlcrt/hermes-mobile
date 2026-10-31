@@ -38,20 +38,35 @@ class ContinuationView extends StatefulWidget {
 }
 
 class _ContinuationViewState extends State<ContinuationView> {
-  late Future<Draft> _draft = _open();
+  static final _cachedDrafts = <(String, String, String), Draft>{};
 
-  Future<Draft> _open() => widget.outbox.openContinuation(
-    widget.connection,
-    widget.profile,
+  (String, String, String) get _cacheKey => (
+    widget.connection.value,
+    widget.profile.value,
     widget.session,
   );
+
+  late Future<Draft> _draft = _open();
+
+  Future<Draft> _open() async {
+    final draft = await widget.outbox.openContinuation(
+      widget.connection,
+      widget.profile,
+      widget.session,
+    );
+    _cachedDrafts[_cacheKey] = draft;
+    DraftViewModel.cacheDraft(draft);
+    return draft;
+  }
 
   @override
   Widget build(BuildContext context) => FutureBuilder<Draft>(
     future: _draft,
+    initialData: _cachedDrafts[_cacheKey],
     builder: (context, snapshot) {
       final draft = snapshot.data;
       if (draft != null) {
+        DraftViewModel.cacheDraft(draft);
         return DraftView(
           continuation: true,
           create: () => widget.createViewModel(draft.key),
@@ -63,32 +78,30 @@ class _ContinuationViewState extends State<ContinuationView> {
       }
       final failed = snapshot.hasError;
       return Scaffold(
-        appBar: AppBar(title: const Text(Content.timelineTitle)),
+        appBar: AppBar(title: Text( failed ? Content.timelineTitle : '')),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(Spacing.md),
             child: Semantics(
               liveRegion: true,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    failed
-                        ? Content.error('storage.unavailable')
-                        : Content.openingConversation,
-                  ),
-                  if (failed)
-                    TextButton(
-                      onPressed: () {
-                        final next = _open();
-                        setState(() {
-                          _draft = next;
-                        });
-                      },
-                      child: const Text(Content.retryList),
-                    ),
-                ],
-              ),
+              label: failed ? null : Content.openingConversation,
+              child: failed
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(Content.error('storage.unavailable')),
+                        TextButton(
+                          onPressed: () {
+                            final next = _open();
+                            setState(() {
+                              _draft = next;
+                            });
+                          },
+                          child: const Text(Content.retryList),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
         ),

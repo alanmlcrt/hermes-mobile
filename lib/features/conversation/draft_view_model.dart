@@ -12,6 +12,9 @@ import '../../models/timeline.dart';
 import '../../ui/content.dart';
 
 class DraftViewModel extends ChangeNotifier {
+  static final _draftCache = <DraftKey, Draft>{};
+  static void cacheDraft(Draft draft) => _draftCache[draft.key] = draft;
+
   DraftViewModel({
     required this.outbox,
     required this.gateway,
@@ -21,6 +24,11 @@ class DraftViewModel extends ChangeNotifier {
     this.interventions,
     this.results,
   }) {
+    final cached = _draftCache[key];
+    if (cached != null) {
+      draft = cached;
+      _text = cached.body;
+    }
     _subscription = gateway.snapshots.listen((_) => _notify());
     _outboxChanges = outbox.changes.listen(_onOutbox);
     _timelineChanges = conversation.changes.listen((changed) {
@@ -134,6 +142,8 @@ class DraftViewModel extends ChangeNotifier {
   int clearTick = 0;
   Draft? draft;
   AppError? error;
+  bool _initialLoading = true;
+  bool get initialLoading => _initialLoading;
   bool _disposed = false;
 
   Profile? get profile => gateway.snapshot.profiles
@@ -172,6 +182,7 @@ class DraftViewModel extends ChangeNotifier {
   Future<void> _load() async {
     try {
       draft = await outbox.draft(key);
+      if (draft != null) _draftCache[key] = draft!;
       attachments = await _draftAttachments();
       _text = draft?.body ?? '';
       if (draft == null) error = const AppError('draft.not_found');
@@ -179,6 +190,7 @@ class DraftViewModel extends ChangeNotifier {
     } catch (_) {
       error = const AppError('storage.unavailable');
     }
+    _initialLoading = false;
     _notify();
   }
 

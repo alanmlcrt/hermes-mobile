@@ -37,17 +37,22 @@ abstract final class Palette {
   static const double accentTint = .08;
 }
 
-/// Nuances sobres de profil (palette Zinc / Slate shadcn), contraste ≥ 4,5:1
-/// avec [onAccent].
+/// Palette de 12 couleurs pastel de profil, contraste élevé avec [onAccent].
 abstract final class AccentTokens {
-  static const Color onAccent = Color(0xFFFFFFFF);
+  static const Color onAccent = Color(0xFF18181B);
   static Color of(ProfileAccent accent) => switch (accent) {
-    ProfileAccent.indigo => const Color(0xFF18181B),
-    ProfileAccent.blue => const Color(0xFF27272A),
-    ProfileAccent.violet => const Color(0xFF3F3F46),
-    ProfileAccent.teal => const Color(0xFF334155),
-    ProfileAccent.orange => const Color(0xFF44403C),
-    ProfileAccent.raspberry => const Color(0xFF374151),
+    ProfileAccent.indigo => const Color(0xFFA5B4FC),
+    ProfileAccent.blue => const Color(0xFF93C5FD),
+    ProfileAccent.sky => const Color(0xFF7DD3FC),
+    ProfileAccent.teal => const Color(0xFF5EEAD4),
+    ProfileAccent.mint => const Color(0xFF6EE7B7),
+    ProfileAccent.emerald => const Color(0xFF86EFAC),
+    ProfileAccent.amber => const Color(0xFFFCD34D),
+    ProfileAccent.orange => const Color(0xFFFDBA74),
+    ProfileAccent.peach => const Color(0xFFFDA4AF),
+    ProfileAccent.rose => const Color(0xFFF9A8D4),
+    ProfileAccent.raspberry => const Color(0xFFF0ABFC),
+    ProfileAccent.violet => const Color(0xFFC4B5FD),
   };
 }
 

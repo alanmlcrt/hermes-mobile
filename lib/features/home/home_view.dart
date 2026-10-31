@@ -123,6 +123,8 @@ class _ProfileRow extends StatefulWidget {
 }
 
 class _ProfileRowState extends State<_ProfileRow> {
+  static final _cachedLatest = <(String, String), SessionSummary?>{};
+
   // ponytail: une requête de liste par profil ; un résumé serveur si la liste
   // de profils grandit.
   late final Future<SessionSummary?> _latest = _load();
@@ -153,6 +155,8 @@ class _ProfileRowState extends State<_ProfileRow> {
       widget.profile.key,
     );
     _session = list.firstOrNull?.id;
+    _cachedLatest[(connection.value, widget.profile.key.value)] =
+        list.firstOrNull;
     await _readMarker();
     return list.firstOrNull;
   }
@@ -181,10 +185,18 @@ class _ProfileRowState extends State<_ProfileRow> {
     final scheme = theme.colorScheme;
     final p = widget.profile;
     final name = Content.profileName(p.label, p.key.value);
+    final connection = widget.gateway.snapshot.connection?.key;
+    final cacheKey = connection == null
+        ? null
+        : (connection.value, p.key.value);
+    final hasCached =
+        cacheKey != null && _cachedLatest.containsKey(cacheKey);
     return FutureBuilder<SessionSummary?>(
       future: _latest,
+      initialData: cacheKey == null ? null : _cachedLatest[cacheKey],
       builder: (context, snap) {
         final latest = snap.data;
+        final done = snap.connectionState == ConnectionState.done || hasCached;
         final date = latest?.startedAt;
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(
@@ -205,12 +217,13 @@ class _ProfileRowState extends State<_ProfileRow> {
             ),
           ),
           subtitle: Text(
-            switch (snap.connectionState) {
-              ConnectionState.done when latest != null =>
-                latest.title ?? latest.preview ?? Content.untitledConversation,
-              ConnectionState.done => Content.homeNoConversation,
-              _ => Content.historyLoading,
-            },
+            done
+                ? (latest != null
+                      ? (latest.title ??
+                            latest.preview ??
+                            Content.untitledConversation)
+                      : Content.homeNoConversation)
+                : Content.historyLoading,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
