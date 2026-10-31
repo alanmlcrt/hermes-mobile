@@ -876,6 +876,16 @@ abstract interface class ConversationGateway {
     ProfileKey profile,
   );
 
+  /// Renomme la conversation [key] (titre déjà normalisé) et rend le titre
+  /// confirmé par Hermes ; rien n'est publié localement. Lève `rename.busy`
+  /// (une mutation en cours sur cette clé), `rename.missing` (méthode absente),
+  /// `rename.refused`, `rename.pending` (non confirmé), `rpc.uncertain`
+  /// (envoyé sans réponse : jamais rejoué) ou `transport.offline`.
+  Future<String> rename(TimelineKey key, String title);
+
+  /// `session.title` absente constatée sur la connexion courante.
+  bool renameMissing(ConnectionKey connection);
+
   /// Clé dont la projection a changé.
   Stream<TimelineKey> get changes;
   Future<void> dispose();

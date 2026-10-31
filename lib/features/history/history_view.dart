@@ -8,6 +8,7 @@ import '../../ui/content.dart';
 import '../../ui/tokens.dart';
 import '../profiles/profile_accents.dart';
 import 'history_view_model.dart';
+import 'rename_conversation_dialog.dart';
 
 /// Conversations d'un profil, en feuille du bas ouverte depuis la pastille
 /// du nom ; ouvrir une ligne reprend la conversation.
@@ -91,6 +92,8 @@ class _HistoryViewState extends State<HistoryView> {
           session: s,
           selected: s.id == widget.current,
           onTap: () => widget.onOpen(s.id),
+          onRename: () => showRenameConversationDialog(context, vm, s),
+          renameMissing: vm.renameMissing,
         ),
       );
     }

@@ -381,6 +381,36 @@ abstract final class Content {
       'Seules les conversations les plus récentes sont affichées.';
   static const retryList = 'Réessayer';
   static const untitledConversation = 'Conversation sans titre';
+  static String conversationActions(String title) =>
+      'Actions pour la conversation $title';
+  static const rename = 'Renommer';
+  static const renameMissing =
+      'Indisponible : ce serveur Hermes ne permet pas de renommer.';
+  static const renameTitle = 'Renommer la conversation';
+  static const renameField = 'Titre de la conversation';
+  static const renameHint =
+      'Le nouveau titre est partagé avec Hermes et ses autres clients.';
+  static const renameConfirm = 'Renommer';
+  static const renameCancel = 'Annuler';
+  static const renaming = 'Renommage en cours…';
+  static String renameError(String code) => switch (code) {
+    'rename.empty' => 'Saisissez un titre.',
+    'rename.same' => 'Ce titre est déjà celui de la conversation.',
+    'rename.missing' => renameMissing,
+    'rename.busy' =>
+      'Un changement est déjà en cours sur cette conversation. Patientez.',
+    'rename.refused' =>
+      'Hermes a refusé ce titre. Titre inchangé, saisie conservée.',
+    'rename.pending' => 'Hermes n’a pas encore confirmé ce titre. Actualisez la liste pour le vérifier.',
+    'rpc.uncertain' => 'Résultat incertain : actualisez la liste pour vérifier le titre avant un nouvel essai.',
+    'contract.invalid_response' => 'Réponse de Hermes illisible : actualisez la liste pour vérifier le titre.',
+    'rename.unreachable' => 'La conversation n’a pas pu être préparée. Titre inchangé, saisie conservée.',
+    'transport.offline' =>
+      'Hermes n’est pas joignable. Titre inchangé, saisie conservée.',
+    'connection.mismatch' =>
+      'La connexion a changé. Actualisez la liste avant de renommer.',
+    _ => 'Le renommage a échoué. Titre inchangé, saisie conservée.',
+  };
   static const openingConversation = 'Ouverture de la conversation…';
   static const resumeFailed =
       'Impossible de retrouver la suite de cette conversation. Votre texte est conservé.';

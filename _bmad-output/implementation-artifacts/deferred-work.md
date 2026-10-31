@@ -94,3 +94,11 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-7-1-verifier-rangement-recherche.md`
   summary: Mesurer la réactivité de la recherche 7.6 sur un corpus local représentatif (risque moyen non vérifié).
   evidence: Le plan préexistant ne borne pas le travail à la saisie ; aucune implémentation ne démontre de blocage. Mesures de latence et volume réel nécessaires pendant 7.6.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-renommer-conversation.md`
+  summary: Exploiter ou contrôler `session_key` rendu par `session.title` (risque moyen non vérifié).
+  evidence: `HermesRpc.titled` valide puis ignore `session_key` ; si Hermes re-clé la session, la ligne garde un identifiant périmé. La qualification réelle de `session.title` tranchera.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-7-2-renommer-conversation.md`
+  summary: Sérialiser les `session.resume` concurrents d'une même session (risque moyen non vérifié).
+  evidence: `OutboxRepository.resume` n'a pas de verrou par clé ; un renommage et une ouverture peuvent reprendre la même session en parallèle. Effet serveur à observer sur installation.

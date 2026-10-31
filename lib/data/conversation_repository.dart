@@ -620,6 +620,75 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
     );
   }
 
+  /// Mutations distantes en cours, une au plus par session.
+  final _mutations = <TimelineKey>{};
+
+  /// `session.title` absente (-32601) : (connexion, génération de socket).
+  ({ConnectionKey connection, int generation})? _renameMissing;
+
+  @override
+  bool renameMissing(ConnectionKey connection) =>
+      _renameMissing?.connection == connection &&
+      _renameMissing?.generation == gateway.socketGeneration;
+
+  /// Runtime lié sur la socket courante, sinon reprise existante (jamais de
+  /// création), puis `session.title`. Le titre n'est publié nulle part ici :
+  /// l'appelant affiche la confirmation, l'historique la réconcilie.
+  @override
+  Future<String> rename(TimelineKey key, String title) async {
+    if (gateway.snapshot.connection?.key != key.connection) {
+      throw const AppError('connection.mismatch');
+    }
+    if (renameMissing(key.connection)) throw const AppError('rename.missing');
+    if (!_mutations.add(key)) throw const AppError('rename.busy');
+    try {
+      final binding = _bindings[key];
+      var generation = gateway.socketGeneration;
+      String runtime;
+      if (binding != null && binding.generation == generation) {
+        runtime = binding.runtime;
+      } else {
+        final resumer = this.resumer;
+        if (resumer == null) throw const AppError('rename.unreachable');
+        try {
+          final resumed = await resumer.resume(key);
+          runtime = resumed.runtime;
+          generation = resumed.generation;
+        } on RpcError {
+          throw const AppError('rename.unreachable');
+        } on AppError catch (e) {
+          // Rien n'a été renommé : seule la reprise a échoué.
+          if (e.code == 'transport.offline') rethrow;
+          throw const AppError('rename.unreachable');
+        }
+        // Socket changée pendant la reprise : l'identifiant runtime est périmé.
+        if (generation != gateway.socketGeneration ||
+            gateway.snapshot.connection?.key != key.connection) {
+          throw const AppError('rename.unreachable');
+        }
+      }
+      final Map<String, dynamic> result;
+      try {
+        result = await gateway.call(
+          HermesRpc.sessionTitle,
+          HermesRpc.titleParams(runtime, key.profile, title),
+          timeout: timeout,
+        );
+      } on RpcError catch (e) {
+        if (e.code == HermesRpc.methodNotFound) {
+          _renameMissing = (connection: key.connection, generation: generation);
+          throw const AppError('rename.missing');
+        }
+        throw const AppError('rename.refused');
+      }
+      final titled = HermesRpc.titled(result);
+      if (titled.pending) throw const AppError('rename.pending');
+      return titled.title;
+    } finally {
+      _mutations.remove(key);
+    }
+  }
+
   /// Fil affiché ou dont le travail est en cours/incertain ; les autres se
   /// resynchronisent à l'ouverture ([load]).
   Future<void> _resyncIfActive(TimelineKey key) async {

@@ -689,6 +689,31 @@ abstract final class HermesRpc {
   static int _count(Object? n) =>
       n is num && n.isFinite ? n.toInt().clamp(0, 1 << 31) : 0;
 
+  /// `session.title` (contrat documentaire, non qualifié sur installation) :
+  /// identifiant runtime, profil et titre déjà normalisé.
+  static const sessionTitle = 'session.title';
+
+  static Map<String, dynamic> titleParams(
+    String runtime,
+    ProfileKey profile,
+    String title,
+  ) => {'session_id': runtime, 'profile': profile.value, 'title': title};
+
+  /// `SessionTitleResult {title, session_key?, pending?}` ; `pending: true` :
+  /// titre en file, non confirmé.
+  static ({String title, bool pending}) titled(Map<String, dynamic> r) {
+    final title = r['title'];
+    final pending = r['pending'];
+    final key = r['session_key'];
+    if (title is! String ||
+        title.trim().isEmpty ||
+        (pending != null && pending is! bool) ||
+        (key != null && key is! String)) {
+      throw const AppError('contract.invalid_response');
+    }
+    return (title: title, pending: pending == true);
+  }
+
   static Map<String, dynamic> historyParams(String runtime) => {
     'session_id': runtime,
   };

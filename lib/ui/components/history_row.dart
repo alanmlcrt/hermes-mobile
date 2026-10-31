@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/history.dart';
@@ -6,34 +8,60 @@ import '../tokens.dart';
 
 /// Une conversation de l'historique : titre (sinon aperçu, sinon libellé
 /// générique), date locale et nombre de messages, annoncés d'un bloc ; la
-/// conversation ouverte est teintée de la couleur du profil.
-class HistoryRow extends StatelessWidget {
+/// conversation ouverte est teintée de la couleur du profil. Le menu de fin
+/// de ligne propose « Renommer » ; le focus lui revient après le dialogue.
+class HistoryRow extends StatefulWidget {
   const HistoryRow({
     super.key,
     required this.session,
     this.onTap,
     this.selected = false,
+    this.onRename,
+    this.renameMissing = false,
   });
   final SessionSummary session;
   final bool selected;
   final VoidCallback? onTap;
 
+  /// Ouvre le renommage ; se termine à la fermeture du dialogue.
+  final Future<void> Function()? onRename;
+
+  /// Méthode absente constatée : entrée désactivée et expliquée.
+  final bool renameMissing;
+
+  @override
+  State<HistoryRow> createState() => _HistoryRowState();
+}
+
+class _HistoryRowState extends State<HistoryRow> {
+  final _menuFocus = FocusNode(debugLabel: 'history-row-menu');
+
+  @override
+  void dispose() {
+    _menuFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _rename() async {
+    await widget.onRename!();
+    if (mounted) _menuFocus.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final session = widget.session;
     final date = session.startedAt;
     final scheme = Theme.of(context).colorScheme;
+    final label =
+        session.title ?? session.preview ?? Content.untitledConversation;
     return ListTile(
-      selected: selected,
+      selected: widget.selected,
       selectedColor: scheme.content,
       selectedTileColor: scheme.accent.withValues(alpha: Palette.accentTint),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.lg),
       ),
-      title: Text(
-        session.title ?? session.preview ?? Content.untitledConversation,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       visualDensity: VisualDensity.compact,
       subtitle: Text(
         [
@@ -41,7 +69,37 @@ class HistoryRow extends StatelessWidget {
           Content.messageCount(session.messageCount),
         ].join(' · '),
       ),
-      onTap: onTap,
+      trailing: widget.onRename == null
+          ? null
+          : MenuAnchor(
+              childFocusNode: _menuFocus,
+              menuChildren: [
+                MenuItemButton(
+                  leadingIcon: const Icon(Icons.edit_outlined),
+                  onPressed: widget.renameMissing
+                      ? null
+                      : () => unawaited(_rename()),
+                  child: widget.renameMissing
+                      ? const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(Content.rename),
+                            Text(Content.renameMissing),
+                          ],
+                        )
+                      : const Text(Content.rename),
+                ),
+              ],
+              builder: (context, controller, _) => IconButton(
+                focusNode: _menuFocus,
+                tooltip: Content.conversationActions(label),
+                onPressed: () =>
+                    controller.isOpen ? controller.close() : controller.open(),
+                icon: const Icon(Icons.more_vert),
+              ),
+            ),
+      onTap: widget.onTap,
     );
   }
 }

@@ -507,6 +507,25 @@ class MemoryConversation implements ConversationGateway {
     return lists[(connection, profile)] ?? const [];
   }
 
+  /// Renommages demandés ; [renameGate] retient la réponse, [renameError] la
+  /// remplace, [renamed] fixe le titre confirmé (sinon le titre envoyé).
+  final renameCalls = <(TimelineKey, String)>[];
+  Completer<void>? renameGate;
+  Object? renameError;
+  String? renamed;
+  final missingRename = <ConnectionKey>{};
+  @override
+  Future<String> rename(TimelineKey key, String title) async {
+    renameCalls.add((key, title));
+    await renameGate?.future;
+    if (renameError != null) throw renameError!;
+    return renamed ?? title;
+  }
+
+  @override
+  bool renameMissing(ConnectionKey connection) =>
+      missingRename.contains(connection);
+
   @override
   Future<void> dispose() async {}
 }
