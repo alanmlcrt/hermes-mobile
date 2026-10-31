@@ -35,7 +35,13 @@ class HistoryViewModel extends ChangeNotifier {
   final ProfileKey profile;
 
   HistoryState state = HistoryState.loading;
+
+  /// Épinglées d'abord (ordre d'épinglage), puis l'ordre du serveur.
   List<SessionSummary> sessions = const [];
+  Map<String, ConversationMarker> markers = const {};
+
+  /// Dernière écriture de marqueur échouée (rien n'a été enregistré).
+  bool markerFailed = false;
   int _request = 0;
   bool _disposed = false;
 
@@ -66,13 +72,61 @@ class HistoryViewModel extends ChangeNotifier {
       final connection = gateway.snapshot.connection?.key;
       if (connection == null) throw StateError('no connection');
       final list = await conversation.sessions(connection, profile);
+      Map<String, ConversationMarker> marks;
+      try {
+        marks = await conversation.markers(connection, profile);
+      } catch (_) {
+        marks = const {};
+      }
       if (request != _request) return;
-      sessions = list;
+      markers = marks;
+      sessions = _ordered(list);
       _listed = connection;
       state = list.isEmpty ? HistoryState.empty : HistoryState.ready;
     } catch (_) {
       if (request != _request) return;
       state = HistoryState.error;
+    }
+    _notify();
+  }
+
+  List<SessionSummary> _ordered(List<SessionSummary> list) {
+    final pinned = list.where((s) => markers[s.id]?.pinned ?? false).toList()
+      ..sort(
+        (a, b) => markers[a.id]!.pinOrder!.compareTo(markers[b.id]!.pinOrder!),
+      );
+    return [...pinned, ...list.where((s) => !pinned.contains(s))];
+  }
+
+  ConversationMarker markerOf(String session) =>
+      markers[session] ?? const ConversationMarker();
+
+  Future<void> togglePin(String session) => _markerCommand(
+    session,
+    (k) => conversation.setPinned(k, !markerOf(session).pinned),
+  );
+
+  Future<void> toggleUnread(String session) => _markerCommand(
+    session,
+    (k) => conversation.setUnread(k, !markerOf(session).unread),
+  );
+
+  /// Écriture locale puis relecture des marqueurs ; un échec est signalé.
+  Future<void> _markerCommand(
+    String session,
+    Future<void> Function(TimelineKey) write,
+  ) async {
+    final connection = _listed;
+    if (connection == null) return;
+    try {
+      await write(TimelineKey(connection, profile, session));
+      final marks = await conversation.markers(connection, profile);
+      if (_disposed || _listed != connection) return;
+      markers = marks;
+      sessions = _ordered(sessions);
+      markerFailed = false;
+    } catch (_) {
+      markerFailed = true;
     }
     _notify();
   }

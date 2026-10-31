@@ -78,7 +78,7 @@ class DraftViewModel extends ChangeNotifier {
       attachmentError = Content.error('attachment.selection');
     } finally {
       try {
-        attachments = await outbox.attachments(key);
+        attachments = await _draftAttachments();
       } catch (_) {
         error = const AppError('storage.unavailable');
       }
@@ -94,7 +94,7 @@ class DraftViewModel extends ChangeNotifier {
     _notify();
     try {
       await outbox.removeAttachment(key, attachment.key);
-      attachments = await outbox.attachments(key);
+      attachments = await _draftAttachments();
     } on AppError catch (e) {
       attachmentError = Content.error(e.code);
     } catch (_) {
@@ -109,7 +109,7 @@ class DraftViewModel extends ChangeNotifier {
     if (attachmentBusy || sendStatus.busy) return;
     try {
       await outbox.retryAttachment(key, attachment.key);
-      attachments = await outbox.attachments(key);
+      attachments = await _draftAttachments();
       attachmentError = null;
     } on AppError catch (e) {
       attachmentError = Content.error(e.code);
@@ -118,6 +118,11 @@ class DraftViewModel extends ChangeNotifier {
     }
     _notify();
   }
+
+  Future<List<Attachment>> _draftAttachments() async => [
+    for (final a in await outbox.attachments(key))
+      if (!a.sent) a,
+  ];
 
   late final StreamSubscription<ConnectionSnapshot> _subscription;
   late final StreamSubscription<DraftKey> _outboxChanges;
@@ -167,7 +172,7 @@ class DraftViewModel extends ChangeNotifier {
   Future<void> _load() async {
     try {
       draft = await outbox.draft(key);
-      attachments = await outbox.attachments(key);
+      attachments = await _draftAttachments();
       _text = draft?.body ?? '';
       if (draft == null) error = const AppError('draft.not_found');
       await _loadTimeline();
@@ -414,9 +419,15 @@ class DraftViewModel extends ChangeNotifier {
         conversation.resumeFailed(k);
   }
 
+  TimelineKey? _viewed;
+
   Future<void> _loadTimeline() async {
     final k = _timelineKey;
     if (k == null) return;
+    // ponytail: « affiché » = écran monté, même app en arrière-plan ; ajouter
+    // le cycle de vie si un fil laissé ouvert doit devenir non lu.
+    _viewed = k;
+    conversation.viewing(k, true);
     try {
       await conversation.load(k);
     } catch (_) {
@@ -427,7 +438,7 @@ class DraftViewModel extends ChangeNotifier {
   Future<void> _onOutbox(DraftKey changed) async {
     if (changed != key) return;
     try {
-      attachments = await outbox.attachments(key);
+      attachments = await _draftAttachments();
     } catch (_) {
       error = const AppError('storage.unavailable');
     }
@@ -466,6 +477,7 @@ class DraftViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    if (_viewed case final k?) conversation.viewing(k, false);
     unawaited(_subscription.cancel());
     unawaited(_outboxChanges.cancel());
     unawaited(_timelineChanges.cancel());

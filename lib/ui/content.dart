@@ -383,6 +383,14 @@ abstract final class Content {
   static const untitledConversation = 'Conversation sans titre';
   static String conversationActions(String title) =>
       'Actions pour la conversation $title';
+  static const pin = 'Épingler';
+  static const unpin = 'Désépingler';
+  static const markUnread = 'Marquer non lu';
+  static const markRead = 'Marquer lu';
+  static const pinned = 'Épinglée';
+  static const unread = 'Non lu';
+  static const markerFailed =
+      'Le marqueur n’a pas pu être enregistré sur le téléphone. Réessayez.';
   static const rename = 'Renommer';
   static const renameMissing =
       'Indisponible : ce serveur Hermes ne permet pas de renommer.';

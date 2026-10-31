@@ -886,6 +886,22 @@ abstract interface class ConversationGateway {
   /// `session.title` absente constatée sur la connexion courante.
   bool renameMissing(ConnectionKey connection);
 
+  /// Marqueurs locaux des conversations du profil, par `stored_session_id`.
+  Future<Map<String, ConversationMarker>> markers(
+    ConnectionKey connection,
+    ProfileKey profile,
+  );
+
+  /// Épingle (en fin du groupe) ou désépingle [key] ; local seulement.
+  Future<void> setPinned(TimelineKey key, bool pinned);
+
+  /// « Marquer non lu » (ou lu) ; local seulement.
+  Future<void> setUnread(TimelineKey key, bool unread);
+
+  /// Fil réellement affiché : son ouverture le marque lu, et une fin de tour
+  /// reçue pendant l'affichage ne le rend pas non lu.
+  void viewing(TimelineKey key, bool open);
+
   /// Clé dont la projection a changé.
   Stream<TimelineKey> get changes;
   Future<void> dispose();

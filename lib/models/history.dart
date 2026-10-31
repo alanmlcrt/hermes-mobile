@@ -18,3 +18,12 @@ class SessionSummary {
   final DateTime? startedAt;
   final int messageCount;
 }
+
+/// Marqueurs locaux d'une conversation (7.3), jamais envoyés à Hermes.
+/// [pinOrder] : séquence locale croissante, `null` si non épinglée.
+class ConversationMarker {
+  const ConversationMarker({this.pinOrder, this.unread = false});
+  final int? pinOrder;
+  final bool unread;
+  bool get pinned => pinOrder != null;
+}

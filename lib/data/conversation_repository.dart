@@ -527,6 +527,9 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
             if (boundary) {
               _pendingBoundaries.update(entry.key, (v) => v - 1);
             }
+            if (effect == EventEffect.terminal) {
+              unawaited(_terminal(entry.key, event));
+            }
           }),
         );
       }
@@ -618,6 +621,128 @@ class ConversationRepository implements ConversationGateway, ResultGateway {
         timeout: timeout,
       ),
     );
+  }
+
+  // ── Marqueurs locaux (7.3) ──────────────────────────────────────────────
+
+  static const _markerWhere =
+      'connection_key = ? AND profile_key = ? AND stored_session_id = ?';
+  static List<Object?> _markerArgs(TimelineKey k) => [
+    k.connection.value,
+    k.profile.value,
+    k.session,
+  ];
+  final _viewing = <TimelineKey>{};
+
+  @override
+  Future<Map<String, ConversationMarker>> markers(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async {
+    final rows = await database.query(
+      'conversation_markers',
+      where: 'connection_key = ? AND profile_key = ?',
+      whereArgs: [connection.value, profile.value],
+    );
+    return {
+      for (final r in rows)
+        r['stored_session_id'] as String: ConversationMarker(
+          pinOrder: r['pin_order'] as int?,
+          unread: r['unread'] == 1,
+        ),
+    };
+  }
+
+  /// Écrit [values] sur la ligne de [key], créée au besoin.
+  Future<void> _mark(
+    DatabaseExecutor db,
+    TimelineKey key,
+    Map<String, Object?> values,
+  ) async {
+    final updated = await db.update(
+      'conversation_markers',
+      values,
+      where: _markerWhere,
+      whereArgs: _markerArgs(key),
+    );
+    if (updated == 0) {
+      await db.insert('conversation_markers', {
+        'connection_key': key.connection.value,
+        'profile_key': key.profile.value,
+        'stored_session_id': key.session,
+        ...values,
+      });
+    }
+  }
+
+  @override
+  Future<void> setPinned(TimelineKey key, bool pinned) => database.transaction((
+    txn,
+  ) async {
+    if (!pinned) return _mark(txn, key, {'pin_order': null});
+    final rows = await txn.query(
+      'conversation_markers',
+      columns: ['pin_order'],
+      where: _markerWhere,
+      whereArgs: _markerArgs(key),
+    );
+    if (rows.firstOrNull?['pin_order'] != null) return;
+    // ponytail: séquence globale (MAX + 1), suffisante pour un téléphone.
+    final max = await txn.rawQuery(
+      'SELECT MAX(pin_order) AS m FROM conversation_markers',
+    );
+    await _mark(txn, key, {'pin_order': ((max.single['m'] as int?) ?? 0) + 1});
+  });
+
+  @override
+  Future<void> setUnread(TimelineKey key, bool unread) =>
+      _mark(database, key, {'unread': unread ? 1 : 0});
+
+  @override
+  void viewing(TimelineKey key, bool open) {
+    if (!open) {
+      _viewing.remove(key);
+      return;
+    }
+    _viewing.add(key);
+    unawaited(
+      setUnread(key, false).catchError((Object _) {
+        _log('markers.write_failed');
+      }),
+    );
+  }
+
+  /// Fin de tour appliquée (réussite, erreur, arrêt confirmé) : non lu si le
+  /// fil n'est pas affiché. Sans identité (`seq`) ou déjà vue : rien.
+  Future<void> _terminal(TimelineKey key, GatewayEvent e) async {
+    final p = projection(key);
+    if (e.seq == null || p.seq != e.seq || p.replayEpoch != e.replayEpoch) {
+      return;
+    }
+    if (p.workState != WorkState.succeeded &&
+        p.workState != WorkState.failed &&
+        p.workState != WorkState.stopped) {
+      return;
+    }
+    final id = jsonEncode([e.replayEpoch, e.seq]);
+    try {
+      await database.transaction((txn) async {
+        final rows = await txn.query(
+          'conversation_markers',
+          columns: ['seen_terminal'],
+          where: _markerWhere,
+          whereArgs: _markerArgs(key),
+        );
+        if (rows.firstOrNull?['seen_terminal'] == id) return;
+        await _mark(txn, key, {
+          'seen_terminal': id,
+          if (!_viewing.contains(key)) 'unread': 1,
+        });
+      });
+      if (!_changes.isClosed) _changes.add(key);
+    } catch (_) {
+      _log('markers.write_failed');
+    }
   }
 
   /// Mutations distantes en cours, une au plus par session.

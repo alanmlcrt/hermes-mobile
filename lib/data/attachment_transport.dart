@@ -32,10 +32,7 @@ class AttachmentTransport {
     final connection = gateway.snapshot.connection?.key;
     final refusal = limits.refusal(attachment.mediaType, attachment.bytes);
     if (refusal != null) {
-      return AttachResult(
-        AttachOutcome.refused,
-        errorCode: refusal,
-      );
+      return AttachResult(AttachOutcome.refused, errorCode: refusal);
     }
     try {
       final bytes = await File(attachment.localPath).readAsBytes();

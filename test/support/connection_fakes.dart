@@ -199,10 +199,7 @@ class FakeTransport implements HermesTransport {
   void Function()? beforeRequest;
 
   /// Téléchargements binaires demandés, dans l'ordre.
-  final downloads =
-      <
-        ({Uri uri, String targetPath, String? bearer})
-      >[];
+  final downloads = <({Uri uri, String targetPath, String? bearer})>[];
   List<int> downloadBytes = utf8.encode('SYNTHETIC_FILE');
   String? downloadMediaType = 'text/plain';
 
@@ -525,6 +522,44 @@ class MemoryConversation implements ConversationGateway {
   @override
   bool renameMissing(ConnectionKey connection) =>
       missingRename.contains(connection);
+
+  /// Marqueurs locaux en mémoire ; [markerError] fait échouer les écritures.
+  final markerRows = <TimelineKey, ConversationMarker>{};
+  final viewed = <TimelineKey>{};
+  Object? markerError;
+  int _pins = 0;
+  @override
+  Future<Map<String, ConversationMarker>> markers(
+    ConnectionKey connection,
+    ProfileKey profile,
+  ) async => {
+    for (final e in markerRows.entries)
+      if (e.key.connection == connection && e.key.profile == profile)
+        e.key.session: e.value,
+  };
+  @override
+  Future<void> setPinned(TimelineKey key, bool pinned) async {
+    if (markerError != null) throw markerError!;
+    final m = markerRows[key] ?? const ConversationMarker();
+    if (pinned == m.pinned) return;
+    markerRows[key] = ConversationMarker(
+      pinOrder: pinned ? ++_pins : null,
+      unread: m.unread,
+    );
+  }
+
+  @override
+  Future<void> setUnread(TimelineKey key, bool unread) async {
+    if (markerError != null) throw markerError!;
+    markerRows[key] = ConversationMarker(
+      pinOrder: markerRows[key]?.pinOrder,
+      unread: unread,
+    );
+  }
+
+  @override
+  void viewing(TimelineKey key, bool open) =>
+      open ? viewed.add(key) : viewed.remove(key);
 
   @override
   Future<void> dispose() async {}

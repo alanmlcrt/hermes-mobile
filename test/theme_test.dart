@@ -48,23 +48,43 @@ void main() {
           ('primaryFixed', s.primaryFixed, src.primaryFixed),
           ('primaryFixedDim', s.primaryFixedDim, src.primaryFixedDim),
           ('onPrimaryFixed', s.onPrimaryFixed, src.onPrimaryFixed),
-          ('onPrimaryFixedVariant', s.onPrimaryFixedVariant, src.onPrimaryFixedVariant),
+          (
+            'onPrimaryFixedVariant',
+            s.onPrimaryFixedVariant,
+            src.onPrimaryFixedVariant,
+          ),
           ('secondary', s.secondary, src.secondary),
           ('onSecondary', s.onSecondary, src.onSecondary),
           ('secondaryContainer', s.secondaryContainer, src.secondaryContainer),
-          ('onSecondaryContainer', s.onSecondaryContainer, src.onSecondaryContainer),
+          (
+            'onSecondaryContainer',
+            s.onSecondaryContainer,
+            src.onSecondaryContainer,
+          ),
           ('secondaryFixed', s.secondaryFixed, src.secondaryFixed),
           ('secondaryFixedDim', s.secondaryFixedDim, src.secondaryFixedDim),
           ('onSecondaryFixed', s.onSecondaryFixed, src.onSecondaryFixed),
-          ('onSecondaryFixedVariant', s.onSecondaryFixedVariant, src.onSecondaryFixedVariant),
+          (
+            'onSecondaryFixedVariant',
+            s.onSecondaryFixedVariant,
+            src.onSecondaryFixedVariant,
+          ),
           ('tertiary', s.tertiary, src.tertiary),
           ('onTertiary', s.onTertiary, src.onTertiary),
           ('tertiaryContainer', s.tertiaryContainer, src.tertiaryContainer),
-          ('onTertiaryContainer', s.onTertiaryContainer, src.onTertiaryContainer),
+          (
+            'onTertiaryContainer',
+            s.onTertiaryContainer,
+            src.onTertiaryContainer,
+          ),
           ('tertiaryFixed', s.tertiaryFixed, src.tertiaryFixed),
           ('tertiaryFixedDim', s.tertiaryFixedDim, src.tertiaryFixedDim),
           ('onTertiaryFixed', s.onTertiaryFixed, src.onTertiaryFixed),
-          ('onTertiaryFixedVariant', s.onTertiaryFixedVariant, src.onTertiaryFixedVariant),
+          (
+            'onTertiaryFixedVariant',
+            s.onTertiaryFixedVariant,
+            src.onTertiaryFixedVariant,
+          ),
           ('error', s.error, src.error),
           ('onError', s.onError, src.onError),
           ('errorContainer', s.errorContainer, src.errorContainer),
@@ -73,11 +93,27 @@ void main() {
           ('onSurface', s.onSurface, src.onSurface),
           ('surfaceDim', s.surfaceDim, src.surfaceDim),
           ('surfaceBright', s.surfaceBright, src.surfaceBright),
-          ('surfaceContainerLowest', s.surfaceContainerLowest, src.surfaceContainerLowest),
-          ('surfaceContainerLow', s.surfaceContainerLow, src.surfaceContainerLow),
+          (
+            'surfaceContainerLowest',
+            s.surfaceContainerLowest,
+            src.surfaceContainerLowest,
+          ),
+          (
+            'surfaceContainerLow',
+            s.surfaceContainerLow,
+            src.surfaceContainerLow,
+          ),
           ('surfaceContainer', s.surfaceContainer, src.surfaceContainer),
-          ('surfaceContainerHigh', s.surfaceContainerHigh, src.surfaceContainerHigh),
-          ('surfaceContainerHighest', s.surfaceContainerHighest, src.surfaceContainerHighest),
+          (
+            'surfaceContainerHigh',
+            s.surfaceContainerHigh,
+            src.surfaceContainerHigh,
+          ),
+          (
+            'surfaceContainerHighest',
+            s.surfaceContainerHighest,
+            src.surfaceContainerHighest,
+          ),
           ('onSurfaceVariant', s.onSurfaceVariant, src.onSurfaceVariant),
           ('outline', s.outline, src.outline),
           ('outlineVariant', s.outlineVariant, src.outlineVariant),
@@ -111,16 +147,20 @@ void main() {
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(),
-        child: Builder(builder: (c) {
-          normal = motionDuration(c, Motion.medium);
-          return MediaQuery(
-            data: const MediaQueryData(disableAnimations: true),
-            child: Builder(builder: (c2) {
-              reduced = motionDuration(c2, Motion.medium);
-              return const SizedBox();
-            }),
-          );
-        }),
+        child: Builder(
+          builder: (c) {
+            normal = motionDuration(c, Motion.medium);
+            return MediaQuery(
+              data: const MediaQueryData(disableAnimations: true),
+              child: Builder(
+                builder: (c2) {
+                  reduced = motionDuration(c2, Motion.medium);
+                  return const SizedBox();
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
     expect(normal, Motion.medium);

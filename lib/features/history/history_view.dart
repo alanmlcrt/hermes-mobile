@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/history.dart';
@@ -94,6 +96,9 @@ class _HistoryViewState extends State<HistoryView> {
           onTap: () => widget.onOpen(s.id),
           onRename: () => showRenameConversationDialog(context, vm, s),
           renameMissing: vm.renameMissing,
+          marker: vm.markerOf(s.id),
+          onTogglePin: () => unawaited(vm.togglePin(s.id)),
+          onToggleUnread: () => unawaited(vm.toggleUnread(s.id)),
         ),
       );
     }
@@ -187,6 +192,11 @@ class _HistoryViewState extends State<HistoryView> {
             ),
           ],
           HistoryState.ready => [
+            if (vm.markerFailed)
+              const HistoryNotice(
+                icon: Icons.error_outline,
+                message: Content.markerFailed,
+              ),
             ..._rows(context, vm),
             if (vm.sessions.length >= sessionListLimit)
               const Padding(

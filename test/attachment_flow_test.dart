@@ -217,7 +217,7 @@ void main() {
         expect(vm.draft, isNotNull);
         expect(
           vm.attachments.map((a) => a.name),
-          contains('photo-existante.jpg'),
+          ['photo-existante.jpg'],
         );
       });
       tester.view.physicalSize = const Size(800, 1200);
@@ -234,6 +234,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        expect(find.text(Content.attachmentVisionUnknown), findsNothing);
         expect(
           vm.attachments
               .singleWhere((a) => a.name == 'photo-existante.jpg')
@@ -257,6 +258,7 @@ void main() {
             (w) => w is MessageBubble && w.text == 'Message $name',
           );
           expect(message, findsOneWidget);
+          expect(find.text(name), findsOneWidget);
           expect(
             find.descendant(of: message, matching: find.text(name)),
             findsOneWidget,

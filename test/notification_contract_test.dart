@@ -189,14 +189,14 @@ void main() {
     );
     expect(RegExp(r'"ttl":\s*_TTL').hasMatch(androidBlock), isTrue);
     expect(RegExp(r'"channel_id":\s*_CHANNEL').hasMatch(androidBlock), isTrue);
-    final collapse = RegExp(
-      r'"collapse_key":\s*f"([^"]*)"',
-    ).firstMatch(androidBlock)?.group(1);
+    final collapse = RegExp(r'"collapse_key":\s*f"([^"]*)"')
+        .firstMatch(androidBlock)
+        ?.group(1);
     expect(collapse, isNotNull);
     expect(_template(collapse!), android['collapseKeyTemplate']);
-    final tag = RegExp(
-      r'"tag":\s*f"([^"]*)"',
-    ).firstMatch(androidBlock)?.group(1);
+    final tag = RegExp(r'"tag":\s*f"([^"]*)"')
+        .firstMatch(androidBlock)
+        ?.group(1);
     expect(tag, isNotNull);
     expect(_template(tag!), android['notificationTagTemplate']);
   });

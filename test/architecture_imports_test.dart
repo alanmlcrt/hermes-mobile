@@ -22,10 +22,14 @@ List<String> importViolations(String path, String source) {
     final target = match.group(1)!;
     if (inModels &&
         (target.startsWith('package:flutter/') || target == 'dart:ui')) {
-      violations.add('$path importe "$target" (lib/models ne doit pas importer Flutter)');
+      violations.add(
+        '$path importe "$target" (lib/models ne doit pas importer Flutter)',
+      );
     }
     if (inFeatures && _resolvesToData(path, target)) {
-      violations.add('$path importe "$target" (lib/features ne doit pas importer lib/data)');
+      violations.add(
+        '$path importe "$target" (lib/features ne doit pas importer lib/data)',
+      );
     }
   }
   return violations;

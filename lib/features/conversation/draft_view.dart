@@ -208,28 +208,16 @@ class _DraftViewState extends State<DraftView> {
                               child: SingleChildScrollView(
                                 controller: _attachmentScroll,
                                 primary: false,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    AttachmentList(
-                                      attachments: vm.attachments,
-                                      onRemove:
-                                          vm.attachmentBusy ||
-                                              vm.sendStatus.busy
-                                          ? null
-                                          : vm.removeAttachment,
-                                      onRetry:
-                                          vm.attachmentBusy ||
-                                              vm.sendStatus.busy
-                                          ? null
-                                          : vm.retryAttachment,
-                                    ),
-                                    if (vm.attachments.any((a) => a.isImage))
-                                      const Text(
-                                        Content.attachmentVisionUnknown,
-                                      ),
-                                  ],
+                                child: AttachmentList(
+                                  attachments: vm.attachments,
+                                  onRemove:
+                                      vm.attachmentBusy || vm.sendStatus.busy
+                                      ? null
+                                      : vm.removeAttachment,
+                                  onRetry:
+                                      vm.attachmentBusy || vm.sendStatus.busy
+                                      ? null
+                                      : vm.retryAttachment,
                                 ),
                               ),
                             ),

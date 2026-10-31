@@ -177,7 +177,10 @@ void main() {
           request.headers.value('authorization'),
           'Bearer SYNTHETIC_ACCESS',
         );
-        request.response.headers.contentType = ContentType('application', 'pdf');
+        request.response.headers.contentType = ContentType(
+          'application',
+          'pdf',
+        );
         request.response.contentLength = body.length;
         request.response.add(body);
         await request.response.close();
@@ -283,50 +286,55 @@ void main() {
     });
   }
 
-  test('redirection refusée : aucune credential ni fichier vers la cible', () async {
-    final directory = await Directory.systemTemp.createTemp('hermes-download-');
-    addTearDown(() => directory.delete(recursive: true));
-    final source = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final external = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(() => source.close(force: true));
-    addTearDown(() => external.close(force: true));
-    var leaked = 0;
-    external.listen((request) {
-      leaked++;
-      request.response.close();
-    });
-    source.listen((request) {
-      request.response.statusCode = 302;
-      request.response.headers.set(
-        'Location',
-        'http://127.0.0.1:${external.port}/leak',
+  test(
+    'redirection refusée : aucune credential ni fichier vers la cible',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'hermes-download-',
       );
-      request.response.close();
-    });
-    final target = '${directory.path}/results/cle';
-    final transport = IoHermesTransport();
-    addTearDown(transport.close);
-    await expectLater(
-      HermesAdapter(transport).download(
-        Uri.parse('http://127.0.0.1:${source.port}'),
-        path: '/home/u/rapport.pdf',
-        profile: const ProfileKey('default'),
-        session: 'a1b2c3d4',
-        targetPath: target,
-        bearer: 'SYNTHETIC_ACCESS',
-      ),
-      throwsA(
-        isA<AppError>().having(
-          (error) => error.code,
-          'code',
-          'transport.redirect',
+      addTearDown(() => directory.delete(recursive: true));
+      final source = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final external = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => source.close(force: true));
+      addTearDown(() => external.close(force: true));
+      var leaked = 0;
+      external.listen((request) {
+        leaked++;
+        request.response.close();
+      });
+      source.listen((request) {
+        request.response.statusCode = 302;
+        request.response.headers.set(
+          'Location',
+          'http://127.0.0.1:${external.port}/leak',
+        );
+        request.response.close();
+      });
+      final target = '${directory.path}/results/cle';
+      final transport = IoHermesTransport();
+      addTearDown(transport.close);
+      await expectLater(
+        HermesAdapter(transport).download(
+          Uri.parse('http://127.0.0.1:${source.port}'),
+          path: '/home/u/rapport.pdf',
+          profile: const ProfileKey('default'),
+          session: 'a1b2c3d4',
+          targetPath: target,
+          bearer: 'SYNTHETIC_ACCESS',
         ),
-      ),
-    );
-    expect(leaked, 0);
-    expect(await File(target).exists(), isFalse);
-    expect(await File('$target.part').exists(), isFalse);
-  });
+        throwsA(
+          isA<AppError>().having(
+            (error) => error.code,
+            'code',
+            'transport.redirect',
+          ),
+        ),
+      );
+      expect(leaked, 0);
+      expect(await File(target).exists(), isFalse);
+      expect(await File('$target.part').exists(), isFalse);
+    },
+  );
 
   test(
     'flux inactif : délai d’inactivité, partiel supprimé, rien présenté comme '
@@ -380,11 +388,7 @@ void main() {
         ),
         throwsA(
           isA<AppError>()
-              .having(
-                (error) => error.code,
-                'code',
-                'transport.unreachable',
-              )
+              .having((error) => error.code, 'code', 'transport.unreachable')
               .having((error) => error.retryable, 'retryable', isTrue),
         ),
       );

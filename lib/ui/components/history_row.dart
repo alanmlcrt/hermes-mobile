@@ -18,7 +18,13 @@ class HistoryRow extends StatefulWidget {
     this.selected = false,
     this.onRename,
     this.renameMissing = false,
+    this.marker = const ConversationMarker(),
+    this.onTogglePin,
+    this.onToggleUnread,
   });
+  final ConversationMarker marker;
+  final VoidCallback? onTogglePin;
+  final VoidCallback? onToggleUnread;
   final SessionSummary session;
   final bool selected;
   final VoidCallback? onTap;
@@ -61,7 +67,37 @@ class _HistoryRowState extends State<HistoryRow> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.lg),
       ),
-      title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      // Repères en texte et icône, annoncés avec le titre (jamais la couleur seule).
+      title: Row(
+        children: [
+          if (widget.marker.pinned) ...[
+            const Icon(
+              Icons.push_pin,
+              size: IconSizes.sm,
+              semanticLabel: Content.pinned,
+            ),
+            const SizedBox(width: Spacing.xs),
+          ],
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: widget.marker.unread
+                  ? const TextStyle(fontWeight: FontWeight.w700)
+                  : null,
+            ),
+          ),
+          if (widget.marker.unread) ...[
+            const SizedBox(width: Spacing.xs),
+            Text(
+              Content.unread,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: scheme.accent, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ],
+      ),
       visualDensity: VisualDensity.compact,
       subtitle: Text(
         [
@@ -74,6 +110,32 @@ class _HistoryRowState extends State<HistoryRow> {
           : MenuAnchor(
               childFocusNode: _menuFocus,
               menuChildren: [
+                if (widget.onTogglePin != null)
+                  MenuItemButton(
+                    leadingIcon: Icon(
+                      widget.marker.pinned
+                          ? Icons.push_pin_outlined
+                          : Icons.push_pin,
+                    ),
+                    onPressed: widget.onTogglePin,
+                    child: Text(
+                      widget.marker.pinned ? Content.unpin : Content.pin,
+                    ),
+                  ),
+                if (widget.onToggleUnread != null)
+                  MenuItemButton(
+                    leadingIcon: Icon(
+                      widget.marker.unread
+                          ? Icons.mark_email_read_outlined
+                          : Icons.mark_email_unread_outlined,
+                    ),
+                    onPressed: widget.onToggleUnread,
+                    child: Text(
+                      widget.marker.unread
+                          ? Content.markRead
+                          : Content.markUnread,
+                    ),
+                  ),
                 MenuItemButton(
                   leadingIcon: const Icon(Icons.edit_outlined),
                   onPressed: widget.renameMissing

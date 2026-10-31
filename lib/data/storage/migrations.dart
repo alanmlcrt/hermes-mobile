@@ -263,4 +263,17 @@ final List<Future<void> Function(DatabaseExecutor)> connectionMigrations = [
       'state TEXT NOT NULL, created_at TEXT NOT NULL)',
     );
   },
+  (db) async {
+    // 7.3 : épingle et non lu, locaux au téléphone. [seen_terminal] : fin de
+    // tour déjà comptée (replay sans effet).
+    await db.execute(
+      'CREATE TABLE conversation_markers ('
+      'connection_key TEXT NOT NULL COLLATE BINARY, '
+      'profile_key TEXT NOT NULL COLLATE BINARY, '
+      'stored_session_id TEXT NOT NULL COLLATE BINARY, '
+      'pin_order INTEGER, unread INTEGER NOT NULL DEFAULT 0, '
+      'seen_terminal TEXT, '
+      'PRIMARY KEY (connection_key, profile_key, stored_session_id))',
+    );
+  },
 ];
